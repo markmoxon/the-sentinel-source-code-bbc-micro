@@ -13,6 +13,8 @@ config.set_show_all_labels(False)
 config.set_indent_string(" ")
 config.set_show_stats(False)
 
+hexadecimal(0x400, 0x8000)
+
 ################################################################################
 # ZERO PAGE
 ################################################################################
