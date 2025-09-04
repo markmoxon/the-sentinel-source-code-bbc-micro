@@ -2,8 +2,42 @@ from commands import *
 import acorn
 
 
-load(0x0400, "../../4-reference-binaries/pias/TheSentinel.bin")
-set_output_filename("TheSentinel.bin")
+# The game code does the following when it loads:
+#
+#   * Load game at &1900-&6D23
+#   * Move &1900-&6CFF to &0400-&57FF
+#   * Move &4100-&49FF to &5800-&60FF
+#
+# We can cater for this in py8dis as follows, but because an instruction
+# straddles the &4A00 boundary, it creates a warning and some pretty
+# convoluted code, so I've gone for the manual slicing approach for more
+# control
+#
+# load(0x1900, "../../4-reference-binaries/pias/TheSentinel.bin")
+# move(0x0400, 0x1900, 0x6D00 - 0x1900)
+# move(0x5800, 0x4100, 0x4A00 - 0x4100)
+
+# Here's how I've sliced up the game binary to support the code moves:
+#
+# File offset (size)    Loaded to (filename)    Moved to
+# 0000-3D00 (15616)     1900-55FF               0400-40FF
+# 3D00-4600 (17920)     5600-5EFF               5800-60FF
+# 4600-5400 (21504)     5F00-6CFF               4A00-57FF
+# 5400-5424 (36)        6D00-6D23               Not moved
+#
+# We now load these slices to the locations where they will be run, i.e.
+# after all the code moving, so py8dis can disassemble the whole game at
+# the correct address, and we add COPYBLOCK commands to the end of the
+# assembly file so BeebAsm can split up the code to the configuration in
+# the game binary
+
+load(0x0400, "slices/1900-55ff.bin")
+load(0x5800, "slices/5600-5eff.bin")
+load(0x4A00, "slices/5f00-6cff.bin")
+load(0x6d00, "slices/6d00-6d23.bin")
+
+
+set_output_filename("null.bin")
 acorn.bbc()
 config.set_lower_case(False)
 config.set_label_references(False)
@@ -85,32 +119,57 @@ entry(0x3F04, "Begin")
 entry(0x3FED, "sub_C3FED")
 label(0x400A, "Noise1")
 byte(0x400A, 0x4100 - 0x400A, cols=8)
-label(0x4100, "L4100")
-label(0x4300, "Noise2")
-byte(0x4300, 0x4500 - 0x4300, cols=8)
-entry(0x4500, "sub_C4500")
-entry(0x4501, "sub_C4501")
-entry(0x4575, "sub_C4575")
-entry(0x4633, "sub_C4633")
-entry(0x46C4, "sub_C46C4")
-entry(0x46F5, "sub_C46F5")
-entry(0x4707, "sub_C4707")
-entry(0x4720, "sub_C4720")
-entry(0x472C, "sub_C472C")
-byte(0x4757, 8, cols=8)
-entry(0x475F, "sub_C475F")
-entry(0x4824, "sub_C4824")
-entry(0x4868, "sub_C4868")
-entry(0x487D, "sub_C487D")
-entry(0x4880, "sub_C4880")
-byte(0x48BC, 3, cols=8)
-entry(0x48BF, "sub_C48BF")
-byte(0x48D9, 12, cols=8)
-entry(0x48E5, "sub_C48E5")
-entry(0x48F6, "sub_C48F6")
-byte(0x48FF, 0x49A0 - 0x48FF, cols=8)
+
 entry(0x5560, "sub_C5560")
 byte(0x5783, 0x5800 - 0x5783, cols=8)
-entry(0x6D00 - 0x1900 + 0x0400, "Entry")
+
+label(0x5800, "L5800")
+label(0x5A00, "Noise2")
+byte(0x5A00, 0x5C00 - 0x5A00, cols=8)
+entry(0x5C00, "sub_C5C00")
+entry(0x5C01, "sub_C5C01")
+entry(0x5C75, "sub_C5C75")
+entry(0x5D33, "sub_C5D33")
+entry(0x5DC4, "sub_C5DC4")
+entry(0x5DF5, "sub_C5DF5")
+entry(0x5E07, "sub_C5E07")
+entry(0x5E20, "sub_C5E20")
+entry(0x5E2C, "sub_C5E2C")
+byte(0x5E57, 8, cols=8)
+entry(0x5E5F, "sub_C5E5F")
+entry(0x5F24, "sub_C5F24")
+entry(0x5F68, "sub_C5F68")
+entry(0x5F7D, "sub_C5F7D")
+entry(0x5F80, "sub_C5F80")
+byte(0x5FBC, 3, cols=8)
+entry(0x5FBF, "sub_C5FBF")
+byte(0x5FD9, 12, cols=8)
+entry(0x5FE5, "sub_C5FE5")
+entry(0x5FF6, "sub_C5FF6")
+byte(0x5FFF, 0x60A0 - 0x5FFF, cols=8)
+
+entry(0x6D00, "Entry")
+
+################################################################################
+# MOVES
+################################################################################
+
+# The game code does the following when it loads:
+#
+#   * Load game at &1900-&6D23
+#   * Move &1900-&6CFF to &0400-&57FF
+#   * Move &4100-&49FF to &5800-&60FF
+#
+# We now reverse this process in BeebAsm using COPYBLOCK commands to copy code
+# from the game address to the address in the binary file (when the latter is
+# loaded at &1900), as then BeebAsm can save out the correct game binary
+
+annotate(0x6D23, "")
+annotate(0x6D23, "                              \ Game addr to file addr")
+annotate(0x6D23, "COPYBLOCK &5800, &6100, &4100 \ 5800-60FF to 4100-49FF")
+annotate(0x6D23, "COPYBLOCK &0400, &5800, &1900 \ 0400-57FF to 1900-6CFF")
+annotate(0x6D23, "")
+annotate(0x6D23, 'SAVE "TheSentinel.bin", &1900, &6D24')
+annotate(0x6D23, "")
 
 go()
