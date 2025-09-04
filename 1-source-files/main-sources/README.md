@@ -10,8 +10,6 @@ This folder contains the annotated source code for the BBC Micro version of The 
 
   * [sentinel-disc.asm](sentinel-disc.asm) builds the SSD disc image from the assembled binaries and other source files
 
-  * [sentinel-readme.asm](sentinel-readme.asm) generates a README file for inclusion on the SSD disc image
-
 * Files that are generated during the build process:
 
   * [sentinel-build-options.asm](sentinel-build-options.asm) stores the make options in BeebAsm format so they can be included in the assembly process
