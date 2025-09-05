@@ -43,36 +43,19 @@
 
  LOAD% = &1900          \ The load address of the main code binary
 
-crtc_cursor_start                     = 10
-crtc_screen_start_high                = 12
-crtc_screen_start_low                 = 13
-crtc_vert_displayed                   = 6
-crtc_vert_sync_pos                    = 7
-osbyte_acknowledge_escape             = 126
-osbyte_flush_buffer                   = 21
-osbyte_inkey                          = 129
-osbyte_read_os_version                = 0
-osbyte_read_write_escape_break_effect = 200
-osbyte_select_input_stream            = 2
-osbyte_set_cursor_editing             = 4
-osbyte_tv                             = 144
-osbyte_write_sheila                   = 151
-osword_read_char                      = 10
+ SHEILA = &FE00         \ Memory-mapped space for accessing internal hardware,
+                        \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
+                        \ known as SHEILA)
 
-crtc_address_register = &FE00
-crtc_register_data   = &FE01
-system_via_ifr       = &FE4D
-user_via_t1c_l       = &FE64
-user_via_t1c_h       = &FE65
-user_via_t1l_l       = &FE66
-user_via_t1l_h       = &FE67
-user_via_acr         = &FE6B
-user_via_ifr         = &FE6D
-user_via_ier         = &FE6E
-osrdch               = &FFE0
-oswrch               = &FFEE
-osword               = &FFF1
-osbyte               = &FFF4
+ OSRDCH = &FFE0         \ The address for the OSRDCH routine
+
+ OSWRCH = &FFEE         \ The address for the OSWRCH routine
+
+ OSBYTE = &FFF4         \ The address for the OSBYTE routine
+
+ OSWORD = &FFF1         \ The address for the OSWORD routine
+
+
 
 \ ******************************************************************************
 \
@@ -1570,9 +1553,9 @@ L0F36 = sub_C0F34+2
 
  TYA
  PHA
- LDA #osbyte_inkey
+ LDA #129               \ osbyte_inkey
  LDY #&FF
- JSR osbyte
+ JSR OSBYTE
  PLA
  TAY
  CPX #&FF
@@ -2238,13 +2221,13 @@ L1145 = sub_C1144+1
  LDA #&0F
  PHA
  LDA #&F0
- LDX #crtc_screen_start_low
- STX crtc_address_register
- STA crtc_register_data
+ LDX #13                \ crtc_screen_start_low
+ STX SHEILA+&00         \ crtc_address_register
+ STA SHEILA+&01         \ crtc_register_data
  DEX
- STX crtc_address_register
+ STX SHEILA+&00         \ crtc_address_register
  PLA
- STA crtc_register_data
+ STA SHEILA+&01         \ crtc_register_data
  CLI
  RTS
 
@@ -7677,8 +7660,8 @@ L314A = C3148+2
  PHA
  LDY #>(L0C10)
  LDX #<(L0C10)
- LDA #osword_read_char
- JSR osword
+ LDA #10                \ osword_read_char
+ JSR OSWORD
  LDA L0C4A
  STA L0026
  LDX #&07
@@ -7838,7 +7821,7 @@ L314A = C3148+2
  CPY L0074
  BNE C32EB
  LDA #&07
- JSR oswrch
+ JSR OSWRCH
  JMP C32B3
 
 .C32EB
@@ -8175,7 +8158,7 @@ L314A = C3148+2
 .C3473
 
  LDY #&59
- JMP osword
+ JMP OSWORD
 
 .L3478
 
@@ -8339,8 +8322,8 @@ L314A = C3148+2
 
 .C3555
 
- LDA #osbyte_flush_buffer
- JMP osbyte
+ LDA #21                \ osbyte_flush_buffer
+ JMP OSBYTE
 
 .sub_C355A
 
@@ -8671,10 +8654,10 @@ L314A = C3148+2
 .sub_C3766
 
  SEI
- LDA user_via_ifr
+ LDA SHEILA+&6D         \ user_via_ifr
  AND #&40
  BEQ C3763
- STA user_via_ifr
+ STA SHEILA+&6D         \ user_via_ifr
  LDA L00FC
  PHA
  TXA
@@ -8774,13 +8757,13 @@ L314A = C3148+2
  ROR A
  LSR L006D
  ROR A
- LDX #crtc_screen_start_low
- STX crtc_address_register
- STA crtc_register_data
- LDX #crtc_screen_start_high
- STX crtc_address_register
+ LDX #13                \ crtc_screen_start_low
+ STX SHEILA+&00         \ crtc_address_register
+ STA SHEILA+&01         \ crtc_register_data
+ LDX #12                \ crtc_screen_start_high
+ STX SHEILA+&00         \ crtc_address_register
  LDA L006D
- STA crtc_register_data
+ STA SHEILA+&01         \ crtc_register_data
  DEC L0CC1
  LDA L0CC2
  CLC
@@ -9474,57 +9457,57 @@ L3EC0 = L3E00+192
 
 .Begin
 
- LDA #osbyte_set_cursor_editing
+ LDA #4                 \ osbyte_set_cursor_editing
  LDY #&00
  LDX #&01
- JSR osbyte
- LDA #osbyte_tv
+ JSR OSBYTE
+ LDA #144               \ osbyte_tv
  LDX #&00
  LDY #&00
- JSR osbyte
+ JSR OSBYTE
  LDA #&16
- JSR oswrch
+ JSR OSWRCH
  LDA #&05
- JSR oswrch
+ JSR OSWRCH
  SEI
- LDA #crtc_vert_displayed
- STA crtc_address_register
+ LDA #6                 \ crtc_vert_displayed
+ STA SHEILA+&00         \ crtc_address_register
  LDA #&19
- STA crtc_register_data
- LDA #crtc_vert_sync_pos
- STA crtc_address_register
+ STA SHEILA+&01         \ crtc_register_data
+ LDA #7                 \ crtc_vert_sync_pos
+ STA SHEILA+&00         \ crtc_address_register
 
 .C3F30
 
  LDA #&20
- STA crtc_register_data
- LDA #crtc_cursor_start
- STA crtc_address_register
+ STA SHEILA+&01         \ crtc_register_data
+ LDA #10                \ crtc_cursor_start
+ STA SHEILA+&00         \ crtc_address_register
  LDA #&20
- STA crtc_register_data
+ STA SHEILA+&01         \ crtc_register_data
  CLI
- LDA #osbyte_write_sheila
+ LDA #151               \ osbyte_write_sheila
  LDX #&42
  LDY #&FF
- JSR osbyte
- LDA #osbyte_write_sheila
+ JSR OSBYTE
+ LDA #151               \ osbyte_write_sheila
  LDX #&40
  LDY #&05
- JSR osbyte
- LDA #osbyte_write_sheila
+ JSR OSBYTE
+ LDA #151               \ osbyte_write_sheila
  LDX #&40
  LDY #&0C
- JSR osbyte
- LDA #osbyte_read_os_version
+ JSR OSBYTE
+ LDA #0                 \ osbyte_read_os_version
  LDX #&FF
 
- JSR osbyte
+ JSR OSBYTE
  CPX #&00
  BEQ C3F72
- LDA #osbyte_read_write_escape_break_effect
+ LDA #200               \ osbyte_read_write_escape_break_effect
  LDX #&02
  LDY #&00
- JSR osbyte
+ JSR OSBYTE
  JMP C3F8C
 
 .C3F72
@@ -9578,20 +9561,20 @@ L3EC0 = L3E00+192
 
 .loop_C3FBC
 
- BIT system_via_ifr
+ BIT SHEILA+&4D         \ system_via_ifr
  BEQ loop_C3FBC
  LDA #&40
- STA user_via_acr
+ STA SHEILA+&6B         \ user_via_acr
  LDA #&C0
- STA user_via_ier
+ STA SHEILA+&6E         \ user_via_ier
  LDA #&00
- STA user_via_t1c_l
+ STA SHEILA+&64         \ user_via_t1c_l
  LDA #&39
- STA user_via_t1c_h
+ STA SHEILA+&65         \ user_via_t1c_h
  LDA #&1E
- STA user_via_t1l_l
+ STA SHEILA+&66         \ user_via_t1l_l
  LDA #&4E
- STA user_via_t1l_h
+ STA SHEILA+&67         \ user_via_t1l_h
  LDA #&37
  STA irq1v+1
  LDA #&66
@@ -10435,7 +10418,7 @@ L5521 = L5520+1
 .loop_C575B
 
  LDA L5796,X
- JSR oswrch
+ JSR OSWRCH
  DEX
  BPL loop_C575B
  PLA
@@ -10444,7 +10427,7 @@ L5521 = L5520+1
 
 .C5767
 
- JMP oswrch
+ JMP OSWRCH
 
 .C576A
 
@@ -10459,7 +10442,7 @@ L5521 = L5520+1
 
 .C5775
 
- JSR oswrch
+ JSR OSWRCH
  DEC L5783
  BNE loop_C5771
  LDA #&06
@@ -10986,14 +10969,14 @@ L5BA0 = Noise3+160
 
 .C5E0A
 
- JSR osrdch
+ JSR OSRDCH
  BCC return_40
  CMP #&1B
  BNE return_40
  TYA
  PHA
- LDA #osbyte_acknowledge_escape
- JSR osbyte
+ LDA #126               \ osbyte_acknowledge_escape
+ JSR OSBYTE
  PLA
  TAY
  JMP C5E0A
@@ -11004,9 +10987,9 @@ L5BA0 = Noise3+160
 
 .sub_C5E20
 
- LDA #osbyte_select_input_stream
+ LDA #2                 \ osbyte_select_input_stream
  LDX #&00
- JSR osbyte
+ JSR OSBYTE
  LDX #&00
  JMP C3555
 
@@ -11027,15 +11010,15 @@ L5BA0 = Noise3+160
 .C5E3C
 
  LDA #&13
- JSR oswrch
+ JSR OSWRCH
  LDA L0075
- JSR oswrch
+ JSR OSWRCH
  TXA
  LDX #&04
 
 .loop_C5E49
 
- JSR oswrch
+ JSR OSWRCH
  LDA #&00
  DEX
  BNE loop_C5E49
