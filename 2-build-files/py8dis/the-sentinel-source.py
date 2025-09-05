@@ -170,7 +170,7 @@ entry(0x5FBF, "sub_C5FBF")
 byte(0x5FD9, 12, cols=8)
 entry(0x5FE5, "sub_C5FE5")
 entry(0x5FF6, "sub_C5FF6")
-byte(0x5FFF, 0x60A0 - 0x5FFF, cols=8)
+byte(0x5FFF, 0x6100 - 0x5FFF, cols=8)
 
 entry(0x6D00, "Entry")
 
