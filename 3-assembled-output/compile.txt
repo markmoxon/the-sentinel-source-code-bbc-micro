@@ -2682,7 +2682,7 @@
 .C0E70
      0E70   46 8B      LSR &8B
      0E72   66 8A      ROR &8A
-.return_1
+.CRE01
      0E74   60         RTS
 .sub_C0E75
      0E75   8D 0C 0C   STA &0C0C
@@ -2805,7 +2805,7 @@
      0F5B   85 74      STA &74
      0F5D   90 02      BCC &0F61
      0F5F   E6 75      INC &75
-.return_2
+.CRE02
      0F61   60         RTS
 .sub_C0F62
      0F62   98         TYA
@@ -2917,9 +2917,9 @@
      1010   85 74      STA &74
      1012   A9 00      LDA #&00
      1014   E5 75      SBC &75
-.return_3
+.CRE03
      1016   60         RTS
-.C1017
+.sub_C1017
      1017   A2 FF      LDX #&FF
      1019   9A         TXS
      101A   A9 04      LDA #&04
@@ -2994,7 +2994,7 @@
      10AF   20 D5 56   JSR &56D5
      10B2   C6 15      DEC &15
      10B4   D0 F9      BNE &10AF
-.return_4
+.CRE04
      10B6   60         RTS
 .sub_C10B7
      10B7   A4 08      LDY &08
@@ -3058,7 +3058,7 @@
      1133   20 F8 38   JSR &38F8
 .loop_C1136
      1136   20 23 39   JSR &3923
-.return_5
+.CRE05
      1139   60         RTS
 .C113A
      113A   BD 40 01   LDA &0140,X
@@ -3167,7 +3167,7 @@
      11F9   A5 09      LDA &09
      11FB   30 0B      BMI &1208
      11FD   8D 1D 0C   STA &0C1D
-.C1200
+.sub_C1200
      1200   A9 80      LDA #&80
      1202   8D E4 0C   STA &0CE4
      1205   8D 1E 0C   STA &0C1E
@@ -3222,7 +3222,7 @@
 .C1258
      1258   38         SEC
      1259   60         RTS
-.C125A
+.sub_C125A
      125A   20 94 31   JSR &3194
      125D   29 1F      AND #&1F
      125F   C9 1F      CMP #&1F
@@ -3561,7 +3561,7 @@
      14BC   30 E8      BMI &14A6
      14BE   0E 71 0C   ASL &0C71
      14C1   90 09      BCC &14CC
-.return_6
+.CRE06
      14C3   60         RTS
 .L14C4
      14C4   02
@@ -3773,7 +3773,7 @@
      1626   D0 05      BNE &162D
      1628   CD 09 0C   CMP &0C09
      162B   F0 6B      BEQ &1698
-.C162D
+.sub_C162D
      162D   8D 09 0C   STA &0C09
      1630   8D 9B 16   STA &169B
      1633   AD C2 0C   LDA &0CC2
@@ -3828,7 +3828,7 @@
      1691   A9 00      LDA #&00
      1693   8D 9B 16   STA &169B
      1696   F0 B5      BEQ &164D
-.return_7
+.CRE07
      1698   60         RTS
 .L1699
      1699   00
@@ -4201,7 +4201,7 @@
      1962   F0 05      BEQ &1969
      1964   A2 06      LDX #&06
      1966   20 55 35   JSR &3555
-.return_8
+.CRE08
      1969   60         RTS
 .sub_C196A
      196A   A9 80      LDA #&80
@@ -4342,7 +4342,7 @@
      1A71   DE 88 0C   DEC &0C88,X
      1A74   A6 01      LDX &01
      1A76   18         CLC
-.return_9
+.CRE09
      1A77   60         RTS
 .C1A78
      1A78   20 D8 1E   JSR &1ED8
@@ -4405,7 +4405,7 @@
 .sub_C1AE7
      1AE7   20 F3 1A   JSR &1AF3
      1AEA   B0 1E      BCS &1B0A
-.C1AEC
+.sub_C1AEC
      1AEC   AE 0D 0C   LDX &0C0D
      1AEF   9A         TXS
      1AF0   4C C9 16   JMP &16C9
@@ -4425,7 +4425,7 @@
      1B07   A8         TAY
      1B08   68         PLA
      1B09   AA         TAX
-.return_10
+.CRE10
      1B0A   60         RTS
 .sub_C1B0B
      1B0B   AD 61 0C   LDA &0C61
@@ -5356,9 +5356,9 @@
      2198   A9 80      LDA #&80
      219A   8D 63 0C   STA &0C63
      219D   18         CLC
-.return_11
+.CRE11
      219E   60         RTS
-.C219F
+.sub_C219F
      219F   29 3F      AND #&3F
      21A1   8D 6C 0C   STA &0C6C
      21A4   A2 00      LDX #&00
@@ -5410,7 +5410,7 @@
      21FB   A8         TAY
      21FC   CE 6B 0C   DEC &0C6B
      21FF   10 F2      BPL &21F3
-.return_12
+.CRE12
      2201   60         RTS
 .sub_C2202
      2202   85 26      STA &26
@@ -5585,9 +5585,9 @@
      2306   84 1A      STY &1A
      2308   C4 04      CPY &04
      230A   B0 73      BCS &237F
-.return_13
+.CRE13
      230C   60         RTS
-.C230D
+.sub_C230D
      230D   A4 1A      LDY &1A
      230F   C4 04      CPY &04
      2311   F0 F9      BEQ &230C
@@ -5847,7 +5847,7 @@
      24DB   10 B5      BPL &2492
      24DD   C6 1A      DEC &1A
      24DF   10 9F      BPL &2480
-.return_14
+.CRE14
      24E1   60         RTS
 .L24E2
      24E2   80
@@ -5985,7 +5985,7 @@
      25BB   C6 18      DEC &18
      25BD   30 03      BMI &25C2
      25BF   4C F5 24   JMP &24F5
-.return_15
+.CRE15
      25C2   60         RTS
 .sub_C25C3
      25C3   A9 00      LDA #&00
@@ -6330,7 +6330,7 @@
      2810   C8         INY
      2811   C0 20      CPY #&20
      2813   F0 EF      BEQ &2804
-.C2815
+.sub_C2815
      2815   84 24      STY &24
      2817   84 0F      STY &0F
      2819   98         TYA
@@ -6513,7 +6513,7 @@
      2954   20 E2 29   JSR &29E2
      2957   A5 25      LDA &25
      2959   4C 45 29   JMP &2945
-.return_16
+.CRE16
      295C   60         RTS
 .sub_C295D
      295D   A5 10      LDA &10
@@ -6587,7 +6587,7 @@
      29C2   85 29      STA &29
      29C4   A9 02      LDA #&02
      29C6   85 10      STA &10
-.return_17
+.CRE17
      29C8   60         RTS
 .C29C9
      29C9   BD 80 01   LDA &0180,X
@@ -6632,7 +6632,7 @@
      2A16   85 45      STA &45
      2A18   68         PLA
      2A19   D0 3F      BNE &2A5A
-.C2A1B
+.sub_C2A1B
      2A1B   A2 00      LDX #&00
      2A1D   A5 25      LDA &25
      2A1F   45 26      EOR &26
@@ -6684,7 +6684,7 @@
      2A73   A5 3B      LDA &3B
      2A75   09 40      ORA #&40
      2A77   85 3B      STA &3B
-.C2A79
+.sub_C2A79
      2A79   A4 10      LDY &10
      2A7B   C0 02      CPY #&02
      2A7D   B0 14      BCS &2A93
@@ -6701,7 +6701,7 @@
      2A93   20 36 2D   JSR &2D36
      2A96   B0 03      BCS &2A9B
      2A98   20 99 22   JSR &2299
-.return_18
+.CRE18
      2A9B   60         RTS
 .sub_C2A9C
      2A9C   A2 50      LDX #&50
@@ -6992,7 +6992,7 @@
      2C8B   C5 73      CMP &73
      2C8D   B0 02      BCS &2C91
      2C8F   A2 0B      LDX #&0B
-.return_19
+.CRE19
      2C91   60         RTS
 .C2C92
      2C92   A5 75      LDA &75
@@ -7008,14 +7008,14 @@
      2CA1   C5 76      CMP &76
      2CA3   90 02      BCC &2CA7
      2CA5   A2 07      LDX #&07
-.return_20
+.CRE20
      2CA7   60         RTS
 .C2CA8
      2CA8   A2 05      LDX #&05
      2CAA   C5 74      CMP &74
      2CAC   90 02      BCC &2CB0
      2CAE   A2 0D      LDX #&0D
-.return_21
+.CRE21
      2CB0   60         RTS
 .C2CB1
      2CB1   C5 74      CMP &74
@@ -7029,14 +7029,14 @@
      2CC1   C5 74      CMP &74
      2CC3   90 02      BCC &2CC7
      2CC5   A2 0F      LDX #&0F
-.return_22
+.CRE22
      2CC7   60         RTS
 .C2CC8
      2CC8   A2 01      LDX #&01
      2CCA   C5 76      CMP &76
      2CCC   90 02      BCC &2CD0
      2CCE   A2 09      LDX #&09
-.return_23
+.CRE23
      2CD0   60         RTS
 .C2CD1
      2CD1   C5 75      CMP &75
@@ -7044,7 +7044,7 @@
      2CD5   A2 0A      LDX #&0A
      2CD7   90 02      BCC &2CDB
      2CD9   A2 03      LDX #&03
-.return_24
+.CRE24
      2CDB   60         RTS
 .C2CDC
      2CDC   A2 00      LDX #&00
@@ -7324,7 +7324,7 @@
      2EA7   4C 56 2E   JMP &2E56
 .C2EAA
      2EAA   4C 87 30   JMP &3087
-.return_25
+.CRE25
      2EAD   60         RTS
 .sub_C2EAE
      2EAE   A5 3F      LDA &3F
@@ -7409,7 +7409,7 @@
      2F32   D0 EE      BNE &2F22
 .C2F34
      2F34   84 7F      STY &7F
-.return_26
+.CRE26
      2F36   60         RTS
 .C2F37
      2F37   A0 00      LDY #&00
@@ -7742,7 +7742,7 @@
      318F   8D 48 31   STA &3148
      3192   68         PLA
      3193   60         RTS
-.C3194
+.sub_C3194
      3194   8C BC 31   STY &31BC
      3197   A0 08      LDY #&08
 .loop_C3199
@@ -7764,7 +7764,7 @@
      31BB   60         RTS
 .L31BC
      31BC   00
-.C31BD
+.sub_C31BD
      31BD   18         CLC
      31BE   69 30      ADC #&30
 .sub_C31C0
@@ -7775,7 +7775,7 @@
      31C6   2C 60 0C   BIT &0C60
      31C9   30 03      BMI &31CE
      31CB   4C 44 57   JMP &5744
-.C31CE
+.sub_C31CE
      31CE   48         PHA
      31CF   8D 10 0C   STA &0C10
      31D2   29 C0      AND #&C0
@@ -7944,7 +7944,7 @@
 .C32FC
      32FC   20 03 33   JSR &3303
      32FF   4C B3 32   JMP &32B3
-.return_27
+.CRE27
      3302   60         RTS
 .sub_C3303
      3303   38         SEC
@@ -7999,7 +7999,7 @@
      3352   38         SEC
      3353   E9 30      SBC #&30
      3355   60         RTS
-.C3356
+.sub_C3356
      3356   48         PHA
      3357   4A         LSR A
      3358   4A         LSR A
@@ -8048,7 +8048,7 @@
      33A4   20 94 31   JSR &3194
      33A7   4E 60 0C   LSR &0C60
      33AA   60         RTS
-.C33AB
+.sub_C33AB
      33AB   AD FE 0C   LDA &0CFE
      33AE   20 56 33   JSR &3356
      33B1   AD FD 0C   LDA &0CFD
@@ -8142,12 +8142,12 @@
      3434   69 01      ADC #&01
      3436   CA         DEX
      3437   D0 FA      BNE &3433
-.return_28
+.CRE28
      3439   60         RTS
 .sub_C343A
      343A   8E 04 59   STX &5904
      343D   8C 0C 59   STY &590C
-.C3440
+.sub_C3440
      3440   48         PHA
      3441   38         SEC
      3442   E9 01      SBC #&01
@@ -8162,7 +8162,7 @@
      3452   D0 05      BNE &3459
      3454   20 59 34   JSR &3459
      3457   A9 00      LDA #&00
-.C3459
+.sub_C3459
      3459   0A         ASL A
      345A   0A         ASL A
      345B   0A         ASL A
@@ -8194,7 +8194,7 @@
      347D   02
      347E   03
      347F   01
-.C3480
+.sub_C3480
      3480   AD E4 0C   LDA &0CE4
      3483   30 4E      BMI &34D3
      3485   AD D4 34   LDA &34D4
@@ -8237,7 +8237,7 @@
      34CB   A9 05      LDA #&05
      34CD   20 40 34   JSR &3440
      34D0   4C 80 34   JMP &3480
-.return_29
+.CRE29
      34D3   60         RTS
 .L34D4
      34D4   58
@@ -8270,9 +8270,9 @@
      34FC   A9 00      LDA #&00
      34FE   20 2D 16   JSR &162D
      3501   4E 72 0C   LSR &0C72
-.return_30
+.CRE30
      3504   60         RTS
-.C3505
+.sub_C3505
      3505   AE E7 0C   LDX &0CE7
      3508   30 3D      BMI &3547
      350A   EE E7 0C   INC &0CE7
@@ -8304,7 +8304,7 @@
      3541   4C 40 34   JMP &3440
 .C3544
      3544   8D E7 0C   STA &0CE7
-.return_31
+.CRE31
      3547   60         RTS
 .sub_C3548
      3548   A2 07      LDX #&07
@@ -8316,7 +8316,7 @@
      3552   60         RTS
 .sub_C3553
      3553   A2 04      LDX #&04
-.C3555
+.sub_C3555
      3555   A9 15      LDA #&15
      3557   4C F4 FF   JMP &FFF4
 .sub_C355A
@@ -8341,7 +8341,7 @@
      3582   69 01      ADC #&01
      3584   8D DF 0C   STA &0CDF
      3587   CE 74 0C   DEC &0C74
-.return_32
+.CRE32
      358A   60         RTS
 .C358B
      358B   4C 05 35   JMP &3505
@@ -8486,7 +8486,7 @@
      36B7   20 DE 33   JSR &33DE
      36BA   C8         INY
      36BB   4C B0 36   JMP &36B0
-.return_33
+.CRE33
      36BE   60         RTS
 .L36BF
      36BF   77
@@ -8754,7 +8754,7 @@
      38AC   85 65      STA &65
      38AE   CA         DEX
      38AF   D0 DA      BNE &388B
-.return_34
+.CRE34
      38B1   60         RTS
 .sub_C38B2
      38B2   A0 00      LDY #&00
@@ -8883,7 +8883,7 @@
      3964   29 03      AND #&03
      3966   C9 03      CMP #&03
      3968   F0 4C      BEQ &39B6
-.return_35
+.CRE35
      396A   60         RTS
 .sub_C396B
      396B   A6 0B      LDX &0B
@@ -8943,9 +8943,9 @@
      39D3   69 20      ADC #&20
 .C39D5
      39D5   8D C5 0C   STA &0CC5
-.return_36
+.CRE36
      39D8   60         RTS
-.C39D9
+.sub_C39D9
      39D9   AD D7 0C   LDA &0CD7
      39DC   30 27      BMI &3A05
      39DE   20 A7 3A   JSR &3AA7
@@ -9038,7 +9038,7 @@
      3A81   91 2A      STA (&2A),Y
      3A83   EE C9 0C   INC &0CC9
      3A86   4C FB 39   JMP &39FB
-.return_37
+.CRE37
      3A89   60         RTS
 .L3A8A
      3A8A   80
@@ -9088,7 +9088,7 @@
      3ABF   10 EE      BPL &3AAF
      3AC1   A2 00      LDX #&00
      3AC3   8E C9 0C   STX &0CC9
-.return_38
+.CRE38
      3AC6   60         RTS
 .L3AC7
      3AC7   08
@@ -9117,7 +9117,7 @@
 .C3AE7
      3AE7   8D CB 0C   STA &0CCB
      3AEA   60         RTS
-.C3AEB
+.sub_C3AEB
      3AEB   A9 5A      LDA #&5A
      3AED   85 63      STA &63
      3AEF   A9 00      LDA #&00
@@ -15040,7 +15040,7 @@
      5D2B   C4 4F      CPY &4F
      5D2D   F0 03      BEQ &5D32
      5D2F   4C 85 5C   JMP &5C85
-.return_39
+.CRE39
      5D32   60         RTS
 .sub_C5D33
      5D33   20 01 5C   JSR &5C01
@@ -15156,7 +15156,7 @@
      5E06   60         RTS
 .sub_C5E07
      5E07   20 20 5E   JSR &5E20
-.C5E0A
+.sub_C5E0A
      5E0A   20 E0 FF   JSR &FFE0
      5E0D   90 10      BCC &5E1F
      5E0F   C9 1B      CMP #&1B
@@ -15168,7 +15168,7 @@
      5E1A   68         PLA
      5E1B   A8         TAY
      5E1C   4C 0A 5E   JMP &5E0A
-.return_40
+.CRE40
      5E1F   60         RTS
 .sub_C5E20
      5E20   A9 02      LDA #&02
@@ -15316,7 +15316,7 @@
      5F1E   F0 03      BEQ &5F23
 .C5F20
      5F20   4C 7E 5E   JMP &5E7E
-.return_41
+.CRE41
      5F23   60         RTS
 .sub_C5F24
      5F24   48         PHA
