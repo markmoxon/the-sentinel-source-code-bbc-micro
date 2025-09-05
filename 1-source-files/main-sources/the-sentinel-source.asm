@@ -43,6 +43,15 @@
 
  LOAD% = &1900          \ The load address of the main code binary
 
+ IRQ1V = &0204          \ The IRQ1V vector that we intercept to implement the
+                        \ screen mode
+
+ BRKIV = &0287          \ The Break Intercept vector (which is a JMP instruction
+                        \ to the Break Intercept handler)
+
+ BRKI = &0380           \ The CFS workspace, which we can use for the Break
+                        \ Intercept handler
+
  SHEILA = &FE00         \ Memory-mapped space for accessing internal hardware,
                         \ such as the video ULA, 6845 CRTC and 6522 VIAs (also
                         \ known as SHEILA)
@@ -54,8 +63,6 @@
  OSBYTE = &FFF4         \ The address for the OSBYTE routine
 
  OSWORD = &FFF1         \ The address for the OSWORD routine
-
-
 
 \ ******************************************************************************
 \
@@ -205,7 +212,18 @@ L008E                = &008E
 L008F                = &008F
 L00FC                = &00FC
 
-; Memory locations
+\ ******************************************************************************
+\
+\       Name: Stack variables
+\       Type: Workspace
+\    Address: &0100 to ???
+\   Category: Workspaces
+\    Summary: Variables that share page 1 with the stack
+\
+\ ******************************************************************************
+
+ ORG &0100              \ Set the assembly address to &0100
+
 L0100                = &0100
 L0140                = &0140
 L0142                = &0142
@@ -9517,15 +9535,15 @@ L3EC0 = L3E00+192
 .loop_C3F74
 
  LDA sub_C3FED,X
- STA L0380,X
+ STA BRKI,X
  DEX
  BPL loop_C3F74
  LDA #&4C
- STA L0287
- LDA #&80
- STA L0288
- LDA #&03
- STA L0289
+ STA BRKIV
+ LDA #LO(BRKI)
+ STA BRKIV+1
+ LDA #HI(BRKI)
+ STA BRKIV+2
 
 .C3F8C
 
@@ -9553,9 +9571,9 @@ L3EC0 = L3E00+192
  CMP #&4A
  BCC loop_C3F9A
  SEI
- LDA irq1v
+ LDA IRQ1V
  STA L0D01
- LDA irq1v+1
+ LDA IRQ1V+1
  STA L0D02
  LDA #&02
 
@@ -9576,9 +9594,9 @@ L3EC0 = L3E00+192
  LDA #&4E
  STA SHEILA+&67         \ user_via_t1l_h
  LDA #&37
- STA irq1v+1
+ STA IRQ1V+1
  LDA #&66
- STA irq1v
+ STA IRQ1V
  CLI
  JMP C1017
 
@@ -9603,7 +9621,7 @@ L3EC0 = L3E00+192
  CPX #&7C
  BCC loop_C3FF5
  LDA #&00
- STA L0287
+ STA BRKIV
  RTS
 
 .Noise1
