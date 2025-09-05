@@ -2838,7 +2838,7 @@
      0F8C   24 67      BIT &67
      0F8E   30 07      BMI &0F97
      0F90   70 07      BVS &0F99
-.loop_C0F92
+.P0F92
      0F92   85 8E      STA &8E
      0F94   86 8F      STX &8F
      0F96   60         RTS
@@ -2945,7 +2945,7 @@
      104D   AD 52 0C   LDA &0C52
      1050   D0 0D      BNE &105F
      1052   A2 03      LDX #&03
-.loop_C1054
+.P1054
      1054   BD 8C 10   LDA &108C,X
      1057   9D F0 0C   STA &0CF0,X
      105A   CA         DEX
@@ -2990,7 +2990,7 @@
      10A9   D0 0B      BNE &10B6
      10AB   A9 03      LDA #&03
      10AD   85 15      STA &15
-.loop_C10AF
+.P10AF
      10AF   20 D5 56   JSR &56D5
      10B2   C6 15      DEC &15
      10B4   D0 F9      BNE &10AF
@@ -3056,7 +3056,7 @@
 .C1131
      1131   A9 08      LDA #&08
      1133   20 F8 38   JSR &38F8
-.loop_C1136
+.P1136
      1136   20 23 39   JSR &3923
 .CRE05
      1139   60         RTS
@@ -3065,7 +3065,7 @@
      113D   38         SEC
      113E   F9 F4 38   SBC &38F4,Y
      1141   9D 40 01   STA &0140,X
-.sub_C1144
+.C1144
      1144   4C 36 11   JMP &1136
 .L1147
      1147   35
@@ -3097,7 +3097,7 @@
      1170   90 DD      BCC &114F
 .sub_C1172
      1172   A2 3F      LDX #&3F
-.loop_C1174
+.P1174
      1174   A9 FF      LDA #&FF
      1176   9D 80 3E   STA &3E80,X
      1179   9D C0 3E   STA &3EC0,X
@@ -3298,7 +3298,7 @@
      12EE   AD 50 0C   LDA &0C50
      12F1   D0 15      BNE &1308
      12F3   A2 17      LDX #&17
-.loop_C12F5
+.P12F5
      12F5   BD 20 0C   LDA &0C20,X
      12F8   C9 02      CMP #&02
      12FA   90 03      BCC &12FF
@@ -3351,11 +3351,11 @@
 .sub_C1353
      1353   A2 03      LDX #&03
      1355   A9 80      LDA #&80
-.loop_C1357
+.P1357
      1357   9D E8 0C   STA &0CE8,X
      135A   CA         DEX
      135B   10 FA      BPL &1357
-.loop_C135D
+.P135D
      135D   BE 7D 13   LDX &137D,Y
      1360   20 62 0F   JSR &0F62
      1363   D0 0E      BNE &1373
@@ -3442,7 +3442,7 @@
      13ED   D0 0B      BNE &13FA
      13EF   A2 7F      LDX #&7F
      13F1   8E 0F 14   STX &140F
-.loop_C13F4
+.P13F4
      13F4   9D 80 3E   STA &3E80,X
      13F7   CA         DEX
      13F8   10 FA      BPL &13F4
@@ -3531,7 +3531,7 @@
      1485   A5 75      LDA &75
 .C1487
      1487   85 1E      STA &1E
-.loop_C1489
+.P1489
      1489   A9 02      LDA #&02
      148B   20 0E 21   JSR &210E
      148E   AD 06 0C   LDA &0C06
@@ -3603,7 +3603,7 @@
      14F0   86 6E      STX &6E
      14F2   A9 01      LDA #&01
      14F4   9D 40 0A   STA &0A40,X
-.loop_C14F7
+.P14F7
      14F7   20 8D 15   JSR &158D
      14FA   90 0F      BCC &150B
      14FC   A5 06      LDA &06
@@ -3676,7 +3676,7 @@
 .sub_C158D
      158D   A2 3F      LDX #&3F
      158F   A0 00      LDY #&00
-.loop_C1591
+.P1591
      1591   BD 10 5B   LDA &5B10,X
      1594   C5 06      CMP &06
      1596   D0 05      BNE &159D
@@ -3690,7 +3690,7 @@
      15A1   F0 0F      BEQ &15B2
      15A3   85 74      STA &74
      15A5   A0 FF      LDY #&FF
-.loop_C15A7
+.P15A7
      15A7   0A         ASL A
      15A8   C8         INY
      15A9   90 FC      BCC &15A7
@@ -3793,7 +3793,7 @@
      164D   A0 03      LDY #&03
      164F   20 8E 56   JSR &568E
      1652   4C 5A 16   JMP &165A
-.loop_C1655
+.P1655
      1655   AD 99 16   LDA &1699
      1658   4A         LSR A
      1659   4A         LSR A
@@ -3975,7 +3975,7 @@
      17A3   A9 80      LDA #&80
      17A5   85 0F      STA &0F
      17A7   A0 3F      LDY #&3F
-.loop_C17A9
+.P17A9
      17A9   A9 00      LDA #&00
      17AB   20 82 18   JSR &1882
      17AE   AD 76 0C   LDA &0C76
@@ -4044,7 +4044,7 @@
      182E   B0 08      BCS &1838
      1830   A9 78      LDA #&78
      1832   9D 20 0C   STA &0C20,X
-.loop_C1835
+.P1835
      1835   4C C9 16   JMP &16C9
 .C1838
      1838   D0 FB      BNE &1835
@@ -4275,7 +4275,7 @@
 .C19F1
      19F1   FE 80 0C   INC &0C80,X
      19F4   4C EC 1A   JMP &1AEC
-.loop_C19F7
+.P19F7
      19F7   A9 80      LDA #&80
      19F9   8D 4E 0C   STA &0C4E
      19FC   4C EC 1A   JMP &1AEC
@@ -4434,7 +4434,7 @@
      1B12   20 47 21   JSR &2147
      1B15   A9 00      LDA #&00
      1B17   8D 1C 0C   STA &0C1C
-.loop_C1B1A
+.P1B1A
      1B1A   38         SEC
      1B1B   60         RTS
 .C1B1C
@@ -4467,7 +4467,7 @@
      1B56   D0 40      BNE &1B98
      1B58   20 00 12   JSR &1200
      1B5B   86 0B      STX &0B
-.loop_C1B5D
+.P1B5D
      1B5D   BD 00 01   LDA &0100,X
      1B60   C9 40      CMP #&40
      1B62   90 0D      BCC &1B71
@@ -4537,7 +4537,7 @@
      1BDA   60         RTS
 .C1BDB
      1BDB   A0 07      LDY #&07
-.loop_C1BDD
+.P1BDD
      1BDD   B9 00 01   LDA &0100,Y
      1BE0   30 18      BMI &1BFA
      1BE2   B9 40 0A   LDA &0A40,Y
@@ -4651,7 +4651,7 @@
      1CA9   60         RTS
 .sub_C1CAA
      1CAA   A2 02      LDX #&02
-.loop_C1CAC
+.P1CAC
      1CAC   A9 00      LDA #&00
      1CAE   85 74      STA &74
      1CB0   B5 34      LDA &34,X
@@ -5279,7 +5279,7 @@
      210E   8D 61 0C   STA &0C61
 .sub_C2111
      2111   A2 3F      LDX #&3F
-.loop_C2113
+.P2113
      2113   BD 00 01   LDA &0100,X
      2116   30 05      BMI &211D
      2118   CA         DEX
@@ -5362,7 +5362,7 @@
      219F   29 3F      AND #&3F
      21A1   8D 6C 0C   STA &0C6C
      21A4   A2 00      LDX #&00
-.loop_C21A6
+.P21A6
      21A6   E8         INX
      21A7   29 3F      AND #&3F
      21A9   A8         TAY
@@ -5393,7 +5393,7 @@
      21DE   30 21      BMI &2201
      21E0   AE 6B 0C   LDX &0C6B
      21E3   10 07      BPL &21EC
-.loop_C21E5
+.P21E5
      21E5   B9 00 01   LDA &0100,Y
      21E8   29 3F      AND #&3F
      21EA   A8         TAY
@@ -5640,7 +5640,7 @@
      2360   AA         TAX
      2361   A5 54      LDA &54
      2363   3D 87 22   AND &2287,X
-.sub_C2366
+.C2366
      2366   1D 3C 3E   ORA &3E3C,X
      2369   3D 8F 22   AND &228F,X
      236C   85 74      STA &74
@@ -5673,7 +5673,7 @@
      239A   B1 72      LDA (&72),Y
      239C   85 54      STA &54
      239E   3D 8B 22   AND &228B,X
-.sub_C23A1
+.C23A1
      23A1   1D 7C 3E   ORA &3E7C,X
      23A4   91 72      STA (&72),Y
 .C23A6
@@ -5695,7 +5695,7 @@
      23C0   AA         TAX
      23C1   B1 72      LDA (&72),Y
      23C3   3D 87 22   AND &2287,X
-.sub_C23C6
+.C23C6
      23C6   1D 3C 3E   ORA &3E3C,X
      23C9   91 72      STA (&72),Y
      23CB   98         TYA
@@ -5713,7 +5713,7 @@
      23DC   8D E3 23   STA &23E3
      23DF   A5 58      LDA &58
      23E1   18         CLC
-.sub_C23E2
+.C23E2
      23E2   90 7C      BCC &2460
      23E4   A0 F8      LDY #&F8
      23E6   91 70      STA (&70),Y
@@ -5785,7 +5785,7 @@
      2468   A9 00      LDA #&00
      246A   85 05      STA &05
      246C   A2 7F      LDX #&7F
-.loop_C246E
+.P246E
      246E   9D 80 3E   STA &3E80,X
      2471   CA         DEX
      2472   10 FA      BPL &246E
@@ -5906,7 +5906,7 @@
      2535   0A         ASL A
      2536   C9 06      CMP #&06
      2538   90 75      BCC &25AF
-.loop_C253A
+.P253A
      253A   06 2C      ASL &2C
      253C   26 2F      ROL &2F
      253E   06 2D      ASL &2D
@@ -5932,7 +5932,7 @@
      2563   69 3C      ADC #&3C
      2565   85 0D      STA &0D
      2567   A0 00      LDY #&00
-.loop_C2569
+.P2569
      2569   B1 0C      LDA (&0C),Y
      256B   C9 7F      CMP #&7F
      256D   D0 68      BNE &25D7
@@ -5948,7 +5948,7 @@
      257E   A2 02      LDX #&02
      2580   18         CLC
      2581   90 06      BCC &2589
-.loop_C2583
+.P2583
      2583   B5 34      LDA &34,X
      2585   75 2C      ADC &2C,X
      2587   95 34      STA &34,X
@@ -5995,7 +5995,7 @@
      25CB   85 71      STA &71
      25CD   A9 1F      LDA #&1F
      25CF   85 26      STA &26
-.loop_C25D1
+.P25D1
      25D1   A9 1F      LDA #&1F
      25D3   85 24      STA &24
      25D5   D0 03      BNE &25DA
@@ -6152,7 +6152,7 @@
      26DB   C4 37      CPY &37
      26DD   F0 28      BEQ &2707
      26DF   90 0A      BCC &26EB
-.loop_C26E1
+.P26E1
      26E1   88         DEY
      26E2   20 15 28   JSR &2815
      26E5   C4 37      CPY &37
@@ -6164,7 +6164,7 @@
      26EF   85 05      STA &05
      26F1   E6 26      INC &26
      26F3   A4 37      LDY &37
-.loop_C26F5
+.P26F5
      26F5   88         DEY
      26F6   20 15 28   JSR &2815
      26F9   C4 32      CPY &32
@@ -6179,7 +6179,7 @@
      2709   C4 38      CPY &38
      270B   F0 28      BEQ &2735
      270D   B0 0A      BCS &2719
-.loop_C270F
+.P270F
      270F   C8         INY
      2710   20 15 28   JSR &2815
      2713   C4 38      CPY &38
@@ -6191,7 +6191,7 @@
      271D   85 05      STA &05
      271F   E6 26      INC &26
      2721   A4 38      LDY &38
-.loop_C2723
+.P2723
      2723   C8         INY
      2724   20 15 28   JSR &2815
      2727   C4 33      CPY &33
@@ -6273,7 +6273,7 @@
      27B4   F0 33      BEQ &27E9
      27B6   C9 80      CMP #&80
      27B8   F0 1D      BEQ &27D7
-.loop_C27BA
+.P27BA
      27BA   A5 24      LDA &24
      27BC   85 32      STA &32
      27BE   20 0E 28   JSR &280E
@@ -6282,7 +6282,7 @@
      27C5   F0 F3      BEQ &27BA
      27C7   C9 80      CMP #&80
      27C9   F0 07      BEQ &27D2
-.loop_C27CB
+.P27CB
      27CB   20 0E 28   JSR &280E
      27CE   B0 02      BCS &27D2
      27D0   F0 F9      BEQ &27CB
@@ -6308,7 +6308,7 @@
      27F2   85 33      STA &33
      27F4   A5 32      LDA &32
      27F6   85 24      STA &24
-.loop_C27F8
+.P27F8
      27F8   20 06 28   JSR &2806
      27FB   B0 02      BCS &27FF
 .C27FD
@@ -6431,7 +6431,7 @@
      28BD   9D 80 01   STA &0180,X
      28C0   C9 C0      CMP #&C0
      28C2   90 12      BCC &28D6
-.loop_C28C4
+.P28C4
      28C4   29 3F      AND #&3F
      28C6   A8         TAY
      28C7   B9 00 01   LDA &0100,Y
@@ -6490,7 +6490,7 @@
 .sub_C292D
      292D   A5 37      LDA &37
      292F   85 25      STA &25
-.loop_C2931
+.P2931
      2931   C5 38      CMP &38
      2933   B0 27      BCS &295C
      2935   C5 03      CMP &03
@@ -6501,7 +6501,7 @@
      2940   4C 31 29   JMP &2931
 .C2943
      2943   A5 38      LDA &38
-.loop_C2945
+.P2945
      2945   38         SEC
      2946   E9 01      SBC #&01
      2948   30 12      BMI &295C
@@ -6705,7 +6705,7 @@
      2A9B   60         RTS
 .sub_C2A9C
      2A9C   A2 50      LDX #&50
-.loop_C2A9E
+.P2A9E
      2A9E   20 94 31   JSR &3194
      2AA1   9D 00 5A   STA &5A00,X
      2AA4   CA         DEX
@@ -6730,10 +6730,10 @@
      2ACA   20 53 2B   JSR &2B53
      2ACD   A9 1E      LDA #&1E
      2ACF   85 26      STA &26
-.loop_C2AD1
+.P2AD1
      2AD1   A9 1E      LDA #&1E
      2AD3   85 24      STA &24
-.loop_C2AD5
+.P2AD5
      2AD5   20 4E 2C   JSR &2C4E
      2AD8   20 78 2B   JSR &2B78
      2ADB   8A         TXA
@@ -6816,17 +6816,17 @@
      2B53   85 66      STA &66
      2B55   A9 02      LDA #&02
      2B57   85 15      STA &15
-.loop_C2B59
+.P2B59
      2B59   A9 1F      LDA #&1F
      2B5B   85 26      STA &26
-.loop_C2B5D
+.P2B5D
      2B5D   A9 00      LDA #&00
      2B5F   20 90 2B   JSR &2B90
      2B62   C6 26      DEC &26
      2B64   10 F7      BPL &2B5D
      2B66   A9 1F      LDA #&1F
      2B68   85 24      STA &24
-.loop_C2B6A
+.P2B6A
      2B6A   A9 80      LDA #&80
      2B6C   20 90 2B   JSR &2B90
      2B6F   C6 24      DEC &24
@@ -6854,7 +6854,7 @@
      2B90   05 66      ORA &66
      2B92   85 1C      STA &1C
      2B94   A2 22      LDX #&22
-.loop_C2B96
+.P2B96
      2B96   8A         TXA
      2B97   29 1F      AND #&1F
      2B99   24 1C      BIT &1C
@@ -6942,7 +6942,7 @@
      2C31   9D 1D 0F   STA &0F1D,X
 .C2C34
      2C34   A2 1F      LDX #&1F
-.loop_C2C36
+.P2C36
      2C36   8A         TXA
      2C37   24 1C      BIT &1C
      2C39   10 05      BPL &2C40
@@ -7394,7 +7394,7 @@
      2F1B   D0 63      BNE &2F80
      2F1D   A6 18      LDX &18
      2F1F   4C 29 2F   JMP &2F29
-.loop_C2F22
+.P2F22
      2F22   65 0D      ADC &0D
      2F24   90 03      BCC &2F29
      2F26   E5 0C      SBC &0C
@@ -7444,7 +7444,7 @@
 .C2F6B
      2F6B   CA         DEX
      2F6C   65 0C      ADC &0C
-.sub_C2F6E
+.C2F6E
      2F6E   90 0A      BCC &2F7A
      2F70   E5 0D      SBC &0D
      2F72   CE 78 2F   DEC &2F78
@@ -7461,7 +7461,7 @@
      2F86   8E 94 2F   STX &2F94
      2F89   A6 18      LDX &18
      2F8B   4C 95 2F   JMP &2F95
-.loop_C2F8E
+.P2F8E
      2F8E   65 0D      ADC &0D
      2F90   90 03      BCC &2F95
      2F92   E5 0C      SBC &0C
@@ -7636,7 +7636,7 @@
      30D5   A6 18      LDX &18
      30D7   20 6E 31   JSR &316E
      30DA   4C E9 30   JMP &30E9
-.loop_C30DD
+.P30DD
      30DD   65 0D      ADC &0D
      30DF   90 08      BCC &30E9
      30E1   E5 0C      SBC &0C
@@ -7745,7 +7745,7 @@
 .sub_C3194
      3194   8C BC 31   STY &31BC
      3197   A0 08      LDY #&08
-.loop_C3199
+.P3199
      3199   AD 7D 0C   LDA &0C7D
      319C   4A         LSR A
      319D   4A         LSR A
@@ -7812,7 +7812,7 @@
      320A   85 24      STA &24
      320C   A9 04      LDA #&04
      320E   85 15      STA &15
-.loop_C3210
+.P3210
      3210   1E 10 0C   ASL &0C10,X
      3213   2A         ROL A
      3214   1E 10 0C   ASL &0C10,X
@@ -7846,7 +7846,10 @@
      3246   68         PLA
      3247   60         RTS
 .L3248
-     3248   20 27 28 ...
+     3248   20
+     3249   27
+     324A   28
+     324B   29
 .sub_C324C
      324C   8D 8F 32   STA &328F
      324F   A9 80      LDA #&80
@@ -7867,7 +7870,7 @@
      3273   F0 11      BEQ &3286
 .C3275
      3275   A2 00      LDX #&00
-.loop_C3277
+.P3277
      3277   BD 90 32   LDA &3290,X
      327A   20 CE 31   JSR &31CE
      327D   E8         INX
@@ -7894,12 +7897,12 @@
      32A1   20 20 5E   JSR &5E20
      32A4   A0 07      LDY #&07
      32A6   A9 20      LDA #&20
-.loop_C32A8
+.P32A8
      32A8   99 F0 0C   STA &0CF0,Y
      32AB   88         DEY
      32AC   10 FA      BPL &32A8
      32AE   20 03 33   JSR &3303
-.loop_C32B1
+.P32B1
      32B1   A0 00      LDY #&00
 .C32B3
      32B3   20 0A 5E   JSR &5E0A
@@ -7913,7 +7916,7 @@
      32C4   88         DEY
      32C5   30 EA      BMI &32B1
      32C7   A2 00      LDX #&00
-.loop_C32C9
+.P32C9
      32C9   BD F1 0C   LDA &0CF1,X
      32CC   9D F0 0C   STA &0CF0,X
      32CF   E8         INX
@@ -7934,7 +7937,7 @@
      32EB   C8         INY
      32EC   48         PHA
      32ED   A2 06      LDX #&06
-.loop_C32EF
+.P32EF
      32EF   BD F0 0C   LDA &0CF0,X
      32F2   9D F1 0C   STA &0CF1,X
      32F5   CA         DEX
@@ -7951,14 +7954,14 @@
      3304   6E 0F 0C   ROR &0C0F
      3307   A6 74      LDX &74
      3309   CA         DEX
-.loop_C330A
+.P330A
      330A   BD F0 0C   LDA &0CF0,X
      330D   20 C0 31   JSR &31C0
      3310   CA         DEX
      3311   10 F7      BPL &330A
      3313   A6 74      LDX &74
      3315   A9 08      LDA #&08
-.loop_C3317
+.P3317
      3317   20 C0 31   JSR &31C0
      331A   CA         DEX
      331B   D0 FA      BNE &3317
@@ -7967,7 +7970,7 @@
 .sub_C3321
      3321   A0 00      LDY #&00
      3323   A2 00      LDX #&00
-.loop_C3325
+.P3325
      3325   20 3E 33   JSR &333E
      3328   85 74      STA &74
      332A   C8         INY
@@ -8036,7 +8039,7 @@
      338B   20 CE 31   JSR &31CE
      338E   4E E6 0C   LSR &0CE6
      3391   AE E6 0C   LDX &0CE6
-.loop_C3394
+.P3394
      3394   20 64 33   JSR &3364
      3397   E0 04      CPX #&04
      3399   B0 03      BCS &339E
@@ -8098,14 +8101,14 @@
      33F7   18         CLC
      33F8   69 02      ADC #&02
      33FA   85 74      STA &74
-.loop_C33FC
+.P33FC
      33FC   20 94 31   JSR &3194
      33FF   A0 07      LDY #&07
      3401   0A         ASL A
      3402   08         PHP
      3403   F0 06      BEQ &340B
      3405   A0 FF      LDY #&FF
-.loop_C3407
+.P3407
      3407   C8         INY
      3408   0A         ASL A
      3409   90 FC      BCC &3407
@@ -8137,7 +8140,7 @@
      342C   A9 00      LDA #&00
      342E   AE 0A 0C   LDX &0C0A
      3431   F0 06      BEQ &3439
-.loop_C3433
+.P3433
      3433   18         CLC
      3434   69 01      ADC #&01
      3436   CA         DEX
@@ -8222,7 +8225,7 @@
      34AD   8C 5F 59   STY &595F
      34B0   8C 51 59   STY &5951
      34B3   A0 0B      LDY #&0B
-.loop_C34B5
+.P34B5
      34B5   BE D5 34   LDX &34D5,Y
      34B8   E0 4F      CPX #&4F
      34BA   D0 04      BNE &34C0
@@ -8263,7 +8266,7 @@
      34ED   A9 08      LDA #&08
      34EF   20 2D 16   JSR &162D
      34F2   20 48 35   JSR &3548
-.loop_C34F5
+.P34F5
      34F5   AD EB 0C   LDA &0CEB
      34F8   C9 03      CMP #&03
      34FA   D0 F9      BNE &34F5
@@ -8308,7 +8311,7 @@
      3547   60         RTS
 .sub_C3548
      3548   A2 07      LDX #&07
-.loop_C354A
+.P354A
      354A   20 55 35   JSR &3555
      354D   CA         DEX
      354E   E0 04      CPX #&04
@@ -8397,7 +8400,7 @@
      35F7   85 55      STA &55
      35F9   A9 02      LDA #&02
      35FB   20 63 29   JSR &2963
-.loop_C35FE
+.P35FE
      35FE   20 5A 35   JSR &355A
      3601   AD E7 0C   LDA &0CE7
      3604   10 F8      BPL &35FE
@@ -8422,7 +8425,7 @@
      3631   A2 03      LDX #&03
      3633   A9 00      LDA #&00
      3635   8D 73 0C   STA &0C73
-.loop_C3638
+.P3638
      3638   9D 7C 0C   STA &0C7C,X
      363B   CA         DEX
      363C   10 FA      BPL &3638
@@ -8434,7 +8437,7 @@
      364B   8D DF 0C   STA &0CDF
      364E   A9 42      LDA #&42
      3650   20 F6 5F   JSR &5FF6
-.loop_C3653
+.P3653
      3653   20 5A 35   JSR &355A
      3656   AD E7 0C   LDA &0CE7
      3659   10 F8      BPL &3653
@@ -8463,14 +8466,14 @@
      3689   20 C7 36   JSR &36C7
      368C   AD D1 0C   LDA &0CD1
      368F   8D C1 0C   STA &0CC1
-.loop_C3692
+.P3692
      3692   AD C1 0C   LDA &0CC1
      3695   D0 FB      BNE &3692
      3697   F0 CD      BEQ &3666
 .sub_C3699
      3699   A9 00      LDA #&00
      369B   8D 05 0C   STA &0C05
-.loop_C369E
+.P369E
      369E   A9 00      LDA #&00
      36A0   20 3A 37   JSR &373A
      36A3   AD 05 0C   LDA &0C05
@@ -8479,7 +8482,7 @@
      36AA   4C EB 3A   JMP &3AEB
 .sub_C36AD
      36AD   BC 84 57   LDY &5784,X
-.loop_C36B0
+.P36B0
      36B0   B9 96 57   LDA &5796,Y
      36B3   C9 FF      CMP #&FF
      36B5   F0 07      BEQ &36BE
@@ -8503,7 +8506,7 @@
      36CC   20 3A 37   JSR &373A
      36CF   AD 0A 0C   LDA &0C0A
      36D2   85 15      STA &15
-.loop_C36D4
+.P36D4
      36D4   A5 15      LDA &15
      36D6   C9 0F      CMP #&0F
      36D8   90 11      BCC &36EB
@@ -8541,7 +8544,7 @@
      371A   90 F4      BCC &3710
      371C   A9 07      LDA #&07
      371E   20 3A 37   JSR &373A
-.loop_C3721
+.P3721
      3721   A9 08      LDA #&08
      3723   20 3A 37   JSR &373A
      3726   AD 05 0C   LDA &0C05
@@ -8570,7 +8573,7 @@
      3750   2A         ROL A
      3751   85 71      STA &71
      3753   A0 07      LDY #&07
-.loop_C3755
+.P3755
      3755   BD B0 58   LDA &58B0,X
      3758   91 70      STA (&70),Y
      375A   CA         DEX
@@ -8623,7 +8626,7 @@
      37B3   20 53 13   JSR &1353
      37B6   A2 02      LDX #&02
      37B8   A9 80      LDA #&80
-.loop_C37BA
+.P37BA
      37BA   9D E8 0C   STA &0CE8,X
      37BD   CA         DEX
      37BE   10 FA      BPL &37BA
@@ -8829,7 +8832,7 @@
      3908   A9 00      LDA #&00
      390A   20 63 29   JSR &2963
      390D   A0 00      LDY #&00
-.loop_C390F
+.P390F
      390F   B9 1A 39   LDA &391A,Y
      3912   85 51      STA &51
      3914   B9 1C 39   LDA &391C,Y
@@ -9077,7 +9080,7 @@
      3AAA   F0 1A      BEQ &3AC6
      3AAC   CA         DEX
      3AAD   A0 00      LDY #&00
-.loop_C3AAF
+.P3AAF
      3AAF   BD C1 49   LDA &49C1,X
      3AB2   85 2A      STA &2A
      3AB4   BD F3 3D   LDA &3DF3,X
@@ -10158,7 +10161,7 @@
 .sub_C3F00
      3F00   38         SEC
      3F01   6E FC 0C   ROR &0CFC
-.Begin
+.sub_3F04
      3F04   A9 04      LDA #&04
      3F06   A0 00      LDY #&00
      3F08   A2 01      LDX #&01
@@ -10210,7 +10213,7 @@
      3F6F   4C 8C 3F   JMP &3F8C
 .C3F72
      3F72   A2 1C      LDX #&1C
-.loop_C3F74
+.P3F74
      3F74   BD ED 3F   LDA &3FED,X
      3F77   9D 80 03   STA &0380,X
      3F7A   CA         DEX
@@ -10229,9 +10232,9 @@
      3F94   85 71      STA &71
      3F96   A9 58      LDA #&58
      3F98   85 73      STA &73
-.loop_C3F9A
+.P3F9A
      3F9A   A0 00      LDY #&00
-.loop_C3F9C
+.P3F9C
      3F9C   B1 70      LDA (&70),Y
      3F9E   91 72      STA (&72),Y
      3FA0   88         DEY
@@ -10247,7 +10250,7 @@
      3FB4   AD 05 02   LDA &0205
      3FB7   8D 02 0D   STA &0D02
      3FBA   A9 02      LDA #&02
-.loop_C3FBC
+.P3FBC
      3FBC   2C 4D FE   BIT &FE4D
      3FBF   F0 FB      BEQ &3FBC
      3FC1   A9 40      LDA #&40
@@ -10273,9 +10276,9 @@
      3FEF   85 71      STA &71
      3FF1   A9 00      LDA #&00
      3FF3   85 70      STA &70
-.loop_C3FF5
+.P3FF5
      3FF5   A0 FF      LDY #&FF
-.loop_C3FF7
+.P3FF7
      3FF7   91 70      STA (&70),Y
      3FF9   88         DEY
      3FFA   D0 FB      BNE &3FF7
@@ -10286,7 +10289,7 @@
      4004   A9 00      LDA #&00
      4006   8D 87 02   STA &0287
      4009   60         RTS
-.Noise1
+.L400A
      400A   20
      400B   65
      400C   74
@@ -13459,7 +13462,7 @@
      555D   12
      555E   FF
      555F   FF
-.C5560
+.sub_C5560
      5560   85 7E      STA &7E
      5562   85 8A      STA &8A
      5564   85 8B      STA &8B
@@ -13495,7 +13498,7 @@
      559A   F0 C4      BEQ &5560
      559C   A5 85      LDA &85
      559E   4C E3 55   JMP &55E3
-.loop_C55A1
+.P55A1
      55A1   06 82      ASL &82
      55A3   26 85      ROL &85
 .C55A5
@@ -13532,7 +13535,7 @@
      55DA   65 8B      ADC &8B
      55DC   85 8B      STA &8B
      55DE   60         RTS
-.loop_C55DF
+.P55DF
      55DF   06 80      ASL &80
      55E1   26 83      ROL &83
 .C55E3
@@ -13741,7 +13744,7 @@
      5741   FF
      5742   FF
      5743   FF
-.C5744
+.sub_C5744
      5744   2C 0F 0C   BIT &0C0F
      5747   30 1E      BMI &5767
      5749   C9 20      CMP #&20
@@ -13753,7 +13756,7 @@
      5757   8A         TXA
      5758   48         PHA
      5759   A2 16      LDX #&16
-.loop_C575B
+.P575B
      575B   BD 96 57   LDA &5796,X
      575E   20 EE FF   JSR &FFEE
      5761   CA         DEX
@@ -13767,7 +13770,7 @@
      576A   C9 19      CMP #&19
      576C   F0 07      BEQ &5775
      576E   4C 44 57   JMP &5744
-.loop_C5771
+.P5771
      5771   C8         INY
      5772   B9 96 57   LDA &5796,Y
 .C5775
@@ -14378,7 +14381,7 @@
      59FD   FF
      59FE   FF
      59FF   FF
-.Noise2
+.L5A00
      5A00   44
      5A01   58
      5A02   20
@@ -14635,7 +14638,7 @@
      5AFD   20
      5AFE   0D
      5AFF   14
-.Noise3
+.L5B00
      5B00   AA
      5B01   14
      5B02   2E
@@ -15182,7 +15185,7 @@
      5E30   A8         TAY
      5E31   A9 03      LDA #&03
      5E33   85 75      STA &75
-.loop_C5E35
+.P5E35
      5E35   A6 74      LDX &74
      5E37   10 03      BPL &5E3C
      5E39   BE 57 5E   LDX &5E57,Y
@@ -15193,7 +15196,7 @@
      5E43   20 EE FF   JSR &FFEE
      5E46   8A         TXA
      5E47   A2 04      LDX #&04
-.loop_C5E49
+.P5E49
      5E49   20 EE FF   JSR &FFEE
      5E4C   A9 00      LDA #&00
      5E4E   CA         DEX
@@ -15223,7 +15226,7 @@
      5E6E   E9 01      SBC #&01
      5E70   F0 09      BEQ &5E7B
      5E72   A0 FF      LDY #&FF
-.loop_C5E74
+.P5E74
      5E74   0A         ASL A
      5E75   C8         INY
      5E76   90 FC      BCC &5E74
@@ -15348,10 +15351,10 @@
      5F65   4C 68 5F   JMP &5F68
 .sub_C5F68
      5F68   85 1E      STA &1E
-.loop_C5F6A
+.P5F6A
      5F6A   A9 1E      LDA #&1E
      5F6C   85 15      STA &15
-.loop_C5F6E
+.P5F6E
      5F6E   20 D9 56   JSR &56D9
      5F71   20 5A 35   JSR &355A
      5F74   C6 15      DEC &15
@@ -15427,6 +15430,7 @@
      5FF9   A9 03      LDA #&03
      5FFB   8D 73 0C   STA &0C73
      5FFE   60         RTS
+.L5FFF
      5FFF   23
      6000   FE
      6001   FE
@@ -15692,9 +15696,9 @@
      6D08   85 71      STA &71
      6D0A   A9 04      LDA #&04
      6D0C   85 73      STA &73
-.loop_C6D0E
+.P6D0E
      6D0E   A0 00      LDY #&00
-.loop_C6D10
+.P6D10
      6D10   B1 70      LDA (&70),Y
      6D12   91 72      STA (&72),Y
      6D14   C8         INY
