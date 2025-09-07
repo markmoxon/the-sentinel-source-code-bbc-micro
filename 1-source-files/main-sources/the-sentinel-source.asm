@@ -1176,7 +1176,7 @@ L0BAB = L0B00+171
 
 .sub_C0D05
 
- LDA #&00
+ LDA #0
  LSR L0074
  BCC C0D0E
  CLC
@@ -1423,7 +1423,7 @@ L0BAB = L0B00+171
  BCC C0E1F
  LDA #&FF
  STA L007E
- LDA #&00
+ LDA #0
  STA L008A
  LDA #&20
  STA L008B
@@ -1431,7 +1431,7 @@ L0BAB = L0B00+171
 
 .C0E10
 
- LDA #&00
+ LDA #0
  STA L0078
  ROR L0074
  ROR A
@@ -1519,7 +1519,7 @@ L0BAB = L0B00+171
  STA L0C54
  LDX #&01
  STX L0060
- LDX #&00
+ LDX #0
  BIT L0C0C
  BVC C0E94
  INX
@@ -1558,7 +1558,7 @@ L0BAB = L0B00+171
 
 .C0ECB
 
- LDA #&00
+ LDA #0
  SEC
  SBC L0C53
  STA L0074
@@ -1569,12 +1569,12 @@ L0BAB = L0B00+171
  JSR sub_C0F4A
  ASL L0074
  ROL L0075
- LDA #&00
+ LDA #0
  SEC
  SBC L0074
  AND #&FE
  STA L0C00,X
- LDA #&00
+ LDA #0
  SBC L0075
  BCC C0EFA
  LDA #&FE
@@ -1590,7 +1590,7 @@ L0BAB = L0B00+171
  CPX L0060
  BEQ C0F19
  LDX L0060
- LDA #&00
+ LDA #0
  SEC
  SBC L0C53
  STA L0C53
@@ -1796,11 +1796,11 @@ L0F36 = sub_C0F34+2
 
  LDA L006B
  BPL C0FB5
- LDA #&00
+ LDA #0
  SEC
  SBC L006A
  STA L006A
- LDA #&00
+ LDA #0
  SBC L006B
  STA L006B
  LDA L0067
@@ -1888,11 +1888,11 @@ L0F36 = sub_C0F34+2
 .sub_C1009
 
  STA L0075
- LDA #&00
+ LDA #0
  SEC
  SBC L0074
  STA L0074
- LDA #&00
+ LDA #0
  SBC L0075
 
 .CRE03
@@ -1915,9 +1915,9 @@ L0F36 = sub_C0F34+2
  LDA #&04
  JSR sub_C5E2C
  JSR sub_C1149
- LDA #&00
+ LDA #0
  JSR sub_C324C
- LDX #&00
+ LDX #0
  JSR sub_C36AD
  LDA #&87
  JSR sub_C5E2C
@@ -1963,7 +1963,7 @@ L0F36 = sub_C0F34+2
 .C1074
 
  JSR sub_C1149
- LDA #&00
+ LDA #0
  JSR sub_C324C
  LDA #&87
  JSR sub_C5E2C
@@ -1998,9 +1998,9 @@ L0F36 = sub_C0F34+2
 
  JSR sub_C130C
  JSR sub_C3699
- LDA #&00
+ LDA #0
  JSR sub_C2963
- LDA #&00
+ LDA #0
  LDY #&18
  LDX #&28
  JSR sub_C2202
@@ -2159,11 +2159,11 @@ L1145 = C1144+1
 
  SEC
  ROR L0CFC
- LDX #&00
+ LDX #0
 
 .C114F
 
- LDA #&00
+ LDA #0
  STA L0900,X
  STA L0A00,X
  CPX #&90
@@ -2260,7 +2260,7 @@ L1145 = C1144+1
 
 .C11C0
 
- LDA #&00
+ LDA #0
 
 .C11C2
 
@@ -2375,7 +2375,7 @@ L1145 = C1144+1
 .sub_C1224
 
  STA L0006
- LDA #&00
+ LDA #0
  STA L0015
 
 .C122A
@@ -2441,7 +2441,7 @@ L1145 = C1144+1
 
 .sub_C1264
 
- LDA #&00
+ LDA #0
  STA L0CE4
  STA L0C51
 
@@ -2750,7 +2750,7 @@ L1145 = C1144+1
 
 .C13FA
 
- LDA #&00
+ LDA #0
  STA L0C78
  STA L0C4C
  RTS
@@ -2895,7 +2895,7 @@ L1145 = C1144+1
 
 .sub_C1440
 
- LDA #&00
+ LDA #0
  JSR sub_C210E
  STX L000B
  LDA #&0A
@@ -3037,7 +3037,7 @@ L1145 = C1144+1
 .sub_C14EB
 
  JSR sub_C15BC
- LDX #&00
+ LDX #0
 
 .C14F0
 
@@ -3065,7 +3065,7 @@ L1145 = C1144+1
  BCS C150B
  TAY
  LDX L5A40,Y
- LDA #&00
+ LDA #0
  STA L5B07,X
  STA L5B08,X
  STA L5B09,X
@@ -3089,7 +3089,7 @@ L1145 = C1144+1
  LDA #&06
  JSR sub_C210E
  JSR sub_C1EFF
- LDA #&00
+ LDA #0
  STA L09C0,X
  LDX L006E
 
@@ -3137,7 +3137,7 @@ L1145 = C1144+1
 .sub_C158D
 
  LDX #&3F
- LDY #&00
+ LDY #0
 
 .P1591
 
@@ -3196,7 +3196,7 @@ L1145 = C1144+1
 
 .sub_C15BC
 
- LDX #&00
+ LDX #0
  STX L0006
 
 .C15C0
@@ -3210,7 +3210,7 @@ L1145 = C1144+1
  AND #&38
  LSR A
  STA L001A
- LDA #&00
+ LDA #0
  STA L5B10,X
  LDA #&04
  STA L000C
@@ -3352,7 +3352,7 @@ L1145 = C1144+1
  LDA L0C4F
  CMP #&40
  BNE C164D
- LDA #&00
+ LDA #0
  STA L169B
  BEQ C164D
 
@@ -3475,7 +3475,7 @@ L1145 = C1144+1
  LDY L0CA8,X
  LDA L0100,Y
  BMI C174F
- LDA #&00
+ LDA #0
  JSR sub_C1882
  LDA L0C57
  CMP #&14
@@ -3521,7 +3521,7 @@ L1145 = C1144+1
 
 .C174F
 
- LDA #&00
+ LDA #0
  STA L0C20,X
 
 .C1754
@@ -3564,7 +3564,7 @@ L1145 = C1144+1
  LDA L0C20,X
  BEQ C17A3
  LDY L0CA8,X
- LDA #&00
+ LDA #0
  JSR sub_C1882
  LDA L0014
  BEQ C17A0
@@ -3582,7 +3582,7 @@ L1145 = C1144+1
 
 .P17A9
 
- LDA #&00
+ LDA #0
  JSR sub_C1882
  LDA L0C76
  AND #&40
@@ -3610,7 +3610,7 @@ L1145 = C1144+1
 
 .C17D7
 
- LDA #&00
+ LDA #0
  STA L0C20,X
  JSR sub_C1AA7
  BCS C17F0
@@ -3648,7 +3648,7 @@ L1145 = C1144+1
  JSR sub_C196A
  LDX #&07
  LDY #&78
- LDA #&00
+ LDA #0
  JSR sub_C343A
  LDX L0000
  JMP C1876
@@ -3695,7 +3695,7 @@ L1145 = C1144+1
 
 .C1862
 
- LDA #&00
+ LDA #0
  STA L0C20,Y
  BEQ C187F
 
@@ -3735,7 +3735,7 @@ L1145 = C1144+1
  STA L0074
  STX L1919
  STY L0C58
- LDA #&00
+ LDA #0
  STA L0014
  LDA L0100,Y
  BMI C1911
@@ -3842,7 +3842,7 @@ L1145 = C1144+1
 
 .sub_C191A
 
- LDY #&00
+ LDY #0
  STY L0074
  LDX #&07
 
@@ -3907,7 +3907,7 @@ L1145 = C1144+1
  LDA #&80
  STA L0CA0,X
  STA L0C90,X
- LDA #&00
+ LDA #0
  STA L0C98,X
  LDA #&40
  STA L0C80,X
@@ -4035,7 +4035,7 @@ L1145 = C1144+1
  LDA L0A40,X
  BNE C1A31
  LDY L0000
- LDA #&00
+ LDA #0
  STA L0C20,Y
  LDA #&03
  BNE C1A42
@@ -4269,7 +4269,7 @@ L1145 = C1144+1
  CMP #&22
  BNE C1B1C
  JSR sub_C2147
- LDA #&00
+ LDA #0
  STA L0C1C
 
 .P1B1A
@@ -4439,7 +4439,7 @@ L1145 = C1144+1
 
  LDA L0CC6
  STA L0075
- LDA #&00
+ LDA #0
  LSR L0075
  ROR A
  LSR L0075
@@ -4457,7 +4457,7 @@ L1145 = C1144+1
  SEC
  SBC #&05
  STA L0075
- LDA #&00
+ LDA #0
  LSR L0075
  ROR A
  LSR L0075
@@ -4492,7 +4492,7 @@ L1145 = C1144+1
  JSR sub_C1C8C
  STA L0033
  STX L0032
- LDY #&00
+ LDY #0
  JSR sub_C1C8C
  STA L0030
  STX L002D
@@ -4503,8 +4503,8 @@ L1145 = C1144+1
  LDY #&01
  LDX #&02
  JSR sub_C1C6C
- LDY #&00
- LDX #&00
+ LDY #0
+ LDX #0
 
 \ ******************************************************************************
 \
@@ -4517,7 +4517,7 @@ L1145 = C1144+1
 
 .sub_C1C6C
 
- LDA #&00
+ LDA #0
  STA L0067
  LDA L0032
  STA L006A
@@ -4580,7 +4580,7 @@ L1145 = C1144+1
 
 .P1CAC
 
- LDA #&00
+ LDA #0
  STA L0074
  LDA L0034,X
  CLC
@@ -4633,7 +4633,7 @@ L1145 = C1144+1
  LDA #&80
  STA L0060
  STA L000C
- LDA #&00
+ LDA #0
  STA L0079
  STA L0C67
  JSR sub_C1DE6
@@ -4989,7 +4989,7 @@ L1145 = C1144+1
 
 .sub_C1EB5
 
- LDA #&00
+ LDA #0
  STA L0034
  STA L0035
  STA L0036
@@ -5089,7 +5089,7 @@ L1145 = C1144+1
  CLC
  ADC #&80
  STA L0A00,X
- LDA #&00
+ LDA #0
 
 .C1F42
 
@@ -5100,7 +5100,7 @@ L1145 = C1144+1
 .C1F4B
 
  PHA
- LDA #&00
+ LDA #0
  STA L0100,X
  LDA #&E0
  STA L0A00,X
@@ -5155,7 +5155,7 @@ L1145 = C1144+1
 
 .C1F78
 
- LDA #&00
+ LDA #0
  STA L0C6D
  STA L0C4D
  STA L0C1E
@@ -5178,14 +5178,14 @@ L1145 = C1144+1
  LDX L006E
  LDA L0C62
  STA L2095
- LDA #&00
+ LDA #0
  LSR L2095
  ROR A
  STA L001F
  LDA L2095
  ADC L09C0,X
  STA L09C0,X
- LDY #&00
+ LDY #0
  STY L0008
  LDA L0C69
  JSR sub_C2997
@@ -5205,16 +5205,16 @@ L1145 = C1144+1
 
 .C1FD5
 
- LDY #&00
+ LDY #0
  JSR sub_C38FB
  LDX L006E
- LDA #&00
+ LDA #0
  STA L001F
  SEC
  LDA L09C0,X
  SBC L2095
  STA L09C0,X
- LDA #&00
+ LDA #0
  STA L0075
  LDA L0C62
  ASL A
@@ -5417,7 +5417,7 @@ L1145 = C1144+1
 .C20AF
 
  STA L0080
- LDA #&00
+ LDA #0
  STA L0CD4
  JSR sub_C561D
  LDA L0C59
@@ -5427,7 +5427,7 @@ L1145 = C1144+1
  LDA L0C57
  SBC L008B
  BPL C20CC
- LDA #&00
+ LDA #0
  BEQ C20D3
 
 .C20CC
@@ -5586,7 +5586,7 @@ L1145 = C1144+1
 
 .sub_C2147
 
- LDA #&00
+ LDA #0
  JSR sub_C210E
  LDX L000B
  LDA L0940,X
@@ -5607,7 +5607,7 @@ L1145 = C1144+1
 
 .C2170
 
- LDA #&00
+ LDA #0
  JSR sub_C5FF6
  LDX L000B
  LDA L0900,X
@@ -5650,7 +5650,7 @@ L1145 = C1144+1
 
  AND #&3F
  STA L0C6C
- LDX #&00
+ LDX #0
 
 .P21A6
 
@@ -6041,13 +6041,13 @@ L1145 = C1144+1
 
 .C2333
 
- LDA #&00
+ LDA #0
  STA L002D
  BEQ sub_C230D
 
 .C2339
 
- LDA #&00
+ LDA #0
  STA L002C
  BEQ sub_C230D
 
@@ -6068,7 +6068,7 @@ L1145 = C1144+1
  LDA S
  SBC #&00
  STA Q
- LDA #&00
+ LDA #0
  STA L002D
  LDA #&F8
  BNE C23D8
@@ -6262,7 +6262,7 @@ L23E3 = C23E2+1
 
  LDA L0CDE
  BMI CRE14
- LDA #&00
+ LDA #0
  STA L0005
  LDX #&7F
 
@@ -6374,7 +6374,7 @@ L23E3 = C23E2+1
 .C24F5
 
  JSR sub_C355A
- LDY #&00
+ LDY #0
  STY L0074
  DEY
  STY L0017
@@ -6388,7 +6388,7 @@ L23E3 = C23E2+1
 
 .C250D
 
- LDA #&00
+ LDA #0
  STA L0086,X
  SEC
  SBC L0037,X
@@ -6398,10 +6398,10 @@ L23E3 = C23E2+1
  STA L002F,X
  BPL C2529
  DEC L0086,X
- LDA #&00
+ LDA #0
  SEC
  SBC L002C,X
- LDA #&00
+ LDA #0
  SBC L002F,X
 
 .C2529
@@ -6446,7 +6446,7 @@ L23E3 = C23E2+1
  CLC
  ADC #&3C
  STA L000D
- LDY #&00
+ LDY #0
 
 .P2569
 
@@ -6506,7 +6506,7 @@ L23E3 = C23E2+1
  LDA L0018
  ORA L0005
  TAY
- LDA #&00
+ LDA #0
  SBC #&00
  STA L0180,Y
  DEC L0018
@@ -6528,7 +6528,7 @@ L23E3 = C23E2+1
 
 .sub_C25C3
 
- LDA #&00
+ LDA #0
  STA P
  STA L0060
  LDA #&7F
@@ -6700,7 +6700,7 @@ L23E3 = C23E2+1
  STA L0026
  LDA L0C48
  STA L0032
- LDA #&00
+ LDA #0
  STA L0005
  JSR sub_C27AF
  LDA L0032
@@ -6845,7 +6845,7 @@ L23E3 = C23E2+1
 
 .C276B
 
- LDA #&00
+ LDA #0
  STA L0005
  INC L0026
  LDY L0003
@@ -7021,7 +7021,7 @@ L23E3 = C23E2+1
  TYA
  ORA L0005
  STA L0021
- LDA #&00
+ LDA #0
  STA L007F
  LDX L006E
  LDA #&80
@@ -7033,11 +7033,11 @@ L23E3 = C23E2+1
  SBC L0C78
  STA L0086
  BPL C2840
- LDA #&00
+ LDA #0
  SEC
  SBC L0080
  STA L0080
- LDA #&00
+ LDA #0
  SBC L0086
 
 .C2840
@@ -7050,11 +7050,11 @@ L23E3 = C23E2+1
  SBC L001D
  STA L0088
  BPL C285A
- LDA #&00
+ LDA #0
  SEC
  SBC L0082
  STA L0082
- LDA #&00
+ LDA #0
  SBC L0088
 
 .C285A
@@ -7160,7 +7160,7 @@ L23E3 = C23E2+1
 .C28EE
 
  LDX L006E
- LDA #&00
+ LDA #0
  SEC
  SBC L0A00,X
  STA L0080
@@ -7284,7 +7284,7 @@ L23E3 = C23E2+1
  CLC
  ADC L0061
  STA L0036
- LDA #&00
+ LDA #0
  STA L0028
  STA L0029
  RTS
@@ -7355,7 +7355,7 @@ L23E3 = C23E2+1
  STA L0074
  LSR A
  STA L0007
- LDA #&00
+ LDA #0
  ROR A
  STA L0028
  LDA L0007
@@ -7377,7 +7377,7 @@ L23E3 = C23E2+1
  LSR A
  LSR A
  STA L0011
- LDA #&00
+ LDA #0
  ROR A
  STA L0029
  LDA #&02
@@ -7458,7 +7458,7 @@ L23E3 = C23E2+1
 
 .sub_C2A1B
 
- LDX #&00
+ LDX #0
  LDA L0025
  EOR L0026
  AND #&01
@@ -7471,7 +7471,7 @@ L23E3 = C23E2+1
 
  LDA L2CE3,X
  STA L0019
- LDA #&00
+ LDA #0
  STA L003B
  JMP sub_C2A79
 
@@ -7587,7 +7587,7 @@ L23E3 = C23E2+1
  STA L0C08
  LDA #&80
  JSR sub_C2AF2
- LDA #&00
+ LDA #0
  JSR sub_C2B53
  LDA #&01
  JSR sub_C2AF2
@@ -7682,7 +7682,7 @@ L23E3 = C23E2+1
  CLC
  ADC #&06
  BPL C2B39
- LDA #&00
+ LDA #0
 
 .C2B39
 
@@ -7731,7 +7731,7 @@ L23E3 = C23E2+1
 
 .P2B5D
 
- LDA #&00
+ LDA #0
  JSR sub_C2B90
  DEC L0026
  BPL P2B5D
@@ -7866,11 +7866,11 @@ L23E3 = C23E2+1
 
 .C2BFE
 
- LDX #&00
+ LDX #0
 
 .C2C00
 
- LDA #&00
+ LDA #0
  STA L0075
  LDA L5A00,X
  CLC
@@ -8063,7 +8063,7 @@ L23E3 = C23E2+1
 
 .C2CDC
 
- LDX #&00
+ LDX #0
  RTS
 
 \ ******************************************************************************
@@ -8203,7 +8203,7 @@ L23E3 = C23E2+1
 
 .C2D93
 
- LDA #&00
+ LDA #0
  STA L006C
  LDY L0017
 
@@ -8231,7 +8231,7 @@ L23E3 = C23E2+1
 
 .C2DBC
 
- LDA #&00
+ LDA #0
  STA L0006
  STA L0031
  STA L001E
@@ -8239,7 +8239,7 @@ L23E3 = C23E2+1
  STA L0004
  STA L0030
  STA L007F
- LDY #&00
+ LDY #0
 
 .C2DCE
 
@@ -8264,11 +8264,11 @@ L23E3 = C23E2+1
  STY L0075
  LDX L0075
  LDY L0074
- LDA #&00
+ LDA #0
  SEC
  SBC L000C
  STA L000C
- LDA #&00
+ LDA #0
  SBC L0076
 
 .C2E03
@@ -8292,7 +8292,7 @@ L23E3 = C23E2+1
 
  LDA L0076
  BEQ C2E2B
- LDA #&00
+ LDA #0
  STA L0B40,Y
  STA L0B40,X
  JMP C2FCC
@@ -8313,7 +8313,7 @@ L23E3 = C23E2+1
  STA L0018
  LDA L54A0,X
  STA L0039
- LDA #&00
+ LDA #0
  STA L0041
  STA L0042
  JSR sub_C2EAE
@@ -8344,7 +8344,7 @@ L23E3 = C23E2+1
  STA L5A00,Y
  LDA L0031
  STA L5B00,Y
- LDA #&00
+ LDA #0
  STA L007F
 
 .C2E88
@@ -8517,7 +8517,7 @@ L2F2B = C2F29+2
 
 .C2F37
 
- LDY #&00
+ LDY #0
  BEQ C2F34
 
 .C2F3B
@@ -8644,7 +8644,7 @@ L2F79 = C2F77+2
 .C2FCC
 
  STX L000E
- LDA #&00
+ LDA #0
  STA L0040
  LDA L54A0,Y
  SEC
@@ -8753,12 +8753,12 @@ L2F79 = C2F77+2
  LDA L0041
  SBC L0042
  BPL C30A4
- LDA #&00
+ LDA #0
  SEC
  SBC L000D
  STA L000D
  LDX #&E8
- LDA #&00
+ LDA #0
  LDY #&E6
  JMP C30AA
 
@@ -8955,7 +8955,7 @@ L314A = C3148+2
 .C3181
 
  BPL C3188
- LDY #&00
+ LDY #0
  JMP C318A
 
 .C3188
@@ -9128,7 +9128,7 @@ L314A = C3148+2
  DEX
  BMI C3239
  BNE C3204
- LDA #&00
+ LDA #0
  STA L0C10
  BEQ C3204
 
@@ -9178,18 +9178,18 @@ L314A = C3148+2
  STA L097F
  SEC
  ROR L0C4B
- LDA #&00
+ LDA #0
  JSR sub_C2AF2
  BIT L328F
  BPL C3275
  JSR sub_C3381
  LDX #&03
- LDA #&00
+ LDA #0
  BEQ C3286
 
 .C3275
 
- LDX #&00
+ LDX #0
 
 .P3277
 
@@ -9262,7 +9262,7 @@ L314A = C3148+2
 
 .P32B1
 
- LDY #&00
+ LDY #0
 
 .C32B3
 
@@ -9276,7 +9276,7 @@ L314A = C3148+2
  BNE C32B3
  DEY
  BMI P32B1
- LDX #&00
+ LDX #0
 
 .P32C9
 
@@ -9367,8 +9367,8 @@ L314A = C3148+2
 
 .sub_C3321
 
- LDY #&00
- LDX #&00
+ LDY #0
+ LDX #0
 
 .P3325
 
@@ -9685,7 +9685,7 @@ L314A = C3148+2
 
 .sub_C342C
 
- LDA #&00
+ LDA #0
  LDX L0C0A
  BEQ CRE28
 
@@ -9740,7 +9740,7 @@ L314A = C3148+2
  CMP #&01
  BNE sub_C3459
  JSR sub_C3459
- LDA #&00
+ LDA #0
 
 \ ******************************************************************************
 \
@@ -9934,7 +9934,7 @@ L314A = C3148+2
  LDA L0CEB
  CMP #&03
  BNE P34F5
- LDA #&00
+ LDA #0
  JSR sub_C162D
  LSR L0C72
 
@@ -10127,7 +10127,7 @@ L314A = C3148+2
  BMI C361D
  LDA #&04
  JSR sub_C5E2C
- LDA #&00
+ LDA #0
  STA L0055
  STA L0008
  STA L0CC9
@@ -10188,7 +10188,7 @@ L314A = C3148+2
  LDA #&04
  JSR sub_C5E2C
  LDX #&03
- LDA #&00
+ LDA #0
  STA L0C73
 
 .P3638
@@ -10228,7 +10228,7 @@ L314A = C3148+2
 
  LDA L0009
  STA L0008
- LDA #&00
+ LDA #0
  STA L0CD1
  STA L0C1E
  BIT L0C5F
@@ -10261,12 +10261,12 @@ L314A = C3148+2
 
 .sub_C3699
 
- LDA #&00
+ LDA #0
  STA L0C05
 
 .P369E
 
- LDA #&00
+ LDA #0
  JSR sub_C373A
  LDA L0C05
  CMP #&28
@@ -10323,7 +10323,7 @@ L314A = C3148+2
 
 .sub_C36C7
 
- LDA #&00
+ LDA #0
  STA L0C05
  JSR sub_C373A
  LDA L0C0A
@@ -10338,7 +10338,7 @@ L314A = C3148+2
  STA L0015
  LDA #&06
  JSR sub_C373A
- LDA #&00
+ LDA #0
  JSR sub_C373A
  JMP P36D4
 
@@ -10351,7 +10351,7 @@ L314A = C3148+2
  STA L0015
  LDA #&01
  JSR sub_C373A
- LDA #&00
+ LDA #0
  JSR sub_C373A
  JMP C36EB
 
@@ -10367,7 +10367,7 @@ L314A = C3148+2
 
 .C3710
 
- LDA #&00
+ LDA #0
  JSR sub_C373A
  LDA L0C05
  CMP #&1D
@@ -10384,7 +10384,7 @@ L314A = C3148+2
  BCC P3721
  LDA #&09
  JSR sub_C373A
- LDA #&00
+ LDA #0
  JSR sub_C373A
  JMP sub_C3AEB
 
@@ -10685,7 +10685,7 @@ L314A = C3148+2
 
 .sub_C38B2
 
- LDY #&00
+ LDY #0
  LDA (L0062),Y
  STA (L0064),Y
  INY
@@ -10843,9 +10843,9 @@ L314A = C3148+2
 
 .sub_C3908
 
- LDA #&00
+ LDA #0
  JSR sub_C2963
- LDY #&00
+ LDY #0
 
 .P390F
 
@@ -11251,7 +11251,7 @@ L314A = C3148+2
  LDX L0CC9
  BEQ CRE38
  DEX
- LDY #&00
+ LDY #0
 
 .P3AAF
 
@@ -11263,7 +11263,7 @@ L314A = C3148+2
  STA (L002A),Y
  DEX
  BPL P3AAF
- LDX #&00
+ LDX #0
  STX L0CC9
 
 .CRE38
@@ -11335,7 +11335,7 @@ L314A = C3148+2
 
  LDA #&5A
  STA L0063
- LDA #&00
+ LDA #0
  STA L0062
  LDA L0CCB
  STA L0065
@@ -11521,88 +11521,133 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_3F04
+\       Name: SetupGame
 \       Type: Subroutine
-\   Category: ???
+\   Category: Setup
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_3F04
+.SetupGame
 
- LDA #4                 \ osbyte_set_cursor_editing
- LDY #&00
- LDX #&01
+ LDA #4                 \ Call OSBYTE with A = 4, X = 1 and Y = 0 to disable
+ LDY #0                 \ cursor editing
+ LDX #1
  JSR OSBYTE
- LDA #144               \ osbyte_tv
- LDX #&00
- LDY #&00
- JSR OSBYTE
- LDA #&16
- JSR OSWRCH
- LDA #&05
- JSR OSWRCH
- SEI
- LDA #6                 \ crtc_vert_displayed
- STA SHEILA+&00         \ crtc_address_register
- LDA #&19
- STA SHEILA+&01         \ crtc_register_data
- LDA #7                 \ crtc_vert_sync_pos
- STA SHEILA+&00         \ crtc_address_register
 
-.C3F30
+ LDA #144               \ Call OSBYTE with A = 144, X = 0 and Y = 0 to switch
+ LDX #0                 \ interlace on
+ LDY #0
+ JSR OSBYTE
 
- LDA #&20
- STA SHEILA+&01         \ crtc_register_data
- LDA #10                \ crtc_cursor_start
- STA SHEILA+&00         \ crtc_address_register
- LDA #&20
- STA SHEILA+&01         \ crtc_register_data
- CLI
- LDA #151               \ osbyte_write_sheila
- LDX #&42
- LDY #&FF
- JSR OSBYTE
- LDA #151               \ osbyte_write_sheila
- LDX #&40
- LDY #&05
- JSR OSBYTE
- LDA #151               \ osbyte_write_sheila
- LDX #&40
- LDY #&0C
- JSR OSBYTE
- LDA #0                 \ osbyte_read_os_version
- LDX #&FF
+ LDA #22                \ Switch to screen mode 5 with the following VDU
+ JSR OSWRCH             \ command:
+ LDA #5                 \
+ JSR OSWRCH             \   VDU 22, 5
 
- JSR OSBYTE
- CPX #&00
- BEQ C3F72
- LDA #200               \ osbyte_read_write_escape_break_effect
- LDX #&02
- LDY #&00
- JSR OSBYTE
- JMP C3F8C
+ SEI                    \ Disable interrupts so we can update the 6845 registers
 
-.C3F72
+ LDA #6                 \ Set 6845 register R6 = 25
+ STA SHEILA+&00         \
+ LDA #25                \ This is the "vertical displayed" register, which sets
+ STA SHEILA+&01         \ the number of displayed character rows to 25. For
+                        \ comparison, this value is 32 for standard mode 5, but
+                        \ we claw back seven rows to create the game's letterbox
+                        \ screen mode
+
+ LDA #7                 \ Prepare to set 6845 register R7
+ STA SHEILA+&00
+
+.setp1
+
+ LDA #32                \ Set 6845 register R7 = 32
+ STA SHEILA+&01         \
+                        \ This is the "vertical sync position" register, which
+                        \ determines the vertical sync position with respect to
+                        \ the reference, programmed in character row times. For
+                        \ comparison this is 34 for mode 5, but it needs to be
+                        \ adjusted for our custom screen's vertical sync
+
+ LDA #10                \ Set 6845 register R10 = %00100000
+ STA SHEILA+&00         \
+ LDA #%00100000         \ This is the "cursor start" register, and bits 5 and 6
+ STA SHEILA+&01         \ define the "cursor display mode", as follows:
+                        \
+                        \   * %00 = steady, non-blinking cursor
+                        \
+                        \   * %01 = do not display a cursor
+                        \
+                        \   * %10 = fast blinking cursor (blink at 1/16 of the
+                        \           field rate)
+                        \
+                        \   * %11 = slow blinking cursor (blink at 1/32 of the
+                        \           field rate)
+                        \
+                        \ We can therefore turn off the cursor completely by
+                        \ setting cursor display mode %01, with bit 6 of R10
+                        \ clear and bit 5 of R10 set
+
+ CLI                    \ Re-enable interrupts
+
+ LDA #151               \ Call OSBYTE with A = 151, X = &42 and Y = 11111111 to
+ LDX #&42               \ write the value 11111111 to SHEILA+&42
+ LDY #%11111111         \
+ JSR OSBYTE             \ This sets the direction of all eight ports of the 6522
+                        \ System VIA to output by setting the corresponding bits
+                        \ in the Data Direction Register B (SHEILA &42)
+
+ LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = 00000101 to
+ LDX #&40               \ write the value 00000101 to SHEILA+&40
+ LDY #%00000101         \
+ JSR OSBYTE             \ This sets bits 0 and 2 of the 6522 System VIA output
+                        \ register ORB (SHEILA &40) ???
+
+ LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = 00001100 to
+ LDX #&40               \ write the value 00001100 to SHEILA+&40
+ LDY #%00001100         \
+ JSR OSBYTE             \ This sets bits 2 and 3 of the 6522 System VIA output
+                        \ register ORB (SHEILA &40) ???
+
+ LDA #0                 \ Call OSBYTE with A = 0 and X = 255 to fetch the
+ LDX #255               \ operating system version into X
+ JSR OSBYTE
+
+ CPX #0                 \ If X = 0 then this is an Electron, so jump down to
+ BEQ setp2              \ setp2 to skip the following
+
+                        \ If we get here then this is not an Electron (so it
+                        \ must be a BBC Micro or BBC Master)
+
+ LDA #200               \ Call OSBYTE with A = 200, X = 2 and Y = 0 to set the
+ LDX #2                 \ normal action for the ESCAPE key and clear memory if
+ LDY #0                 \ the BREAK key is pressed
+ JSR OSBYTE
+
+ JMP setp4              \ Jump to setp4 to skip the setup for the Electron
+
+.setp2
+
+                        \ If we get here then this is an Electron
 
  LDX #&1C
 
-.P3F74
+.setp3
 
  LDA sub_C3FED,X
  STA BRKI,X
  DEX
- BPL P3F74
- LDA #&4C
+ BPL setp3
+
+ LDA #&4C               \ Set the instruction 
  STA BRKIV
  LDA #LO(BRKI)
  STA BRKIV+1
  LDA #HI(BRKI)
  STA BRKIV+2
 
-.C3F8C
+.setp4
 
- LDA #&00
+ LDA #0
  STA P
  STA R
  LDA #&41
@@ -11610,37 +11655,42 @@ L314A = C3148+2
  LDA #&58
  STA S
 
-.P3F9A
+.setp5
 
- LDY #&00
+ LDY #0
 
-.P3F9C
+.setp6
 
  LDA (P),Y
  STA (R),Y
  DEY
- BNE P3F9C
+ BNE setp6
+
  INC Q
  INC S
  LDA Q
  CMP #&4A
- BCC P3F9A
- SEI
+ BCC setp5
+
+ SEI                    \ Disable interrupts so we can update the interrupt
+                        \ vector and VIA
+
  LDA IRQ1V
  STA L0D01
  LDA IRQ1V+1
  STA L0D02
  LDA #&02
 
-.P3FBC
+.setp7
 
  BIT SHEILA+&4D         \ system_via_ifr
- BEQ P3FBC
+ BEQ setp7
+
  LDA #&40
  STA SHEILA+&6B         \ user_via_acr
  LDA #&C0
  STA SHEILA+&6E         \ user_via_ier
- LDA #&00
+ LDA #0
  STA SHEILA+&64         \ user_via_t1c_l
  LDA #&39
  STA SHEILA+&65         \ user_via_t1c_h
@@ -11652,7 +11702,9 @@ L314A = C3148+2
  STA IRQ1V+1
  LDA #&66
  STA IRQ1V
- CLI
+
+ CLI                    \ Re-enable interrupts
+
  JMP sub_C1017
 
 \ ******************************************************************************
@@ -11668,7 +11720,7 @@ L314A = C3148+2
 
  LDA #&04
  STA Q
- LDA #&00
+ LDA #0
  STA P
 
 .P3FF5
@@ -11684,7 +11736,7 @@ L314A = C3148+2
  LDX Q
  CPX #&7C
  BCC P3FF5
- LDA #&00
+ LDA #0
  STA BRKIV
  RTS
 
@@ -11735,15 +11787,15 @@ L314A = C3148+2
  EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
  EQUB &53, &54, &58, &20, &58, &54
 
+
+ ORG &4A00              \ Set the assembly address to &4A00
+
 L49A0                = &49A0
 L49A1                = &49A1
 L49AB                = &49AB
 L49AC                = &49AC
 L49B6                = &49B6
 L49C1                = &49C1
-
-
- ORG &4A00
 
 \ ******************************************************************************
 \
@@ -12366,11 +12418,11 @@ L49C1                = &49C1
  LDA L0086
  EOR L0088
  BMI C55D1
- LDA #&00
+ LDA #0
  SEC
  SBC L008A
  STA L008A
- LDA #&00
+ LDA #0
  SBC L008B
  STA L008B
 
@@ -12411,17 +12463,17 @@ L49C1                = &49C1
  LDA L0086
  EOR L0088
  BPL C560F
- LDA #&00
+ LDA #0
  SEC
  SBC L008A
  STA L008A
- LDA #&00
+ LDA #0
  SBC L008B
  STA L008B
 
 .C560F
 
- LDA #&00
+ LDA #0
  BIT L0088
  BPL C5617
  LDA #&80
@@ -12447,11 +12499,11 @@ L49C1                = &49C1
  STA L0086
  TAY
  BPL C562D
- LDA #&00
+ LDA #0
  SEC
  SBC L0080
  STA L0080
- LDA #&00
+ LDA #0
  SBC L0086
 
 .C562D
@@ -12461,7 +12513,7 @@ L49C1                = &49C1
  STA L0082
  LDA L007D
  STA L0085
- LDA #&00
+ LDA #0
  STA L0088
  JSR sub_C5567
  LDA L008A
@@ -12674,7 +12726,7 @@ L49C1                = &49C1
 
 .sub_C56D9
 
- LDA #&00
+ LDA #0
 
 .C56DB
 
@@ -12711,7 +12763,7 @@ L49C1                = &49C1
  ROL A
  AND #&03
  TAX
- LDY #&00
+ LDY #0
  LDA L227F,X
  EOR #&FF
  AND (L0022),Y
@@ -13220,7 +13272,7 @@ L5BA0 = L5B00+160
  ADC #&0A
  STA L0C57
  LDY L006F
- LDA #&00
+ LDA #0
  SEC
  SBC L008A
  STA L0059
@@ -13232,7 +13284,7 @@ L5BA0 = L5B00+160
  BNE C5C60
  LDA #&80
  STA L005A
- LDA #&00
+ LDA #0
  STA L0059
  CPY #&3F
  BEQ C5C60
@@ -13293,7 +13345,7 @@ L5BA0 = L5B00+160
  LDA L008F
  JSR sub_C0D03
  STA L0074
- LDA #&00
+ LDA #0
  BIT L0067
  BVC C5CA9
  JSR sub_C1009
@@ -13309,11 +13361,11 @@ L5BA0 = L5B00+160
  ADC L0075
  STA L0088
  BPL C5CC7
- LDA #&00
+ LDA #0
  SEC
  SBC L0082
  STA L0082
- LDA #&00
+ LDA #0
  SBC L0088
 
 .C5CC7
@@ -13324,7 +13376,7 @@ L5BA0 = L5B00+160
  LDA L008E
  JSR sub_C0D03
  STA L0080
- LDA #&00
+ LDA #0
  STA L0083
  LDA L0067
  STA L0086
@@ -13342,7 +13394,7 @@ L5BA0 = L5B00+160
  LDA L4C20,Y
  ASL A
  STA L0074
- LDA #&00
+ LDA #0
  BCC C5D05
  JSR sub_C1009
 
@@ -13391,7 +13443,7 @@ L5BA0 = L5B00+160
  JSR sub_C5C75
  LDA #&40
  STA L003B
- LDA #&00
+ LDA #0
  STA L0053
  STA L0C47
  LDX L004C
@@ -13486,7 +13538,7 @@ L5BA0 = L5B00+160
 
 .sub_C5DC4
 
- LDA #&00
+ LDA #0
  STA L0080
  SEC
  LDA L0900,Y
@@ -13496,13 +13548,13 @@ L5BA0 = L5B00+160
  STA L0086
  BPL C5DDC
  SEC
- LDA #&00
+ LDA #0
  SBC L0086
 
 .C5DDC
 
  STA L0083
- LDA #&00
+ LDA #0
  STA L0082
  SEC
  LDA L0980,Y
@@ -13510,7 +13562,7 @@ L5BA0 = L5B00+160
  STA L0088
  BPL C5DF2
  SEC
- LDA #&00
+ LDA #0
  SBC L0088
 
 .C5DF2
@@ -13590,9 +13642,9 @@ L5BA0 = L5B00+160
 .sub_C5E20
 
  LDA #2                 \ osbyte_select_input_stream
- LDX #&00
+ LDX #0
  JSR OSBYTE
- LDX #&00
+ LDX #0
  JMP sub_C3555
 
 \ ******************************************************************************
@@ -13630,7 +13682,7 @@ L5BA0 = L5B00+160
 .P5E49
 
  JSR OSWRCH
- LDA #&00
+ LDA #0
  DEX
  BNE P5E49
  DEY
@@ -13722,7 +13774,7 @@ L5BA0 = L5B00+160
  ASL A
  ADC L0013
  STA L0013
- LDA #&00
+ LDA #0
  LSR L0013
  ROR A
  LSR L0013
@@ -13769,7 +13821,7 @@ L5BA0 = L5B00+160
  ROL A
  AND #&03
  TAX
- LDY #&00
+ LDY #0
  LDA (L0062),Y
  AND L227F,X
  STA L0013
@@ -13813,7 +13865,7 @@ L5BA0 = L5B00+160
  STA L0C74
  PLA
  JSR sub_C5F68
- LDY #&00
+ LDY #0
  STY L0CC9
  STY L0C5F
  LDA L0C1C
@@ -13871,7 +13923,7 @@ L5BA0 = L5B00+160
 
 .sub_C5F7D
 
- JMP C3F30
+ JMP setp1
 
 \ ******************************************************************************
 \
@@ -13899,7 +13951,7 @@ L5BA0 = L5B00+160
  STA L0142
  LDA L5FE2,Y
  STA L09C2
- LDA #&00
+ LDA #0
  STA L0A02
  STA L0A01
  LDA L5FDF,Y
@@ -13934,7 +13986,7 @@ L5BA0 = L5B00+160
 
  JSR sub_C1410
  LDX #&03
- LDY #&00
+ LDY #0
  LDA #&80
  JSR sub_C139B
  LDX #&04
@@ -14065,39 +14117,58 @@ L5BA0 = L5B00+160
 \
 \       Name: Entry
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Setup
+\    Summary: The main entry point for the game
 \
 \ ******************************************************************************
 
- ORG &6D00
+ ORG &6D00              \ Set the assembly address to &6D00
 
 .Entry
 
- LDA #&00
- STA P
- STA R
+                        \ We start by copying the game code in memory as
+                        \ follows:
+                        \
+                        \   * &1900-&6CFF is copied to &0400-&57FF
+                        \
+                        \ The game binary has a load address of &1900 and an
+                        \ execution address of &6D00 (the address of this
+                        \ routine)
+
+ LDA #&00               \ Set (Q P) = &1900
+ STA P                  \
+ STA R                  \ We use this as the source address for the copy
  LDA #&19
  STA Q
- LDA #&04
- STA S
 
-.P6D0E
+ LDA #&04               \ Set (S R) = &0400
+ STA S                  \
+                        \ We use this as the destination address for the copy
 
- LDY #&00
+.entr1
 
-.P6D10
+ LDY #0                 \ Set up a byte counter in Y
 
- LDA (P),Y
+.entr2
+
+ LDA (P),Y              \ Copy the Y-th byte of (Q P) to the Y-th byte of (S R)
  STA (R),Y
- INY
- BNE P6D10
- INC Q
- INC S
- LDA Q
- CMP #&6D
- BNE P6D0E
- JMP sub_3F04
+
+ INY                    \ Increment the byte counter
+
+ BNE entr2              \ Loop back until we have copied a whole page of bytes
+
+ INC Q                  \ Increment the high byte of (Q P) to point to the next
+                        \ page in memory
+
+ INC S                  \ Increment the high byte of (S R) to point to the next
+                        \ page in memory
+
+ LDA Q                  \ Loop back until (Q P) reaches &6D00, at which point we
+ CMP #&6D               \ have copied all the game code
+ BNE entr1
+
+ JMP SetupGame          \ Jump to SetupGame to set things up for a new game
 
 \ ******************************************************************************
 \
