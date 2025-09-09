@@ -1117,40 +1117,32 @@ L0BAB = L0B00+171
 \
 \       Name: NMI
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Setup
+\    Summary: The NMI handler at the start of the NMI workspace
 \
 \ ******************************************************************************
 
 .NMI
 
- RTI
+ RTI                    \ This is the address of the current NMI handler, at
+                        \ the start of the NMI workspace at address &0D00
+                        \
+                        \ We put an RTI instruction here to make sure we return
+                        \ successfully from any NMIs that call this workspace
 
 \ ******************************************************************************
 \
-\       Name: L0D01
+\       Name: irq1Address
 \       Type: Variable
 \   Category: ???
-\    Summary: ???
+\    Summary: Stores the previous value of IRQ1V before we install our custom
+\             IRQ handler
 \
 \ ******************************************************************************
 
-.L0D01
+.irq1Address
 
- EQUB &93
-
-\ ******************************************************************************
-\
-\       Name: L0D02
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L0D02
-
- EQUB &DC
+ EQUW &DC93             \ This value is workspace noise and has no meaning
 
 \ ******************************************************************************
 \
@@ -10430,18 +10422,19 @@ L314A = C3148+2
 
 .C3763
 
- JMP (L0D01)
+ JMP (irq1Address)      \ Jump to the original address from IRQ1V to pass
+                        \ control to the next interrupt handler
 
 \ ******************************************************************************
 \
-\       Name: sub_C3766
+\       Name: IRQHandler
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3766
+.IRQHandler
 
  SEI
  LDA SHEILA+&6D         \ user_via_ifr
@@ -11685,11 +11678,13 @@ L314A = C3148+2
                         \ routine to BRKI
 
  LDA #&4C               \ Set the Break Intercept code to the following, so that
- STA BRKIV              \ BRKI gets called when the BREAK key is pressed (&4C is
- LDA #LO(BRKI)          \ the opcode for the JMP instruction):
- STA BRKIV+1            \
- LDA #HI(BRKI)          \    JMP BRKI
- STA BRKIV+2
+ STA BRKIV              \ BRKI gets called when the BREAK key is pressed:
+ LDA #LO(BRKI)          \
+ STA BRKIV+1            \    4C 80 03   JMP BRKI
+ LDA #HI(BRKI)          \
+ STA BRKIV+2            \ &4C is the opcode for the JMP instruction, and BRKI is
+                        \ at address &0380 (part of the cassette filing system
+                        \ workspace)
 
 .setp3
 
@@ -11738,32 +11733,55 @@ L314A = C3148+2
  SEI                    \ Disable interrupts so we can update the interrupt
                         \ vector and VIA
 
- LDA IRQ1V
- STA L0D01
- LDA IRQ1V+1
- STA L0D02
- LDA #&02
+ LDA IRQ1V              \ Store the current address from the IRQ1V vector in
+ STA irq1Address        \ irq1Address, so the IRQ handler can jump to it after
+ LDA IRQ1V+1            \ implementing the custom interrupt handler
+ STA irq1Address+1
+
+                        \ We now wait for the vertical sync, which we can check
+                        \ by reading bit 1 of the 6522 System VIA status byte
+                        \ (SHEILA &4D), which is set if vertical sync has
+                        \ occurred on the video system
+
+ LDA #%00000010         \ Set a bit mask in A that we can use to read bit 1 of
+                        \ the 6522 System VIA status byte
 
 .setp6
 
- BIT SHEILA+&4D         \ system_via_ifr
- BEQ setp6
+ BIT SHEILA+&4D         \ Loop around until bit 1 of the 6522 System VIA status
+ BEQ setp6              \ byte is set, so we wait until the vertical sync
 
- LDA #&40
- STA SHEILA+&6B         \ user_via_acr
- LDA #&C0
- STA SHEILA+&6E         \ user_via_ier
- LDA #0
- STA SHEILA+&64         \ user_via_t1c_l
- LDA #&39
- STA SHEILA+&65         \ user_via_t1c_h
- LDA #&1E
- STA SHEILA+&66         \ user_via_t1l_l
- LDA #&4E
- STA SHEILA+&67         \ user_via_t1l_h
- LDA #&37
- STA IRQ1V+1
- LDA #&66
+ LDA #%01000000         \ Set 6522 User VIA auxiliary control register ACR
+ STA SHEILA+&6B         \ (SHEILA &6B) bits 7 and 6 to disable PB7 (which is one
+                        \ of the pins on the user port) and set continuous
+                        \ interrupts for timer 1
+
+ LDA #%11000000         \ Set 6522 User VIA interrupt enable register IER
+ STA SHEILA+&6E         \ (SHEILA &4E) bits 6 and 7 (i.e. enable the Timer1
+                        \ interrupt from the User VIA)
+
+ LDA #&00               \ Set 6522 User VIA T1C-L timer 1 low-order counter
+ STA SHEILA+&64         \ (SHEILA &64) to &00 (so this sets the low-order
+                        \ counter but does not start counting until the
+                        \ high-order counter is set)
+
+ LDA #&39               \ Set 6522 User VIA T1C-H timer 1 high-order counter
+ STA SHEILA+&65         \ (SHEILA &45) to &39 to start the T1 counter
+                        \ counting down from &3900 (14592) at a rate of 1 MHz
+
+ LDA #&1E               \ Set 6522 User VIA T1L-L timer 1 low-order latches
+ STA SHEILA+&66         \ to &1E (so this sets the low-order counter but does
+                        \ not start counting until the high-order counter is
+                        \ set)
+
+ LDA #&4E               \ Set 6522 User VIA T1L-H timer 1 high-order latches
+ STA SHEILA+&67         \ to &4E (so this sets the timer to &4E1E (19998) but
+                        \ does not start counting until the current timer has
+                        \ run down)
+
+ LDA #HI(IRQHandler)    \ Set the IRQ1V vector to IRQHandler, so the IRQHandler
+ STA IRQ1V+1            \ routine is now the interrupt handler
+ LDA #LO(IRQHandler)
  STA IRQ1V
 
  CLI                    \ Re-enable interrupts

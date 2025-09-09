@@ -2437,10 +2437,8 @@
      0CFF   00
 .NMI
      0D00   40         RTI
-.L0D01
-     0D01   93
-.L0D02
-     0D02   DC
+.irq1Address
+     0D01   93 DC
 .sub_C0D03
      0D03   85 74      STA &74
 .sub_C0D05
@@ -8584,7 +8582,7 @@
      3762   60         RTS
 .C3763
      3763   6C 01 0D   JMP (&0D01)
-.sub_C3766
+.IRQHandler
      3766   78         SEI
      3767   AD 6D FE   LDA &FE6D
      376A   29 40      AND #&40
