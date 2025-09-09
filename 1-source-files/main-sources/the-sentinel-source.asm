@@ -1171,7 +1171,7 @@ L0BAB = L0B00+171
 \
 \ ******************************************************************************
 
-.sub_C0D03
+.Multiply8x8
 
  STA T                  \ Set T = A
 
@@ -1514,7 +1514,7 @@ L0BAB = L0B00+171
 
  STA L0C0C
  STX L0F3B
- JSR sub_C0F3E
+ JSR GetAngleInRadians
  STA L0C53
  LDA U
  STA L0C54
@@ -1539,8 +1539,8 @@ L0BAB = L0B00+171
 .C0EA1
 
  LDA #&AB
- JSR sub_C0D03
- JSR sub_C0D03
+ JSR Multiply8x8
+ JSR Multiply8x8
  STA V
  JSR sub_C0F4A
  LDA L0C53
@@ -1667,22 +1667,87 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F3E
+\       Name: GetAngleInRadians
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Convert a 16-bit angle into radians, restricted to a quarter
+\             circle
+\  Deep dive: Trigonometry
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A T)               A yaw angle in Revs format (-128 to +127)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   (U A)               The angle, reduced to a quarter circle, converted to
+\                       radians, and halved
 \
 \ ******************************************************************************
 
-.sub_C0F3E
+.GetAngleInRadians
 
- ASL T
- ROL A
- ASL T
- ROL A
- STA V
- LDA #&C9
+ ASL T                  \ Set (V T) = (A T) << 2
+ ROL A                  \
+ ASL T                  \ This shift multiplies (A T) by four, removing bits 6
+ ROL A                  \ and 7 in the process
+ STA V                  \
+                        \ The degree system in Revs looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of car
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ The top byte of (A T) is in this range, so shifting to
+                        \ the left by two places drops bits 6 and 7 and scales
+                        \ the angle into the range 0 to 252, as follows:
+                        \
+                        \   * 0 to 63 (%00000000 to %00111111)
+                        \     -> 0 to 252 (%00000000 to %11111100)
+                        \
+                        \   * 64 to 127 (%01000000 to %01111111)
+                        \     -> 0 to 252 (%00000000 to %11111100)
+                        \
+                        \   * -1 to -64 (%11111111 to %11000000)
+                        \     -> 252 to 0 (%11111100 to %00000000)
+                        \
+                        \   * -65 to -128 (%10111111 to %10000000)
+                        \     -> 252 to 0 (%11111100 to %00000000)
+
+                        \ We now convert this number from a Revs angle into
+                        \ radians
+                        \
+                        \ The value of (V T) represents a quarter-circle, which
+                        \ is PI/2 radians, but we actually multiply by PI/4 to
+                        \ return the angle in radians divided by 2, to prevent
+                        \ overflow in the GetRotationMatrix routine
+
+ LDA #201               \ Set U = 201
  STA U
+
+                        \ Fall through into Multiply8x16 to calculate:
+                        \
+                        \   (U A) = U * (V T) / 256
+                        \         = 201 * (V T) / 256
+                        \         = (201 / 256) * (V T)
+                        \         = (3.14 / 4) * (V T)
+                        \
+                        \ So we return (U A) = PI/4 * (V T)
+                        \
+                        \ which is the original angle, reduced to a quarter
+                        \ circle, converted to radians, and halved
 
 \ ******************************************************************************
 \
@@ -1695,10 +1760,10 @@ L0F36 = sub_C0F34+2
 
 .sub_C0F4A
 
- JSR sub_C0D03+2
+ JSR Multiply8x8+2
  STA W
  LDA V
- JSR sub_C0D03
+ JSR Multiply8x8
  STA U
  LDA W
  CLC
@@ -1822,7 +1887,7 @@ L0F36 = sub_C0F34+2
  LDA L006B
  STA U
  LDA L0068
- JSR sub_C0D03
+ JSR Multiply8x8
  STA W
  LDA T
  CLC
@@ -1834,7 +1899,7 @@ L0F36 = sub_C0F34+2
 .C0FD7
 
  LDA L0069
- JSR sub_C0D03
+ JSR Multiply8x8
  STA L0078
  LDA T
  CLC
@@ -1848,7 +1913,7 @@ L0F36 = sub_C0F34+2
  LDA L006A
  STA U
  LDA L0069
- JSR sub_C0D03
+ JSR Multiply8x8
  STA U
  LDA T
  CLC
@@ -4858,7 +4923,7 @@ L1145 = C1144+1
 
  STA U
  LDA L0002
- JSR sub_C0D03
+ JSR Multiply8x8
  PLP
  JSR sub_C1007
  CLC
@@ -7749,7 +7814,7 @@ L23E3 = C23E2+1
 
  STA U
  LDA L0C08
- JSR sub_C0D03
+ JSR Multiply8x8
  PLP
  JSR sub_C1007
  CLC
@@ -13582,7 +13647,7 @@ L5BA0 = L5B00+160
  LDA L4D60,Y
  STA U
  LDA L008F
- JSR sub_C0D03
+ JSR Multiply8x8
  STA T
  LDA #0
  BIT L0067
@@ -13613,7 +13678,7 @@ L5BA0 = L5B00+160
  LDA L4D60,Y
  STA U
  LDA L008E
- JSR sub_C0D03
+ JSR Multiply8x8
  STA L0080
  LDA #0
  STA L0083

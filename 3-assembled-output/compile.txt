@@ -2439,7 +2439,7 @@
      0D00   40         RTI
 .irq1Address
      0D01   93 DC
-.sub_C0D03
+.Multiply8x8
      0D03   85 74      STA &74
      0D05   A9 00      LDA #&00
      0D07   46 74      LSR &74
@@ -2774,7 +2774,7 @@
      0F3B   00
      0F3C   A9
      0F3D   00
-.sub_C0F3E
+.GetAngleInRadians
      0F3E   06 74      ASL &74
      0F40   2A         ROL A
      0F41   06 74      ASL &74
