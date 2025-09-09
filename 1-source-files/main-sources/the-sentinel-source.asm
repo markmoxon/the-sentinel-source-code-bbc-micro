@@ -1910,7 +1910,7 @@ L0F36 = sub_C0F34+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- JSR sub_C1149
+ JSR ResetVariables
 
  LDA #0
  JSR sub_C324C
@@ -1918,14 +1918,14 @@ L0F36 = sub_C0F34+2
  LDX #0
  JSR sub_C36AD
 
- LDA #&87               \ Set the palette the second set of colours from the
+ LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
  JSR sub_C5E07
 
 .C1034
 
- JSR sub_C1149
+ JSR ResetVariables
 
  LDX #&01
  JSR sub_C36AD
@@ -1974,12 +1974,12 @@ L0F36 = sub_C0F34+2
 
 .C1074
 
- JSR sub_C1149
+ JSR ResetVariables
 
  LDA #0
  JSR sub_C324C
 
- LDA #&87               \ Set the palette the second set of colours from the
+ LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
  LDX #&03
@@ -2165,72 +2165,117 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1149
+\       Name: ResetVariables
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Main Loop
+\    Summary: Reset all the variable blocks
 \
 \ ******************************************************************************
 
-.sub_C1149
+.ResetVariables
 
- SEC
- ROR L0CFC
- LDX #0
+ SEC                    \ Set bit 7 of L0CFC (so we skip a part of the interrupt
+ ROR L0CFC              \ handler) ???
 
-.C114F
+                        \ We now zero the following variable blocks:
+                        \
+                        \   * &0000 to &008F
+                        \
+                        \   * &0100 to &01BF
+                        \
+                        \   * &0900 to &09EF
+                        \
+                        \   * &0A00 to &0AEF
+                        \
+                        \   * &0C00 to &0CE3
+                        \
+                        \ and set the following variable block to &80:
+                        \
+                        \   * &0CE4 to &0CEF
 
- LDA #0
- STA L0900,X
- STA L0A00,X
- CPX #&90
- BCS C115D
- STA L0000,X
+ LDX #0                 \ Set X to use as a byte counter to run from 0 to &EF
 
-.C115D
+.rese1
 
- CPX #&C0
- BCS C1164
- STA L0100,X
+ LDA #0                 \ Set A = 0 so we can zero the following variable blocks
 
-.C1164
+ STA L0900,X            \ Zero the X-th byte of L0900
 
- CPX #&E4
- BCC C116A
- LDA #&80
+ STA L0A00,X            \ Zero the X-th byte of L0A00
 
-.C116A
+ CPX #&90               \ If X >= &90 then skip the following instruction
+ BCS rese2
 
- STA L0C00,X
- INX
- CPX #&F0
- BCC C114F
+ STA L0000,X            \ Zero the X-th byte of L0000
+
+.rese2
+
+ CPX #&C0               \ If X >= &C0 then skip the following instruction
+ BCS rese3
+
+ STA L0100,X            \ Zero the X-th byte of L0100
+
+.rese3
+
+ CPX #&E4               \ If X < &E4 then skip the following instruction,
+ BCC rese4              \ leaving A = 0, so we zero &0C00 to &0CE3
+
+ LDA #&80               \ If we get here then X >= &E4, so set A = &80 so we
+                        \ set &0CE4 to &0CEF to &80
+
+.rese4
+
+ STA L0C00,X            \ Set the X-th byte of L0C00 to A
+
+ INX                    \ Increment the byte counter
+
+ CPX #&F0               \ Loop back until we have processed X from 0 to &EF
+ BCC rese1
+
+                        \ Fall through into ResetVariables2 to ???
 
 \ ******************************************************************************
 \
-\       Name: sub_C1172
+\       Name: ResetVariables2
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Main Loop
+\    Summary: Reset the L3E80, L3EC0 and L0100 variable blocks
 \
 \ ******************************************************************************
 
-.sub_C1172
+.ResetVariables2
 
- LDX #&3F
+                        \ We now set the following variable blocks to &FF:
+                        \
+                        \   * &3E80 to &3EBF
+                        \
+                        \   * &3EC0 to &3EFF
+                        \
+                        \ and set the following variable block to &80:
+                        \
+                        \   * &0100 to &01EF
 
-.P1174
+ LDX #&3F               \ Set X to use as a byte counter to run from &3F to 0
 
- LDA #&FF
+.resv1
+
+ LDA #&FF               \ Set the X-th byte of L3E80 to &FF
  STA L3E80,X
- STA L3EC0,X
- LDA #&80
+
+ STA L3EC0,X            \ Set the X-th byte of L3EC0 to &FF
+
+ LDA #&80               \ Set the X-th byte of L0100 to &80
  STA L0100,X
- DEX
- BPL P1174
- INC L0C7D
- JSR sub_C3923
- RTS
+
+ DEX                    \ Decrement the byte counter
+
+ BPL resv1              \ Loop back until we have processed X from &3F to 0
+
+ INC L0C7D              \ ???
+
+ JSR sub_C3923          \ ???
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -10126,11 +10171,12 @@ L314A = C3148+2
 
 .sub_C35A4
 
- LDA #&83               \ Set the palette the first set of colours from the
+ LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
 
  JSR sub_C5E07
- LSR L0CFC
+
+ LSR L0CFC              \ Clear bit 7 of L0CFC ???
 
 .C35AF
 
@@ -10186,7 +10232,7 @@ L314A = C3148+2
  LDA L0CE7
  BPL P35FE
 
- LDA #&83               \ Set the palette the first set of colours from the
+ LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
 
  LDA L0CDE
@@ -10199,7 +10245,7 @@ L314A = C3148+2
 
 .C361D
 
- JSR sub_C1149
+ JSR ResetVariables
  LDY L0CFE
  LDX L0CFD
  JSR sub_C33B7
@@ -10219,10 +10265,10 @@ L314A = C3148+2
  STA L0C7C,X
  DEX
  BPL P3638
- JSR sub_C1172
+ JSR ResetVariables2
  JSR sub_C1A7E
 
- LDA #&87               \ Set the palette the second set of colours from the
+ LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
  LDA #&0A
@@ -10475,11 +10521,13 @@ L314A = C3148+2
  BEQ C3763
  STA SHEILA+&6D         \ user_via_ifr
  LDA L00FC
- PHA
- TXA
+
+ PHA                    \ Store A, X and Y on the stack so we can preserve them
+ TXA                    \ across calls to the interrupt handler
  PHA
  TYA
  PHA
+
  CLD
  DEC L0CDF
  BPL C3781
@@ -10487,8 +10535,9 @@ L314A = C3148+2
 
 .C3781
 
- LDA L0CFC
- BMI C37CB
+ LDA L0CFC              \ If bit 7 of L0CFC is set, jump to C37CB to skip the
+ BMI C37CB              \ following and return from the interrupt handler ???
+
  LDA L0C4E
  BMI C37C3
  LDA L0C72
@@ -10534,12 +10583,13 @@ L314A = C3148+2
 
 .C37CB
 
- PLA
+ PLA                    \ Restore A, X and Y from the stack
  TAY
  PLA
  TAX
  PLA
- RTI
+
+ RTI                    \ Return from the interrupt handler
 
 \ ******************************************************************************
 \
@@ -10932,8 +10982,10 @@ L314A = C3148+2
 
 .sub_C3923
 
- LDY #&01
- BNE P390F
+ LDY #1
+
+ BNE P390F              \ Jump to P390F to ??? (this BNE is effectively a JMP as
+                        \ Y is never zero
 
 \ ******************************************************************************
 \
@@ -11542,7 +11594,7 @@ L314A = C3148+2
 
 .sub_C3F00
 
- SEC
+ SEC                    \ Set bit 7 of L0CFC ???
  ROR L0CFC
 
 \ ******************************************************************************
@@ -11550,13 +11602,20 @@ L314A = C3148+2
 \       Name: ConfigureMachine
 \       Type: Subroutine
 \   Category: Setup
-\    Summary: ???
+\    Summary: Configure the custom screen mode, set the break handler to clear
+\             memory, move code, reset timers and set the interrupt handler
 \
 \ ------------------------------------------------------------------------------
 \
-\ Other entry points:
+\ The custom screen mode is based on screen mode 5, but with only 25 character
+\ rows rather than 32. This gives the game screen a letterbox appearance.
 \
-\   setp1               ???
+\ The custom mode has a vertical resolution of 25 * 8 = 200 pixels, compared to
+\ the 256 pixels of standard mode 5. The horizontal resolution is the same at
+\ 160 pixels.
+\
+\ Screen memory for the custom mode runs from &6000 to &7F3F, with four pixels
+\ per byte and four colours per pixel.
 \
 \ ******************************************************************************
 

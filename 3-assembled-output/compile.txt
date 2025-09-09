@@ -3069,33 +3069,33 @@
      1147   35
 .L1148
      1148   CD
-.sub_C1149
+.ResetVariables
      1149   38         SEC
      114A   6E FC 0C   ROR &0CFC
      114D   A2 00      LDX #&00
-.C114F
+.rese1
      114F   A9 00      LDA #&00
      1151   9D 00 09   STA &0900,X
      1154   9D 00 0A   STA &0A00,X
      1157   E0 90      CPX #&90
      1159   B0 02      BCS &115D
      115B   95 00      STA &00,X
-.C115D
+.rese2
      115D   E0 C0      CPX #&C0
      115F   B0 03      BCS &1164
      1161   9D 00 01   STA &0100,X
-.C1164
+.rese3
      1164   E0 E4      CPX #&E4
      1166   90 02      BCC &116A
      1168   A9 80      LDA #&80
-.C116A
+.rese4
      116A   9D 00 0C   STA &0C00,X
      116D   E8         INX
      116E   E0 F0      CPX #&F0
      1170   90 DD      BCC &114F
-.sub_C1172
+.ResetVariables2
      1172   A2 3F      LDX #&3F
-.P1174
+.resv1
      1174   A9 FF      LDA #&FF
      1176   9D 80 3E   STA &3E80,X
      1179   9D C0 3E   STA &3EC0,X
