@@ -10171,7 +10171,7 @@
 .sub_C3F00
      3F00   38         SEC
      3F01   6E FC 0C   ROR &0CFC
-.SetupGame
+.ConfigureMachine
      3F04   A9 04      LDA #&04
      3F06   A0 00      LDY #&00
      3F08   A2 01      LDX #&01
@@ -10191,7 +10191,6 @@
      3F28   8D 01 FE   STA &FE01
      3F2B   A9 07      LDA #&07
      3F2D   8D 00 FE   STA &FE00
-.setp1
      3F30   A9 20      LDA #&20
      3F32   8D 01 FE   STA &FE01
      3F35   A9 0A      LDA #&0A
@@ -10221,9 +10220,9 @@
      3F6A   A0 00      LDY #&00
      3F6C   20 F4 FF   JSR &FFF4
      3F6F   4C 8C 3F   JMP &3F8C
-.setp2
+.setp1
      3F72   A2 1C      LDX #&1C
-.setp3
+.setp2
      3F74   BD ED 3F   LDA &3FED,X
      3F77   9D 80 03   STA &0380,X
      3F7A   CA         DEX
@@ -10234,7 +10233,7 @@
      3F84   8D 88 02   STA &0288
      3F87   A9 03      LDA #&03
      3F89   8D 89 02   STA &0289
-.setp4
+.setp3
      3F8C   A9 00      LDA #&00
      3F8E   85 70      STA &70
      3F90   85 72      STA &72
@@ -10242,9 +10241,9 @@
      3F94   85 71      STA &71
      3F96   A9 58      LDA #&58
      3F98   85 73      STA &73
-.setp5
+.setp4
      3F9A   A0 00      LDY #&00
-.setp6
+.setp5
      3F9C   B1 70      LDA (&70),Y
      3F9E   91 72      STA (&72),Y
      3FA0   88         DEY
@@ -10260,7 +10259,7 @@
      3FB4   AD 05 02   LDA &0205
      3FB7   8D 02 0D   STA &0D02
      3FBA   A9 02      LDA #&02
-.setp7
+.setp6
      3FBC   2C 4D FE   BIT &FE4D
      3FBF   F0 FB      BEQ &3FBC
      3FC1   A9 40      LDA #&40
@@ -10281,14 +10280,14 @@
      3FE6   8D 04 02   STA &0204
      3FE9   58         CLI
      3FEA   4C 17 10   JMP &1017
-.sub_C3FED
+.ClearMemory
      3FED   A9 04      LDA #&04
      3FEF   85 71      STA &71
      3FF1   A9 00      LDA #&00
      3FF3   85 70      STA &70
-.P3FF5
+.cmem1
      3FF5   A0 FF      LDY #&FF
-.P3FF7
+.cmem2
      3FF7   91 70      STA (&70),Y
      3FF9   88         DEY
      3FFA   D0 FB      BNE &3FF7
@@ -15394,7 +15393,8 @@
      5F7A   D0 EE      BNE &5F6A
      5F7C   60         RTS
 .sub_C5F7D
-     5F7D   4C 30 3F   JMP &3F30
+     5F7D   4C
+     5F7E   30 3F      BMI &5FBF
 .sub_C5F80
      5F80   8D 41 0A   STA &0A41
      5F83   B9 BC 5F   LDA &5FBC,Y

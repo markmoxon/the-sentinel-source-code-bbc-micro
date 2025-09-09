@@ -46,7 +46,7 @@
  IRQ1V = &0204          \ The IRQ1V vector that we intercept to implement the
                         \ screen mode
 
- BRKIV = &0287          \ The Break Intercept vector (which is a JMP instruction
+ BRKIV = &0287          \ The Break Intercept code (which is a JMP instruction
                         \ to the Break Intercept handler)
 
  BRKI = &0380           \ The CFS workspace, which we can use for the Break
@@ -11521,14 +11521,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: SetupGame
+\       Name: ConfigureMachine
 \       Type: Subroutine
 \   Category: Setup
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   setp1               ???
+\
 \ ******************************************************************************
 
-.SetupGame
+.ConfigureMachine
 
  LDA #4                 \ Call OSBYTE with A = 4, X = 1 and Y = 0 to disable
  LDY #0                 \ cursor editing
@@ -11555,15 +11561,10 @@ L314A = C3148+2
                         \ we claw back seven rows to create the game's letterbox
                         \ screen mode
 
- LDA #7                 \ Prepare to set 6845 register R7
- STA SHEILA+&00
-
-.setp1
-
- LDA #32                \ Set 6845 register R7 = 32
- STA SHEILA+&01         \
-                        \ This is the "vertical sync position" register, which
-                        \ determines the vertical sync position with respect to
+ LDA #7                 \ Set 6845 register R7 = 32
+ STA SHEILA+&00         \
+ LDA #32                \ This is the "vertical sync position" register, which
+ STA SHEILA+&01         \ determines the vertical sync position with respect to
                         \ the reference, programmed in character row times. For
                         \ comparison this is 34 for mode 5, but it needs to be
                         \ adjusted for our custom screen's vertical sync
@@ -11589,88 +11590,150 @@ L314A = C3148+2
 
  CLI                    \ Re-enable interrupts
 
- LDA #151               \ Call OSBYTE with A = 151, X = &42 and Y = 11111111 to
- LDX #&42               \ write the value 11111111 to SHEILA+&42
+ LDA #151               \ Call OSBYTE with A = 151, X = &42 and Y = %11111111 to
+ LDX #&42               \ write the value %11111111 to SHEILA+&42
  LDY #%11111111         \
  JSR OSBYTE             \ This sets the direction of all eight ports of the 6522
                         \ System VIA to output by setting the corresponding bits
                         \ in the Data Direction Register B (SHEILA &42)
 
- LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = 00000101 to
- LDX #&40               \ write the value 00000101 to SHEILA+&40
+ LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = %00000101 to
+ LDX #&40               \ write the value %00000101 to SHEILA+&40
  LDY #%00000101         \
- JSR OSBYTE             \ This sets bits 0 and 2 of the 6522 System VIA output
-                        \ register ORB (SHEILA &40) ???
+ JSR OSBYTE             \ Writing a value of %vaaa to SHEILA+&40 writes to the
+                        \ System VIA's addressable latch, setting latch address
+                        \ %aaa to value v
+                        \
+                        \ This therefore sets address %101 to 1, which is
+                        \ address B5 in the System VIA
+                        \
+                        \ We now we set B4 as well
 
- LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = 00001100 to
- LDX #&40               \ write the value 00001100 to SHEILA+&40
+ LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = %00001100 to
+ LDX #&40               \ write the value %00001100 to SHEILA+&40
  LDY #%00001100         \
- JSR OSBYTE             \ This sets bits 2 and 3 of the 6522 System VIA output
-                        \ register ORB (SHEILA &40) ???
+ JSR OSBYTE             \ Writing a value of %vaaa to SHEILA+&40 writes to the
+                        \ System VIA's addressable latch, setting latch address
+                        \ %aaa to value v
+                        \
+                        \ This therefore sets address %100 to 0, which is
+                        \ address B4 in the System VIA
+                        \
+                        \ B4 and B5 in the System VIA control the address of the
+                        \ start of screen memory and the screen size, so this
+                        \ sets screen memory to &6000 and screen size to 8K (see
+                        \ page 429 of the "Advanced User Guide for the BBC
+                        \ Micro" by Bray, Dickens and Holmes for details)
 
  LDA #0                 \ Call OSBYTE with A = 0 and X = 255 to fetch the
  LDX #255               \ operating system version into X
  JSR OSBYTE
 
- CPX #0                 \ If X = 0 then this is an Electron, so jump down to
- BEQ setp2              \ setp2 to skip the following
+ CPX #0                 \ If X = 0 then this is either a BBC Micro running an
+ BEQ setp1              \ operating system version of 1.00 or earlier, or it's
+                        \ an Electron, so in either case jump to setp1 to skip
+                        \ the following
 
-                        \ If we get here then this is not an Electron (so it
-                        \ must be a BBC Micro or BBC Master)
+                        \ If we get here then this is not an Electron or an
+                        \ early operating system, so it must be a BBC Micro with
+                        \ MOS 1.20 or later, or a BBC Master
 
  LDA #200               \ Call OSBYTE with A = 200, X = 2 and Y = 0 to set the
  LDX #2                 \ normal action for the ESCAPE key and clear memory if
  LDY #0                 \ the BREAK key is pressed
  JSR OSBYTE
 
- JMP setp4              \ Jump to setp4 to skip the setup for the Electron
+ JMP setp3              \ Jump to setp3 to skip the setup for the Electron
+
+.setp1
+
+                        \ If we get here then this is either a BBC Micro running
+                        \ MOS 1.00 or earlier, or it's an Electron
+                        \
+                        \ In MOS 0.10, OSBYTE 200 does not let you set the BREAK
+                        \ key to clear memory, so we need to set this up by hand
+                        \ (otherwise hackers could load the game on MOS 0.10 and
+                        \ simply press BREAK to access the loaded game code).
+                        \
+                        \ The Electron and MOS 1.00 do not need this code, as
+                        \ OSBYTE 200 is supported in these versions of the
+                        \ operating system, but OSBYTE 0 doesn't distinguish
+                        \ between the Electron and MOS 1.00 and earlier (they
+                        \ all return X = 0)
+                        \
+                        \ There's no harm in manually clearing memory on those
+                        \ systems, though, so the following code is run on
+                        \ BREAK on MOS 1.00 and earlier and on the Electron
+                        \
+                        \ To set this up, we copy the break handler routine from
+                        \ ClearMemory to address BRKI (this points to the
+                        \ cassette filing system workspace, which is unused
+                        \ now that the game is loaded, so it's a suitable
+                        \ location for our handler)
+
+ LDX #&1C               \ Set a counter in X for the size of the ClearMemory
+                        \ routine
 
 .setp2
 
-                        \ If we get here then this is an Electron
+ LDA ClearMemory,X      \ Copy the X-th byte of the ClearMemory routine into the
+ STA BRKI,X             \ X-th byte of BRKI
 
- LDX #&1C
+ DEX                    \ Decrement the byte counter
+
+ BPL setp2              \ Loop back until we have copied the whole ClearMemory
+                        \ routine to BRKI
+
+ LDA #&4C               \ Set the Break Intercept code to the following, so that
+ STA BRKIV              \ BRKI gets called when the BREAK key is pressed (&4C is
+ LDA #LO(BRKI)          \ the opcode for the JMP instruction):
+ STA BRKIV+1            \
+ LDA #HI(BRKI)          \    JMP BRKI
+ STA BRKIV+2
 
 .setp3
 
- LDA sub_C3FED,X
- STA BRKI,X
- DEX
- BPL setp3
+                        \ Next we copy a block of game code in memory as
+                        \ follows:
+                        \
+                        \   * &4100-&49FF is copied to &5800-&60FF
+                        \
+                        \ The game binary could easily have been structured to
+                        \ avoid this copy, so presumably it's just done to make
+                        \ the game code harder to crack
 
- LDA #&4C               \ Set the instruction 
- STA BRKIV
- LDA #LO(BRKI)
- STA BRKIV+1
- LDA #HI(BRKI)
- STA BRKIV+2
+ LDA #&00               \ Set (Q P) = &4100
+ STA P                  \
+ STA R                  \ We use this as the source address for the copy
+ LDA #&41
+ STA Q
+
+ LDA #&58               \ Set (S R) = &5800
+ STA S                  \
+                        \ We use this as the destination address for the copy
 
 .setp4
 
- LDA #0
- STA P
- STA R
- LDA #&41
- STA Q
- LDA #&58
- STA S
+ LDY #0                 \ Set up a byte counter in Y
 
 .setp5
 
- LDY #0
-
-.setp6
-
- LDA (P),Y
+ LDA (P),Y              \ Copy the Y-th byte of (Q P) to the Y-th byte of (S R)
  STA (R),Y
- DEY
- BNE setp6
 
- INC Q
- INC S
- LDA Q
- CMP #&4A
- BCC setp5
+ DEY                    \ Decrement the byte counter
+
+ BNE setp5              \ Loop back until we have copied a whole page of bytes
+
+ INC Q                  \ Increment the high byte of (Q P) to point to the next
+                        \ page in memory
+
+ INC S                  \ Increment the high byte of (S R) to point to the next
+                        \ page in memory
+
+ LDA Q                  \ Loop back until (Q P) reaches &4A00, at which point we
+ CMP #&4A               \ have copied the whole block of memory
+ BCC setp4
 
  SEI                    \ Disable interrupts so we can update the interrupt
                         \ vector and VIA
@@ -11681,10 +11744,10 @@ L314A = C3148+2
  STA L0D02
  LDA #&02
 
-.setp7
+.setp6
 
  BIT SHEILA+&4D         \ system_via_ifr
- BEQ setp7
+ BEQ setp6
 
  LDA #&40
  STA SHEILA+&6B         \ user_via_acr
@@ -11709,36 +11772,47 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3FED
+\       Name: ClearMemory
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Setup
+\    Summary: Clear game memory, so that the BREAK key can remove all trace of
+\             the game code in early versions of the operating system
 \
 \ ******************************************************************************
 
-.sub_C3FED
+.ClearMemory
 
- LDA #&04
- STA Q
- LDA #0
- STA P
+ LDA #&04               \ Set (Q P) = &0400
+ STA Q                  \
+ LDA #&00               \ We use this as the start address for clearing memory,
+ STA P                  \ which is where the game code starts
+                        \
+                        \ This also sets A = 0, which we can use to zero memory
 
-.P3FF5
+.cmem1
 
- LDY #&FF
+ LDY #&FF               \ Set Y = &FF to use as a byte counter
 
-.P3FF7
+.cmem2
 
- STA (P),Y
- DEY
- BNE P3FF7
- INC Q
- LDX Q
- CPX #&7C
- BCC P3FF5
- LDA #0
- STA BRKIV
- RTS
+ STA (P),Y              \ Zero the Y-th byte at (Q P)
+
+ DEY                    \ Decrement the byte counter
+
+ BNE cmem2              \ Loop back until we have zeroed a whole page of memory
+
+ INC Q                  \ Increment the high byte of (Q P) to point to the next
+                        \ page in memory
+
+ LDX Q                  \ Loop back until (Q P) reaches &7C00, at which point we
+ CPX #&7C               \ have zeroed all the game code (including any code
+ BCC cmem1              \ still left at the higher memory address where it's
+                        \ first loaded)
+
+ LDA #&00               \ Set the Break Intercept code to a BRK instruction to
+ STA BRKIV              \ reinstate the default break handler
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -13923,7 +13997,8 @@ L5BA0 = L5B00+160
 
 .sub_C5F7D
 
- JMP setp1
+ EQUB &4C
+ BMI sub_C5FBF
 
 \ ******************************************************************************
 \
@@ -14168,7 +14243,8 @@ L5BA0 = L5B00+160
  CMP #&6D               \ have copied all the game code
  BNE entr1
 
- JMP SetupGame          \ Jump to SetupGame to set things up for a new game
+ JMP ConfigureMachine   \ Jump to ConfigureMachine to configure the computer,
+                        \ ready for a new game
 
 \ ******************************************************************************
 \
