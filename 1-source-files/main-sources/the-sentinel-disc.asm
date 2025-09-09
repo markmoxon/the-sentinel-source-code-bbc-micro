@@ -2,7 +2,7 @@
 \
 \ THE SENTINEL DISC IMAGE SCRIPT
 \
-\ The Sentinel was written by Geoffrey J Crammond and is copyright Firebird 1985
+\ The Sentinel was written by Geof Crammond and is copyright Firebird 1985
 \
 \ The code on this site has been reconstructed from a disassembly of the
 \ original game binaries

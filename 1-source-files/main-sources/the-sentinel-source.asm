@@ -2,7 +2,7 @@
 \
 \ THE SENTINEL SOURCE
 \
-\ The Sentinel was written by Geoffrey J Crammond and is copyright Firebird 1985
+\ The Sentinel was written by Geof Crammond and is copyright Firebird 1985
 \
 \ The code on this site has been reconstructed from a disassembly of the
 \ original game binaries
@@ -1146,95 +1146,104 @@ L0BAB = L0B00+171
 
 \ ******************************************************************************
 \
-\       Name: sub_C0D03
+\       Name: Multiply8x8
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Calculate (A T) = T * U
+\
+\ ------------------------------------------------------------------------------
+\
+\ Do the following multiplication of two unsigned 8-bit numbers:
+\
+\   (A T) = A * U
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   X is unchanged
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   Multiply8x8+2       Calculate (A T) = T * U
 \
 \ ******************************************************************************
 
 .sub_C0D03
 
- STA T
+ STA T                  \ Set T = A
 
-\ ******************************************************************************
-\
-\       Name: sub_C0D05
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
+                        \ We now calculate (A T) = T * U
+                        \                        = A * U
 
-.sub_C0D05
+ LDA #0                 \ Set A = 0 so we can start building the answer in A
 
- LDA #0
- LSR T
- BCC C0D0E
+ LSR T                  \ Set T = T >> 1
+                        \ and C flag = bit 0 of T
+
+                        \ We are now going to work our way through the bits of
+                        \ T, and do a shift-add for any bits that are set,
+                        \ keeping the running total in A, and instead of using a
+                        \ loop, we unroll the calculation, starting with bit 0
+
+ BCC P%+5               \ If C (i.e. the next bit from T) is set, do the
+ CLC                    \ addition for this bit of T:
+ ADC U                  \
+                        \   A = A + U
+
+ ROR A                  \ Shift A right to catch the next digit of our result,
+                        \ which the next ROR sticks into the left end of T while
+                        \ also extracting the next bit of T
+
+ ROR T                  \ Add the overspill from shifting A to the right onto
+                        \ the start of T, and shift T right to fetch the next
+                        \ bit for the calculation into the C flag
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 1
  CLC
  ADC U
-
-.C0D0E
-
  ROR A
  ROR T
- BCC C0D16
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 2
  CLC
  ADC U
-
-.C0D16
-
  ROR A
  ROR T
- BCC C0D1E
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 3
  CLC
  ADC U
-
-.C0D1E
-
  ROR A
  ROR T
- BCC C0D26
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 4
  CLC
  ADC U
-
-.C0D26
-
  ROR A
  ROR T
- BCC C0D2E
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 5
  CLC
  ADC U
-
-.C0D2E
-
  ROR A
  ROR T
- BCC C0D36
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 6
  CLC
  ADC U
-
-.C0D36
-
  ROR A
  ROR T
- BCC C0D3E
+
+ BCC P%+5               \ Repeat the shift-and-add loop for bit 7
  CLC
  ADC U
-
-.C0D3E
-
  ROR A
  ROR T
- BCC C0D46
- CLC
- ADC U
 
-.C0D46
-
- ROR A
- ROR T
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -1686,7 +1695,7 @@ L0F36 = sub_C0F34+2
 
 .sub_C0F4A
 
- JSR sub_C0D05
+ JSR sub_C0D03+2
  STA W
  LDA V
  JSR sub_C0D03

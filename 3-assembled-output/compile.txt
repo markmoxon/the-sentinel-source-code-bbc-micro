@@ -2441,55 +2441,46 @@
      0D01   93 DC
 .sub_C0D03
      0D03   85 74      STA &74
-.sub_C0D05
      0D05   A9 00      LDA #&00
      0D07   46 74      LSR &74
      0D09   90 03      BCC &0D0E
      0D0B   18         CLC
      0D0C   65 75      ADC &75
-.C0D0E
      0D0E   6A         ROR A
      0D0F   66 74      ROR &74
      0D11   90 03      BCC &0D16
      0D13   18         CLC
      0D14   65 75      ADC &75
-.C0D16
      0D16   6A         ROR A
      0D17   66 74      ROR &74
      0D19   90 03      BCC &0D1E
      0D1B   18         CLC
      0D1C   65 75      ADC &75
-.C0D1E
      0D1E   6A         ROR A
      0D1F   66 74      ROR &74
      0D21   90 03      BCC &0D26
      0D23   18         CLC
      0D24   65 75      ADC &75
-.C0D26
      0D26   6A         ROR A
      0D27   66 74      ROR &74
      0D29   90 03      BCC &0D2E
      0D2B   18         CLC
      0D2C   65 75      ADC &75
-.C0D2E
      0D2E   6A         ROR A
      0D2F   66 74      ROR &74
      0D31   90 03      BCC &0D36
      0D33   18         CLC
      0D34   65 75      ADC &75
-.C0D36
      0D36   6A         ROR A
      0D37   66 74      ROR &74
      0D39   90 03      BCC &0D3E
      0D3B   18         CLC
      0D3C   65 75      ADC &75
-.C0D3E
      0D3E   6A         ROR A
      0D3F   66 74      ROR &74
      0D41   90 03      BCC &0D46
      0D43   18         CLC
      0D44   65 75      ADC &75
-.C0D46
      0D46   6A         ROR A
      0D47   66 74      ROR &74
      0D49   60         RTS
