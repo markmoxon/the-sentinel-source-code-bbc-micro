@@ -2917,7 +2917,7 @@
      1014   E5 75      SBC &75
 .CRE03
      1016   60         RTS
-.sub_C1017
+.MainLoop
      1017   A2 FF      LDX #&FF
      1019   9A         TXS
      101A   A9 04      LDA #&04
@@ -15205,24 +15205,24 @@
      5E24   20 F4 FF   JSR &FFF4
      5E27   A2 00      LDX #&00
      5E29   4C 55 35   JMP &3555
-.sub_C5E2C
+.SetColourPalette
      5E2C   85 74      STA &74
      5E2E   29 7F      AND #&7F
      5E30   A8         TAY
      5E31   A9 03      LDA #&03
      5E33   85 75      STA &75
-.P5E35
+.pall1
      5E35   A6 74      LDX &74
      5E37   10 03      BPL &5E3C
      5E39   BE 57 5E   LDX &5E57,Y
-.C5E3C
+.pall2
      5E3C   A9 13      LDA #&13
      5E3E   20 EE FF   JSR &FFEE
      5E41   A5 75      LDA &75
      5E43   20 EE FF   JSR &FFEE
      5E46   8A         TXA
      5E47   A2 04      LDX #&04
-.P5E49
+.pall3
      5E49   20 EE FF   JSR &FFEE
      5E4C   A9 00      LDA #&00
      5E4E   CA         DEX
@@ -15231,12 +15231,10 @@
      5E52   C6 75      DEC &75
      5E54   10 DF      BPL &5E35
      5E56   60         RTS
-.L5E57
+.colourPalettes
      5E57   04
      5E58   00
-.L5E59
      5E59   06
-.L5E5A
      5E5A   03
      5E5B   04
      5E5C   00

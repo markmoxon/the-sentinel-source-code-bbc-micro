@@ -185,10 +185,10 @@ P                    = &0070
 Q                    = &0071
 R                    = &0072
 S                    = &0073
-L0074                = &0074
-L0075                = &0075
-L0076                = &0076
-L0077                = &0077
+T                    = &0074
+U                    = &0075
+V                    = &0076
+W                    = &0077
 L0078                = &0078
 L0079                = &0079
 L007A                = &007A
@@ -1155,7 +1155,7 @@ L0BAB = L0B00+171
 
 .sub_C0D03
 
- STA L0074
+ STA T
 
 \ ******************************************************************************
 \
@@ -1169,71 +1169,71 @@ L0BAB = L0B00+171
 .sub_C0D05
 
  LDA #0
- LSR L0074
+ LSR T
  BCC C0D0E
  CLC
- ADC L0075
+ ADC U
 
 .C0D0E
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D16
  CLC
- ADC L0075
+ ADC U
 
 .C0D16
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D1E
  CLC
- ADC L0075
+ ADC U
 
 .C0D1E
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D26
  CLC
- ADC L0075
+ ADC U
 
 .C0D26
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D2E
  CLC
- ADC L0075
+ ADC U
 
 .C0D2E
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D36
  CLC
- ADC L0075
+ ADC U
 
 .C0D36
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D3E
  CLC
- ADC L0075
+ ADC U
 
 .C0D3E
 
  ROR A
- ROR L0074
+ ROR T
  BCC C0D46
  CLC
- ADC L0075
+ ADC U
 
 .C0D46
 
  ROR A
- ROR L0074
+ ROR T
  RTS
 
 \ ******************************************************************************
@@ -1247,149 +1247,149 @@ L0BAB = L0B00+171
 
 .sub_C0D4A
 
- ASL L0074
+ ASL T
  ROL A
  BCS C0D5B
- CMP L0076
+ CMP V
  BCC C0D68
  BNE C0D5B
- LDY L0074
- CPY L0077
+ LDY T
+ CPY W
  BCC C0D68
 
 .C0D5B
 
- STA L0075
- LDA L0074
- SBC L0077
- STA L0074
- LDA L0075
- SBC L0076
+ STA U
+ LDA T
+ SBC W
+ STA T
+ LDA U
+ SBC V
  SEC
 
 .C0D68
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0D79
- CMP L0076
+ CMP V
  BCC C0D86
  BNE C0D79
- LDY L0074
- CPY L0077
+ LDY T
+ CPY W
  BCC C0D86
 
 .C0D79
 
- STA L0075
- LDA L0074
- SBC L0077
- STA L0074
- LDA L0075
- SBC L0076
+ STA U
+ LDA T
+ SBC W
+ STA T
+ LDA U
+ SBC V
  SEC
 
 .C0D86
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0D97
- CMP L0076
+ CMP V
  BCC C0DA4
  BNE C0D97
- LDY L0074
- CPY L0077
+ LDY T
+ CPY W
  BCC C0DA4
 
 .C0D97
 
- STA L0075
- LDA L0074
- SBC L0077
- STA L0074
- LDA L0075
- SBC L0076
+ STA U
+ LDA T
+ SBC W
+ STA T
+ LDA U
+ SBC V
  SEC
 
 .C0DA4
 
  PHP
- CMP L0076
+ CMP V
  BEQ C0E10
- ASL L0074
+ ASL T
  ROL A
  BCS C0DB2
- CMP L0076
+ CMP V
  BCC C0DB5
 
 .C0DB2
 
- SBC L0076
+ SBC V
  SEC
 
 .C0DB5
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0DBE
- CMP L0076
+ CMP V
  BCC C0DC1
 
 .C0DBE
 
- SBC L0076
+ SBC V
  SEC
 
 .C0DC1
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0DCA
- CMP L0076
+ CMP V
  BCC C0DCD
 
 .C0DCA
 
- SBC L0076
+ SBC V
  SEC
 
 .C0DCD
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0DD6
- CMP L0076
+ CMP V
  BCC C0DD9
 
 .C0DD6
 
- SBC L0076
+ SBC V
  SEC
 
 .C0DD9
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0DE2
- CMP L0076
+ CMP V
  BCC C0DE5
 
 .C0DE2
 
- SBC L0076
+ SBC V
  SEC
 
 .C0DE5
 
- ROL L0074
+ ROL T
  ROL A
  BCS C0DEE
- CMP L0076
+ CMP V
  BCC C0DF1
 
 .C0DEE
 
- SBC L0076
+ SBC V
  SEC
 
 .C0DF1
@@ -1397,12 +1397,12 @@ L0BAB = L0B00+171
  ROR L0078
  ROL A
  BCS C0DF8
- CMP L0076
+ CMP V
 
 .C0DF8
 
  ROR L0078
- LDA L0074
+ LDA T
 
 .C0DFC
 
@@ -1425,9 +1425,9 @@ L0BAB = L0B00+171
 
  LDA #0
  STA L0078
- ROR L0074
+ ROR T
  ROR A
- ROR L0074
+ ROR T
  ROR A
  ORA #&20
  JMP C0DFC
@@ -1450,7 +1450,7 @@ L0BAB = L0B00+171
  LDA L008A
  SEC
  SBC L3B00+1,Y
- STA L0074
+ STA T
  LDA L008B
  SBC L3C01+1,Y
  BIT L0078
@@ -1459,10 +1459,10 @@ L0BAB = L0B00+171
 
 .C0E49
 
- STA L0075
+ STA U
  ROL A
- ROR L0075
- ROR L0074
+ ROR U
+ ROR T
 
 .C0E50
 
@@ -1477,10 +1477,10 @@ L0BAB = L0B00+171
  BPL C0E70
  LDA L008A
  CLC
- ADC L0074
+ ADC T
  STA L008A
  LDA L008B
- ADC L0075
+ ADC U
  STA L008B
 
 .C0E70
@@ -1507,7 +1507,7 @@ L0BAB = L0B00+171
  STX L0F3B
  JSR sub_C0F3E
  STA L0C53
- LDA L0075
+ LDA U
  STA L0C54
  LDX #&01
  STX L0060
@@ -1532,18 +1532,18 @@ L0BAB = L0B00+171
  LDA #&AB
  JSR sub_C0D03
  JSR sub_C0D03
- STA L0076
+ STA V
  JSR sub_C0F4A
  LDA L0C53
  SEC
- SBC L0074
- STA L0074
+ SBC T
+ STA T
  LDA L0C54
- SBC L0075
- ASL L0074
+ SBC U
+ ASL T
  ROL A
  STA L0C02,X
- LDA L0074
+ LDA T
  AND #&FE
  STA L0C00,X
  JMP C0EFD
@@ -1553,21 +1553,21 @@ L0BAB = L0B00+171
  LDA #0
  SEC
  SBC L0C53
- STA L0074
+ STA T
  LDA #&C9
  SBC L0C54
- STA L0075
- STA L0076
+ STA U
+ STA V
  JSR sub_C0F4A
- ASL L0074
- ROL L0075
+ ASL T
+ ROL U
  LDA #0
  SEC
- SBC L0074
+ SBC T
  AND #&FE
  STA L0C00,X
  LDA #0
- SBC L0075
+ SBC U
  BCC C0EFA
  LDA #&FE
  STA L0C00,X
@@ -1589,7 +1589,7 @@ L0BAB = L0B00+171
  LDA #&C9
  SBC L0C54
  STA L0C54
- STA L0075
+ STA U
  JMP C0E94
 
 .C0F19
@@ -1667,13 +1667,13 @@ L0F36 = sub_C0F34+2
 
 .sub_C0F3E
 
- ASL L0074
+ ASL T
  ROL A
- ASL L0074
+ ASL T
  ROL A
- STA L0076
+ STA V
  LDA #&C9
- STA L0075
+ STA U
 
 \ ******************************************************************************
 \
@@ -1687,16 +1687,16 @@ L0F36 = sub_C0F34+2
 .sub_C0F4A
 
  JSR sub_C0D05
- STA L0077
- LDA L0076
+ STA W
+ LDA V
  JSR sub_C0D03
- STA L0075
- LDA L0077
+ STA U
+ LDA W
  CLC
- ADC L0074
- STA L0074
+ ADC T
+ STA T
  BCC CRE02
- INC L0075
+ INC U
 
 .CRE02
 
@@ -1740,7 +1740,7 @@ L0F36 = sub_C0F34+2
 .C0F74
 
  STA L0067
- ASL L0074
+ ASL T
  ROL A
  AND #&7F
  TAX
@@ -1811,42 +1811,42 @@ L0F36 = sub_C0F34+2
 .C0FC1
 
  LDA L006B
- STA L0075
+ STA U
  LDA L0068
  JSR sub_C0D03
- STA L0077
- LDA L0074
+ STA W
+ LDA T
  CLC
  ADC #&80
- STA L0076
+ STA V
  BCC C0FD7
- INC L0077
+ INC W
 
 .C0FD7
 
  LDA L0069
  JSR sub_C0D03
  STA L0078
- LDA L0074
+ LDA T
  CLC
- ADC L0077
- STA L0077
+ ADC W
+ STA W
  BCC C0FE9
  INC L0078
 
 .C0FE9
 
  LDA L006A
- STA L0075
+ STA U
  LDA L0069
  JSR sub_C0D03
- STA L0075
- LDA L0074
+ STA U
+ LDA T
  CLC
- ADC L0076
- LDA L0075
- ADC L0077
- STA L0074
+ ADC V
+ LDA U
+ ADC W
+ STA T
  BCC C1003
  INC L0078
 
@@ -1879,13 +1879,13 @@ L0F36 = sub_C0F34+2
 
 .sub_C1009
 
- STA L0075
+ STA U
  LDA #0
  SEC
- SBC L0074
- STA L0074
+ SBC T
+ STA T
  LDA #0
- SBC L0075
+ SBC U
 
 .CRE03
 
@@ -1893,75 +1893,100 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C1017
+\       Name: MainLoop
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Main loop
+\    Summary: The main game loop, where we display the title screen, fetch the
+\             landscape number, play the game and repeat
 \
 \ ******************************************************************************
 
-.sub_C1017
+.MainLoop
 
- LDX #&FF
- TXS
- LDA #&04
- JSR sub_C5E2C
+ LDX #&FF               \ Set the stack pointer to &01FF, which is the standard
+ TXS                    \ location for the 6502 stack, so this instruction
+                        \ effectively resets the stack
+
+ LDA #4                 \ Set all four logical colours to physical colour 4
+ JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
+
  JSR sub_C1149
+
  LDA #0
  JSR sub_C324C
+
  LDX #0
  JSR sub_C36AD
- LDA #&87
- JSR sub_C5E2C
+
+ LDA #&87               \ Set the palette the second set of colours from the
+ JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
+
  JSR sub_C5E07
 
 .C1034
 
  JSR sub_C1149
+
  LDX #&01
  JSR sub_C36AD
+
  LDA #&04
  JSR sub_C329F
+
  JSR sub_C3321
+
  LDY L0CF1
  LDX L0CF0
  JSR sub_C33B7
+
  LDA L0C52
  BNE C105F
+
  LDX #&03
 
 .P1054
 
  LDA L108C,X
  STA L0CF0,X
+
  DEX
+
  BPL P1054
+
  BMI C106C
 
 .C105F
 
  LDX #&02
  JSR sub_C36AD
+
  LDA #&08
  JSR sub_C329F
+
  JSR sub_C3321
 
 .C106C
 
- LDA #&04
- JSR sub_C5E2C
+ LDA #4                 \ Set all four logical colours to physical colour 4
+ JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
+
  JSR sub_C2A9C
 
 .C1074
 
  JSR sub_C1149
+
  LDA #0
  JSR sub_C324C
- LDA #&87
- JSR sub_C5E2C
+
+ LDA #&87               \ Set the palette the second set of colours from the
+ JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
+
  LDX #&03
  JSR sub_C36AD
+
  JSR sub_C5E07
+
  JMP C1034
 
 \ ******************************************************************************
@@ -2871,9 +2896,9 @@ L1145 = C1144+1
  AND #&07
  TAX
  LDA L14C4,X
- STA L5E5A
+ STA colourPalettes+3
  LDA L14E3,X
- STA L5E59
+ STA colourPalettes+2
  RTS
 
 \ ******************************************************************************
@@ -2920,13 +2945,13 @@ L1145 = C1144+1
  SBC L0C6F
  SBC L0C6F
  SBC L0C6F
- STA L0075
+ STA U
  JSR sub_C341B
  CLC
  ADC #&0A
- CMP L0075
+ CMP U
  BCC C1487
- LDA L0075
+ LDA U
 
 .C1487
 
@@ -3053,7 +3078,7 @@ L1145 = C1144+1
 
  JSR sub_C3194
  AND L0027
- CMP L0074
+ CMP T
  BCS C150B
  TAY
  LDX L5A40,Y
@@ -3146,7 +3171,7 @@ L1145 = C1144+1
  BPL P1591
  TYA
  BEQ C15B2
- STA L0074
+ STA T
  LDY #&FF
 
 .P15A7
@@ -3724,7 +3749,7 @@ L1145 = C1144+1
 
 .sub_C1882
 
- STA L0074
+ STA T
  STX L1919
  STY L0C58
  LDA #0
@@ -3732,12 +3757,12 @@ L1145 = C1144+1
  LDA L0100,Y
  BMI C1911
  LDA L0A40,Y
- CMP L0074
+ CMP T
  BNE C1911
  JSR sub_C5C01
  LDX #&07
  LDA L0F36,X
- STA L0074
+ STA T
  AND #&0F
  CMP #&09
  BEQ C18AC
@@ -3747,16 +3772,16 @@ L1145 = C1144+1
 
  TXA
  CLC
- ADC L0074
+ ADC T
  STA L0C75
  LDA L0C68
  LSR A
- STA L0074
+ STA T
  LDA L0C57
  SEC
  SBC #&0A
  CLC
- ADC L0074
+ ADC T
  CMP L0C68
  BCS C1912
  LDA L008A
@@ -3778,7 +3803,7 @@ L1145 = C1144+1
  JSR sub_C561D
  LDA L008A
  STA L003F
- STA L0074
+ STA T
  LDA L008B
  STA L0040
  JSR sub_C1C43
@@ -3835,7 +3860,7 @@ L1145 = C1144+1
 .sub_C191A
 
  LDY #0
- STY L0074
+ STY T
  LDX #&07
 
 .C1920
@@ -3857,7 +3882,7 @@ L1145 = C1144+1
  BEQ C1945
  LDY #&04
  LDA L0CB0,X
- STA L0074
+ STA T
  BMI C1948
 
 .C1945
@@ -3868,7 +3893,7 @@ L1145 = C1144+1
 .C1948
 
  STY L0C04
- LDA L0074
+ LDA T
  STA L0C4F
  LDA L0C73
  CPY L0C73
@@ -4430,17 +4455,17 @@ L1145 = C1144+1
 .sub_C1BFF
 
  LDA L0CC6
- STA L0075
+ STA U
  LDA #0
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
  CLC
  STA L003D
- LDA L0075
+ LDA U
  ADC L09C0,X
  SEC
  SBC #&0A
@@ -4448,21 +4473,21 @@ L1145 = C1144+1
  LDA L0CC7
  SEC
  SBC #&05
- STA L0075
+ STA U
  LDA #0
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
  CLC
  ADC #&20
  STA L003F
- STA L0074
- LDA L0075
+ STA T
+ LDA U
  ADC L0140,X
  CLC
  ADC #&03
@@ -4489,7 +4514,7 @@ L1145 = C1144+1
  STA L0030
  STX L002D
  LDA L003D
- STA L0074
+ STA T
  LDA L003E
  JSR sub_C0E75
  LDY #&01
@@ -4521,7 +4546,7 @@ L1145 = C1144+1
  STA L0069
  JSR sub_C0F9E
  STA L002F,X
- LDA L0074
+ LDA T
  STA L002C,X
  RTS
 
@@ -4537,24 +4562,24 @@ L1145 = C1144+1
 .sub_C1C8C
 
  LDA L0C00,Y
- STA L0074
+ STA T
  LDA L0C02,Y
  LSR A
- ROR L0074
+ ROR T
  PHP
  LSR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
+ ROR T
  LSR A
- ROR L0074
+ ROR T
  PLP
  BCC C1CA7
  JSR sub_C1009
 
 .C1CA7
 
- LDX L0074
+ LDX T
  RTS
 
 \ ******************************************************************************
@@ -4573,21 +4598,21 @@ L1145 = C1144+1
 .P1CAC
 
  LDA #0
- STA L0074
+ STA T
  LDA L0034,X
  CLC
  ADC L002C,X
  STA L0034,X
  LDA L002F,X
  BPL C1CBD
- DEC L0074
+ DEC T
 
 .C1CBD
 
  ADC L0037,X
  STA L0037,X
  LDA L003A,X
- ADC L0074
+ ADC T
  STA L003A,X
  DEX
  BPL P1CAC
@@ -4673,17 +4698,17 @@ L1145 = C1144+1
 .C1D35
 
  STA S
- STA L0077
+ STA W
  LSR L0060
  INC L0024
  JSR sub_C1DE6
- STA L0076
+ STA V
  INC L0026
  JSR sub_C1DE6
- STA L0075
+ STA U
  DEC L0024
  JSR sub_C1DE6
- STA L0074
+ STA T
  DEC L0026
  JSR sub_C2B78
  AND #&0F
@@ -4697,11 +4722,11 @@ L1145 = C1144+1
  LDA L003B
  CMP S
  BCS C1D74
- CMP L0074
+ CMP T
  BCS C1D74
- CMP L0075
+ CMP U
  BCS C1D74
- CMP L0076
+ CMP V
  BCS C1D74
  JMP C1D33
 
@@ -4764,7 +4789,7 @@ L1145 = C1144+1
  STA L0002
  LDA S,X
  STA L0078
- LDA L0074,X
+ LDA T,X
  SEC
  SBC S,X
  PHP
@@ -4775,19 +4800,19 @@ L1145 = C1144+1
 
 .C1DBD
 
- STA L0075
+ STA U
  LDA L0002
  JSR sub_C0D03
  PLP
  JSR sub_C1007
  CLC
  ADC L0078
- STA L0075
+ STA U
  LDA L0038
  SEC
- SBC L0074
+ SBC T
  LDA L003B
- SBC L0075
+ SBC U
  BPL C1DDB
  JMP C1D33
 
@@ -4893,24 +4918,24 @@ L1145 = C1144+1
  LDA L0A00,Y
  SEC
  SBC L0038
- STA L0075
+ STA U
  LDA L0940,Y
  SBC L003B
  PHA
- LDA L0075
+ LDA U
  CLC
  ADC #&E0
- STA L0075
+ STA U
  PLA
  ADC #&00
  BMI C1E82
  LSR A
- ROR L0075
+ ROR U
  LSR A
  BNE C1E82
- LDA L0075
+ LDA U
  ROR A
- CMP L0074
+ CMP T
  BCC C1E82
  BIT L0C56
  BMI C1E82
@@ -4952,7 +4977,7 @@ L1145 = C1144+1
 
 .C1EA1
 
- STA L0074
+ STA T
  LDA L0039
  SEC
  SBC #&80
@@ -4961,13 +4986,13 @@ L1145 = C1144+1
 
 .C1EAC
 
- CMP L0074
+ CMP T
  BCS C1EB2
- LDA L0074
+ LDA T
 
 .C1EB2
 
- STA L0074
+ STA T
  RTS
 
 \ ******************************************************************************
@@ -5207,17 +5232,17 @@ L1145 = C1144+1
  SBC L2095
  STA L09C0,X
  LDA #0
- STA L0075
+ STA U
  LDA L0C62
  ASL A
  ASL A
  ASL A
- ROL L0075
+ ROL U
  CLC
  ADC L0CC2
  STA L2092
  LDA L0CC3
- ADC L0075
+ ADC U
  CMP #&80
  BCC C2008
  SBC #&20
@@ -5415,7 +5440,7 @@ L1145 = C1144+1
  LDA L0C59
  SEC
  SBC L008A
- STA L0074
+ STA T
  LDA L0C57
  SBC L008B
  BPL C20CC
@@ -5424,7 +5449,7 @@ L1145 = C1144+1
 
 .C20CC
 
- ASL L0074
+ ASL T
  ROL A
  CMP #&28
  BCS C2105
@@ -5435,11 +5460,11 @@ L1145 = C1144+1
  LDA L0C59
  CLC
  ADC L008A
- STA L0074
+ STA T
  LDA L0C57
  ADC L008B
  BMI C2105
- ASL L0074
+ ASL T
  ROL A
  CMP #&28
  BCC C20EE
@@ -5662,11 +5687,11 @@ L1145 = C1144+1
  LDA L0A00,X
  SEC
  SBC L0A00,Y
- STA L0074
+ STA T
  LDA L0940,X
  SBC L0940,Y
  BMI C21F0
- ORA L0074
+ ORA T
  BNE C21D5
  LDA L0A40,Y
  CMP #&06
@@ -5740,9 +5765,9 @@ L1145 = C1144+1
  STX L0025
  LDX L0C4C
  LDA L2277,X
- STA L0074
+ STA T
  LDA L227B,X
- STA L0075
+ STA U
 
 .C2224
 
@@ -5762,28 +5787,28 @@ L1145 = C1144+1
 .C2238
 
  INY
- LDA L0074
+ LDA T
  STA (P),Y
  INY
- LDA L0075
+ LDA U
  STA (P),Y
  INY
- LDA L0074
+ LDA T
  STA (P),Y
  INY
- LDA L0075
+ LDA U
  STA (P),Y
  INY
- LDA L0074
+ LDA T
  STA (P),Y
  INY
- LDA L0075
+ LDA U
  STA (P),Y
  INY
- LDA L0074
+ LDA T
  STA (P),Y
  INY
- LDA L0075
+ LDA U
  STA (P),Y
  DEX
  BNE C2238
@@ -5943,14 +5968,14 @@ L1145 = C1144+1
  LDA #&F0
  CLC
  SBC L0006
- STA L0074
+ STA T
  LSR A
  LSR A
  LSR A
  CLC
  ADC L0055
  TAX
- LDA L0074
+ LDA T
  AND #&07
  CLC
  ADC L3D83,X
@@ -5969,12 +5994,12 @@ L1145 = C1144+1
  BIT L0C7A
  BPL C22EF
  AND #&CF
- STA L0074
+ STA T
  LDA L0019
  ASL A
  ASL A
  AND #&30
- ORA L0074
+ ORA T
 
 .C22EF
 
@@ -6079,10 +6104,10 @@ L2367 = C2366+1
 
  ORA L3E3C,X
  AND L228F,X
- STA L0074
+ STA T
  LDA (R),Y
  AND L228B,X
- ORA L0074
+ ORA T
  STA (R),Y
  JMP sub_C230D
 
@@ -6277,7 +6302,7 @@ L23E3 = C23E2+1
  JSR sub_C24EA
  LDX L000B
  LDA L0940,X
- STA L0076
+ STA V
  LDX #&1E
 
 .C2492
@@ -6288,14 +6313,14 @@ L23E3 = C23E2+1
  LDY #&FF
  LSR A
  BCS C24A2
- CMP L0076
+ CMP V
  BCC C24A2
  BEQ C24A2
  INY
 
 .C24A2
 
- STY L0077
+ STY W
  TXA
  ASL A
  ASL A
@@ -6303,7 +6328,7 @@ L23E3 = C23E2+1
  AND #&E0
  ORA L001A
  LSR A
- STA L0074
+ STA T
  TXA
  AND #&03
  ROL A
@@ -6315,13 +6340,13 @@ L23E3 = C23E2+1
  ORA L0181,X
  ORA L01A0,X
  ORA L01A1,X
- AND L0077
+ AND W
  AND L24E2,Y
- STA L0075
- LDY L0074
+ STA U
+ LDY T
  LDA L3E80,Y
  AND L0027
- ORA L0075
+ ORA U
  STA L3E80,Y
  DEX
  BPL C2492
@@ -6367,7 +6392,7 @@ L23E3 = C23E2+1
 
  JSR sub_C355A
  LDY #0
- STY L0074
+ STY T
  DEY
  STY L0017
  LDY L0018
@@ -6398,15 +6423,15 @@ L23E3 = C23E2+1
 
 .C2529
 
- CMP L0074
+ CMP T
  BCC C252F
- STA L0074
+ STA T
 
 .C252F
 
  DEX
  BPL C250D
- LDA L0074
+ LDA T
  ASL A
  ASL A
  CMP #&06
@@ -6624,7 +6649,7 @@ L23E3 = C23E2+1
  AND #&3F
  SEC
  SBC #&20
- STA L0074
+ STA T
  LDA L001C
  ASL A
  ROL A
@@ -6641,7 +6666,7 @@ L23E3 = C23E2+1
  SEC
  SBC #&02
  STA L004B
- LDA L0074
+ LDA T
  SEC
  SBC #&0A
  STA L0020
@@ -7101,17 +7126,17 @@ L23E3 = C23E2+1
 
 .C28A4
 
- STY L0074
+ STY T
  TXA
  ASL A
  ASL A
  ASL A
  AND #&E0
- ORA L0074
+ ORA T
  TAY
  TXA
  AND #&03
- STA L0074
+ STA T
  CLC
  ADC #&04
  STA L005F
@@ -7129,7 +7154,7 @@ L23E3 = C23E2+1
  CMP #&40
  BCS P28C4
  LDA L0940,Y
- STA L0075
+ STA U
  JMP C28EE
 
 .C28D6
@@ -7138,13 +7163,13 @@ L23E3 = C23E2+1
  LSR A
  LSR A
  LSR A
- STA L0075
+ STA U
  TYA
  LSR A
  TAY
- ROL L0074
+ ROL T
  LDA L3E80,Y
- LDY L0074
+ LDY T
  AND L24E2,Y
  BNE C28EE
  STA L0180,X
@@ -7156,7 +7181,7 @@ L23E3 = C23E2+1
  SEC
  SBC L0A00,X
  STA L0080
- LDA L0075
+ LDA U
  SBC L0940,X
  JSR sub_C561D
  LDY L0021
@@ -7344,7 +7369,7 @@ L23E3 = C23E2+1
 
 .sub_C2997
 
- STA L0074
+ STA T
  LSR A
  STA L0007
  LDA #0
@@ -7354,7 +7379,7 @@ L23E3 = C23E2+1
  LSR A
  EOR #&80
  STA L0012
- LDA L0074
+ LDA T
  ASL A
  ASL A
  STA L0061
@@ -7645,13 +7670,13 @@ L23E3 = C23E2+1
  LSR A
  LSR A
  LSR A
- STA L0074
+ STA T
  LDA (L005E),Y
  ASL A
  ASL A
  ASL A
  ASL A
- ORA L0074
+ ORA T
  JMP C2B48
 
 .C2B1B
@@ -7666,7 +7691,7 @@ L23E3 = C23E2+1
 
 .C2B26
 
- STA L0075
+ STA U
  LDA L0C08
  JSR sub_C0D03
  PLP
@@ -7863,33 +7888,33 @@ L23E3 = C23E2+1
 .C2C00
 
  LDA #0
- STA L0075
+ STA U
  LDA L5A00,X
  CLC
  ADC L5A01,X
  BCC C2C10
  CLC
- INC L0075
+ INC U
 
 .C2C10
 
  ADC L5A02,X
  BCC C2C18
  CLC
- INC L0075
+ INC U
 
 .C2C18
 
  ADC L5A03,X
  BCC C2C20
  CLC
- INC L0075
+ INC U
 
 .C2C20
 
- LSR L0075
+ LSR U
  ROR A
- LSR L0075
+ LSR U
  ROR A
  STA L5A00,X
  INX
@@ -7940,23 +7965,23 @@ L23E3 = C23E2+1
  INC L0024
  JSR sub_C2B78
  AND #&0F
- STA L0076
+ STA V
  INC L0026
  JSR sub_C2B78
  AND #&0F
- STA L0075
+ STA U
  DEC L0024
  JSR sub_C2B78
  AND #&0F
- STA L0074
+ STA T
  DEC L0026
  LDA S
- CMP L0076
+ CMP V
  BEQ C2CB1
- CMP L0074
+ CMP T
  BEQ C2C92
- LDA L0075
- CMP L0076
+ LDA U
+ CMP V
  BEQ C2C85
 
 .C2C82
@@ -7966,7 +7991,7 @@ L23E3 = C23E2+1
 
 .C2C85
 
- CMP L0074
+ CMP T
  BNE C2C9C
  LDX #&02
  CMP S
@@ -7979,10 +8004,10 @@ L23E3 = C23E2+1
 
 .C2C92
 
- LDA L0075
- CMP L0076
+ LDA U
+ CMP V
  BEQ C2CA8
- CMP L0074
+ CMP T
  BEQ C2C9F
 
 .C2C9C
@@ -7993,7 +8018,7 @@ L23E3 = C23E2+1
 .C2C9F
 
  LDX #&0E
- CMP L0076
+ CMP V
  BCC CRE20
  LDX #&07
 
@@ -8004,7 +8029,7 @@ L23E3 = C23E2+1
 .C2CA8
 
  LDX #&05
- CMP L0074
+ CMP T
  BCC CRE21
  LDX #&0D
 
@@ -8014,15 +8039,15 @@ L23E3 = C23E2+1
 
 .C2CB1
 
- CMP L0074
+ CMP T
  BEQ C2CD1
- LDA L0075
- CMP L0074
+ LDA U
+ CMP T
  BEQ C2CC8
- CMP L0076
+ CMP V
  BNE C2C82
  LDX #&06
- CMP L0074
+ CMP T
  BCC CRE22
  LDX #&0F
 
@@ -8033,7 +8058,7 @@ L23E3 = C23E2+1
 .C2CC8
 
  LDX #&01
- CMP L0076
+ CMP V
  BCC CRE23
  LDX #&09
 
@@ -8043,7 +8068,7 @@ L23E3 = C23E2+1
 
 .C2CD1
 
- CMP L0075
+ CMP U
  BEQ C2CDC
  LDX #&0A
  BCC CRE24
@@ -8169,17 +8194,17 @@ L23E3 = C23E2+1
  LDA L0BA0,X
  CLC
  ADC L0029
- STA L0074
+ STA T
  LDA L5500,X
  ADC L0011
- ASL L0074
+ ASL T
  ROL A
- ROL L0074
+ ROL T
  ROL A
- ROL L0074
+ ROL T
  ROL A
  STA L54A0,X
- LDA L0074
+ LDA T
  ROL A
  AND #&07
  CMP #&04
@@ -8206,16 +8231,16 @@ L23E3 = C23E2+1
  LDA L0BA0,X
  CLC
  ADC L0029
- STA L0074
+ STA T
  LDA L5500,X
  ADC L0011
  CMP #&20
  BCS C2D5D
- ASL L0074
+ ASL T
  ROL A
- ASL L0074
+ ASL T
  ROL A
- ASL L0074
+ ASL T
  ROL A
  STA L54A0,X
  DEY
@@ -8250,28 +8275,28 @@ L23E3 = C23E2+1
  LDA L0AE0,Y
  SBC L0AE0,X
  BPL C2E03
- STA L0076
+ STA V
  INC L0002
- STX L0074
- STY L0075
- LDX L0075
- LDY L0074
+ STX T
+ STY U
+ LDX U
+ LDY T
  LDA #0
  SEC
  SBC L000C
  STA L000C
  LDA #0
- SBC L0076
+ SBC V
 
 .C2E03
 
- STA L0076
+ STA V
  BIT L006C
  BVC C2E1C
  LDA L0B40,Y
  ORA L0B40,X
  BEQ C2E1C
- LDA L0076
+ LDA V
  BNE C2E19
  LDA L000C
  BEQ C2E56
@@ -8282,7 +8307,7 @@ L23E3 = C23E2+1
 
 .C2E1C
 
- LDA L0076
+ LDA V
  BEQ C2E2B
  LDA #0
  STA L0B40,Y
@@ -8641,21 +8666,21 @@ L2F79 = C2F77+2
  LDA L54A0,Y
  SEC
  SBC L54A0,X
- STA L0074
+ STA T
  LDA L0B40,Y
  SBC L0B40,X
  STA L000A
  JSR sub_C1007
- STA L0075
- ORA L0076
+ STA U
+ ORA V
  BEQ C2FFA
 
 .C2FEC
 
- LSR L0076
+ LSR V
  ROR L000C
- LSR L0075
- ROR L0074
+ LSR U
+ ROR T
  SEC
  ROL L0040
  LSR A
@@ -8666,14 +8691,14 @@ L2F79 = C2F77+2
  LDX L000C
  CPX #&FF
  BEQ C2FEC
- LDX L0074
+ LDX T
  CPX #&FF
  BEQ C2FEC
- LDA L0075
+ LDA U
  BIT L000A
  JSR sub_C1007
  STA L0043
- LDA L0074
+ LDA T
  STA L003A
  LDA L54A0,Y
  STA L0039
@@ -8762,8 +8787,8 @@ L2F79 = C2F77+2
 
 .C30AA
 
- STY L0074
- STA L0076
+ STY T
+ STA V
  LDY L000D
  CPY L000C
  LDY L001A
@@ -8778,7 +8803,7 @@ L2F79 = C2F77+2
 .C30C3
 
  STY L30EA
- LDA L0074
+ LDA T
  STA C310A
  LDY L000C
  TYA
@@ -8786,7 +8811,7 @@ L2F79 = C2F77+2
  EOR #&FF
  CLC
  INY
- STY L0075
+ STY U
  LDX L0018
  JSR sub_C316E
  JMP C30E9
@@ -8800,7 +8825,7 @@ L2F79 = C2F77+2
 .C30E3
 
  INX
- CPX L0076
+ CPX V
  CLC
  BEQ C310A
 
@@ -8815,7 +8840,7 @@ L30EB = C30E9+2
 
 .C30F1
 
- DEC L0075
+ DEC U
  BNE P30DD
  JMP CRE26
 
@@ -8849,7 +8874,7 @@ L30EB = C30E9+2
 .C311D
 
  STY L3149
- LDA L0074
+ LDA T
  STA C3164
  LDY L000D
  TYA
@@ -8857,7 +8882,7 @@ L30EB = C30E9+2
  EOR #&FF
  CLC
  INY
- STY L0075
+ STY U
  LDX L0018
  JSR sub_C316E
  JMP C3148
@@ -8865,7 +8890,7 @@ L30EB = C30E9+2
 .C3137
 
  INX
- CPX L0076
+ CPX V
  CLC
  BEQ C3164
 
@@ -8883,7 +8908,7 @@ L3149 = C3148+1
 L314A = C3148+2
 
  STX L5A00
- DEC L0075
+ DEC U
  BNE C3137
  JMP CRE26
 
@@ -9240,7 +9265,7 @@ L314A = C3148+2
 
 .sub_C329F
 
- STA L0074
+ STA T
  JSR sub_C5E20
  LDY #&07
  LDA #&20
@@ -9285,7 +9310,7 @@ L314A = C3148+2
 
  CMP #&3A
  BCS C32B3
- CPY L0074
+ CPY T
  BNE C32EB
  LDA #&07
  JSR OSWRCH
@@ -9328,7 +9353,7 @@ L314A = C3148+2
 
  SEC
  ROR L0C0F
- LDX L0074
+ LDX T
  DEX
 
 .P330A
@@ -9337,7 +9362,7 @@ L314A = C3148+2
  JSR sub_C31C0
  DEX
  BPL P330A
- LDX L0074
+ LDX T
  LDA #&08
 
 .P3317
@@ -9365,14 +9390,14 @@ L314A = C3148+2
 .P3325
 
  JSR sub_C333E
- STA L0074
+ STA T
  INY
  JSR sub_C333E
  ASL A
  ASL A
  ASL A
  ASL A
- ORA L0074
+ ORA T
  STA L0CF0,X
  INX
  INY
@@ -9610,7 +9635,7 @@ L314A = C3148+2
  LSR A
  CLC
  ADC #&02
- STA L0074
+ STA T
 
 .P33FC
 
@@ -9637,7 +9662,7 @@ L314A = C3148+2
 .C3411
 
  CLC
- ADC L0074
+ ADC T
  CMP #&08
  BCS P33FC
  ADC #&01
@@ -9657,13 +9682,13 @@ L314A = C3148+2
  JSR sub_C3194
  PHA
  AND #&07
- STA L0074
+ STA T
  PLA
  LSR A
  LSR A
  AND #&1E
  LSR A
- ADC L0074
+ ADC T
  RTS
 
 \ ******************************************************************************
@@ -10101,8 +10126,9 @@ L314A = C3148+2
 
 .sub_C35A4
 
- LDA #&83
- JSR sub_C5E2C
+ LDA #&83               \ Set the palette the first set of colours from the
+ JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
+
  JSR sub_C5E07
  LSR L0CFC
 
@@ -10111,14 +10137,16 @@ L314A = C3148+2
  JSR sub_C3548
  LDA L0C64
  BPL C35BA
- JMP sub_C1017
+ JMP MainLoop
 
 .C35BA
 
  LDA L0C4E
  BMI C361D
- LDA #&04
- JSR sub_C5E2C
+
+ LDA #4                 \ Set all four logical colours to physical colour 4
+ JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
+
  LDA #0
  STA L0055
  STA L0008
@@ -10157,8 +10185,10 @@ L314A = C3148+2
  JSR sub_C355A
  LDA L0CE7
  BPL P35FE
- LDA #&83
- JSR sub_C5E2C
+
+ LDA #&83               \ Set the palette the first set of colours from the
+ JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
+
  LDA L0CDE
  BPL C3666
  STA L0C4E
@@ -10177,8 +10207,9 @@ L314A = C3148+2
 
 .C362C
 
- LDA #&04
- JSR sub_C5E2C
+ LDA #4                 \ Set all four logical colours to physical colour 4
+ JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
+
  LDX #&03
  LDA #0
  STA L0C73
@@ -10190,8 +10221,10 @@ L314A = C3148+2
  BPL P3638
  JSR sub_C1172
  JSR sub_C1A7E
- LDA #&87
- JSR sub_C5E2C
+
+ LDA #&87               \ Set the palette the second set of colours from the
+ JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
+
  LDA #&0A
  STA L0CDF
  LDA #&42
@@ -10208,7 +10241,7 @@ L314A = C3148+2
 
 .C3663
 
- JMP sub_C1017
+ JMP MainLoop
 
 .C3666
 
@@ -11786,7 +11819,9 @@ L314A = C3148+2
 
  CLI                    \ Re-enable interrupts
 
- JMP sub_C1017
+ JMP MainLoop           \ Jump to MainLoop to start the main game loop, where
+                        \ we display the title screen, fetch the landscape
+                        \ number, play the game and repeat
 
 \ ******************************************************************************
 \
@@ -12499,12 +12534,12 @@ L49C1                = &49C1
  BCC P55A1
  ROR A
  ROR L0080
- STA L0076
+ STA V
  LDA L0082
- STA L0074
+ STA T
  LDA L0080
  AND #&FC
- STA L0077
+ STA W
  LDA L0085
  JSR sub_C0D4A
  LDA L0086
@@ -12544,12 +12579,12 @@ L49C1                = &49C1
  BCC P55DF
  ROR A
  ROR L0082
- STA L0076
+ STA V
  LDA L0080
- STA L0074
+ STA T
  LDA L0082
  AND #&FC
- STA L0077
+ STA W
  LDA L0083
  JSR sub_C0D4A
  LDA L0086
@@ -12649,19 +12684,19 @@ L49C1                = &49C1
  ADC #&00
  TAY
  LDA L3D02,Y
- STA L0075
+ STA U
  LDA L005C
- STA L0074
+ STA T
  LDA L005D
- STA L0076
+ STA V
  JSR sub_C0F4A
- LSR L0075
- ROR L0074
- LDA L0074
+ LSR U
+ ROR T
+ LDA T
  CLC
  ADC L007A
  STA L007C
- LDA L0075
+ LDA U
  ADC L007B
  STA L007D
  LDY L568D
@@ -13426,17 +13461,17 @@ L5BA0 = L5B00+160
 .C5C85
 
  LDA L0059
- STA L0074
+ STA T
  LDA L005A
  CLC
  ADC L4AE0,Y
  JSR sub_C0F70
  LDY L004E
  LDA L4D60,Y
- STA L0075
+ STA U
  LDA L008F
  JSR sub_C0D03
- STA L0074
+ STA T
  LDA #0
  BIT L0067
  BVC C5CA9
@@ -13444,13 +13479,13 @@ L5BA0 = L5B00+160
 
 .C5CA9
 
- STA L0075
+ STA U
  LDA L0C5D
  CLC
- ADC L0074
+ ADC T
  STA L0082
  LDA L0C5E
- ADC L0075
+ ADC U
  STA L0088
  BPL C5CC7
  LDA #0
@@ -13464,7 +13499,7 @@ L5BA0 = L5B00+160
 
  STA L0085
  LDA L4D60,Y
- STA L0075
+ STA U
  LDA L008E
  JSR sub_C0D03
  STA L0080
@@ -13485,19 +13520,19 @@ L5BA0 = L5B00+160
  LDY L004E
  LDA L4C20,Y
  ASL A
- STA L0074
+ STA T
  LDA #0
  BCC C5D05
  JSR sub_C1009
 
 .C5D05
 
- STA L0075
- LDA L0074
+ STA U
+ LDA T
  CLC
  ADC L0C5B
  STA L0080
- LDA L0075
+ LDA U
  ADC L0C5C
  LDX L006E
  JSR sub_C561D
@@ -13741,67 +13776,141 @@ L5BA0 = L5B00+160
 
 \ ******************************************************************************
 \
-\       Name: sub_C5E2C
+\       Name: SetColourPalette
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen mode
+\    Summary: Set the logical colours for each of the four physical colours in
+\             screen mode 5
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   Defines how the four physical colours in the mode 5
+\                       palette are set:
+\
+\                         * If bit 7 is clear then bits 0-6 contain the physical
+\                           colour to set for all four logical colours (so the
+\                           screen is effectively blanked to this colour)
+\
+\                         * If bit 7 is set then bits 0-6 contain the offset
+\                           within the colourPalettes table of the last of the
+\                           four physical colours to set for logical colours
+\                           3, 2, 1 and 0 (so we work backwards through the
+\                           table from the offset in bits 0-6)
 \
 \ ******************************************************************************
 
-.sub_C5E2C
+.SetColourPalette
 
- STA L0074
- AND #&7F
+ STA T                  \ Store the argument in T
+
+ AND #%01111111         \ Extract bits 0-6 of the argument into Y
  TAY
- LDA #&03
- STA L0075
 
-.P5E35
+ LDA #3                 \ We now work through the logical colours from 3 down
+ STA U                  \ to 0, setting the physical colour for each one in
+                        \ turn, so set a logical colour counter in U
 
- LDX L0074
- BPL C5E3C
- LDX L5E57,Y
+.pall1
 
-.C5E3C
+ LDX T                  \ Set X to the argument in T
 
- LDA #&13
- JSR OSWRCH
- LDA L0075
- JSR OSWRCH
- TXA
- LDX #&04
+ BPL pall2              \ If bit 7 of the argument in T is clear, skip the
+                        \ following instruction, so X contains the physical
+                        \ colour in the routine's argument (i.e. the colour to
+                        \ which we set all four logical colours)
 
-.P5E49
+                        \ If we get here then bit 7 of the argument in T is set,
+                        \ which means bits 0-6 contain the offset within the
+                        \ colourPalettes table of the four physical colours in
+                        \ the palette
+                        \
+                        \ We set Y above to the value of bits 0-6, so we can use
+                        \ this as the index into the colourPalettes table (we
+                        \ will decrement Y below for each of the four colours,
+                        \ so we end up setting all four logical colours to the
+                        \ four values in the table)
 
- JSR OSWRCH
- LDA #0
- DEX
- BNE P5E49
- DEY
- DEC L0075
- BPL P5E35
- RTS
+ LDX colourPalettes,Y   \ Fetch the physical colour from the Y-th entry in
+                        \ colourPalettes, which we now want to allocate to
+                        \ logical colour U
+
+.pall2
+
+ LDA #19                \ Start a VDU 19 command, which sets a logical colour to
+ JSR OSWRCH             \ a physical colour using the following format:
+                        \
+                        \   VDU 19, logical, physical, 0, 0, 0
+                        \
+                        \ which we output as follows:
+                        \
+                        \   VDU 19, U, X, 0, 0, 0
+
+ LDA U                  \ Write the value in U, which is the logical colour we
+ JSR OSWRCH             \ want to define
+
+ TXA                    \ Set A to the value in X
+
+ LDX #4                 \ Set X = 4 to use as a byte counter as we output the
+                        \ physical colour and three zeroes
+
+.pall3
+
+ JSR OSWRCH             \ Write the value in A, which is the physical colour we
+                        \ want to set (in the first iteration of the loop), or
+                        \ one of three trailing zeroes (in later iterations)
+
+ LDA #0                 \ Set A = 0 so the remaining three iterations of the
+                        \ loop output the trailing zeroes
+
+ DEX                    \ Decrement the byte counter
+
+ BNE pall3              \ Loop back until we have output the whole VDU command
+
+ DEY                    \ Decrement the colourPalettes index in Y
+
+ DEC U                  \ Decrement the logical colour counter in U
+
+ BPL pall1              \ Loop back until we have defined the logical colours
+                        \ for all four physical colours
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L5E57
+\       Name: colourPalettes
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Screen mode
+\    Summary: The logical colours for two mode 5 palettes
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains the logical colours that are set in the SetColourPalette
+\ routine when it is called with an argument with bit 7 set. This routine is
+\ only ever called with an argument of &83 or &87.
+\
+\ If the argument to SetColourPalette is &83, the palette is set as follows:
+\
+\   * Colour 0 = 4 (blue)
+\   * Colour 1 = 0 (black)
+\   * Colour 2 = 6 (cyan)
+\   * Colour 3 = 3 (yellow)
+\
+\ If the argument to SetColourPalette is &87, the palette is set as follows:
+\
+\   * Colour 0 = 4 (blue)
+\   * Colour 1 = 0 (black)
+\   * Colour 2 = 1 (red)
+\   * Colour 3 = 3 (yellow)
 \
 \ ******************************************************************************
 
-.L5E57
+.colourPalettes
 
- EQUB &04, &00
+ EQUB 4, 0, 6, 3        \ Palette with SetColourPalette offset 3
 
-.L5E59
-
- EQUB &06
-
-.L5E5A
-
- EQUB &03, &04, &00, &01, &03
+ EQUB 4, 0, 1, 3        \ Palette with SetColourPalette offset 7
 
 \ ******************************************************************************
 \
