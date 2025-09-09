@@ -3402,7 +3402,7 @@
      1398   0B
      1399   0F
      139A   8D
-.sub_C139B
+.DrawObject
      139B   8D 1C 0C   STA &0C1C
      139E   8E 4C 0C   STX &0C4C
      13A1   8A         TXA
@@ -7773,7 +7773,7 @@
      31C6   2C 60 0C   BIT &0C60
      31C9   30 03      BMI &31CE
      31CB   4C 44 57   JMP &5744
-.sub_C31CE
+.DrawLetter3D
      31CE   48         PHA
      31CF   8D 10 0C   STA &0C10
      31D2   29 C0      AND #&C0
@@ -7848,7 +7848,7 @@
      3249   27
      324A   28
      324B   29
-.sub_C324C
+.DrawTitleScreen
      324C   8D 8F 32   STA &328F
      324F   A9 80      LDA #&80
      3251   8D FF 09   STA &09FF
@@ -7866,9 +7866,9 @@
      326F   A2 03      LDX #&03
      3271   A9 00      LDA #&00
      3273   F0 11      BEQ &3286
-.C3275
+.titl1
      3275   A2 00      LDX #&00
-.P3277
+.titl2
      3277   BD 90 32   LDA &3290,X
      327A   20 CE 31   JSR &31CE
      327D   E8         INX
@@ -7876,14 +7876,14 @@
      3280   90 F5      BCC &3277
      3282   A2 01      LDX #&01
      3284   A9 05      LDA #&05
-.C3286
+.titl3
      3286   A0 01      LDY #&01
      3288   20 9B 13   JSR &139B
      328B   4E 4B 0C   LSR &0C4B
      328E   60         RTS
-.L328F
+.screenType
      328F   00
-.L3290
+.titleText
      3290   84
      3291   D5
      3292   54 48 45 
@@ -8029,7 +8029,7 @@
      337F   60         RTS
 .L3380
      3380   00
-.sub_C3381
+.DrawLandscapeCode
      3381   A9 80      LDA #&80
      3383   8D 60 0C   STA &0C60
      3386   20 CE 31   JSR &31CE

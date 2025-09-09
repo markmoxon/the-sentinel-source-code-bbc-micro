@@ -1910,10 +1910,10 @@ L0F36 = sub_C0F34+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- JSR ResetVariables
+ JSR ResetVariables     \ Reset all the game's main variables
 
- LDA #0
- JSR sub_C324C
+ LDA #0                 \ Call DrawTitleScreen with A = 0 to draw the title
+ JSR DrawTitleScreen    \ screen
 
  LDX #0
  JSR sub_C36AD
@@ -1925,7 +1925,7 @@ L0F36 = sub_C0F34+2
 
 .C1034
 
- JSR ResetVariables
+ JSR ResetVariables     \ Reset all the game's main variables
 
  LDX #&01
  JSR sub_C36AD
@@ -1974,10 +1974,10 @@ L0F36 = sub_C0F34+2
 
 .C1074
 
- JSR ResetVariables
+ JSR ResetVariables     \ Reset all the game's main variables
 
- LDA #0
- JSR sub_C324C
+ LDA #0                 \ Call DrawTitleScreen with A = 0 to draw the title
+ JSR DrawTitleScreen    \ screen
 
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
@@ -2168,7 +2168,7 @@ L1145 = C1144+1
 \       Name: ResetVariables
 \       Type: Subroutine
 \   Category: Main Loop
-\    Summary: Reset all the variable blocks
+\    Summary: Reset all the game's main variables
 \
 \ ******************************************************************************
 
@@ -2239,7 +2239,7 @@ L1145 = C1144+1
 \       Name: ResetVariables2
 \       Type: Subroutine
 \   Category: Main Loop
-\    Summary: Reset the L3E80, L3EC0 and L0100 variable blocks
+\    Summary: Reset the L3E80, L3EC0 and L0100 variable blocks ???
 \
 \ ******************************************************************************
 
@@ -2753,14 +2753,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C139B
+\       Name: DrawObject
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C139B
+.DrawObject
 
  STA L0C1C
  STX L0C4C
@@ -4195,8 +4195,10 @@ L1145 = C1144+1
  JSR sub_C2A9C
  JSR sub_C1410
  JSR sub_C1440
- LDA #&80
- JSR sub_C324C
+
+ LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
+ JSR DrawTitleScreen    \ showing the landscape code
+
  LDX #&05
  JSR sub_C36AD
  JMP sub_C33AB
@@ -9113,19 +9115,19 @@ L314A = C3148+2
 .C31C6
 
  BIT L0C60
- BMI sub_C31CE
+ BMI DrawLetter3D
  JMP sub_C5744
 
 \ ******************************************************************************
 \
-\       Name: sub_C31CE
+\       Name: DrawLetter3D
 \       Type: Subroutine
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C31CE
+.DrawLetter3D
 
  PHA
  STA L0C10
@@ -9222,77 +9224,116 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C324C
+\       Name: DrawTitleScreen
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: Draw the title screen or the screen showing the landscape code
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   Determines the type of screen to draw:
+\
+\                         * If bit 7 = 0 then draw the title screen
+\
+\                         * If bit 7 = 1 then draw the landscape code screen
 \
 \ ******************************************************************************
 
-.sub_C324C
+.DrawTitleScreen
 
- STA L328F
- LDA #&80
+ STA screenType         \ Store the screen type in A in screenType, so we can
+                        \ refer to it below
+
+ LDA #&80               \ Set L09FF = &80 ???
  STA L09FF
- LDA #&E0
+
+ LDA #&E0               \ Set L0A3F = &E0 ???
  STA L0A3F
- LDA #&02
+
+ LDA #2                 \ Set L097F = 2 ???
  STA L097F
- SEC
+
+ SEC                    \ Set bit 7 of L0C4B ???
  ROR L0C4B
+
  LDA #0
  JSR sub_C2AF2
- BIT L328F
- BPL C3275
- JSR sub_C3381
- LDX #&03
- LDA #0
- BEQ C3286
 
-.C3275
+ BIT screenType         \ If bit 7 of the screen type is clear, jump to titl1 to
+ BPL titl1              \ print "THE SENTINEL" on the title screen
 
- LDX #0
+                        \ If we get here then bit 7 of the argument is set, so
+                        \ we now draw the landscape code
 
-.P3277
+ JSR DrawLandscapeCode  \ Draw the landscape code in 3D ???
 
- LDA L3290,X
- JSR sub_C31CE
- INX
- CPX #&0F
- BCC P3277
- LDX #&01
- LDA #&05
+ LDX #3
 
-.C3286
+ LDA #0                 \ Set A = 0 so the call to DrawObject draws a robot on
+                        \ the right of the screen
 
- LDY #&01
- JSR sub_C139B
- LSR L0C4B
- RTS
+ BEQ titl3              \ Jump to titl3 to ??? (this BEQ is effectively a JMP as
+                        \ A is always zero)
+
+.titl1
+
+ LDX #0                 \ We now look through all the characters in the title
+                        \ text, drawing each one in turn, so set X as a
+                        \ character index
+
+.titl2
+
+ LDA titleText,X        \ Set A to the X-th character in the title text
+
+ JSR DrawLetter3D       \ Draw the character in A in 3D ???
+
+ INX                    \ Increment the character index
+
+ CPX #15                \ Loop back until we have drawn all 15 characters in the
+ BCC titl2              \ title text
+
+ LDX #1
+
+ LDA #5                 \ Set A = 5 so the call to DrawObject draws the Sentinel
+                        \ on the right of the screen
+
+.titl3
+
+ LDY #1
+
+ JSR DrawObject         \ Draw the Sentinel on the title screen or the robot on
+                        \ the landscape code screen ???
+
+ LSR L0C4B              \ Clear bit 7 of L0C4B ???
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L328F
+\       Name: screenType
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: A variable that determines whether we are drawing the title screen
+\             or the landscape code screen in the DrawTitleScreen routine
 \
 \ ******************************************************************************
 
-.L328F
+.screenType
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: L3290
+\       Name: titleText
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: The text to draw on the title screen
 \
 \ ******************************************************************************
 
-.L3290
+.titleText
 
  EQUB &84, &D5
  EQUS "THE"
@@ -9549,20 +9590,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3381
+\       Name: DrawLandscapeCode
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3381
+.DrawLandscapeCode
 
  LDA #&80
  STA L0C60
- JSR sub_C31CE
+ JSR DrawLetter3D
  LDA #&C7
- JSR sub_C31CE
+ JSR DrawLetter3D
  LSR L0CE6
  LDX L0CE6
 
@@ -10245,7 +10286,8 @@ L314A = C3148+2
 
 .C361D
 
- JSR ResetVariables
+ JSR ResetVariables     \ Reset all the game's main variables
+
  LDY L0CFE
  LDX L0CFD
  JSR sub_C33B7
@@ -10265,7 +10307,9 @@ L314A = C3148+2
  STA L0C7C,X
  DEX
  BPL P3638
- JSR ResetVariables2
+
+ JSR ResetVariables2    \ ???
+
  JSR sub_C1A7E
 
  LDA #&87               \ Set the palette to the second set of colours from the
@@ -14249,7 +14293,7 @@ L5BA0 = L5B00+160
  LDX #&03
  LDY #0
  LDA #&80
- JSR sub_C139B
+ JSR DrawObject
  LDX #&04
  JSR sub_C36AD
  JSR sub_C33AB
