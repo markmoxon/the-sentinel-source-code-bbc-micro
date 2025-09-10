@@ -2782,7 +2782,7 @@
      0F44   85 76      STA &76
      0F46   A9 C9      LDA #&C9
      0F48   85 75      STA &75
-.sub_C0F4A
+.Multiply8x16
      0F4A   20 05 0D   JSR &0D05
      0F4D   85 77      STA &77
      0F4F   A5 76      LDA &76
@@ -2794,7 +2794,7 @@
      0F5B   85 74      STA &74
      0F5D   90 02      BCC &0F61
      0F5F   E6 75      INC &75
-.CRE02
+.mult1
      0F61   60         RTS
 .sub_C0F62
      0F62   98         TYA

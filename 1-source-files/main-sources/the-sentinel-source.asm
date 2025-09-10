@@ -1542,7 +1542,7 @@ L0BAB = L0B00+171
  JSR Multiply8x8
  JSR Multiply8x8
  STA V
- JSR sub_C0F4A
+ JSR Multiply8x16
  LDA L0C53
  SEC
  SBC T
@@ -1567,7 +1567,7 @@ L0BAB = L0B00+171
  SBC L0C54
  STA U
  STA V
- JSR sub_C0F4A
+ JSR Multiply8x16
  ASL T
  ROL U
  LDA #0
@@ -1751,30 +1751,56 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F4A
+\       Name: Multiply8x16
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Multiply an 8-bit and a 16-bit number
+\
+\ ------------------------------------------------------------------------------
+\
+\ Do the following multiplication of two unsigned numbers:
+\
+\   (U T) = U * (V T) / 256
+\
+\ The result is also available in (U A).
 \
 \ ******************************************************************************
 
-.sub_C0F4A
+.Multiply8x16
 
- JSR Multiply8x8+2
- STA W
- LDA V
- JSR Multiply8x8
- STA U
- LDA W
- CLC
- ADC T
+ JSR Multiply8x8+2      \ Set (A T) = T * U
+
+ STA W                  \ Set (W T) = (A T)
+                        \           = T * U
+                        \
+                        \ So W = T * U / 256
+
+ LDA V                  \ Set A = V
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+                        \           = V * U
+
+ STA U                  \ Set (U T) = (A T)
+                        \           = V * U
+
+ LDA W                  \ Set (U T) = (U T) + W
+ CLC                    \
+ ADC T                  \ starting with the low bytes
  STA T
- BCC CRE02
- INC U
 
-.CRE02
+ BCC mult1              \ And then the high bytes, so we get the following:
+ INC U                  \
+                        \   (U T) = (U T) + W
+                        \         = V * U + (T * U / 256)
+                        \         = U * (V + T / 256)
+                        \         = U * (256 * V + T) / 256
+                        \         = U * (V T) / 256
+                        \
+                        \ which is what we want
 
- RTS
+.mult1
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12866,7 +12892,7 @@ L49C1                = &49C1
  STA T
  LDA L005D
  STA V
- JSR sub_C0F4A
+ JSR Multiply8x16
  LSR U
  ROR T
  LDA T
