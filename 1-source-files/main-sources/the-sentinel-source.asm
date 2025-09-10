@@ -1447,9 +1447,9 @@ L0BAB = L0B00+171
 
  TAY
  STA L007E
- LDA L3B00,Y
+ LDA arctanLo,Y
  STA L008A
- LDA L3C01,Y
+ LDA arctanHi,Y
  STA L008B
  BIT G
  BMI C0E35
@@ -1460,10 +1460,10 @@ L0BAB = L0B00+171
 
  LDA L008A
  SEC
- SBC L3B00+1,Y
+ SBC arctanLo+1,Y
  STA T
  LDA L008B
- SBC L3C01+1,Y
+ SBC arctanHi+1,Y
  BIT G
  BVC C0E49
  JSR Negate16Bit
@@ -1479,10 +1479,10 @@ L0BAB = L0B00+171
 
  LDA L008A
  CLC
- ADC L3B00+1,Y
+ ADC arctanLo+1,Y
  STA L008A
  LDA L008B
- ADC L3C01+1,Y
+ ADC arctanHi+1,Y
  STA L008B
  BIT G
  BPL C0E70
@@ -2264,8 +2264,8 @@ L0BAB = L0B00+171
 .C0F85
 
  TAY
- LDA L5980,X
- LDX L5980,Y
+ LDA sin,X
+ LDX sin,Y
  BIT H
  BMI C0F97
  BVS C0F99
@@ -12130,14 +12130,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3B00
+\       Name: arctanLo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Table for arctan values when calculating yaw angles (low byte)
 \
 \ ******************************************************************************
 
-.L3B00
+.arctanLo
 
  FOR I%, 0, 256
 
@@ -12147,14 +12147,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3C01
+\       Name: arctanHi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Table for arctan values when calculating yaw angles (high byte)
 \
 \ ******************************************************************************
 
-.L3C01
+.arctanHi
 
  FOR I%, 0, 256
 
@@ -12166,7 +12166,7 @@ L314A = C3148+2
 \
 \       Name: L3D02
 \       Type: Variable
-\   Category: ???
+\   Category: Maths (Geometry)
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -13973,14 +13973,14 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: L5980
+\       Name: sin
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Table for sin values
 \
 \ ******************************************************************************
 
-.L5980
+.sin
 
  FOR I%, 0, 127
 
