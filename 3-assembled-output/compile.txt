@@ -2050,11 +2050,11 @@
      0BFD   65
      0BFE   10
      0BFF   10
-.L0C00
+.sinYawAngleLo
      0C00   00
-.L0C01
+.cosYawAngleLo
      0C01   00
-.L0C02
+.sinYawAngleHi
      0C02   00
      0C03   00
 .L0C04
@@ -2072,7 +2072,7 @@
 .L0C0A
      0C0A   00
      0C0B   00
-.L0C0C
+.J
      0C0C   00
 .L0C0D
      0C0D   00
@@ -2175,9 +2175,9 @@
      0C51   00
 .L0C52
      0C52   00
-.L0C53
+.G2
      0C53   00
-.L0C54
+.H2
      0C54   00
      0C55   00
 .L0C56
@@ -2494,7 +2494,7 @@
      0D55   A4 74      LDY &74
      0D57   C4 77      CPY &77
      0D59   90 0D      BCC &0D68
-.C0D5B
+.divd1
      0D5B   85 75      STA &75
      0D5D   A5 74      LDA &74
      0D5F   E5 77      SBC &77
@@ -2502,7 +2502,7 @@
      0D63   A5 75      LDA &75
      0D65   E5 76      SBC &76
      0D67   38         SEC
-.C0D68
+.divd2
      0D68   26 74      ROL &74
      0D6A   2A         ROL A
      0D6B   B0 0C      BCS &0D79
@@ -2512,7 +2512,7 @@
      0D73   A4 74      LDY &74
      0D75   C4 77      CPY &77
      0D77   90 0D      BCC &0D86
-.C0D79
+.divd3
      0D79   85 75      STA &75
      0D7B   A5 74      LDA &74
      0D7D   E5 77      SBC &77
@@ -2520,7 +2520,7 @@
      0D81   A5 75      LDA &75
      0D83   E5 76      SBC &76
      0D85   38         SEC
-.C0D86
+.divd4
      0D86   26 74      ROL &74
      0D88   2A         ROL A
      0D89   B0 0C      BCS &0D97
@@ -2530,7 +2530,7 @@
      0D91   A4 74      LDY &74
      0D93   C4 77      CPY &77
      0D95   90 0D      BCC &0DA4
-.C0D97
+.divd5
      0D97   85 75      STA &75
      0D99   A5 74      LDA &74
      0D9B   E5 77      SBC &77
@@ -2538,7 +2538,7 @@
      0D9F   A5 75      LDA &75
      0DA1   E5 76      SBC &76
      0DA3   38         SEC
-.C0DA4
+.divd6
      0DA4   08         PHP
      0DA5   C5 76      CMP &76
      0DA7   F0 67      BEQ &0E10
@@ -2547,55 +2547,43 @@
      0DAC   B0 04      BCS &0DB2
      0DAE   C5 76      CMP &76
      0DB0   90 03      BCC &0DB5
-.C0DB2
      0DB2   E5 76      SBC &76
      0DB4   38         SEC
-.C0DB5
      0DB5   26 74      ROL &74
      0DB7   2A         ROL A
      0DB8   B0 04      BCS &0DBE
      0DBA   C5 76      CMP &76
      0DBC   90 03      BCC &0DC1
-.C0DBE
      0DBE   E5 76      SBC &76
      0DC0   38         SEC
-.C0DC1
      0DC1   26 74      ROL &74
      0DC3   2A         ROL A
      0DC4   B0 04      BCS &0DCA
      0DC6   C5 76      CMP &76
      0DC8   90 03      BCC &0DCD
-.C0DCA
      0DCA   E5 76      SBC &76
      0DCC   38         SEC
-.C0DCD
      0DCD   26 74      ROL &74
      0DCF   2A         ROL A
      0DD0   B0 04      BCS &0DD6
      0DD2   C5 76      CMP &76
      0DD4   90 03      BCC &0DD9
-.C0DD6
      0DD6   E5 76      SBC &76
      0DD8   38         SEC
-.C0DD9
      0DD9   26 74      ROL &74
      0DDB   2A         ROL A
      0DDC   B0 04      BCS &0DE2
      0DDE   C5 76      CMP &76
      0DE0   90 03      BCC &0DE5
-.C0DE2
      0DE2   E5 76      SBC &76
      0DE4   38         SEC
-.C0DE5
      0DE5   26 74      ROL &74
      0DE7   2A         ROL A
      0DE8   B0 04      BCS &0DEE
      0DEA   C5 76      CMP &76
      0DEC   90 03      BCC &0DF1
-.C0DEE
      0DEE   E5 76      SBC &76
      0DF0   38         SEC
-.C0DF1
      0DF1   66 78      ROR &78
      0DF3   2A         ROL A
      0DF4   B0 02      BCS &0DF8
@@ -2673,7 +2661,7 @@
      0E72   66 8A      ROR &8A
 .CRE01
      0E74   60         RTS
-.sub_C0E75
+.GetRotationMatrix
      0E75   8D 0C 0C   STA &0C0C
      0E78   8E 3B 0F   STX &0F3B
      0E7B   20 3E 0F   JSR &0F3E
@@ -2687,14 +2675,14 @@
      0E8F   50 03      BVC &0E94
      0E91   E8         INX
      0E92   C6 60      DEC &60
-.C0E94
+.rotm1
      0E94   C9 7A      CMP #&7A
      0E96   90 09      BCC &0EA1
      0E98   B0 31      BCS &0ECB
      0E9A   AD 53 0C   LDA &0C53
      0E9D   C9 F0      CMP #&F0
      0E9F   B0 2A      BCS &0ECB
-.C0EA1
+.rotm2
      0EA1   A9 AB      LDA #&AB
      0EA3   20 03 0D   JSR &0D03
      0EA6   20 03 0D   JSR &0D03
@@ -2713,7 +2701,7 @@
      0EC3   29 FE      AND #&FE
      0EC5   9D 00 0C   STA &0C00,X
      0EC8   4C FD 0E   JMP &0EFD
-.C0ECB
+.rotm3
      0ECB   A9 00      LDA #&00
      0ECD   38         SEC
      0ECE   ED 53 0C   SBC &0C53
@@ -2736,9 +2724,9 @@
      0EF3   A9 FE      LDA #&FE
      0EF5   9D 00 0C   STA &0C00,X
      0EF8   A9 FF      LDA #&FF
-.C0EFA
+.rotm4
      0EFA   9D 02 0C   STA &0C02,X
-.C0EFD
+.rotm5
      0EFD   E4 60      CPX &60
      0EFF   F0 18      BEQ &0F19
      0F01   A6 60      LDX &60
@@ -2751,29 +2739,26 @@
      0F11   8D 54 0C   STA &0C54
      0F14   85 75      STA &75
      0F16   4C 94 0E   JMP &0E94
-.C0F19
+.rotm6
      0F19   AD 0C 0C   LDA &0C0C
-.sub_C0F1C
      0F1C   10 08      BPL &0F26
      0F1E   A9 01      LDA #&01
      0F20   0D 00 0C   ORA &0C00
      0F23   8D 00 0C   STA &0C00
-.C0F26
+.rotm7
      0F26   AD 0C 0C   LDA &0C0C
      0F29   0A         ASL A
      0F2A   4D 0C 0C   EOR &0C0C
      0F2D   10 08      BPL &0F37
      0F2F   A9 01      LDA #&01
      0F31   0D 01 0C   ORA &0C01
-.sub_C0F34
      0F34   8D 01 0C   STA &0C01
-.C0F37
+.rotm8
      0F37   AE 3B 0F   LDX &0F3B
      0F3A   60         RTS
-.L0F3B
+.xStoreMatrix
      0F3B   00
-     0F3C   A9
-     0F3D   00
+     0F3C   A9 00      LDA #&00
 .GetAngleInRadians
      0F3E   06 74      ASL &74
      0F40   2A         ROL A
@@ -9118,7 +9103,7 @@
      3AF8   AD CA 0C   LDA &0CCA
      3AFB   85 64      STA &64
      3AFD   4C 89 38   JMP &3889
-.L3B00
+.arctanLo
      3B00   00
      3B01   29
      3B02   51
@@ -9376,7 +9361,7 @@
      3BFE   D7
      3BFF   EC
      3C00   00
-.L3C01
+.arctanHi
      3C01   00
      3C02   00
      3C03   00
@@ -14263,7 +14248,7 @@
      597D   00
      597E   00
      597F   00
-.L5980
+.sin
      5980   00
      5981   03
      5982   06

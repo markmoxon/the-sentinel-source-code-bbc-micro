@@ -1254,21 +1254,88 @@ L0BAB = L0B00+171
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ The first part of this routine is based on the Divide16x16 routine in Revs,
+\ Geoff Crammond's previous game, except it supports a divisor (V W) instead of
+\ (V 0), though only the top three bits of W are included in the calculation.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A T)               Unsigned integer
+\
+\   (V W)               Unsigned integer
+\
 \ ******************************************************************************
 
 .sub_C0D4A
 
- ASL T
- ROL A
- BCS C0D5B
+                        \ We start by calculating the following using a similar
+                        \ shift-and-subtract algorithm as Revs:
+                        \
+                        \   T = 256 * (A T) / (V W)
+                        \
+                        \ In Revs, W is assumed to be zero, so there is some
+                        \ extra code below to cater for non-zero values of W
+
+ ASL T                  \ Shift T left, which clears bit 0 of T, ready for us to
+                        \ start building the result in T at the same time as we
+                        \ shift the low byte of (A T) out to the left
+
+                        \ We now repeat the following seven-instruction block
+                        \ eight times, one for each bit in T
+
+ ROL A                  \ Shift the high byte of (A T) to the left to extract
+                        \ the next bit from the number being divided
+
+ BCS divd1              \ If we just shifted a 1 out of A, skip the next few
+                        \ instructions and jump straight to the subtraction
+
+ CMP V                  \ If A < V then jump to divd2 with the C flag clear, so
+ BCC divd2              \ we shift a 0 into the result in T
+
+                        \ This part of the routine has been added to the Revs
+                        \ algorithm to cater for W potentially being non-zero
+
+ BNE divd1              \ If A > V then jump to divd2 with the C flag set, so
+                        \ we shift a 1 into the result in T
+
+                        \ If we get here then A = V
+
+ LDY T                  \ If T < W then jump to divd2 with the C flag clear, so
+ CPY W                  \ we shift a 0 into the result in T
+ BCC divd2
+
+.divd1
+
+                        \ If we get here then T >= W
+
+ STA U
+ LDA T
+ SBC W
+ STA T
+ LDA U
+
+ SBC V                  \ A >= V, so set A = A - V and set the C flag so we
+ SEC                    \ shift a 1 into the result in T
+
+.divd2
+
+ ROL T                  \ Shift the result in T to the left, pulling the C flag
+                        \ into bit 0
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 1
+ BCS divd3
  CMP V
- BCC C0D68
- BNE C0D5B
+ BCC divd4
+ BNE divd3
  LDY T
  CPY W
- BCC C0D68
+ BCC divd4
 
-.C0D5B
+.divd3
 
  STA U
  LDA T
@@ -1278,19 +1345,20 @@ L0BAB = L0B00+171
  SBC V
  SEC
 
-.C0D68
+.divd4
 
  ROL T
- ROL A
- BCS C0D79
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 2
+ BCS divd5
  CMP V
- BCC C0D86
- BNE C0D79
+ BCC divd6
+ BNE divd5
  LDY T
  CPY W
- BCC C0D86
+ BCC divd6
 
-.C0D79
+.divd5
 
  STA U
  LDA T
@@ -1300,110 +1368,59 @@ L0BAB = L0B00+171
  SBC V
  SEC
 
-.C0D86
-
- ROL T
- ROL A
- BCS C0D97
- CMP V
- BCC C0DA4
- BNE C0D97
- LDY T
- CPY W
- BCC C0DA4
-
-.C0D97
-
- STA U
- LDA T
- SBC W
- STA T
- LDA U
- SBC V
- SEC
-
-.C0DA4
+.divd6
 
  PHP
  CMP V
  BEQ C0E10
  ASL T
- ROL A
- BCS C0DB2
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 3
+ BCS P%+6
  CMP V
- BCC C0DB5
-
-.C0DB2
-
+ BCC P%+5
  SBC V
  SEC
-
-.C0DB5
-
  ROL T
- ROL A
- BCS C0DBE
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 4
+ BCS P%+6
  CMP V
- BCC C0DC1
-
-.C0DBE
-
+ BCC P%+5
  SBC V
  SEC
-
-.C0DC1
-
  ROL T
- ROL A
- BCS C0DCA
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 5
+ BCS P%+6
  CMP V
- BCC C0DCD
-
-.C0DCA
-
+ BCC P%+5
  SBC V
  SEC
-
-.C0DCD
-
  ROL T
- ROL A
- BCS C0DD6
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 6
+ BCS P%+6
  CMP V
- BCC C0DD9
-
-.C0DD6
-
+ BCC P%+5
  SBC V
  SEC
-
-.C0DD9
-
  ROL T
- ROL A
- BCS C0DE2
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 7
+ BCS P%+6
  CMP V
- BCC C0DE5
-
-.C0DE2
-
+ BCC P%+5
  SBC V
  SEC
-
-.C0DE5
-
  ROL T
- ROL A
- BCS C0DEE
+
+ ROL A                  \ Repeat the shift-and-subtract loop for bit 8
+ BCS P%+6
  CMP V
- BCC C0DF1
-
-.C0DEE
-
+ BCC P%+5
  SBC V
  SEC
-
-.C0DF1
 
  ROR G
  ROL A
@@ -1413,6 +1430,7 @@ L0BAB = L0B00+171
 .C0DF8
 
  ROR G
+
  LDA T
 
 .C0DFC
