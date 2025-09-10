@@ -195,7 +195,7 @@ L007A                = &007A
 L007B                = &007B
 L007C                = &007C
 L007D                = &007D
-L007E                = &007E
+angleTangent         = &007E
 L007F                = &007F
 L0080                = &0080
 L0081                = &0081
@@ -205,8 +205,8 @@ L0084                = &0084
 L0085                = &0085
 L0086                = &0086
 L0088                = &0088
-L008A                = &008A
-L008B                = &008B
+angleLo              = &008A
+angleHi              = &008B
 L008D                = &008D
 L008E                = &008E
 L008F                = &008F
@@ -1115,14 +1115,14 @@ L0BAB = L0B00+171
 
 \ ******************************************************************************
 \
-\       Name: NMI
+\       Name: NMIHandler
 \       Type: Subroutine
 \   Category: Setup
 \    Summary: The NMI handler at the start of the NMI workspace
 \
 \ ******************************************************************************
 
-.NMI
+.NMIHandler
 
  RTI                    \ This is the address of the current NMI handler, at
                         \ the start of the NMI workspace at address &0D00
@@ -1249,10 +1249,11 @@ L0BAB = L0B00+171
 
 \ ******************************************************************************
 \
-\       Name: sub_C0D4A
+\       Name: GetAngleFromCoords (Part 1 of 3)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Given the coordinates along two axes, calculate the pitch or yaw
+\             angle to those coordinates
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1260,25 +1261,40 @@ L0BAB = L0B00+171
 \ Geoff Crammond's previous game, except it supports a divisor (V W) instead of
 \ (V 0), though only the top three bits of W are included in the calculation.
 \
+\ The calculation is as follows:
+\
+\   (angleHi angleLo) = arctan( (A T) / (V W) )
+\
+\ where (A T) < (V W).
+\
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   (A T)               Unsigned integer
+\   (A T)               First coordinate as an unsigned integer
 \
-\   (V W)               Unsigned integer
+\   (V W)               Second coordinate as an unsigned integer
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   (angleHi angleLo)   The pitch or yaw angle from the origin to the coordinate
+\
+\   angleTangent        Contains 256 * (A T) / (V W), which is the tangent of
+\                       the pitch or yaw angle
 \
 \ ******************************************************************************
 
-.sub_C0D4A
+.GetAngleFromCoords
 
                         \ We start by calculating the following using a similar
                         \ shift-and-subtract algorithm as Revs:
                         \
                         \   T = 256 * (A T) / (V W)
                         \
-                        \ In Revs, W is assumed to be zero, so there is some
-                        \ extra code below to cater for non-zero values of W
+                        \ In Revs, W is always zero, so there is some extra code
+                        \ below to cater for a full 16-bit value in (V W)
 
  ASL T                  \ Shift T left, which clears bit 0 of T, ready for us to
                         \ start building the result in T at the same time as we
@@ -1290,54 +1306,65 @@ L0BAB = L0B00+171
  ROL A                  \ Shift the high byte of (A T) to the left to extract
                         \ the next bit from the number being divided
 
- BCS divd1              \ If we just shifted a 1 out of A, skip the next few
+ BCS gang1              \ If we just shifted a 1 out of A, skip the next few
                         \ instructions and jump straight to the subtraction
 
- CMP V                  \ If A < V then jump to divd2 with the C flag clear, so
- BCC divd2              \ we shift a 0 into the result in T
+ CMP V                  \ If A < V then jump to gang2 with the C flag clear, so
+ BCC gang2              \ we shift a 0 into the result in T
 
                         \ This part of the routine has been added to the Revs
-                        \ algorithm to cater for W potentially being non-zero
+                        \ algorithm to cater for both arguments being full
+                        \ 16-bit values (in Revs the second value always has a
+                        \ low byte of zero)
 
- BNE divd1              \ If A > V then jump to divd2 with the C flag set, so
-                        \ we shift a 1 into the result in T
+ BNE gang1              \ If A > V then jump to gang1 to calculate a full 16-bit
+                        \ subtraction
 
                         \ If we get here then A = V
 
- LDY T                  \ If T < W then jump to divd2 with the C flag clear, so
+ LDY T                  \ If T < W then jump to gang2 with the C flag clear, so
  CPY W                  \ we shift a 0 into the result in T
- BCC divd2
+ BCC gang2
 
-.divd1
+.gang1
 
-                        \ If we get here then T >= W
+                        \ If we get here then T >= W and A >= V, so we know that
+                        \ (A T) >= (V W)
+                        \
+                        \ We now calculate (A T) - (V W) as the subtraction part
+                        \ of the shift-and-subtract algorithm
 
- STA U
- LDA T
- SBC W
- STA T
- LDA U
+ STA U                  \ Store A in U so we can retrieve it after the following
+                        \ calculation
 
- SBC V                  \ A >= V, so set A = A - V and set the C flag so we
- SEC                    \ shift a 1 into the result in T
+ LDA T                  \ Subtract the low bytes as T = T - W
+ SBC W                  \
+ STA T                  \ This calculation works as we know the C flag is set,
+                        \ as we passed through a BCC above
 
-.divd2
+ LDA U                  \ Restore the value of A from before the subtraction
+
+ SBC V                  \ Subtract the high bytes as A = A - V
+
+ SEC                    \ Set the C flag so we shift a 1 into into the result in T
+
+.gang2
 
  ROL T                  \ Shift the result in T to the left, pulling the C flag
                         \ into bit 0
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 1
- BCS divd3
+ ROL A                  \ Repeat the 16-bit shift-and-subtract loop for the
+ BCS gang3              \ second shift
  CMP V
- BCC divd4
- BNE divd3
+ BCC gang4
+ BNE gang3
  LDY T
  CPY W
- BCC divd4
+ BCC gang4
 
-.divd3
+.gang3
 
- STA U
+ STA U                  \ Repeat the 16-bit subtraction for the second shift
  LDA T
  SBC W
  STA T
@@ -1345,22 +1372,22 @@ L0BAB = L0B00+171
  SBC V
  SEC
 
-.divd4
+.gang4
 
- ROL T
+ ROL T                  \ Shift the result for the second shift into T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 2
- BCS divd5
+ ROL A                  \ Repeat the 16-bit shift-and-subtract loop for the
+ BCS gang5              \ third shift
  CMP V
- BCC divd6
- BNE divd5
+ BCC gang6
+ BNE gang5
  LDY T
  CPY W
- BCC divd6
+ BCC gang6
 
-.divd5
+.gang5
 
- STA U
+ STA U                  \ Repeat the 16-bit subtraction for the third shift
  LDA T
  SBC W
  STA T
@@ -1368,14 +1395,31 @@ L0BAB = L0B00+171
  SBC V
  SEC
 
-.divd6
+.gang6
 
- PHP
+ PHP                    \ Store the C flag on the stack, so the stack contains
+                        \ the result bit from shifting and subtracting the third
+                        \ shift
+
+ CMP V                  \ If A = V then jump to gang10 with the C flag set, as
+ BEQ gang10             \ we can skip the rest of the shifts and still get a
+                        \ good result ???
+
+ ASL T                  \ Shift a zero for the third shift into T, so bit 5 of
+                        \ the result is always clear
+                        \
+                        \ We do this so we can set this bit later, depending on
+                        \ the value that we stored on the stack above
+
+ ROL A                  \ Repeat the shift-and-subtract loop for the fourth
+ BCS P%+6               \ shift
  CMP V
- BEQ C0E10
- ASL T
+ BCC P%+5
+ SBC V
+ SEC
+ ROL T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 3
+ ROL A                  \ Repeat the shift-and-subtract loop for the fifth shift
  BCS P%+6
  CMP V
  BCC P%+5
@@ -1383,7 +1427,7 @@ L0BAB = L0B00+171
  SEC
  ROL T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 4
+ ROL A                  \ Repeat the shift-and-subtract loop for the sixth shift
  BCS P%+6
  CMP V
  BCC P%+5
@@ -1391,133 +1435,242 @@ L0BAB = L0B00+171
  SEC
  ROL T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 5
- BCS P%+6
+ ROL A                  \ Repeat the shift-and-subtract loop for the seventh
+ BCS P%+6               \ shift
  CMP V
  BCC P%+5
  SBC V
  SEC
  ROL T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 6
- BCS P%+6
+ ROL A                  \ Repeat the shift-and-subtract loop for the eighth
+ BCS P%+6               \ shift
  CMP V
  BCC P%+5
  SBC V
  SEC
  ROL T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 7
- BCS P%+6
+                        \ We now have the division result that we want:
+                        \
+                        \   T = 256 * (A T) / (V W)
+                        \
+                        \
+                        \ but with bit 5 clear rather than the actual result
+                        \
+                        \ This result can be used to look up the resulting angle
+                        \ from the arctangent table, but first we continue the
+                        \ division to enable us to improve accuracy
+
+\ ******************************************************************************
+\
+\       Name: GetAngleFromCoords (Part 2 of 3)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Overflow and accuracy calculations
+\
+\ ******************************************************************************
+
+                        \ We now do two more shift-and-subtracts to see if we
+                        \ can make the result more accurate
+
+ ROL A                  \ Repeat the shift-and-subtract loop for the ninth
+ BCS P%+6               \ shift, but without updating the result in T
  CMP V
  BCC P%+5
  SBC V
  SEC
- ROL T
 
- ROL A                  \ Repeat the shift-and-subtract loop for bit 8
- BCS P%+6
- CMP V
- BCC P%+5
- SBC V
- SEC
+ ROR G                  \ Shift the carry into bit 7 of G, so it contains the
+                        \ result from shifting and subtracting bit 8
 
- ROR G
- ROL A
- BCS C0DF8
- CMP V
+ ROL A                  \ Repeat the shift-and-subtract loop for the tenth
+ BCS gang7              \ shift, but without subtracting or updating the result
+ CMP V                  \ in T
 
-.C0DF8
+.gang7
 
- ROR G
+ ROR G                  \ Shift the carry into bit 7 of G, so it contains the
+                        \ result from shifting and subtracting the tenth shift,
+                        \ and the result from the ninth shift is now in bit 6
+                        \ of G
+                        \
+                        \ So G now contains two results bits as follows:
+                        \
+                        \   * Bit 6 is the first extra bit from the result
+                        \
+                        \   * Bit 7 is the second extra bit from the result
+                        \
+                        \ We use these below to work out whether to interpolate
+                        \ results from the arctan lookup table, to improve the
+                        \ accuracy of the result
 
- LDA T
+ LDA T                  \ Set A to the result of the division we did above, so
+                        \ we now have the following:
+                        \
+                        \   A = 256 * (A T) / (V W)
+                        \
+                        \ but with bit 5 clear rather than the actual result
+                        \ and the next two result bits in bits 6 and 7 of Q
 
-.C0DFC
+.gang8
 
- PLP
- BCC C0E01
- ADC #&1F
+                        \ We now use the result of the third shift of the
+                        \ shift-and-subtract calculation to set bit 5 in the
+                        \ result, which we cleared in the calculation above
 
-.C0E01
+ PLP                    \ Retrieve the result bit from the third shift, which
+                        \ we stored on the stack in part 1
+                        \
+                        \ This bit repesents the third bit pushed into the
+                        \ result, so that's what should be bit 5 of the result
+                        \
+                        \ It is now in the C flag (because it was in the C flag
+                        \ when we performed the PHP to push it onto the stack)
 
- BCC C0E1F
- LDA #&FF
- STA L007E
- LDA #0
- STA L008A
- LDA #&20
- STA L008B
- RTS
+ BCC gang9              \ If the C flag is clear then bit 5 should remain clear,
+                        \ so skip the following
 
-.C0E10
+                        \ Otherwise bit 5 of the result should be set, so we can
+                        \ do that with the following addition (as the C flsg is
+                        \ set)
 
- LDA #0
- STA G
- ROR T
+ ADC #&1F               \ Set A = A + &1F + C
+                        \       = A + &20
+                        \       = A + %00100000
+                        \
+                        \ So this sets bit 5 of the result in A, as we know bit
+                        \ 5 was clear before the addition
+
+.gang9
+
+ BCC gang11             \ If the above addition was skipped, or it was applied
+                        \ and didn't overflow, then jump to gang11 to continue
+                        \ with the calculation
+
+                        \ If we get here then the above addition overflowed
+
+ LDA #&FF               \ Set angleTangent = 255
+ STA angleTangent
+
+ LDA #&00               \ Set (angleHi angleLo) = (&20 0)
+ STA angleLo            \
+ LDA #&20               \ This represents an angle of 45 degrees, as a full
+ STA angleHi            \ circle of 360 degrees is represented by (1 0 0), and:
+                        \
+                        \   360 degrees / 8 = 45
+                        \
+                        \   256 / 8 = &20
+
+ RTS                    \ Return from the subroutine
+
+.gang10
+
+                        \ If we get here then we have stopped shifting and
+                        \ subtracting after just three shifts
+                        \
+                        \ We stored the first two shifts in T, but didn't store
+                        \ the third shift in T
+
+ LDA #0                 \ Clear bits 6 and 7 of G to indicate that the result is
+ STA G                  \ in the first quadrant
+
+ ROR T                  \ Set A to the bottom two bits of T, which is the same
+ ROR A                  \ result as if we had shifted T left through the rest of
+ ROR T                  \ the shift-and-subtract process that we've skipped
  ROR A
- ROR T
- ROR A
- ORA #&20
- JMP C0DFC
 
-.C0E1F
+ ORA #%00100000         \ Set bit 5 of the result in A ???
+                        \
+                        \ So we now have the result of the division in A
 
- TAY
- STA L007E
- LDA arctanLo,Y
- STA L008A
+ JMP gang8              \ Jump to gang8 to continue the processing from the end
+                        \ of the division process
+
+\ ******************************************************************************
+\
+\       Name: GetAngleFromCoords (Part 3 of 3)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Calculate arctan ???
+\
+\ ******************************************************************************
+
+.gang11
+
+                        \ By this point we have calculated the following:
+                        \
+                        \   A = 256 * (A T) / (V W)
+                        \
+                        \ so now we calculate arctan(A)
+
+ TAY                    \ Set Y to the value of A so we can use it as an index
+                        \ into the arctan tables
+
+ STA angleTangent       \ Set angleTangent = 256 * (A T) / (V W)
+                        \
+                        \ So we return the tangent from the routine in
+                        \ angleTangent
+
+ LDA arctanLo,Y         \ Set (angleHi angleLo) = arctan(A)
+ STA angleLo
  LDA arctanHi,Y
- STA L008B
- BIT G
- BMI C0E35
- BVS C0E50
- JMP CRE01
+ STA angleHi
 
-.C0E35
+ BIT G                  \ If bit 7 of G is set, jump to gang12
+ BMI gang12
 
- LDA L008A
+ BVS gang14             \ If bit 7 of G is clear and bit 6 of G is set, jump to
+                        \ gang14
+
+ JMP gang16             \ Otherwise both bit 7 and bit 6 of G must be clear, so
+                        \ jump to gang16 to return from the subroutine, as the
+                        \ result in (angleHi angleLo) is already correct
+
+.gang12
+
+ LDA angleLo
  SEC
  SBC arctanLo+1,Y
  STA T
- LDA L008B
+ LDA angleHi
  SBC arctanHi+1,Y
  BIT G
- BVC C0E49
+ BVC gang13
  JSR Negate16Bit
 
-.C0E49
+.gang13
 
  STA U
  ROL A
  ROR U
  ROR T
 
-.C0E50
+.gang14
 
- LDA L008A
+ LDA angleLo
  CLC
  ADC arctanLo+1,Y
- STA L008A
- LDA L008B
+ STA angleLo
+ LDA angleHi
  ADC arctanHi+1,Y
- STA L008B
+ STA angleHi
  BIT G
- BPL C0E70
- LDA L008A
+ BPL gang15
+ LDA angleLo
  CLC
  ADC T
- STA L008A
- LDA L008B
+ STA angleLo
+ LDA angleHi
  ADC U
- STA L008B
+ STA angleHi
 
-.C0E70
+.gang15
 
- LSR L008B
- ROR L008A
+ LSR angleHi
+ ROR angleLo
 
-.CRE01
+.gang16
 
  RTS
 
@@ -1596,10 +1749,10 @@ L0BAB = L0B00+171
                         \
                         \   * -128 to -65 (%10000000 to %10111111)
                         \
-                        \ The degree system in Revs looks like this:
+                        \ The degree system in the Sentinel looks like this:
                         \
                         \            0
-                        \      -32   |   +32         Overhead view of car
+                        \      -32   |   +32         Overhead view of player
                         \         \  |  /
                         \          \ | /             0 = looking straight ahead
                         \           \|/              +64 = looking sharp right
@@ -1973,10 +2126,10 @@ L0BAB = L0B00+171
 
                         \ If we get here then playerYawAngle is negative
                         \
-                        \ The degree system in Revs looks like this:
+                        \ The degree system in the Sentinel looks like this:
                         \
                         \            0
-                        \      -32   |   +32         Overhead view of car
+                        \      -32   |   +32         Overhead view of player
                         \         \  |  /
                         \          \ | /             0 = looking straight ahead
                         \           \|/              +64 = looking sharp right
@@ -2009,10 +2162,10 @@ L0BAB = L0B00+171
                         \
                         \   * -128 to -65 (%10000000 to %10111111)
                         \
-                        \ The degree system in Revs looks like this:
+                        \ The degree system in the Sentinel looks like this:
                         \
                         \            0
-                        \      -32   |   +32         Overhead view of car
+                        \      -32   |   +32         Overhead view of player
                         \         \  |  /
                         \          \ | /             0 = looking straight ahead
                         \           \|/              +64 = looking sharp right
@@ -2070,7 +2223,7 @@ L0BAB = L0B00+171
 \
 \ Arguments:
 \
-\   (A T)               A yaw angle in Revs format (-128 to +127)
+\   (A T)               A yaw angle (-128 to +127)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2090,10 +2243,10 @@ L0BAB = L0B00+171
  ASL T                  \ This shift multiplies (A T) by four, removing bits 6
  ROL A                  \ and 7 in the process
  STA V                  \
-                        \ The degree system in Revs looks like this:
+                        \ The degree system in the Sentinel looks like this:
                         \
                         \            0
-                        \      -32   |   +32         Overhead view of car
+                        \      -32   |   +32         Overhead view of player
                         \         \  |  /
                         \          \ | /             0 = looking straight ahead
                         \           \|/              +64 = looking sharp right
@@ -2256,7 +2409,7 @@ L0BAB = L0B00+171
 \
 \       Name: sub_C0F70
 \       Type: Subroutine
-\   Category: ???
+\   Category: Maths (Geometry)
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -4510,9 +4663,9 @@ L1145 = C1144+1
  ADC T
  CMP L0C68
  BCS C1912
- LDA L008A
+ LDA angleLo
  STA L003D
- LDA L008B
+ LDA angleHi
  STA L003E
  LDA #&02
  STA L001E
@@ -4527,10 +4680,10 @@ L1145 = C1144+1
 .C18E1
 
  JSR sub_C561D
- LDA L008A
+ LDA angleLo
  STA L003F
  STA T
- LDA L008B
+ LDA angleHi
  STA L0040
  JSR sub_C1C43
  JSR sub_C1CCC
@@ -6167,10 +6320,10 @@ L1145 = C1144+1
  JSR sub_C561D
  LDA L0C59
  SEC
- SBC L008A
+ SBC angleLo
  STA T
  LDA L0C57
- SBC L008B
+ SBC angleHi
  BPL C20CC
  LDA #0
  BEQ C20D3
@@ -6187,10 +6340,10 @@ L1145 = C1144+1
  STA L0C62
  LDA L0C59
  CLC
- ADC L008A
+ ADC angleLo
  STA T
  LDA L0C57
- ADC L008B
+ ADC angleHi
  BMI C2105
  ASL T
  ROL A
@@ -7807,11 +7960,11 @@ L23E3 = C23E2+1
  STA L0085
  JSR sub_C5567
  LDY L0021
- LDA L008A
+ LDA angleLo
  SEC
  SBC L001F
  STA L0BA0,Y
- LDA L008B
+ LDA angleHi
  SBC L0020
  STA L5500,Y
  JSR sub_C565F
@@ -12159,7 +12312,7 @@ L314A = C3148+2
 
  FOR I%, 0, 256
 
-  EQUB LO(INT(0.5 + 32* ATN(I% / 256) * 256 / ATN(1)))
+  EQUB LO(INT(0.5 + 32 * ATN(I% / 256) * 256 / ATN(1)))
 
  NEXT
 
@@ -12176,7 +12329,7 @@ L314A = C3148+2
 
  FOR I%, 0, 256
 
-  EQUB HI(INT(0.5 + 32* ATN(I% / 256) * 256 / ATN(1)))
+  EQUB HI(INT(0.5 + 32 * ATN(I% / 256) * 256 / ATN(1)))
 
  NEXT
 
@@ -13255,9 +13408,9 @@ L49C1                = &49C1
 
 .sub_C5560
 
- STA L007E
- STA L008A
- STA L008B
+ STA angleTangent
+ STA angleLo
+ STA angleHi
  RTS
 
 \ ******************************************************************************
@@ -13325,17 +13478,17 @@ L49C1                = &49C1
  AND #&FC
  STA W
  LDA L0085
- JSR sub_C0D4A
+ JSR GetAngleFromCoords
  LDA L0086
  EOR L0088
  BMI C55D1
  LDA #0
  SEC
- SBC L008A
- STA L008A
+ SBC angleLo
+ STA angleLo
  LDA #0
- SBC L008B
- STA L008B
+ SBC angleHi
+ STA angleHi
 
 .C55D1
 
@@ -13347,8 +13500,8 @@ L49C1                = &49C1
 .C55D9
 
  CLC
- ADC L008B
- STA L008B
+ ADC angleHi
+ STA angleHi
  RTS
 
 .P55DF
@@ -13370,17 +13523,17 @@ L49C1                = &49C1
  AND #&FC
  STA W
  LDA L0083
- JSR sub_C0D4A
+ JSR GetAngleFromCoords
  LDA L0086
  EOR L0088
  BPL C560F
  LDA #0
  SEC
- SBC L008A
- STA L008A
+ SBC angleLo
+ STA angleLo
  LDA #0
- SBC L008B
- STA L008B
+ SBC angleHi
+ STA angleHi
 
 .C560F
 
@@ -13392,8 +13545,8 @@ L49C1                = &49C1
 .C5617
 
  CLC
- ADC L008B
- STA L008B
+ ADC angleHi
+ STA angleHi
  RTS
 
 \ ******************************************************************************
@@ -13427,11 +13580,11 @@ L49C1                = &49C1
  LDA #0
  STA L0088
  JSR sub_C5567
- LDA L008A
+ LDA angleLo
  SEC
  SBC #&20
  STA L0050
- LDA L008B
+ LDA angleHi
  SBC L0140,X
  PHP
  LSR A
@@ -13463,7 +13616,7 @@ L49C1                = &49C1
 .sub_C565F
 
  STY L568D
- LDA L007E
+ LDA angleTangent
  LSR A
  ADC #&00
  TAY
@@ -14173,11 +14326,11 @@ L5BA0 = L5B00+160
  JSR sub_C5DF5
  JSR sub_C5567
  LDX L006E
- LDA L008A
+ LDA angleLo
  SEC
  SBC L001F
  STA L0C59
- LDA L008B
+ LDA angleHi
  SBC L09C0,X
  CLC
  ADC #&0A
@@ -14185,10 +14338,10 @@ L5BA0 = L5B00+160
  LDY L006F
  LDA #0
  SEC
- SBC L008A
+ SBC angleLo
  STA L0059
  LDA L09C0,Y
- SBC L008B
+ SBC angleHi
  STA L005A
  JSR sub_C565F
  LDA L140F
@@ -14293,11 +14446,11 @@ L5BA0 = L5B00+160
  STA L0086
  JSR sub_C5567
  LDY L0021
- LDA L008A
+ LDA angleLo
  CLC
  ADC L0C59
  STA L0BA0,Y
- LDA L008B
+ LDA angleHi
  ADC L0C57
  STA L5500,Y
  JSR sub_C565F
