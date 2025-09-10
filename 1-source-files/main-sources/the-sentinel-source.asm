@@ -165,7 +165,7 @@ L005C                = &005C
 L005D                = &005D
 L005E                = &005E
 L005F                = &005F
-L0060                = &0060
+secondAxis           = &0060
 L0061                = &0061
 L0062                = &0062
 L0063                = &0063
@@ -594,15 +594,15 @@ L0BAB = L0B00+171
 \
 \ ******************************************************************************
 
-.L0C00
+.sinYawAngleLo
 
  EQUB &00
 
-.L0C01
+.cosYawAngleLo
 
  EQUB &00
 
-.L0C02
+.sinYawAngleHi
 
  EQUB &00, &00
 
@@ -634,7 +634,7 @@ L0BAB = L0B00+171
 
  EQUB &00, &00
 
-.L0C0C
+.J
 
  EQUB &00
 
@@ -764,11 +764,11 @@ L0BAB = L0B00+171
 
  EQUB &00
 
-.L0C53
+.G2
 
  EQUB &00
 
-.L0C54
+.H2
 
  EQUB &00, &00
 
@@ -1157,6 +1157,8 @@ L0BAB = L0B00+171
 \
 \   (A T) = A * U
 \
+\ This routine is from Revs, Geoff Crammond's previous game.
+\
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
@@ -1503,167 +1505,535 @@ L0BAB = L0B00+171
 
 \ ******************************************************************************
 \
-\       Name: sub_C0E75
+\       Name: GetRotationMatrix (Part 1 of 5)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate the rotation matrix for rotating the player's yaw angle
+\             into the global 3D coordinate system
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates the following:
+\
+\   sinYawAngle = sin(playerYawAngle)
+\   cosYawAngle = cos(playerYawAngle)
+\
+\ We can use these to create a rotation matrix that rotates the yaw angle from
+\ the player's frame of reference into the global 3D coordinate system.
+\
+\ This routine is from Revs, Geoff Crammond's previous game. There are only
+\ minor differences: the argument is (A T) instead of (A X), and the value of X
+\ is preserved. Note that to avoid clashing names, the variables G and H have
+\ been renamed to G2 and H2, but the routine is otherwise the same.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A T)               Player yaw angle in (playerYawAngleHi playerYawAngleLo)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   X is preserved
 \
 \ ******************************************************************************
 
-.sub_C0E75
+.GetRotationMatrix
 
- STA L0C0C
- STX L0F3B
- JSR GetAngleInRadians
- STA L0C53
- LDA U
- STA L0C54
- LDX #&01
- STX L0060
+ STA J                  \ Set (J T) = (A T)
+                        \           = playerYawAngle
+
+ STX xStoreMatrix       \ Store X in xStoreMatrix so it can be preserved across
+                        \ calls to the routine
+
+ JSR GetAngleInRadians  \ Set (U A) to the playerYawAngle, reduced to a quarter
+                        \ circle, converted to radians, and halved
+                        \
+                        \ Let's call this yawRadians / 2, where yawRadians is
+                        \ the reduced player yaw angle in radians
+
+ STA G2                 \ Set (U G) = (U A) = yawRadians / 2
+
+ LDA U                  \ Set (A G) = (U G) = yawRadians / 2
+
+ STA H2                 \ Set (H G) = (A G) = yawRadians / 2
+
+                        \ So we now have:
+                        \
+                        \   (H G) = (A G) = (U G) = yawRadians / 2
+                        \
+                        \ This is the angle vector that we now project onto the
+                        \ x- and z-axes of the world 3D coordinate system
+
+ LDX #1                 \ Set X = 0 and secondAxis = 1, so we project sin(H G)
+ STX secondAxis         \ into sinYawAngle and cos(H G) into cosYawAngle
  LDX #0
- BIT L0C0C
- BVC C0E94
- INX
- DEC L0060
 
-.C0E94
+ BIT J                  \ If bit 6 of J is clear, then playerYawAngle is in one
+ BVC rotm1              \ of these ranges:
+                        \
+                        \   * 0 to 63 (%00000000 to %00111111)
+                        \
+                        \   * -128 to -65 (%10000000 to %10111111)
+                        \
+                        \ The degree system in Revs looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of car
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ So playerYawAngle is in the top-right or bottom-left
+                        \ quarter in the above diagram
+                        \
+                        \ In both cases we jump to rotm1 to set sinYawAngle and
+                        \ cosYawAngle
 
- CMP #&7A
- BCC C0EA1
- BCS C0ECB
+                        \ If we get here then bit 6 of J is set, so
+                        \ playerYawAngle is in one of these ranges:
+                        \
+                        \   * 64 to 127 (%01000000 to %01111111)
+                        \
+                        \   * -64 to -1 (%11000000 to %11111111)
+                        \
+                        \ So playerYawAngle is in the bottom-right or top-left
+                        \ quarter in the above diagram
+                        \
+                        \ In both cases we set the variables the other way
+                        \ round, as the triangle we draw to calculate the angle
+                        \ is the opposite way round (i.e. it's reflected in the
+                        \ x-axis or y-axis)
 
- LDA L0C53
- CMP #&F0
- BCS C0ECB
+ INX                    \ Set X = 1 and secondAxis = 0, so we project sin(H G)
+ DEC secondAxis         \ into cosYawAngle and cos(H G) into sinYawAngle
 
-.C0EA1
+                        \ We now enter a loop that sets sinYawAngle + X to
+                        \ sin(H G) on the first iteration, and sets
+                        \ sinYawAngle + secondAxis to cos(H G) on the second
+                        \ iteration
+                        \
+                        \ The commentary is for the sin(H G) iteration, see the
+                        \ end of the loop for details of how the second
+                        \ iteration calculates cos(H G) instead
 
- LDA #&AB
- JSR Multiply8x8
- JSR Multiply8x8
- STA V
- JSR Multiply8x16
- LDA L0C53
- SEC
- SBC T
- STA T
- LDA L0C54
+.rotm1
+
+                        \ If we get here, then we are set up to calculate the
+                        \ following:
+                        \
+                        \   * If playerYawAngle is top-right or bottom-left:
+                        \
+                        \     sinYawAngle = sin(playerYawAngle)
+                        \     cosYawAngle = cos(playerYawAngle)
+                        \
+                        \   * If playerYawAngle is bottom-right or top-left:
+                        \
+                        \     sinYawAngle = cos(playerYawAngle)
+                        \     cosYawAngle = sin(playerYawAngle)
+                        \
+                        \ In each case, the calculation gives us the correct
+                        \ coordinate, as the second set of results uses angles
+                        \ that are "reflected" in the x-axis or y-axis by the
+                        \ capping process in the GetAngleInRadians routine
+
+ CMP #122               \ If A < 122, i.e. U < 122 and H < 122, jump to rotm2
+ BCC rotm2              \ to calculate sin(H G) for smaller angles
+
+ BCS rotm3              \ Jump to rotm3 to calculate sin(H G) for larger angles
+                        \ (this BCS is effectively a JMP as we just passed
+                        \ through a BCS)
+
+ LDA G2                 \ It doesn't look like this code is ever reached, so
+ CMP #240               \ presumably it's left over from development
+ BCS rotm3
+
+\ ******************************************************************************
+\
+\       Name: GetRotationMatrix (Part 2 of 5)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Calculate sin(H G) for smaller angles
+\
+\ ******************************************************************************
+
+.rotm2
+
+                        \ If we get here then (U G) = yawRadians / 2 and U < 122
+
+ LDA #171               \ Set A = 171
+
+ JSR Multiply8x8        \ Set (A T) = (A * U) * U
+ JSR Multiply8x8        \           = A * U^2
+                        \           = 171 * (yawRadians / 2)^2
+
+ STA V                  \ Set (V T) = (A T)
+                        \           = 171 * (yawRadians / 2)^2
+
+ JSR Multiply8x16       \ Set (U T) = U * (V T) / 256
+                        \           = (171 / 256) * (yawRadians / 2)^3
+                        \           = 2/3 * (yawRadians / 2)^3
+
+ LDA G2                 \ Set (A T) = (H G) - (U T)
+ SEC                    \           = yawRadians / 2 - 2/3 * (yawRadians / 2)^3
+ SBC T                  \
+ STA T                  \ starting with the low bytes
+
+ LDA H2                 \ And then the high bytes
  SBC U
- ASL T
+
+ ASL T                  \ Set (A T) = (A T) * 2
  ROL A
- STA L0C02,X
- LDA T
- AND #&FE
- STA L0C00,X
- JMP C0EFD
 
-.C0ECB
+                        \ So we now have the following in (A T):
+                        \
+                        \     (yawRadians / 2 - 2/3 * (yawRadians / 2)^3) * 2
+                        \
+                        \   = yawRadians - 4/3 * (yawRadians / 2)^3
+                        \
+                        \   = yawRadians - 4/3 * yawRadians^3 / 2^3
+                        \
+                        \   = yawRadians - 8/6 * yawRadians^3 * 1/8
+                        \
+                        \   = yawRadians - 1/6 * yawRadians^3
+                        \
+                        \   = yawRadians - yawRadians^3 / 3!
+                        \
+                        \ The Taylor series expansion of sin(x) starts like
+                        \ this:
+                        \
+                        \   sin(x) = x - (x^3 / 3!) + (x^5 / 5!) - ...
+                        \
+                        \ If we take the first two parts of the series and
+                        \ apply them to yawRadians, we get:
+                        \
+                        \   sin(yawRadians) = yawRadians - (yawRadians^3 / 3!)
+                        \
+                        \ which is the same as our value in (A T)
+                        \
+                        \ So the value in (A T) is equal to the first two parts
+                        \ of the Taylor series, and we have effectively just
+                        \ calculated an approximation of this:
+                        \
+                        \   (A T) = sin(yawRadians)
 
- LDA #0
- SEC
- SBC L0C53
- STA T
- LDA #&C9
- SBC L0C54
+ STA sinYawAngleHi,X    \ Set (sinYawAngleHi sinYawAngleLo) = (A T)
+ LDA T                  \
+ AND #%11111110         \ with the sign bit cleared in bit 0 of sinYawAngleLo to
+ STA sinYawAngleLo,X    \ denote a positive result
+
+ JMP rotm5              \ Jump to rotm5 to move on to the next axis
+
+\ ******************************************************************************
+\
+\       Name: GetRotationMatrix (Part 3 of 5)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Calculate sin(H G) for bigger angles
+\
+\ ******************************************************************************
+
+.rotm3
+
+                        \ If we get here then (H G) = yawRadians / 2 and
+                        \ H >= 122
+
+                        \ PI is represented by 804, as 804 / 256 = 3.14, so 201
+                        \ represents PI/4, which we use in the following
+                        \ subtraction
+
+ LDA #0                 \ Set (U T) = (201 0) - (H G)
+ SEC                    \           = PI/4 - yawRadians / 2
+ SBC G2                 \
+ STA T                  \ starting with the low bytes
+
+ LDA #201               \ And then the high bytes
+ SBC H2
  STA U
- STA V
- JSR Multiply8x16
- ASL T
- ROL U
- LDA #0
- SEC
- SBC T
- AND #&FE
- STA L0C00,X
- LDA #0
+
+ STA V                  \ Set (V T) = (U T)
+                        \           = PI/4 - yawRadians / 2
+
+ JSR Multiply8x16       \ Set (U T) = U * (V T) / 256
+                        \           = U * (PI/4 - yawRadians / 2)
+                        \
+                        \ U is the high byte of (U T), which also contains
+                        \ PI/4 - yawRadians / 2, so this approximation holds
+                        \ true:
+                        \
+                        \   (U T) = U * (PI/4 - yawRadians / 2)
+                        \         =~ (PI/4 - yawRadians / 2) ^ 2
+
+ ASL T                  \ Set (U T) = (U T) * 2
+ ROL U                  \           = (PI/4 - yawRadians / 2) ^ 2 * 2
+
+                        \ By this point we have the following:
+                        \
+                        \   (U T) = (PI/4 - yawRadians / 2) ^ 2 * 2
+                        \         = ((PI/2 - yawRadians) / 2) ^ 2 * 2
+                        \
+                        \ If we define x = PI/2 - yawRadians, then we have:
+                        \
+                        \   (U T) = (x / 2) ^ 2 * 2
+                        \         = ((x ^ 2) / (2 ^ 2)) * 2
+                        \         = (x ^ 2) / 2
+                        \
+                        \ The small angle approximation states that for small
+                        \ values of x, the following approximation holds true:
+                        \
+                        \   cos(x) =~ 1 - (x ^ 2) / 2!
+                        \
+                        \ As yawRadians is large, this means x is small, so we
+                        \ can use this approximation
+                        \
+                        \ We are storing the cosine, which is in the range 0 to
+                        \ 1, in the 16-bit variable (U T), so in terms of 16-bit
+                        \ arithmetic, the 1 in the above equation is (1 0 0)
+                        \
+                        \ So this is the same as:
+                        \
+                        \   cos(x) =~ (1 0 0) - (x ^ 2) / 2!
+                        \          =  (1 0 0) - (U T)
+                        \
+                        \ It's a trigonometric identity that:
+                        \
+                        \   cos(PI/2 - x) = sin(x)
+                        \
+                        \ so we have:
+                        \
+                        \   cos(x) = cos(PI/2 - yawRadians)
+                        \          = sin(yawRadians)
+                        \
+                        \ and we already calculated that:
+                        \
+                        \   cos(x) =~ (1 0 0) - (U T)
+                        \
+                        \ so that means that:
+                        \
+                        \   sin(yawRadians) = cos(x)
+                        \                   =~ (1 0 0) - (U T)
+                        \
+                        \ So we just need to calculate (1 0 0) - (U T) to get
+                        \ our result
+
+ LDA #0                 \ Set A = (1 0 0) - (U T)
+ SEC                    \
+ SBC T                  \ starting with the low bytes
+
+ AND #%11111110         \ Which we store in sinYawAngleLo, with bit 0 cleared to
+ STA sinYawAngleLo,X    \ denote a positive result (as it's a sign-magnitude
+                        \ number we want to store)
+
+ LDA #0                 \ And then the high bytes
  SBC U
- BCC C0EFA
- LDA #&FE
- STA L0C00,X
- LDA #&FF
 
-.C0EFA
+ BCC rotm4              \ We now need to subtract the top bytes, i.e. the 1 in
+                        \ (1 0 0) and the 0 in (0 U T), while including the
+                        \ carry from the high byte subtraction
+                        \
+                        \ So the top byte should be:
+                        \
+                        \   A = 1 - 0 - (1 - C)
+                        \     = 1 - (1 - C)
+                        \     = C
+                        \
+                        \ If the C flag is clear, then that means the top byte
+                        \ is zero, so we already have a valid result from the
+                        \ high and low bytes, so we jump to rotm4 to store the
+                        \ high byte of the result in sinYawAngleHi
+                        \
+                        \ If the C flag is set, then the result is (1 A T), but
+                        \ the highest possible value for sin or cos is 1, so
+                        \ that's what we return
+                        \
+                        \ Because sinYawAngle is a sign-magnitude number with
+                        \ the sign bit in bit 0, we return the following value
+                        \ to represent the closest value to 1 that we can fit
+                        \ into 16 bits:
+                        \
+                        \   (11111111 11111110)
 
- STA L0C02,X
+ LDA #%11111110         \ Set sinYawAngleLo to the highest possible positive
+ STA sinYawAngleLo,X    \ value (i.e. all ones except for the sign in bit 0)
 
-.C0EFD
+ LDA #%11111111         \ Set A to the highest possible value of sinYawAngleHi,
+                        \ so we can store it in the next instruction
 
- CPX L0060
- BEQ C0F19
- LDX L0060
- LDA #0
- SEC
- SBC L0C53
- STA L0C53
- LDA #&C9
- SBC L0C54
- STA L0C54
- STA U
- JMP C0E94
+.rotm4
 
-.C0F19
-
- LDA L0C0C
+ STA sinYawAngleHi,X    \ Store A in the high byte in sinYawAngleHi
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F1C
+\       Name: GetRotationMatrix (Part 4 of 5)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Loop back to calculate cos instead of sin
 \
 \ ******************************************************************************
 
-.sub_C0F1C
+.rotm5
 
-L0F1D = sub_C0F1C+1
+ CPX secondAxis         \ If we just processed the second axis, then we have
+ BEQ rotm6              \ now set both sinYawAngle and cosYawAngle, so jump to
+                        \ rotm6 to set their signs
 
- BPL C0F26
- LDA #&01
- ORA L0C00
- STA L0C00
+ LDX secondAxis         \ Otherwise set X = secondAxis so the next time we reach
+                        \ the end of the loop, we take the BEQ branch we just
+                        \ passed through
 
-.C0F26
+ LDA #0                 \ Set (H G) = (201 0) - (H G)
+ SEC                    \
+ SBC G2                 \ starting with the low bytes
+ STA G2
 
- LDA L0C0C
- ASL A
- EOR L0C0C
- BPL C0F37
- LDA #&01
- ORA L0C01
+ LDA #201               \ And then the high bytes
+ SBC H2
+ STA H2
+
+ STA U                  \ Set (U G) = (H G)
+                        \
+                        \ (U G) and (H G) were set to yawRadians / 2 for the
+                        \ first pass through the loop above, so we now have the
+                        \ following:
+                        \
+                        \   201 - yawRadians / 2
+                        \
+                        \ PI is represented by 804, as 804 / 256 = 3.14, so 201
+                        \ represents PI/4, so this the same as:
+                        \
+                        \   PI/4 - yawRadians / 2
+                        \
+                        \ Given that we expect (U G) to contain half the angle
+                        \ we are projecting, this means we are going to find the
+                        \ sine of this angle when we jump back to rotm1:
+                        \
+                        \   PI/2 - yawRadians
+                        \
+                        \ It's a trigonometric identity that:
+                        \
+                        \   sin(PI/2 - x) = cos(x)
+                        \
+                        \ so jumping back will, in fact, find the cosine of the
+                        \ angle
+
+ JMP rotm1              \ Loop back to set the other variable of sinYawAngle and
+                        \ cosYawAngle to the cosine of the angle
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F34
+\       Name: GetRotationMatrix (Part 5 of 5)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Apply the correct signs to the result
+\  Deep dive: The core driving model
 \
 \ ******************************************************************************
 
-.sub_C0F34
+.rotm6
 
-L0F36 = sub_C0F34+2
+                        \ By this point, we have the yaw angle vector's
+                        \ x-coordinate in sinYawAngle and the y-coordinate in
+                        \ cosYawAngle
+                        \
+                        \ The above calculations were done on an angle that was
+                        \ reduced to a quarter-circle, so now we need to add the
+                        \ correct signs according to which quarter-circle the
+                        \ original playerYawAngle in (J T) was in
 
- STA L0C01
+ LDA J                  \ If J is positive then playerYawAngle is positive (as
+ BPL rotm7              \ J contains playerYawAngleHi), so jump to rotm7 to skip
+                        \ the following
 
-.C0F37
+                        \ If we get here then playerYawAngle is negative
+                        \
+                        \ The degree system in Revs looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of car
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ So playerYawAngle is in the left half of the above
+                        \ diagram, where the x-coordinates are negative, so we
+                        \ need to negate the x-coordinate
 
- LDX L0F3B
- RTS
+ LDA #1                 \ Negate sinYawAngle by setting bit 0 of the low byte,
+ ORA sinYawAngleLo      \ as sinYawAngle is a sign-magnitude number
+ STA sinYawAngleLo
+
+.rotm7
+
+ LDA J                  \ If bits 6 and 7 of J are the same (i.e. their EOR is
+ ASL A                  \ zero), jump to rotm8 to return from the subroutine as
+ EOR J                  \ the sign of cosYawAngle is correct
+ BPL rotm8
+
+                        \ Bits 6 and 7 of J, i.e. of playerYawAngleHi, are
+                        \ different, so the angle is in one of these ranges:
+                        \
+                        \   * 64 to 127 (%01000000 to %01111111)
+                        \
+                        \   * -128 to -65 (%10000000 to %10111111)
+                        \
+                        \ The degree system in Revs looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of car
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ So playerYawAngle is in the bottom half of the above
+                        \ diagram, where the y-coordinates are negative, so we
+                        \ need to negate the y-coordinate
+
+
+ LDA #1                 \ Negate cosYawAngle by setting bit 0 of the low byte,
+ ORA cosYawAngleLo      \ as cosYawAngle is a sign-magnitude number
+ STA cosYawAngleLo
+
+.rotm8
+
+ LDX xStoreMatrix       \ Restore the value of X that we stored in xStoreMatrix
+                        \ at the start of the routine, so that it's preserved
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L0F3B
+\       Name: xStoreMatrix
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Temporary storage for X so it can be preserved through calls to
+\             GetRotationMatrix
 \
 \ ******************************************************************************
 
-.L0F3B
+.xStoreMatrix
 
- EQUB &00, &A9, &00
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -1673,6 +2043,10 @@ L0F36 = sub_C0F34+2
 \    Summary: Convert a 16-bit angle into radians, restricted to a quarter
 \             circle
 \  Deep dive: Trigonometry
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine is from Revs, Geoff Crammond's previous game.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1688,6 +2062,8 @@ L0F36 = sub_C0F34+2
 \                       radians, and halved
 \
 \ ******************************************************************************
+
+ LDA #0                 \ This instuction appears to be unused
 
 .GetAngleInRadians
 
@@ -1764,6 +2140,8 @@ L0F36 = sub_C0F34+2
 \
 \ The result is also available in (U A).
 \
+\ This routine is from Revs, Geoff Crammond's previous game.
+\
 \ ******************************************************************************
 
 .Multiply8x16
@@ -1808,6 +2186,11 @@ L0F36 = sub_C0F34+2
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Scan the keyboard for a specific key press
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine is from Revs, Geoff Crammond's previous game. There is only one
+\ minor difference: the value of Y is preserved.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1935,6 +2318,8 @@ L0F36 = sub_C0F34+2
 \         = ((QQ * SS) << 16 + (QQ * RR) << 8 + (PP * SS) << 8 + 128) / 256^2
 \
 \ which is the algorithm that is implemented in this routine.
+\
+\ This routine is from Revs, Geoff Crammond's previous game.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2091,6 +2476,8 @@ L0F36 = sub_C0F34+2
 \
 \ It can also return (A T) * abs(n), where A is given the sign of n.
 \
+\ This routine is from Revs, Geoff Crammond's previous game.
+\
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
@@ -2132,6 +2519,8 @@ L0F36 = sub_C0F34+2
 \ ------------------------------------------------------------------------------
 \
 \ This routine negates the 16-bit number (A T).
+\
+\ This routine is from Revs, Geoff Crammond's previous game.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2499,7 +2888,7 @@ L1145 = C1144+1
 
 .rese4
 
- STA L0C00,X            \ Set the X-th byte of L0C00 to A
+ STA sinYawAngleLo,X            \ Set the X-th byte of sinYawAngleLo to A
 
  INX                    \ Increment the byte counter
 
@@ -4080,7 +4469,7 @@ L1145 = C1144+1
  BNE C1911
  JSR sub_C5C01
  LDX #&07
- LDA L0F36,X
+ LDA rotm8-1,X
  STA T
  AND #&0F
  CMP #&09
@@ -4825,7 +5214,7 @@ L1145 = C1144+1
 
 .sub_C1C43
 
- JSR sub_C0E75
+ JSR GetRotationMatrix
  LDY #&01
  JSR sub_C1C8C
  STA L0033
@@ -4837,7 +5226,7 @@ L1145 = C1144+1
  LDA L003D
  STA T
  LDA L003E
- JSR sub_C0E75
+ JSR GetRotationMatrix
  LDY #&01
  LDX #&02
  JSR sub_C1C6C
@@ -4861,9 +5250,9 @@ L1145 = C1144+1
  STA PP
  LDA L0033
  STA QQ
- LDA L0C00,Y
+ LDA sinYawAngleLo,Y
  STA RR
- LDA L0C02,Y
+ LDA sinYawAngleHi,Y
  STA SS
  JSR Multiply16x16
  STA L002F,X
@@ -4882,9 +5271,9 @@ L1145 = C1144+1
 
 .sub_C1C8C
 
- LDA L0C00,Y
+ LDA sinYawAngleLo,Y
  STA T
- LDA L0C02,Y
+ LDA sinYawAngleHi,Y
  LSR A
  ROR T
  PHP
@@ -4969,7 +5358,7 @@ L1145 = C1144+1
  CMP #&1F
  BCS C1D33
  LDA #&80
- STA L0060
+ STA secondAxis
  STA L000C
  LDA #0
  STA L0079
@@ -4988,7 +5377,7 @@ L1145 = C1144+1
  LDA L0079
  CMP L000C
  BCS C1D33
- BIT L0060
+ BIT secondAxis
  BVS C1D33
  LDA L0C6E
  ORA L0C67
@@ -5020,7 +5409,7 @@ L1145 = C1144+1
 
  STA S
  STA W
- LSR L0060
+ LSR secondAxis
  INC L0024
  JSR sub_C1DE6
  STA V
@@ -5211,7 +5600,7 @@ L1145 = C1144+1
 
  AND #&3F
  TAY
- BIT L0060
+ BIT secondAxis
  BPL C1E8D
  BMI C1DF7
 
@@ -5269,7 +5658,7 @@ L1145 = C1144+1
  CMP #&02
  BEQ C1E8D
  LDA #&C0
- STA L0060
+ STA secondAxis
 
 .C1E8D
 
@@ -6868,7 +7257,7 @@ L23E3 = C23E2+1
 
  LDA #0
  STA P
- STA L0060
+ STA secondAxis
  LDA #&7F
  STA Q
  LDA #&1F
@@ -8242,7 +8631,7 @@ L23E3 = C23E2+1
  CPX #&20
  BCC C2C00
  LDA L5A2E,X
- STA L0F1D,X
+ STA rotm6+4,X
 
 .C2C34
 
@@ -9434,7 +9823,7 @@ L314A = C3148+2
  STA L0026
  LDX #&07
  LDA L0C6E,X
- CMP L0F36,X
+ CMP rotm8-1,X
  BCS C3204
  JSR sub_C316C
 
