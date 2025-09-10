@@ -2141,6 +2141,10 @@ L0F36 = sub_C0F34+2
 \
 \   MainLoop-1          Contains an RTS
 \
+\   main4               ???
+\
+\   main5               ???
+\
 \ ******************************************************************************
 
 .MainLoop
@@ -2165,14 +2169,14 @@ L0F36 = sub_C0F34+2
 
  JSR sub_C5E07
 
-.C1034
+.main1
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDX #&01
+ LDX #1
  JSR sub_C36AD
 
- LDA #&04
+ LDA #4
  JSR sub_C329F
 
  JSR sub_C3321
@@ -2182,39 +2186,39 @@ L0F36 = sub_C0F34+2
  JSR sub_C33B7
 
  LDA L0C52
- BNE C105F
+ BNE main3
 
- LDX #&03
+ LDX #3
 
-.P1054
+.main2
 
  LDA L108C,X
  STA L0CF0,X
 
  DEX
 
- BPL P1054
+ BPL main2
 
- BMI C106C
+ BMI main4
 
-.C105F
+.main3
 
- LDX #&02
+ LDX #2
  JSR sub_C36AD
 
- LDA #&08
+ LDA #8
  JSR sub_C329F
 
  JSR sub_C3321
 
-.C106C
+.main4
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
  JSR sub_C2A9C
 
-.C1074
+.main5
 
  JSR ResetVariables     \ Reset all the game's main variables
 
@@ -2224,12 +2228,12 @@ L0F36 = sub_C0F34+2
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
- LDX #&03
+ LDX #3
  JSR sub_C36AD
 
  JSR sub_C5E07
 
- JMP C1034
+ JMP main1
 
 \ ******************************************************************************
 \
@@ -10533,7 +10537,7 @@ L314A = C3148+2
  LDY L0CFE
  LDX L0CFD
  JSR sub_C33B7
- JMP C106C
+ JMP main4
 
 .C362C
 
@@ -14540,7 +14544,7 @@ L5BA0 = L5B00+160
  JSR sub_C36AD
  JSR sub_C33AB
  JSR sub_C1440
- JMP C1074
+ JMP main5
 
 \ ******************************************************************************
 \

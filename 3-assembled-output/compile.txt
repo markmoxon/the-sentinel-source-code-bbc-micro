@@ -2920,7 +2920,7 @@
      102C   A9 87      LDA #&87
      102E   20 2C 5E   JSR &5E2C
      1031   20 07 5E   JSR &5E07
-.C1034
+.main1
      1034   20 49 11   JSR &1149
      1037   A2 01      LDX #&01
      1039   20 AD 36   JSR &36AD
@@ -2933,23 +2933,23 @@
      104D   AD 52 0C   LDA &0C52
      1050   D0 0D      BNE &105F
      1052   A2 03      LDX #&03
-.P1054
+.main2
      1054   BD 8C 10   LDA &108C,X
      1057   9D F0 0C   STA &0CF0,X
      105A   CA         DEX
      105B   10 F7      BPL &1054
      105D   30 0D      BMI &106C
-.C105F
+.main3
      105F   A2 02      LDX #&02
      1061   20 AD 36   JSR &36AD
      1064   A9 08      LDA #&08
      1066   20 9F 32   JSR &329F
      1069   20 21 33   JSR &3321
-.C106C
+.main4
      106C   A9 04      LDA #&04
      106E   20 2C 5E   JSR &5E2C
      1071   20 9C 2A   JSR &2A9C
-.C1074
+.main5
      1074   20 49 11   JSR &1149
      1077   A9 00      LDA #&00
      1079   20 4C 32   JSR &324C
