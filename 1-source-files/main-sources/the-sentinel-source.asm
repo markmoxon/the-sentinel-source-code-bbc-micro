@@ -1804,24 +1804,52 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F62
+\       Name: ScanKeyboard
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Scan the keyboard for a specific key press
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The negative inkey value of the key to scan for (in the
+\                       range &80 to &FF)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   Z flag              The result:
+\
+\                         * Set if the key in X is being pressed, in which case
+\                           BEQ will branch
+\
+\                         * Clear if the key in X is not being pressed, in which
+\                           case BNE will branch
+\
+\   Y                   Y is preserved
 \
 \ ******************************************************************************
 
-.sub_C0F62
+.ScanKeyboard
 
- TYA
+ TYA                    \ Store Y on the stack so we can preserve it
  PHA
- LDA #129               \ osbyte_inkey
- LDY #&FF
+
+ LDA #129               \ Call OSBYTE with A = 129, Y = &FF and the inkey value
+ LDY #&FF               \ in X, to scan the keyboard for key X
  JSR OSBYTE
- PLA
+
+ PLA                    \ Retrieve Y from the stack so it is unchanged
  TAY
- CPX #&FF
- RTS
+
+ CPX #&FF               \ If the key in X is being pressed, the above call sets
+                        \ both X and Y to &FF, so this sets the Z flag depending
+                        \ on whether the key is being pressed (so a BEQ after
+                        \ the call will branch if the key in X is being pressed)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -2537,7 +2565,7 @@ L1145 = C1144+1
  LDA #&80
  STA L0009
  LDX #&8E
- JSR sub_C0F62
+ JSR ScanKeyboard
  BNE C119A
  SEC
  ROR L0C64
@@ -2545,7 +2573,7 @@ L1145 = C1144+1
 .C119A
 
  LDX #&9D
- JSR sub_C0F62
+ JSR ScanKeyboard
  BNE C11C0
  LDA L1222
  BNE C11C5
@@ -2951,7 +2979,7 @@ L1145 = C1144+1
 .P135D
 
  LDX L137D,Y
- JSR sub_C0F62
+ JSR ScanKeyboard
  BNE C1373
  LDA L138C,Y
  AND #&03

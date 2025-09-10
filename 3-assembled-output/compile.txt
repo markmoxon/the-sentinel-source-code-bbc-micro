@@ -2796,7 +2796,7 @@
      0F5F   E6 75      INC &75
 .mult1
      0F61   60         RTS
-.sub_C0F62
+.ScanKeyboard
      0F62   98         TYA
      0F63   48         PHA
      0F64   A9 81      LDA #&81
