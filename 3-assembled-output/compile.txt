@@ -2837,7 +2837,7 @@
      0F99   85 8F      STA &8F
      0F9B   86 8E      STX &8E
      0F9D   60         RTS
-.sub_C0F9E
+.Multiply16x16
      0F9E   A5 6B      LDA &6B
      0FA0   10 13      BPL &0FB5
      0FA2   A9 00      LDA #&00
@@ -2850,14 +2850,14 @@
      0FAF   A5 67      LDA &67
      0FB1   49 80      EOR #&80
      0FB3   85 67      STA &67
-.C0FB5
+.muls1
      0FB5   A5 68      LDA &68
      0FB7   29 01      AND #&01
      0FB9   F0 06      BEQ &0FC1
      0FBB   A5 67      LDA &67
      0FBD   49 80      EOR #&80
      0FBF   85 67      STA &67
-.C0FC1
+.muls2
      0FC1   A5 6B      LDA &6B
      0FC3   85 75      STA &75
      0FC5   A5 68      LDA &68
@@ -2869,7 +2869,7 @@
      0FD1   85 76      STA &76
      0FD3   90 02      BCC &0FD7
      0FD5   E6 77      INC &77
-.C0FD7
+.muls3
      0FD7   A5 69      LDA &69
      0FD9   20 03 0D   JSR &0D03
      0FDC   85 78      STA &78
@@ -2879,7 +2879,7 @@
      0FE3   85 77      STA &77
      0FE5   90 02      BCC &0FE9
      0FE7   E6 78      INC &78
-.C0FE9
+.muls4
      0FE9   A5 6A      LDA &6A
      0FEB   85 75      STA &75
      0FED   A5 69      LDA &69
@@ -2893,7 +2893,7 @@
      0FFD   85 74      STA &74
      0FFF   90 02      BCC &1003
      1001   E6 78      INC &78
-.C1003
+.muls5
      1003   A5 78      LDA &78
      1005   24 67      BIT &67
 .sub_C1007

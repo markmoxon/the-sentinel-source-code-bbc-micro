@@ -172,11 +172,11 @@ L0063                = &0063
 L0064                = &0064
 L0065                = &0065
 L0066                = &0066
-L0067                = &0067
-L0068                = &0068
-L0069                = &0069
-L006A                = &006A
-L006B                = &006B
+H                    = &0067
+RR                   = &0068
+SS                   = &0069
+PP                   = &006A
+QQ                   = &006B
 L006C                = &006C
 L006D                = &006D
 L006E                = &006E
@@ -189,7 +189,7 @@ T                    = &0074
 U                    = &0075
 V                    = &0076
 W                    = &0077
-L0078                = &0078
+G                    = &0078
 L0079                = &0079
 L007A                = &007A
 L007B                = &007B
@@ -1403,14 +1403,14 @@ L0BAB = L0B00+171
 
 .C0DF1
 
- ROR L0078
+ ROR G
  ROL A
  BCS C0DF8
  CMP V
 
 .C0DF8
 
- ROR L0078
+ ROR G
  LDA T
 
 .C0DFC
@@ -1433,7 +1433,7 @@ L0BAB = L0B00+171
 .C0E10
 
  LDA #0
- STA L0078
+ STA G
  ROR T
  ROR A
  ROR T
@@ -1449,7 +1449,7 @@ L0BAB = L0B00+171
  STA L008A
  LDA L3C01,Y
  STA L008B
- BIT L0078
+ BIT G
  BMI C0E35
  BVS C0E50
  JMP CRE01
@@ -1462,7 +1462,7 @@ L0BAB = L0B00+171
  STA T
  LDA L008B
  SBC L3C01+1,Y
- BIT L0078
+ BIT G
  BVC C0E49
  JSR sub_C1009
 
@@ -1482,7 +1482,7 @@ L0BAB = L0B00+171
  LDA L008B
  ADC L3C01+1,Y
  STA L008B
- BIT L0078
+ BIT G
  BPL C0E70
  LDA L008A
  CLC
@@ -1839,7 +1839,7 @@ L0F36 = sub_C0F34+2
 
 .C0F74
 
- STA L0067
+ STA H
  ASL T
  ROL A
  AND #&7F
@@ -1855,7 +1855,7 @@ L0F36 = sub_C0F34+2
  TAY
  LDA L5980,X
  LDX L5980,Y
- BIT L0067
+ BIT H
  BMI C0F97
  BVS C0F99
 
@@ -1877,83 +1877,178 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F9E
+\       Name: Multiply16x16
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Multiply a sign-magnitude 16-bit number and a signed 16-bit number
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates:
+\
+\   (A T) = (QQ PP) * (SS RR) / 256^2
+\
+\ It uses the following algorithm:
+\
+\  (QQ PP) * (SS RR) = (QQ << 8 + PP) * (SS << 8 + RR)
+\                    = (QQ << 8 * SS << 8) + (QQ << 8 * RR)
+\                                          + (PP * SS << 8)
+\                                          + (PP * RR)
+\                    = (QQ * SS) << 16 + (QQ * RR) << 8
+\                                      + (PP * SS) << 8
+\                                      + (PP * RR)
+\
+\ Finally, it replaces the low byte multiplication in (PP * RR) with 128, as an
+\ estimate, as it's a pain to multiply the low bytes of a signed integer with a
+\ sign-magnitude number. So the final result that is returned in (A T) is as
+\ follows:
+\
+\   (A T) = (QQ PP) * (SS RR) / 256^2
+\         = ((QQ * SS) << 16 + (QQ * RR) << 8 + (PP * SS) << 8 + 128) / 256^2
+\
+\ which is the algorithm that is implemented in this routine.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (QQ PP)             16-bit signed integer
+\
+\   (SS RR)             16-bit sign-magnitude integer with the sign bit in bit 0
+\                       of RR
+\
+\   H                   The sign to apply to the result (in bit 7)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   (A T)               (QQ PP) * (SS RR) * abs(H)
 \
 \ ******************************************************************************
 
-.sub_C0F9E
+.Multiply16x16
 
- LDA L006B
- BPL C0FB5
- LDA #0
- SEC
- SBC L006A
- STA L006A
- LDA #0
- SBC L006B
- STA L006B
- LDA L0067
- EOR #&80
- STA L0067
+ LDA QQ                 \ If (QQ PP) is positive, jump to muls1 to skip the
+ BPL muls1              \ following
 
-.C0FB5
+ LDA #0                 \ (QQ PP) is negative, so we now negate (QQ PP) so it's
+ SEC                    \ positive, starting with the low bytes
+ SBC PP
+ STA PP
 
- LDA L0068
- AND #&01
- BEQ C0FC1
- LDA L0067
- EOR #&80
- STA L0067
+ LDA #0                 \ And then the high bytes
+ SBC QQ                 \
+ STA QQ                 \ So we now have (QQ PP) = |QQ PP|
 
-.C0FC1
+ LDA H                  \ Flip bit 7 of H, so when we set the result to the sign
+ EOR #%10000000         \ of H below, this ensures the result is the correct
+ STA H                  \ sign
 
- LDA L006B
+.muls1
+
+ LDA RR                 \ If bit 0 of RR is clear, then (SS RR) is positive, so
+ AND #1                 \ jump to muls2
+ BEQ muls2
+
+ LDA H                  \ Flip bit 7 of H, so when we set the result to the sign
+ EOR #%10000000         \ of H below, this ensures the result is the correct
+ STA H                  \ sign
+
+.muls2
+
+ LDA QQ                 \ Set U = QQ
  STA U
- LDA L0068
- JSR Multiply8x8
- STA W
- LDA T
- CLC
- ADC #&80
- STA V
- BCC C0FD7
+
+ LDA RR                 \ Set A = RR
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+                        \           = RR * QQ
+
+ STA W                  \ Set (W T) = (A T)
+                        \           = RR * QQ
+
+ LDA T                  \ Set (W V) = (A T) + 128
+ CLC                    \           = RR * QQ + 128
+ ADC #128               \
+ STA V                  \ starting with the low bytes
+
+ BCC muls3              \ And then the high byte
  INC W
 
-.C0FD7
+                        \ So we now have (W V) = RR * QQ + 128
 
- LDA L0069
- JSR Multiply8x8
- STA L0078
- LDA T
- CLC
- ADC W
- STA W
- BCC C0FE9
- INC L0078
+.muls3
 
-.C0FE9
+ LDA SS                 \ Set A = SS
 
- LDA L006A
+ JSR Multiply8x8        \ Set (A T) = A * U
+                        \           = SS * QQ
+
+ STA G                  \ Set (G T) = (A T)
+                        \           = SS * QQ
+
+ LDA T                  \ Set (G W V) = (G T 0) + (W V)
+ CLC                    \
+ ADC W                  \ starting with the middle bytes (as the low bytes are
+ STA W                  \ simply V = 0 + V with no carry)
+
+ BCC muls4              \ And then the high byte
+ INC G
+
+                        \ So now we have:
+                        \
+                        \   (G W V) = (G T 0) + (W V)
+                        \           = (SS * QQ << 8) + RR * QQ + 128
+
+.muls4
+
+ LDA PP                 \ Set U = PP
  STA U
- LDA L0069
- JSR Multiply8x8
- STA U
- LDA T
- CLC
- ADC V
- LDA U
+
+ LDA SS                 \ Set A = SS
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+                        \           = SS * PP
+
+ STA U                  \ Set (U T) = (A T)
+                        \           = SS * PP
+
+ LDA T                  \ Set (G T ?) = (G W V) + (U T)
+ CLC                    \
+ ADC V                  \ starting with the low bytes (which we throw away)
+
+ LDA U                  \ And then the high bytes
  ADC W
  STA T
- BCC C1003
- INC L0078
 
-.C1003
+ BCC muls5              \ And then the high byte
+ INC G
 
- LDA L0078
- BIT L0067
+                        \ So now we have:
+                        \
+                        \   (G T ?) = (G W V) + (U T)
+                        \           = (SS * QQ << 8) + RR * QQ + 128 + SS * PP
+                        \           = (QQ * SS) << 8 + (QQ * RR) + (PP * SS)
+                        \              + 128
+                        \           = (QQ PP) * (SS RR) / 256
+                        \
+                        \ So:
+                        \
+                        \   (G T) = (G T ?) / 256
+                        \         = (QQ PP) * (SS RR) / 256^2
+                        \
+                        \ which is the result that we want
+
+.muls5
+
+ LDA G                  \ Set (A T) = (G T)
+
+ BIT H                  \ We are about to fall through into Absolute16Bit, so
+                        \ this ensures we set the sign of (A T) to the sign in
+                        \ H, so we get:
+                        \
+                        \   (A T) = (A T) * abs(H)
 
 \ ******************************************************************************
 \
@@ -4682,16 +4777,16 @@ L1145 = C1144+1
 .sub_C1C6C
 
  LDA #0
- STA L0067
+ STA H
  LDA L0032
- STA L006A
+ STA PP
  LDA L0033
- STA L006B
+ STA QQ
  LDA L0C00,Y
- STA L0068
+ STA RR
  LDA L0C02,Y
- STA L0069
- JSR sub_C0F9E
+ STA SS
+ JSR Multiply16x16
  STA L002F,X
  LDA T
  STA L002C,X
@@ -4902,7 +4997,7 @@ L1145 = C1144+1
 
 .C1D8A
 
- STA L0078
+ STA G
  LSR A
  LDA L0037
  BCC C1D93
@@ -4911,7 +5006,7 @@ L1145 = C1144+1
 .C1D93
 
  CMP L0039
- LDA L0078
+ LDA G
  ROL A
  TAY
  LDA L1DDE,Y
@@ -4935,7 +5030,7 @@ L1145 = C1144+1
 
  STA L0002
  LDA S,X
- STA L0078
+ STA G
  LDA T,X
  SEC
  SBC S,X
@@ -4953,7 +5048,7 @@ L1145 = C1144+1
  PLP
  JSR sub_C1007
  CLC
- ADC L0078
+ ADC G
  STA U
  LDA L0038
  SEC
@@ -13676,7 +13771,7 @@ L5BA0 = L5B00+160
  JSR Multiply8x8
  STA T
  LDA #0
- BIT L0067
+ BIT H
  BVC C5CA9
  JSR sub_C1009
 
@@ -13708,7 +13803,7 @@ L5BA0 = L5B00+160
  STA L0080
  LDA #0
  STA L0083
- LDA L0067
+ LDA H
  STA L0086
  JSR sub_C5567
  LDY L0021
