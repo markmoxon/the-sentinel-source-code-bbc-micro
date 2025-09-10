@@ -1464,7 +1464,7 @@ L0BAB = L0B00+171
  SBC L3C01+1,Y
  BIT G
  BVC C0E49
- JSR sub_C1009
+ JSR Negate16Bit
 
 .C0E49
 
@@ -2096,24 +2096,36 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C1009
+\       Name: Negate16Bit
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Negate a 16-bit number
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine negates the 16-bit number (A T).
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   Negate16Bit+2       Set (A T) = -(U T)
 \
 \ ******************************************************************************
 
-.sub_C1009
+.Negate16Bit
 
- STA U
- LDA #0
- SEC
- SBC T
- STA T
- LDA #0
+ STA U                  \ Set (U T) = (A T)
+
+ LDA #0                 \ Set (A T) = 0 - (U T)
+ SEC                    \           = -(A T)
+ SBC T                  \
+ STA T                  \ starting with the low bytes
+
+ LDA #0                 \ And then the high bytes
  SBC U
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4852,7 +4864,7 @@ L1145 = C1144+1
  ROR T
  PLP
  BCC C1CA7
- JSR sub_C1009
+ JSR Negate16Bit
 
 .C1CA7
 
@@ -13808,7 +13820,7 @@ L5BA0 = L5B00+160
  LDA #0
  BIT H
  BVC C5CA9
- JSR sub_C1009
+ JSR Negate16Bit
 
 .C5CA9
 
@@ -13856,7 +13868,7 @@ L5BA0 = L5B00+160
  STA T
  LDA #0
  BCC C5D05
- JSR sub_C1009
+ JSR Negate16Bit
 
 .C5D05
 

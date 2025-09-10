@@ -2898,7 +2898,7 @@
      1005   24 67      BIT &67
 .Absolute16Bit
      1007   10 0D      BPL &1016
-.sub_C1009
+.Negate16Bit
      1009   85 75      STA &75
      100B   A9 00      LDA #&00
      100D   38         SEC
@@ -2906,7 +2906,6 @@
      1010   85 74      STA &74
      1012   A9 00      LDA #&00
      1014   E5 75      SBC &75
-.CRE03
      1016   60         RTS
 .MainLoop
      1017   A2 FF      LDX #&FF
