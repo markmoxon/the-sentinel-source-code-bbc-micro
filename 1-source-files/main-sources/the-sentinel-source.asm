@@ -2052,16 +2052,47 @@ L0F36 = sub_C0F34+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C1007
+\       Name: Absolute16Bit
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Calculate the absolute value (modulus) of a 16-bit number
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine sets (A T) = |A T|.
+\
+\ It can also return (A T) * abs(n), where A is given the sign of n.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A T)               The number to make positive
+\
+\   N flag              Controls the sign to be applied:
+\
+\                         * If we want to calculate |A T|, do an LDA or
+\                           equivalent before calling the routine
+\
+\                         * If we want to calculate (A T) * abs(n), do a BIT n
+\                           before calling the routine
+\
+\                         * If we want to set the sign of (A T), then call with:
+\
+\                           * N flag clear to calculate (A T) * 1
+\
+\                           * N flag set to calculate (A T) * -1
 \
 \ ******************************************************************************
 
-.sub_C1007
+.Absolute16Bit
 
- BPL CRE03
+ BPL MainLoop-1         \ If the high byte in A is already positive, return from
+                        \ the subroutine (as MainLoop-1 contains an RTS)
+
+                        \ Otherwise fall through into Negate16Bit to negate the
+                        \ number in (A T), which will make it positive, so this
+                        \ sets (A T) = |A T|
 
 \ ******************************************************************************
 \
@@ -2082,8 +2113,6 @@ L0F36 = sub_C0F34+2
  LDA #0
  SBC U
 
-.CRE03
-
  RTS
 
 \ ******************************************************************************
@@ -2093,6 +2122,12 @@ L0F36 = sub_C0F34+2
 \   Category: Main loop
 \    Summary: The main game loop, where we display the title screen, fetch the
 \             landscape number, play the game and repeat
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   MainLoop-1          Contains an RTS
 \
 \ ******************************************************************************
 
@@ -5046,7 +5081,7 @@ L1145 = C1144+1
  LDA L0002
  JSR Multiply8x8
  PLP
- JSR sub_C1007
+ JSR Absolute16Bit
  CLC
  ADC G
  STA U
@@ -7937,7 +7972,7 @@ L23E3 = C23E2+1
  LDA L0C08
  JSR Multiply8x8
  PLP
- JSR sub_C1007
+ JSR Absolute16Bit
  CLC
  ADC #&06
  BPL C2B39
@@ -8912,7 +8947,7 @@ L2F79 = C2F77+2
  LDA L0B40,Y
  SBC L0B40,X
  STA L000A
- JSR sub_C1007
+ JSR Absolute16Bit
  STA U
  ORA V
  BEQ C2FFA
@@ -8938,7 +8973,7 @@ L2F79 = C2F77+2
  BEQ C2FEC
  LDA U
  BIT L000A
- JSR sub_C1007
+ JSR Absolute16Bit
  STA L0043
  LDA T
  STA L003A

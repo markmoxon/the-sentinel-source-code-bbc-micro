@@ -2896,7 +2896,7 @@
 .muls5
      1003   A5 78      LDA &78
      1005   24 67      BIT &67
-.sub_C1007
+.Absolute16Bit
      1007   10 0D      BPL &1016
 .sub_C1009
      1009   85 75      STA &75
