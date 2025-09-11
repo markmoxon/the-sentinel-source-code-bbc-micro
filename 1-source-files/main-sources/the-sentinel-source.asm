@@ -161,8 +161,8 @@ L0057                = &0057
 L0058                = &0058
 L0059                = &0059
 L005A                = &005A
-L005C                = &005C
-L005D                = &005D
+yCoordLo             = &005C
+yCoordHi             = &005D
 L005E                = &005E
 L005F                = &005F
 secondAxis           = &0060
@@ -191,10 +191,10 @@ V                    = &0076
 W                    = &0077
 G                    = &0078
 L0079                = &0079
-L007A                = &007A
-L007B                = &007B
-L007C                = &007C
-L007D                = &007D
+xCoordLo             = &007A
+xCoordHi             = &007B
+hypotenuseLo         = &007C
+hypotenuseHi         = &007D
 angleTangent         = &007E
 L007F                = &007F
 L0080                = &0080
@@ -8022,7 +8022,7 @@ L23E3 = C23E2+1
  LDA angleHi
  SBC L0020
  STA L5500,Y
- JSR sub_C565F
+ JSR GetHypotenuse
  BIT L001C
  BMI C288B
  BVS C2880
@@ -12390,23 +12390,32 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3D02
+\       Name: hypotenuse
 \       Type: Variable
 \   Category: Maths (Geometry)
-\    Summary: ???
+\    Summary: Table for hypotenuse lengths given the tangent of an angle
+\
+\ ------------------------------------------------------------------------------
+\
+\ Given the tangent of an angle, X = tan(theta), this table contains the
+\ following at index X:
+\
+\   hypotenuse,X = tan(theta / 2)
+\
+\ This allows us to approximate the length of the hypotenuse of a triangle with
+\ angle theta, adjacent side x and opposite side y, as follows:
+\
+\   h =~ x + y * tan(theta / 2)
 \
 \ ******************************************************************************
 
-.L3D02
+.hypotenuse
 
  EQUB 0
 
  FOR I%, 1, 128
 
-  EQUB INT(0.5 + 512 * (1 - COS(ATN(I% / 128))) / SIN(ATN(I% / 128)))
-
-  \ Can also be:
-  \ EQUB INT(0.5 + 512 * TAN(ATN(I% / 128) / 2))
+  EQUB INT(0.5 + 512 * TAN(ATN(I% / 128) / 2))
 
  NEXT
 
@@ -13490,25 +13499,25 @@ L49C1                = &49C1
 .C5575
 
  LDA L0085
- STA L005D
+ STA yCoordHi
  LDA L0082
- STA L005C
+ STA yCoordLo
  LDA L0080
- STA L007A
+ STA xCoordLo
  LDA L0083
- STA L007B
+ STA xCoordHi
  JMP C55A5
 
 .C5588
 
  LDA L0083
- STA L005D
+ STA yCoordHi
  LDA L0080
- STA L005C
+ STA yCoordLo
  LDA L0082
- STA L007A
+ STA xCoordLo
  LDA L0085
- STA L007B
+ STA xCoordHi
  ORA L0082
  BEQ sub_C5560
  LDA L0085
@@ -13628,9 +13637,9 @@ L49C1                = &49C1
 .C562D
 
  STA L0083
- LDA L007C
+ LDA hypotenuseLo
  STA L0082
- LDA L007D
+ LDA hypotenuseHi
  STA L0085
  LDA #0
  STA L0088
@@ -13661,49 +13670,92 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: sub_C565F
+\       Name: GetHypotenuse
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate the hypotenuse from an angle and two coordinates with
+\             one lookup and one multiplication (so without a square root)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates:
+\
+\   (hypotenuseHi hypotenuseLo) = (xCoordHi xCoordLo)
+\                                 + tan(theta / 2) * (yCoordHi yCoordLo) / 2
+\
+\ (NOTE: This may well end up being calculated in the x/y and z planes, so the
+\ hypotenuse points into the screen. ???)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   angleTangent        The angle of the hypotenuse
+\
+\   (xCoordHi xCoordLo) The x-coordinate of the end of the hypotenuse
+\
+\   (yCoordHi yCoordLo) The y-coordinate of the end of the hypotenuse
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   Y                   Y is preserved
 \
 \ ******************************************************************************
 
-.sub_C565F
+.GetHypotenuse
 
- STY L568D
- LDA angleTangent
- LSR A
- ADC #&00
- TAY
- LDA L3D02,Y
+ STY yStoreHypotenuse   \ Store Y in yStoreHypotenuse so it can be preserved
+                        \ acrosscalls to the routine
+
+ LDA angleTangent       \ Set Y = theta / 2
+ LSR A                  \
+ ADC #0                 \ Rounded to the nearest integer by the ADC instruction
+ TAY                    \
+                        \ The hypotenuse lookup table contains 128 entries, so
+                        \ we halve the angle to get the lookup index ???
+
+ LDA hypotenuse,Y       \ Set U = tan(theta / 2)
  STA U
- LDA L005C
+
+ LDA yCoordLo           \ Set (V T) = (yCoordHi yCoordLo)
  STA T
- LDA L005D
+ LDA yCoordHi
  STA V
- JSR Multiply8x16
- LSR U
- ROR T
- LDA T
- CLC
- ADC L007A
- STA L007C
- LDA U
- ADC L007B
- STA L007D
- LDY L568D
- RTS
+
+ JSR Multiply8x16       \ Set (U T) = U * (V T) / 256
+                        \           = tan(theta / 2) * (yCoordHi yCoordLo)
+
+ LSR U                  \ Set (U T) = (U T) / 2
+ ROR T                  \           = tan(theta / 2) * (yCoordHi yCoordLo) / 2
+
+ LDA T                  \ Calculate:
+ CLC                    \
+ ADC xCoordLo           \  (hypotenuseHi hypotenuseLo)
+ STA hypotenuseLo       \
+ LDA U                  \     = (xCoordHi xCoordLo) + (U T)
+ ADC xCoordHi           \
+ STA hypotenuseHi       \     = (xCoordHi xCoordLo)
+                        \       + tan(theta / 2) * (yCoordHi yCoordLo) / 2
+
+ LDY yStoreHypotenuse   \ Restore the value of Y from yStoreHypotenuse that we
+                        \ stored at the start of the routine, so that it's
+                        \ preserved
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L568D
+\       Name: yStoreHypotenuse
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Temporary storage for Y so it can be preserved through calls to
+\             GetHypotenuse
 \
 \ ******************************************************************************
 
-.L568D
+.yStoreHypotenuse
 
  EQUB &41
 
@@ -14398,7 +14450,7 @@ L5BA0 = L5B00+160
  LDA L09C0,Y
  SBC angleHi
  STA L005A
- JSR sub_C565F
+ JSR GetHypotenuse
  LDA L140F
  BNE C5C60
  LDA #&80
@@ -14407,8 +14459,8 @@ L5BA0 = L5B00+160
  STA L0059
  CPY #&3F
  BEQ C5C60
- LSR L007D
- ROR L007C
+ LSR hypotenuseHi
+ ROR hypotenuseLo
  SEC
  ROR L0084
  ROR L0081
@@ -14421,9 +14473,9 @@ L5BA0 = L5B00+160
 
 .C5C60
 
- LDA L007C
+ LDA hypotenuseLo
  STA L0C5D
- LDA L007D
+ LDA hypotenuseHi
  STA L0C5E
  LDA L0081
  STA L0C5B
@@ -14508,7 +14560,7 @@ L5BA0 = L5B00+160
  LDA angleHi
  ADC L0C57
  STA L5500,Y
- JSR sub_C565F
+ JSR GetHypotenuse
  LDY L004E
  LDA L4C20,Y
  ASL A
@@ -14556,7 +14608,7 @@ L5BA0 = L5B00+160
 .sub_C5D33
 
  JSR sub_C5C01
- LDA L007D
+ LDA hypotenuseHi
  CMP #&0F
  ROR L0C7A
  JSR sub_C5C75

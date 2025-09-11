@@ -9619,7 +9619,7 @@
      3CFF   1F
      3D00   1F
      3D01   20
-.L3D02
+.hypotenuse
      3D02   00
      3D03   02
      3D04   04
@@ -13595,7 +13595,7 @@
 .C565C
      565C   85 8D      STA &8D
      565E   60         RTS
-.sub_C565F
+.GetHypotenuse
      565F   8C 8D 56   STY &568D
      5662   A5 7E      LDA &7E
      5664   4A         LSR A
@@ -13619,7 +13619,7 @@
      5687   85 7D      STA &7D
      5689   AC 8D 56   LDY &568D
      568C   60         RTS
-.L568D
+.yStoreHypotenuse
      568D   41
 .sub_C568E
      568E   AD CF 56   LDA &56CF
