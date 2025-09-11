@@ -68,7 +68,7 @@
 \
 \       Name: Zero page
 \       Type: Workspace
-\    Address: ??? to ???
+\    Address: &0000 to &008F
 \   Category: Workspaces
 \    Summary: Mainly temporary variables that are used a lot
 \
@@ -615,17 +615,11 @@
 
  SKIP 1                 \ ???
 
- ORG &00FC
-
-.L00FC
-
- SKIP 1                 \ ???
-
 \ ******************************************************************************
 \
 \       Name: Stack variables
 \       Type: Workspace
-\    Address: &0100 to ???
+\    Address: &0100 to &01BF
 \   Category: Workspaces
 \    Summary: Variables that share page 1 with the stack
 \
@@ -643,15 +637,15 @@
 
 .L0142
 
- SKIP 14               \ ???
+ SKIP 14                \ ???
 
 .L0150
 
- SKIP 48               \ ???
+ SKIP 48                \ ???
 
 .L0180
 
- SKIP 32               \ ???
+ SKIP 32                \ ???
 
 .L01A0
 
@@ -11990,11 +11984,15 @@ L314A = C3148+2
 .IRQHandler
 
  SEI
+
  LDA SHEILA+&6D         \ user_via_ifr
  AND #&40
  BEQ C3763
  STA SHEILA+&6D         \ user_via_ifr
- LDA L00FC
+
+ LDA &FC                \ Set A to the interrupt accumulator save register,
+                        \ which restores A to the value it had on entering the
+                        \ interrupt
 
  PHA                    \ Store A, X and Y on the stack so we can preserve them
  TXA                    \ across calls to the interrupt handler
