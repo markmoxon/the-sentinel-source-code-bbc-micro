@@ -2056,6 +2056,7 @@
      0C01   00
 .sinYawAngleHi
      0C02   00
+.cosYawAngleHi
      0C03   00
 .L0C04
      0C04   00
@@ -3345,7 +3346,7 @@
      1376   AD E8 0C   LDA &0CE8
      1379   2D EA 0C   AND &0CEA
      137C   60         RTS
-.L137D
+.gameKeys
      137D   AE
      137E   CD
      137F   A9
@@ -4587,7 +4588,7 @@
      1C65   20 6C 1C   JSR &1C6C
      1C68   A0 00      LDY #&00
      1C6A   A2 00      LDX #&00
-.sub_C1C6C
+.MultiplyCoords
      1C6C   A9 00      LDA #&00
      1C6E   85 67      STA &67
      1C70   A5 32      LDA &32
@@ -4603,7 +4604,7 @@
      1C87   A5 74      LDA &74
      1C89   95 2C      STA &2C,X
      1C8B   60         RTS
-.sub_C1C8C
+.DivideBy16
      1C8C   B9 00 0C   LDA &0C00,Y
      1C8F   85 74      STA &74
      1C91   B9 02 0C   LDA &0C02,Y

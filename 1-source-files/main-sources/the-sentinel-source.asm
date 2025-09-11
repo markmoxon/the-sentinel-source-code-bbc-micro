@@ -5467,62 +5467,117 @@ L1145 = C1144+1
 
 .sub_C1C43
 
- JSR GetRotationMatrix
- LDY #&01
- JSR sub_C1C8C
+ JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
+                        \ player's pitch angle into the global 3D coordinate
+                        \ system, as follows:
+                        \
+                        \   [ cosPitchAngle   0   -sinPitchAngle ]
+                        \   [       0         1          0       ]
+                        \   [ sinPitchAngle   0    cosPitchAngle ]
+
+ LDY #1
+ JSR DivideBy16
  STA L0033
  STX L0032
+
  LDY #0
- JSR sub_C1C8C
+ JSR DivideBy16
  STA L0030
  STX L002D
- LDA L003D
+
+ LDA playerYawAngleLo   \ Set (A T) = (playerYawAngleHi playerYawAngleLo)
  STA T
- LDA L003E
- JSR GetRotationMatrix
- LDY #&01
- LDX #&02
- JSR sub_C1C6C
- LDY #0
- LDX #0
+ LDA playerYawAngleHi
+
+ JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
+                        \ player's yaw angle into the global 3D coordinate
+                        \ system, as follows:
+                        \
+                        \   [ cosYawAngle   0   -sinYawAngle ]
+                        \   [      0        1         0      ]
+                        \   [ sinYawAngle   0    cosYawAngle ]
+
+ LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
+ LDX #2                 \ the following:
+ JSR MultiplyCoords     \
+                        \    (L002E L0031) = (L0033 L0032) * cosYawAngle
+
+ LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
+ LDX #0                 \ calculate the following:
+                        \
+                        \    (L002C L002F) = (L0033 L0032) * sinYawAngle
+                        \
+                        \ and return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
-\       Name: sub_C1C6C
+\       Name: MultiplyCoords
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Multiply a 16-bit signed number and a 16-bit sign-magnitude value
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine multiplies two 16-bit values and stores the result according to
+\ the arguments.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (L0033 L0032)       The 16-bit signed number to multiply
+\
+\   Y                   Offset of the 16-bit sign-magnitude value to multiply:
+\
+\                         * 0 = sinYawAngle
+\
+\                         * 1 = cosYawAngle
+\
+\   X                   Offset of the variable to store the result in:
+\
+\                         * 0 = (L002C L002F)
+\
+\                         * 2 = (L002E L0031)
 \
 \ ******************************************************************************
 
-.sub_C1C6C
+.MultiplyCoords
 
- LDA #0
- STA H
- LDA L0032
- STA PP
- LDA L0033
+ LDA #0                 \ Set H to sign to apply to the result of Multiply16x16
+ STA H                  \ (in bit 7), so setting H  0 ensures that that the
+                        \ result is positive
+
+ LDA L0032              \ Set (QQ PP) = (L0033 L0032)
+ STA PP                 \
+ LDA L0033              \ where (QQ PP) is a 16-bit signed number
  STA QQ
- LDA sinYawAngleLo,Y
- STA RR
+
+ LDA sinYawAngleLo,Y    \ Set (SS RR) to the 16-bit sign-magnitude number
+ STA RR                 \ pointed to by Y
  LDA sinYawAngleHi,Y
  STA SS
- JSR Multiply16x16
- STA L002F,X
+
+ JSR Multiply16x16      \ Set (A T) = (QQ PP) * (SS RR)
+                        \
+                        \ And apply the sign from bit 7 of H to ensure the
+                        \ result is positive
+
+ STA L002F,X            \ Store the result in (L002C+X L002F+X)
  LDA T
  STA L002C,X
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C1C8C
+\       Name: DivideBy16
 \       Type: Subroutine
-\   Category: ???
+\   Category: Maths (Arithmetic)
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C1C8C
+.DivideBy16
 
  LDA sinYawAngleLo,Y
  STA T
