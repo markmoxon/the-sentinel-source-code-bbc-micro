@@ -1346,7 +1346,7 @@ L0BAB = L0B00+171
 
  SBC V                  \ Subtract the high bytes as A = A - V
 
- SEC                    \ Set the C flag so we shift a 1 into into the result in T
+ SEC                    \ Set the C flag so we shift a 1 into the result in T
 
 .gang2
 
@@ -1472,7 +1472,8 @@ L0BAB = L0B00+171
 \ ******************************************************************************
 
                         \ We now do two more shift-and-subtracts to see if we
-                        \ can make the result more accurate
+                        \ can should make the result more accurate in part 3
+                        \ with interpolation and rounding
 
  ROL A                  \ Repeat the shift-and-subtract loop for the ninth
  BCS P%+6               \ shift, but without updating the result in T
@@ -1497,9 +1498,13 @@ L0BAB = L0B00+171
                         \
                         \ So G now contains two results bits as follows:
                         \
-                        \   * Bit 6 is the first extra bit from the result
+                        \   * Bit 6 is the first extra bit from the result,
+                        \     and if it is set then we apply interpolation to
+                        \     the result in part 3
                         \
-                        \   * Bit 7 is the second extra bit from the result
+                        \   * Bit 7 is the second extra bit from the result,
+                        \     and if it is set then we apply rounding to the
+                        \     result in part 3
                         \
                         \ We use these below to work out whether to interpolate
                         \ results from the arctan lookup table, to improve the
@@ -1528,19 +1533,29 @@ L0BAB = L0B00+171
                         \ It is now in the C flag (because it was in the C flag
                         \ when we performed the PHP to push it onto the stack)
 
- BCC gang9              \ If the C flag is clear then bit 5 should remain clear,
-                        \ so skip the following
+ BCC gang9              \ If the C flag is clear then bit 5 of the result should
+                        \ remain clear, so skip the following
 
-                        \ Otherwise bit 5 of the result should be set, so we can
-                        \ do that with the following addition (as the C flsg is
-                        \ set)
+                        \ Otherwise bit 5 of the result should be set, which we
+                        \ can do with the following addition (in which we know
+                        \ that the C flag is set, as we just passed through a
+                        \ BCC instruction)
 
- ADC #&1F               \ Set A = A + &1F + C
-                        \       = A + &20
+ ADC #%00100000 - 1     \ Set A = A + %00100000 - 1 + C
                         \       = A + %00100000
                         \
-                        \ So this sets bit 5 of the result in A, as we know bit
-                        \ 5 was clear before the addition
+                        \ If we get here having done all ten shifts, then we
+                        \ know that bit 5 of the result in A is clear, as we
+                        \ cleared it with the ASL T instruction just after gang6
+                        \ above, so this just sets bit 5 of the result in A
+                        \ without any risk of the addition overflowing
+                        \
+                        \ If, however, we get here by aborting the sequence of
+                        \ shifts after the second shift and jumping to gang10,
+                        \ then we have already set bit 5 of the result with an
+                        \ ORA instruction in gang10 before jumping back to
+                        \ gang8, so there is a possibility for this addition to
+                        \ overflow ???
 
 .gang9
 
@@ -1548,10 +1563,13 @@ L0BAB = L0B00+171
                         \ and didn't overflow, then jump to gang11 to continue
                         \ with the calculation
 
-                        \ If we get here then the above addition overflowed
+                        \ If we get here then the above addition overflowed, so
+                        \ we return the highest angle possible from the table,
+                        \ which is 45 degrees
 
- LDA #&FF               \ Set angleTangent = 255
- STA angleTangent
+ LDA #255               \ Set angleTangent = 255, which is the closest we can
+ STA angleTangent       \ get to the tangent of 45 degrees, which should really
+                        \ be represented by (1 0) in our scale
 
  LDA #&00               \ Set (angleHi angleLo) = (&20 0)
  STA angleLo            \
@@ -1572,8 +1590,8 @@ L0BAB = L0B00+171
                         \ We stored the first two shifts in T, but didn't store
                         \ the third shift in T
 
- LDA #0                 \ Clear bits 6 and 7 of G to indicate that the result is
- STA G                  \ in the first quadrant
+ LDA #0                 \ Clear bits 6 and 7 of G to indicate that we should not
+ STA G                  \ apply interpolation or rounding in part 3
 
  ROR T                  \ Set A to the bottom two bits of T, which is the same
  ROR A                  \ result as if we had shifted T left through the rest of
@@ -1612,52 +1630,86 @@ L0BAB = L0B00+171
                         \ So we return the tangent from the routine in
                         \ angleTangent
 
- LDA arctanLo,Y         \ Set (angleHi angleLo) = arctan(A)
+ LDA arctanLo,Y         \ Set (angleHi angleLo) = arctan(Y)
  STA angleLo
  LDA arctanHi,Y
  STA angleHi
 
- BIT G                  \ If bit 7 of G is set, jump to gang12
- BMI gang12
+                        \ We now improve the accuracy of this result by applying
+                        \ interpolation and rounding, but only if one of bit 6
+                        \ or bit 7 is set in G
+
+ BIT G                  \ If bit 7 of G is set, jump to gang12 to calculate
+ BMI gang12             \ a value in (U T) that we can then use for rounding up
+                        \ the result of the interpolation
 
  BVS gang14             \ If bit 7 of G is clear and bit 6 of G is set, jump to
-                        \ gang14
+                        \ gang14 to interpolate the result with the next entry
+                        \ in the arctan table, without using rounding
 
  JMP gang16             \ Otherwise both bit 7 and bit 6 of G must be clear, so
                         \ jump to gang16 to return from the subroutine, as the
-                        \ result in (angleHi angleLo) is already correct
+                        \ result in (angleHi angleLo) is already accurate and
+                        \ doesn't need interpolating
 
 .gang12
 
- LDA angleLo
- SEC
- SBC arctanLo+1,Y
- STA T
- LDA angleHi
+                        \ If we get here then we need to apply rounding to the
+                        \ result as well as interpolating the result between
+                        \ arctan(Y) and arctan(Y + 1)
+
+ LDA angleLo            \ Set (A T) = (angleHi angleLo) - arctan(Y + 1)
+ SEC                    \           = arctan(Y) - arctan(Y + 1)
+ SBC arctanLo+1,Y       \
+ STA T                  \ So (A T) contains the amount of rounding we need to
+ LDA angleHi            \ add to the result (the result is divided by two below)
  SBC arctanHi+1,Y
- BIT G
- BVC gang13
+
+ BIT G                  \ If bit 6 of G is set, negate (A T) to give the correct
+ BVC gang13             \ sign to the amount of rounding
  JSR Negate16Bit
 
 .gang13
 
- STA U
- ROL A
- ROR U
- ROR T
+ STA U                  \ Set (U T) = (A T)
+                        \           = arctan(Y) - arctan(Y + 1)
+
+ ROL A                  \ Set the C flag to bit 7 of A, which is the top bit of
+                        \ (U T), so the next instruction rotates the correct
+                        \ bit into bit 7 of U to retain the sign of the result
+
+ ROR U                  \ Set (U T) = (U T) / 2
+ ROR T                  \           = arctan(Y) - arctan(Y + 1)
+                        \
+                        \ So (U T) contains half the difference between
+                        \ arctan(Y) and arctan(Y + 1)
+                        \
+                        \ This is effectively half the difference between the
+                        \ two values, so this is the equivalent of the 0.5 in
+                        \ INT(x + 0.5) when rounding x to the nearest integer,
+                        \ just with the arctan results in our calculation
 
 .gang14
 
- LDA angleLo
- CLC
- ADC arctanLo+1,Y
- STA angleLo
- LDA angleHi
- ADC arctanHi+1,Y
- STA angleHi
- BIT G
- BPL gang15
- LDA angleLo
+                        \ If we get here then we need to interpolate the result
+                        \ between arctan(Y) and arctan(Y + 1)
+
+ LDA angleLo            \ Set (angleHi angleLo) = (angleHi angleLo)
+ CLC                    \                                        + arctan(Y + 1)
+ ADC arctanLo+1,Y       \                       = arctan(Y) and arctan(Y + 1)
+ STA angleLo            \
+ LDA angleHi            \ We will divide this value by two to get the average
+ ADC arctanHi+1,Y       \ of arctan(Y) and arctan(Y + 1), but first we need to
+ STA angleHi            \ add the rounding in (U T), if applicable
+
+ BIT G                  \ If bit 7 of G is clear, jump to gang15 to skip the
+ BPL gang15             \ following, as the rounding in (U T) is only applied
+                        \ when bit 7 of G is set
+
+                        \ If we get here then bit 7 of G is set and we need to
+                        \ add on the rounding in (U T)
+
+ LDA angleLo            \ Set (angleHi angleLo) = (angleHi angleLo) + (U T)
  CLC
  ADC T
  STA angleLo
@@ -1667,12 +1719,15 @@ L0BAB = L0B00+171
 
 .gang15
 
- LSR angleHi
- ROR angleLo
+ LSR angleHi            \ Set (angleHi angleLo) = (angleHi angleLo) / 2
+ ROR angleLo            \
+                        \ So we now have the average value of arctan(Y) and
+                        \ arctan(Y + 1), including rounding if applicable, so
+                        \ the result has now been interpolated for more accuracy
 
 .gang16
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
