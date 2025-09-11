@@ -137,10 +137,10 @@ L0039                = &0039
 L003A                = &003A
 L003B                = &003B
 L003C                = &003C
-L003D                = &003D
-L003E                = &003E
-L003F                = &003F
-L0040                = &0040
+playerYawAngleLo                = &003D
+playerYawAngleHi                = &003E
+playerPitchAngleLo                = &003F
+playerPitchAngleHi                = &0040
 L0041                = &0041
 L0042                = &0042
 L0043                = &0043
@@ -604,7 +604,11 @@ L0BAB = L0B00+171
 
 .sinYawAngleHi
 
- EQUB &00, &00
+ EQUB &00
+
+.cosYawAngleHi
+
+ EQUB &00
 
 .L0C04
 
@@ -1134,7 +1138,7 @@ L0BAB = L0B00+171
 \
 \       Name: irq1Address
 \       Type: Variable
-\   Category: ???
+\   Category: Main loop
 \    Summary: Stores the previous value of IRQ1V before we install our custom
 \             IRQ handler
 \
@@ -3179,16 +3183,19 @@ L1145 = C1144+1
 
  LDA #&80
  STA L0009
- LDX #&8E
- JSR ScanKeyboard
+
+ LDX #&8E               \ Scan the keyboard to see if function key f1 is being
+ JSR ScanKeyboard       \ pressed
+
  BNE C119A
  SEC
  ROR L0C64
 
 .C119A
 
- LDX #&9D
+ LDX #&9D               \ Scan the keyboard to see if SPACE is being pressed
  JSR ScanKeyboard
+
  BNE C11C0
  LDA L1222
  BNE C11C5
@@ -3593,8 +3600,10 @@ L1145 = C1144+1
 
 .P135D
 
- LDX L137D,Y
- JSR ScanKeyboard
+ LDX gameKeys,Y         \ Fetch the internal key number for game key Y
+
+ JSR ScanKeyboard       \ Scan the keyboard to see if this key is being pressed
+
  BNE C1373
  LDA L138C,Y
  AND #&03
@@ -3614,17 +3623,35 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L137D
+\       Name: gameKeys
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Negative inkey values for the game keys
 \
+\ ------------------------------------------------------------------------------
+\
+\ For a full list of negative inkey values, see Appendix C of the "Advanced User
+\ Guide for the BBC Micro" by Bray, Dickens and Holmes.
+
 \ ******************************************************************************
 
-.L137D
+.gameKeys
 
- EQUB &AE, &CD, &A9, &99, &BE, &EF, &CC, &DC
- EQUB &9B, &AB, &DB, &EA, &96, &A6, &CA
+ EQUB &AE               \ Negative inkey value for "S"
+ EQUB &CD               \ Negative inkey value for "D"
+ EQUB &A9               \ Negative inkey value for "L"
+ EQUB &99               \ Negative inkey value for ","
+ EQUB &BE               \ Negative inkey value for "A"
+ EQUB &EF               \ Negative inkey value for "Q"
+ EQUB &CC               \ Negative inkey value for "R"
+ EQUB &DC               \ Negative inkey value for "T"
+ EQUB &9B               \ Negative inkey value for "B"
+ EQUB &AB               \ Negative inkey value for "H"
+ EQUB &DB               \ Negative inkey value for "7"
+ EQUB &EA               \ Negative inkey value for "8"
+ EQUB &96               \ Negative inkey value for "COPY"
+ EQUB &A6               \ Negative inkey value for "DELETE"
+ EQUB &CA               \ Negative inkey value for "U"
 
 \ ******************************************************************************
 \
@@ -4719,9 +4746,9 @@ L1145 = C1144+1
  CMP L0C68
  BCS C1912
  LDA angleLo
- STA L003D
+ STA playerYawAngleLo
  LDA angleHi
- STA L003E
+ STA playerYawAngleHi
  LDA #&02
  STA L001E
  LDA L004C
@@ -4736,10 +4763,10 @@ L1145 = C1144+1
 
  JSR sub_C561D
  LDA angleLo
- STA L003F
+ STA playerPitchAngleLo
  STA T
  LDA angleHi
- STA L0040
+ STA playerPitchAngleHi
  JSR sub_C1C43
  JSR sub_C1CCC
  ROL L0C56
@@ -5400,12 +5427,12 @@ L1145 = C1144+1
  LSR U
  ROR A
  CLC
- STA L003D
+ STA playerYawAngleLo
  LDA U
  ADC L09C0,X
  SEC
  SBC #&0A
- STA L003E
+ STA playerYawAngleHi
  LDA L0CC7
  SEC
  SBC #&05
@@ -5421,13 +5448,13 @@ L1145 = C1144+1
  ROR A
  CLC
  ADC #&20
- STA L003F
+ STA playerPitchAngleLo
  STA T
  LDA U
  ADC L0140,X
  CLC
  ADC #&03
- STA L0040
+ STA playerPitchAngleHi
 
 \ ******************************************************************************
 \
@@ -5511,7 +5538,8 @@ L1145 = C1144+1
  ROR T
  PLP
  BCC C1CA7
- JSR Negate16Bit
+
+ JSR Negate16Bit        \ Set (A T) = -(A T)
 
 .C1CA7
 
@@ -5738,9 +5766,16 @@ L1145 = C1144+1
 
  STA U
  LDA L0002
- JSR Multiply8x8
- PLP
- JSR Absolute16Bit
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+
+ PLP                    \ Restore the sign of ??? which we stored on the
+                        \ stack above, so the N flag is positive if ???,
+                        \ or negative if ???
+
+ JSR Absolute16Bit      \ Set the sign of (A T) to match the result of the
+                        \ subtraction above, so A is now ???
+
  CLC
  ADC G
  STA U
@@ -7577,7 +7612,7 @@ L23E3 = C23E2+1
  LDA #&40
  STA L003C
  LDA #&0C
- STA L003D
+ STA playerYawAngleLo
  LDA L09C0,X
  CLC
  ADC #&20
@@ -8629,9 +8664,16 @@ L23E3 = C23E2+1
 
  STA U
  LDA L0C08
- JSR Multiply8x8
- PLP
- JSR Absolute16Bit
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+
+ PLP                    \ Restore the sign of ??? which we stored on the
+                        \ stack above, so the N flag is positive if ???,
+                        \ or negative if ???
+
+ JSR Absolute16Bit      \ Set the sign of (A T) to match the result of the
+                        \ subtraction above, so A is now ???
+
  CLC
  ADC #&06
  BPL C2B39
@@ -9255,11 +9297,11 @@ L23E3 = C23E2+1
  LDA L000C
  BEQ C2E96
  LDA L0AE0,Y
- STA L003E
+ STA playerYawAngleHi
  LDA L0A80,Y
  STA L001A
  LDA L0AE0,X
- STA L003F
+ STA playerPitchAngleLo
  LDA L0A80,X
  STA L0016
  LDA L54A0,Y
@@ -9352,7 +9394,7 @@ L23E3 = C23E2+1
 
 .sub_C2EAE
 
- LDA L003F
+ LDA playerPitchAngleLo
  BMI C2EC2
  BNE CRE25
  LDA L0016
@@ -9373,7 +9415,7 @@ L23E3 = C23E2+1
 
 .C2EC6
 
- LDA L003E
+ LDA playerYawAngleHi
  BMI CRE25
  BNE C2EDA
  LDA L001A
@@ -9431,7 +9473,7 @@ L23E3 = C23E2+1
  LSR A
  EOR #&FF
  CLC
- LDX L003E
+ LDX playerYawAngleHi
  BNE C2F80
  LDX L0018
  JMP C2F29
@@ -9503,7 +9545,7 @@ L2F2B = C2F29+2
  LSR A
  EOR #&FF
  CLC
- LDX L003E
+ LDX playerYawAngleHi
  BNE C2FA6
  LDX L0018
  JMP C2F77
@@ -9598,7 +9640,7 @@ L2F79 = C2F77+2
 
  STX L000E
  LDA #0
- STA L0040
+ STA playerPitchAngleHi
  LDA L54A0,Y
  SEC
  SBC L54A0,X
@@ -9606,7 +9648,9 @@ L2F79 = C2F77+2
  LDA L0B40,Y
  SBC L0B40,X
  STA L000A
- JSR Absolute16Bit
+
+ JSR Absolute16Bit      \ Set (A T) = |A T|
+
  STA U
  ORA V
  BEQ C2FFA
@@ -9618,7 +9662,7 @@ L2F79 = C2F77+2
  LSR U
  ROR T
  SEC
- ROL L0040
+ ROL playerPitchAngleHi
  LSR A
  BNE C2FEC
 
@@ -9632,7 +9676,9 @@ L2F79 = C2F77+2
  BEQ C2FEC
  LDA U
  BIT L000A
- JSR Absolute16Bit
+
+ JSR Absolute16Bit      \ Set (A T) = |A T|
+
  STA L0043
  LDA T
  STA L003A
@@ -9641,10 +9687,10 @@ L2F79 = C2F77+2
  LDA L0B40,Y
  STA L0042
  LDA L0AE0,Y
- STA L003F
+ STA playerPitchAngleLo
  LDA L0A80,Y
  STA L0016
- LDA L0040
+ LDA playerPitchAngleHi
  BEQ C3054
 
 .C302B
@@ -9654,10 +9700,10 @@ L2F79 = C2F77+2
  SEC
  SBC L000C
  STA L0016
- LDA L003F
- STA L003E
+ LDA playerPitchAngleLo
+ STA playerYawAngleHi
  SBC #&00
- STA L003F
+ STA playerPitchAngleLo
  LDA L0039
  STA L0018
  SEC
@@ -9668,15 +9714,15 @@ L2F79 = C2F77+2
  SBC L0043
  STA L0042
  JSR sub_C2EAE
- DEC L0040
+ DEC playerPitchAngleHi
  BNE C302B
 
 .C3054
 
  LDA L0016
  STA L001A
- LDA L003F
- STA L003E
+ LDA playerPitchAngleLo
+ STA playerYawAngleHi
  LDA L0039
  STA L0018
  LDA L0042
@@ -9685,7 +9731,7 @@ L2F79 = C2F77+2
  LDA L0A80,X
  STA L0016
  LDA L0AE0,X
- STA L003F
+ STA playerPitchAngleLo
  LDA L54A0,X
  STA L0039
  LDA L0B40,X
@@ -9732,7 +9778,7 @@ L2F79 = C2F77+2
  BCS C3112
  STA L30EB
  STX C30E3
- LDA L003E
+ LDA playerYawAngleHi
  BEQ C30C3
  INY
 
@@ -9782,7 +9828,7 @@ L30EB = C30E9+2
 
 .C30F8
 
- DEC L003E
+ DEC playerYawAngleHi
  BPL C30FF
  JMP CRE26
 
@@ -9803,7 +9849,7 @@ L30EB = C30E9+2
 
  STA L314A
  STX C3137
- LDA L003E
+ LDA playerYawAngleHi
  BEQ C311D
  INY
 
@@ -9850,7 +9896,7 @@ L314A = C3148+2
 
 .C3152
 
- DEC L003E
+ DEC playerYawAngleHi
  BPL C3159
  JMP CRE26
 
@@ -9892,7 +9938,7 @@ L314A = C3148+2
 .sub_C316E
 
  PHA
- LDA L003E
+ LDA playerYawAngleHi
  BEQ C3177
  LDA #&2C
  BNE C318C
@@ -11441,7 +11487,7 @@ L314A = C3148+2
 \
 \       Name: IRQHandler
 \       Type: Subroutine
-\   Category: ???
+\   Category: Main loop
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -13536,7 +13582,11 @@ L49C1                = &49C1
  AND #&FC
  STA W
  LDA L0085
- JSR GetAngleFromCoords
+
+ JSR GetAngleFromCoords \ Calculate the following angle:
+                        \
+                        \   (angleHi angleLo) = arctan( (A T) / (V W) )
+
  LDA L0086
  EOR L0088
  BMI C55D1
@@ -13581,7 +13631,11 @@ L49C1                = &49C1
  AND #&FC
  STA W
  LDA L0083
- JSR GetAngleFromCoords
+
+ JSR GetAngleFromCoords \ Calculate the following angle:
+                        \
+                        \   (angleHi angleLo) = arctan( (A T) / (V W) )
+
  LDA L0086
  EOR L0088
  BPL C560F
@@ -14511,12 +14565,15 @@ L5BA0 = L5B00+160
  LDA L4D60,Y
  STA U
  LDA L008F
- JSR Multiply8x8
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+
  STA T
  LDA #0
  BIT H
  BVC C5CA9
- JSR Negate16Bit
+
+ JSR Negate16Bit        \ Set (A T) = -(A T)
 
 .C5CA9
 
@@ -14542,7 +14599,9 @@ L5BA0 = L5B00+160
  LDA L4D60,Y
  STA U
  LDA L008E
- JSR Multiply8x8
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+
  STA L0080
  LDA #0
  STA L0083
@@ -14564,7 +14623,8 @@ L5BA0 = L5B00+160
  STA T
  LDA #0
  BCC C5D05
- JSR Negate16Bit
+
+ JSR Negate16Bit        \ Set (A T) = -(A T)
 
 .C5D05
 
@@ -14669,7 +14729,7 @@ L5BA0 = L5B00+160
  LDA L4FE0,Y
  STA L003C
  LDA L5120,Y
- STA L003D
+ STA playerYawAngleLo
  JSR sub_C2A79
  LDY L004E
 
@@ -14690,7 +14750,7 @@ L5BA0 = L5B00+160
  LDA #&40
  STA L003C
  LDA #&0C
- STA L003D
+ STA playerYawAngleLo
  LSR L0C7A
  LDY L006F
  RTS
