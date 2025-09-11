@@ -161,8 +161,8 @@ L0057                = &0057
 L0058                = &0058
 L0059                = &0059
 L005A                = &005A
-yCoordLo             = &005C
-yCoordHi             = &005D
+bLo                  = &005C
+bHi                  = &005D
 L005E                = &005E
 L005F                = &005F
 secondAxis           = &0060
@@ -191,8 +191,8 @@ V                    = &0076
 W                    = &0077
 G                    = &0078
 L0079                = &0079
-xCoordLo             = &007A
-xCoordHi             = &007B
+aLo                  = &007A
+aHi                  = &007B
 hypotenuseLo         = &007C
 hypotenuseHi         = &007D
 angleTangent         = &007E
@@ -12390,7 +12390,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: hypotenuse
+\       Name: tanHalfAngle
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for hypotenuse lengths given the tangent of an angle
@@ -12400,22 +12400,25 @@ L314A = C3148+2
 \ Given the tangent of an angle, X = tan(theta), this table contains the
 \ following at index X:
 \
-\   hypotenuse,X = tan(theta / 2)
+\   tanHalfAngle,X = 2 * tan(theta / 2)
+\
+\ The table contains lookup values for indexes 0 to 128, which correspond to
+\ theta angles of 0 to 45 degrees.
 \
 \ This allows us to approximate the length of the hypotenuse of a triangle with
-\ angle theta, adjacent side x and opposite side y, as follows:
+\ angle theta, adjacent side a and opposite side b, as follows:
 \
-\   h =~ x + y * tan(theta / 2)
+\   h =~ a + b * tan(theta / 2)
 \
 \ ******************************************************************************
 
-.hypotenuse
+.tanHalfAngle
 
  EQUB 0
 
  FOR I%, 1, 128
 
-  EQUB INT(0.5 + 512 * TAN(ATN(I% / 128) / 2))
+  EQUB INT(0.5 + 2 * 256 * TAN(ATN(I% / 128) / 2))
 
  NEXT
 
@@ -13463,28 +13466,19 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: sub_C5560
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C5560
-
- STA angleTangent
- STA angleLo
- STA angleHi
- RTS
-
-\ ******************************************************************************
-\
 \       Name: sub_C5567
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
+
+.C5560
+
+ STA angleTangent
+ STA angleLo
+ STA angleHi
+ RTS
 
 .sub_C5567
 
@@ -13499,27 +13493,27 @@ L49C1                = &49C1
 .C5575
 
  LDA L0085
- STA yCoordHi
+ STA bHi
  LDA L0082
- STA yCoordLo
+ STA bLo
  LDA L0080
- STA xCoordLo
+ STA aLo
  LDA L0083
- STA xCoordHi
+ STA aHi
  JMP C55A5
 
 .C5588
 
  LDA L0083
- STA yCoordHi
+ STA bHi
  LDA L0080
- STA yCoordLo
+ STA bLo
  LDA L0082
- STA xCoordLo
+ STA aLo
  LDA L0085
- STA xCoordHi
+ STA aHi
  ORA L0082
- BEQ sub_C5560
+ BEQ C5560
  LDA L0085
  JMP C55E3
 
@@ -13673,28 +13667,26 @@ L49C1                = &49C1
 \       Name: GetHypotenuse
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate the hypotenuse from an angle and two coordinates with
+\    Summary: Calculate the hypotenuse from an angle and two triangle sides with
 \             one lookup and one multiplication (so without a square root)
 \
 \ ------------------------------------------------------------------------------
 \
 \ This routine calculates:
 \
-\   (hypotenuseHi hypotenuseLo) = (xCoordHi xCoordLo)
-\                                 + tan(theta / 2) * (yCoordHi yCoordLo) / 2
+\   (hypotenuseHi hypotenuseLo) = (aHi aLo) + tan(theta / 2) * (bHi bLo)
 \
-\ (NOTE: This may well end up being calculated in the x/y and z planes, so the
-\ hypotenuse points into the screen. ???)
+\ for a triangle with angle theta, adjacent side a and opposite side b.
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   angleTangent        The angle of the hypotenuse
+\   angleTangent        The triangle angle theta
 \
-\   (xCoordHi xCoordLo) The x-coordinate of the end of the hypotenuse
+\   (aHi aLo)           The length of a, the adjacent side of the triangle
 \
-\   (yCoordHi yCoordLo) The y-coordinate of the end of the hypotenuse
+\   (bHi bLo)           The length of b, the opposite side of the triangle
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13709,35 +13701,40 @@ L49C1                = &49C1
  STY yStoreHypotenuse   \ Store Y in yStoreHypotenuse so it can be preserved
                         \ acrosscalls to the routine
 
- LDA angleTangent       \ Set Y = theta / 2
+ LDA angleTangent       \ Set Y = angleTangent / 2
  LSR A                  \
- ADC #0                 \ Rounded to the nearest integer by the ADC instruction
- TAY                    \
-                        \ The hypotenuse lookup table contains 128 entries, so
-                        \ we halve the angle to get the lookup index ???
+ ADC #0                 \ The ADC instruction rounds the result to the nearest
+ TAY                    \ integer
+                        \
+                        \ The value of angleTangent ranges from 0 to 255 to
+                        \ represent the tangent of angles 0 to 45 degrees, but
+                        \ the tanHalfAngle table ranges from 0 to 128 to
+                        \ represent the same range of angles, so we have to
+                        \ halve angleTangent so we can use it as an index into
+                        \ the tanHalfAngle table to fetch the tangent of the
+                        \ half angle
 
- LDA hypotenuse,Y       \ Set U = tan(theta / 2)
+ LDA tanHalfAngle,Y     \ Set U = 2 * tan(theta / 2)
  STA U
 
- LDA yCoordLo           \ Set (V T) = (yCoordHi yCoordLo)
+ LDA bLo                \ Set (V T) = (bHi bLo)
  STA T
- LDA yCoordHi
+ LDA bHi
  STA V
 
  JSR Multiply8x16       \ Set (U T) = U * (V T) / 256
-                        \           = tan(theta / 2) * (yCoordHi yCoordLo)
+                        \           = 2 * tan(theta / 2) * (bHi bLo)
 
  LSR U                  \ Set (U T) = (U T) / 2
- ROR T                  \           = tan(theta / 2) * (yCoordHi yCoordLo) / 2
+ ROR T                  \           = tan(theta / 2) * (bHi bLo)
 
  LDA T                  \ Calculate:
  CLC                    \
- ADC xCoordLo           \  (hypotenuseHi hypotenuseLo)
+ ADC aLo                \  (hypotenuseHi hypotenuseLo)
  STA hypotenuseLo       \
- LDA U                  \     = (xCoordHi xCoordLo) + (U T)
- ADC xCoordHi           \
- STA hypotenuseHi       \     = (xCoordHi xCoordLo)
-                        \       + tan(theta / 2) * (yCoordHi yCoordLo) / 2
+ LDA U                  \     = (aHi aLo) + (U T)
+ ADC aHi                \
+ STA hypotenuseHi       \     = (aHi aLo) + tan(theta / 2) * (bHi bLo)
 
  LDY yStoreHypotenuse   \ Restore the value of Y from yStoreHypotenuse that we
                         \ stored at the start of the routine, so that it's

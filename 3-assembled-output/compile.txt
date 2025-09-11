@@ -9619,7 +9619,7 @@
      3CFF   1F
      3D00   1F
      3D01   20
-.hypotenuse
+.tanHalfAngle
      3D02   00
      3D03   02
      3D04   04
@@ -13445,7 +13445,7 @@
      555D   12
      555E   FF
      555F   FF
-.sub_C5560
+.C5560
      5560   85 7E      STA &7E
      5562   85 8A      STA &8A
      5564   85 8B      STA &8B
