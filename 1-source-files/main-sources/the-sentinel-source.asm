@@ -908,25 +908,13 @@ L0BAB = L0B00+171
 
  EQUB &AA
 
-.L0C7B
+.randomLFSR
 
- EQUB &00
-
-.L0C7C
-
- EQUB &00
-
-.L0C7D
-
- EQUB &01
-
-.L0C7E
-
- EQUB &00
-
-.L0C7F
-
- EQUB &00
+ EQUB 0
+ EQUB 0
+ EQUB 1
+ EQUB 0
+ EQUB 0
 
 .L0C80
 
@@ -3164,7 +3152,7 @@ L1145 = C1144+1
 
  BPL resv1              \ Loop back until we have processed X from &3F to 0
 
- INC L0C7D              \ ???
+ INC randomLFSR+2       \ ???
 
  JSR sub_C3923          \ ???
 
@@ -3382,7 +3370,8 @@ L1145 = C1144+1
 
 .sub_C125A
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  AND #&1F
  CMP #&1F
  BCS sub_C125A
@@ -4037,7 +4026,8 @@ L1145 = C1144+1
 
 .C150B
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  AND L0027
  CMP T
  BCS C150B
@@ -4075,7 +4065,9 @@ L1145 = C1144+1
 
  JSR sub_C1EFF
  JSR sub_C196A
- JSR sub_C3194
+
+ JSR GetRandomNumber    \ Set A to a random number
+
  LSR A
  AND #&3F
  ORA #&05
@@ -4422,7 +4414,8 @@ L1145 = C1144+1
 
 .C16C9
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  DEC L0000
  BPL C16D4
  LDA #&07
@@ -6161,7 +6154,9 @@ L1145 = C1144+1
  STA (L005E),Y
  LDA #&F5
  STA L0140,X
- JSR sub_C3194
+
+ JSR GetRandomNumber    \ Set A to a random number
+
  AND #&F8
  CLC
  ADC #&60
@@ -8610,7 +8605,8 @@ L23E3 = C23E2+1
 
 .P2A9E
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  STA L5A00,X
  DEX
  BPL P2A9E
@@ -8748,7 +8744,7 @@ L23E3 = C23E2+1
 
 .C2B45
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
 
 .C2B48
 
@@ -9979,7 +9975,7 @@ L314A = C3148+2
 
 .sub_C316C
 
- BCC sub_C3194
+ BCC GetRandomNumber
 
 \ ******************************************************************************
 \
@@ -10029,49 +10025,62 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3194
+\       Name: GetRandomNumber
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Set A to a random number
+\
+\ ------------------------------------------------------------------------------
+\
+\ Five-byte (40-bit) linear feedback shift register with EOR feedback.
 \
 \ ******************************************************************************
 
-.sub_C3194
+.GetRandomNumber
 
- STY L31BC
- LDY #&08
+ STY yStoreRandom       \ Store Y in yStoreRandom so it can be preserved across
+                        \ calls to the routine
 
-.P3199
+ LDY #8
 
- LDA L0C7D
+.rand1
+
+ LDA randomLFSR+2
  LSR A
  LSR A
  LSR A
- EOR L0C7F
+ EOR randomLFSR+4
  ROR A
- ROL L0C7B
- ROL L0C7C
- ROL L0C7D
- ROL L0C7E
- ROL L0C7F
+ ROL randomLFSR
+ ROL randomLFSR+1
+ ROL randomLFSR+2
+ ROL randomLFSR+3
+ ROL randomLFSR+4
+
  DEY
- BNE P3199
- LDY L31BC
- LDA L0C7F
- RTS
+
+ BNE rand1
+
+ LDY yStoreRandom       \ Restore the value of Y from yStoreRandom that we
+                        \ stored at the start of the routine, so that it's
+                        \ preserved
+
+ LDA randomLFSR+4
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L31BC
+\       Name: yStoreRandom
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L31BC
+.yStoreRandom
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -10544,7 +10553,8 @@ L314A = C3148+2
 
 .sub_C3364
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  PHA
  AND #&0F
  CMP #&0A
@@ -10609,7 +10619,9 @@ L314A = C3148+2
  DEX
  BPL P3394
  STX L0CE6
- JSR sub_C3194
+
+ JSR GetRandomNumber    \ Set A to a random number
+
  LSR L0C60
  RTS
 
@@ -10640,8 +10652,8 @@ L314A = C3148+2
 
 .sub_C33B7
 
- STY L0C7C
- STX L0C7B
+ STY randomLFSR+1
+ STX randomLFSR
  STY L0CFE
  STX L0CFD
  STY L0C52
@@ -10715,7 +10727,8 @@ L314A = C3148+2
 
 .P33FC
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  LDY #&07
  ASL A
  PHP
@@ -10755,7 +10768,8 @@ L314A = C3148+2
 
 .sub_C341B
 
- JSR sub_C3194
+ JSR GetRandomNumber    \ Set A to a random number
+
  PHA
  AND #&07
  STA T
@@ -11162,7 +11176,9 @@ L314A = C3148+2
  BCC CRE32
  LDA #&06
  JSR sub_C343A
- JSR sub_C3194
+
+ JSR GetRandomNumber    \ Set A to a random number
+
  AND #&03
  CLC
  ADC #&01
@@ -11294,7 +11310,7 @@ L314A = C3148+2
 
 .P3638
 
- STA L0C7C,X
+ STA randomLFSR+1,X
  DEX
  BPL P3638
 
@@ -13808,7 +13824,7 @@ L49C1                = &49C1
 .GetHypotenuse
 
  STY yStoreHypotenuse   \ Store Y in yStoreHypotenuse so it can be preserved
-                        \ acrosscalls to the routine
+                        \ across calls to the routine
 
  LDA angleTangent       \ Set Y = angleTangent / 2
  LSR A                  \

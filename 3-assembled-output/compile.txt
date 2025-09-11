@@ -2251,15 +2251,11 @@
      0C79   00
 .L0C7A
      0C7A   AA
-.L0C7B
+.randomLFSR
      0C7B   00
-.L0C7C
      0C7C   00
-.L0C7D
      0C7D   01
-.L0C7E
      0C7E   00
-.L0C7F
      0C7F   00
 .L0C80
      0C80   00
@@ -7716,10 +7712,10 @@
      318F   8D 48 31   STA &3148
      3192   68         PLA
      3193   60         RTS
-.sub_C3194
+.GetRandomNumber
      3194   8C BC 31   STY &31BC
      3197   A0 08      LDY #&08
-.P3199
+.rand1
      3199   AD 7D 0C   LDA &0C7D
      319C   4A         LSR A
      319D   4A         LSR A
@@ -7736,7 +7732,7 @@
      31B5   AC BC 31   LDY &31BC
      31B8   AD 7F 0C   LDA &0C7F
      31BB   60         RTS
-.L31BC
+.yStoreRandom
      31BC   00
 .sub_C31BD
      31BD   18         CLC
