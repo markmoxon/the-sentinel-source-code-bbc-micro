@@ -4271,7 +4271,7 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1440
+\       Name: sub_C1440 (Part 1 of 2)
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
@@ -4379,6 +4379,15 @@ L1145 = C1144+1
 .L14C4
 
  EQUB &02, &01, &03, &06, &01, &06, &01, &03
+
+\ ******************************************************************************
+\
+\       Name: sub_C1440 (Part 2 of 2)
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .C14CC
 
@@ -10450,7 +10459,12 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
-\ Five-byte (40-bit) linear feedback shift register with EOR feedback.
+\ Random numbers in The Sentinel are produced using a five-byte (40-bit) linear
+\ feedback shift register (LFSR) with EOR feedback.
+\
+\ Specifically, to generate a new random number, we shift the LFSR left by eight
+\ places, and on each shift we insert the EOR of bits 19 and 32 into bit 0 of
+\ the register. After eight shifts, the top byte is our next random number.
 \
 \ ******************************************************************************
 
@@ -10459,31 +10473,47 @@ L314A = C3148+2
  STY yStoreRandom       \ Store Y in yStoreRandom so it can be preserved across
                         \ calls to the routine
 
- LDY #8
+                        \ We generate a new random number by shifting the
+                        \ five-byte linear feedback shift register in
+                        \ randomLFSR(4 3 2 1 0) by eight places, inserting EOR
+                        \ feedback as we do so
+
+ LDY #8                 \ Set a shift counter in Y
 
 .rand1
 
- LDA randomLFSR+2
- LSR A
- LSR A
- LSR A
- EOR randomLFSR+4
- ROR A
- ROL randomLFSR
- ROL randomLFSR+1
- ROL randomLFSR+2
+ LDA randomLFSR+2       \ Apply EOR feedback to the linear feedback shift
+ LSR A                  \ register by taking the middle byte in randomLFSR+2,
+ LSR A                  \ shifting it right by three places, EOR'ing it with
+ LSR A                  \ the output end of the shift register in randomLFSR+4
+ EOR randomLFSR+4       \ and rotating bit 0 of the result into the C flag
+ ROR A                  \
+                        \ This is the same as taking bit 3 of randomLFSR+2 and
+                        \ EOR'ing it with bit 0 of randomLFSR+4 into the C flag
+                        \
+                        \ We now use the C flag as the next input bit into the
+                        \ shift register
+                        \
+                        \ So this is the same as EOR'ing bits 19 and 32 of our
+                        \ 40-bit register and shifting the result into bit 0 of
+                        \ the register
+
+ ROL randomLFSR         \ Shift randomLFSR(4 3 2 1 0) to the left by one place,
+ ROL randomLFSR+1       \ inserting the C flag into bit 0 of the input end of
+ ROL randomLFSR+2       \ the shift register in randomLFSR
  ROL randomLFSR+3
  ROL randomLFSR+4
 
- DEY
+ DEY                    \ Decrement the shift counter
 
- BNE rand1
+ BNE rand1              \ Loop back until we have shifted eight times
 
  LDY yStoreRandom       \ Restore the value of Y from yStoreRandom that we
                         \ stored at the start of the routine, so that it's
                         \ preserved
 
- LDA randomLFSR+4
+ LDA randomLFSR+4       \ Set A to the output end of the shift register in
+                        \ randomLFSR+4 to give our random number
 
  RTS                    \ Return from the subroutine
 
