@@ -3215,7 +3215,7 @@ L0BAB = L0B00+171
  JSR DrawTitleScreen    \ screen
 
  LDX #0
- JSR sub_C36AD
+ JSR PrintTextToken
 
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
@@ -3227,7 +3227,7 @@ L0BAB = L0B00+171
  JSR ResetVariables     \ Reset all the game's main variables
 
  LDX #1
- JSR sub_C36AD
+ JSR PrintTextToken
 
  LDA #4
  JSR sub_C329F
@@ -3257,7 +3257,7 @@ L0BAB = L0B00+171
 .main3
 
  LDX #2
- JSR sub_C36AD
+ JSR PrintTextToken
 
  LDA #8
  JSR sub_C329F
@@ -3282,7 +3282,7 @@ L0BAB = L0B00+171
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
  LDX #3
- JSR sub_C36AD
+ JSR PrintTextToken
 
  JSR sub_C5E07
 
@@ -5535,8 +5535,9 @@ L1145 = C1144+1
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape code
 
- LDX #&05
- JSR sub_C36AD
+ LDX #5
+ JSR PrintTextToken
+
  JMP sub_C33AB
 
 \ ******************************************************************************
@@ -11129,18 +11130,18 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C33DE
+\       Name: PrintCharacter
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C33DE
+.PrintCharacter
 
  CMP #&C8
  BCS C33E5
- JMP C576A
+ JMP sub_C576A
 
 .C33E5
 
@@ -11148,7 +11149,7 @@ L314A = C3148+2
  TAX
  TYA
  PHA
- JSR sub_C36AD
+ JSR PrintTextToken
  PLA
  TAY
  RTS
@@ -11779,8 +11780,10 @@ L314A = C3148+2
  JSR sub_C355A
  LDA L0CE7
  BPL P3653
- LDX #&06
- JSR sub_C36AD
+
+ LDX #6
+ JSR PrintTextToken
+
  JSR sub_C5E07
 
 .C3663
@@ -11844,29 +11847,41 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C36AD
+\       Name: PrintTextToken
 \       Type: Subroutine
-\   Category: ???
+\   Category: Text
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The number of the text token to print (0 to 17)
 \
 \ ******************************************************************************
 
-.sub_C36AD
+.PrintTextToken
 
- LDY L5784,X
+ LDY tokenOffset,X      \ Set Y to the offset for text token X, which we can use
+                        \ as a character index to print each character in turn
 
-.P36B0
+.text1
 
- LDA L5796,Y
- CMP #&FF
- BEQ CRE33
- JSR sub_C33DE
- INY
- JMP P36B0
+ LDA L5796,Y            \ Set A to the Y-th character of the text token
 
-.CRE33
+ CMP #&FF               \ If A = &FF then we have reached the end of the token,
+ BEQ text2              \ so jump to text2 to return from the subroutine
 
- RTS
+ JSR PrintCharacter     \ Print the character in A
+
+ INY                    \ Increment the character index in Y to point to the
+                        \ next character of the text token
+
+ JMP text1              \ Loop back to print the next character
+
+.text2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -14633,7 +14648,16 @@ L49C1                = &49C1
 
  JMP OSWRCH
 
-.C576A
+\ ******************************************************************************
+\
+\       Name: sub_C576A
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C576A
 
  CMP #&19
  BEQ C5775
@@ -14657,7 +14681,7 @@ L49C1                = &49C1
 \
 \       Name: L5783
 \       Type: Variable
-\   Category: ???
+\   Category: Text
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -14666,11 +14690,44 @@ L49C1                = &49C1
 
  EQUB &06
 
-.L5784
+\ ******************************************************************************
+\
+\       Name: tokenOffset
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
 
- EQUB &17, &1D, &30, &39, &4E, &57, &5D
- EQUB &60, &67, &6E, &75, &7A, &7F, &86, &90
- EQUB &A2, &A8, &AC
+.tokenOffset
+
+ EQUB token0 - L5796
+ EQUB token1 - L5796
+ EQUB token2 - L5796
+ EQUB token3 - L5796
+ EQUB token4 - L5796
+ EQUB token5 - L5796
+ EQUB token6 - L5796
+ EQUB token7 - L5796
+ EQUB token8 - L5796
+ EQUB token9 - L5796
+ EQUB token10 - L5796
+ EQUB token11 - L5796
+ EQUB token12 - L5796
+ EQUB token13 - L5796
+ EQUB token14 - L5796
+ EQUB token15 - L5796
+ EQUB token16 - L5796
+ EQUB token17 - L5796
+
+\ ******************************************************************************
+\
+\       Name: L5796
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .L5796
 
@@ -14689,29 +14746,267 @@ L49C1                = &49C1
 
  EQUB &03
  EQUB &00, &12, &FF, &FC, &00, &00, &00, &19
- EQUB &7F, &20, &D2, &D4, &D9, &11, &81, &FF
+ EQUB &7F, &20
+
+\ ******************************************************************************
+\
+\       Name: token0
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token0
+
+ EQUB &D2, &D4, &D9, &11, &81
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token1
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token1
+
  EQUB &D4, &D7, &D7, &D8, &CF, &D5, &20, &4E
  EQUB &55, &4D, &42, &45, &52, &3F, &04, &1F
- EQUB &05, &1B, &FF, &D2, &CF, &D6, &3F, &04
- EQUB &1F, &03, &1B, &FF, &D2, &CF, &57, &52
+ EQUB &05, &1B
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token2
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token2
+
+ EQUB &D2, &CF, &D6, &3F, &04
+ EQUB &1F, &03, &1B
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token3
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token3
+
+ EQUB &D2, &CF, &57, &52
  EQUB &4F, &4E, &47, &20, &53, &45, &43, &52
  EQUB &45, &54, &20, &43, &4F, &44, &45, &C8
- EQUB &FF, &D3, &D1, &D9, &CF, &09, &09, &D5
- EQUB &09, &FF, &CF, &D6, &D0, &D5, &09, &FF
- EQUB &D4, &D9, &FF, &19, &04, &40, &00, &00
- EQUB &03, &FF, &19, &04, &C0
- EQUB &00, &C0, &02, &FF, &19, &04, &C0, &00
- EQUB &40, &00, &FF, &05, &12, &00, &80, &FF
- EQUB &05, &12, &00, &81, &FF, &19, &04, &40
- EQUB &00, &A0, &00, &FF
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token4
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token4
+
+ EQUB &D3, &D1, &D9, &CF, &09, &09, &D5
+ EQUB &09
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token5
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token5
+
+ EQUB &CF, &D6, &D0, &D5, &09
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token6
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token6
+
+ EQUB &D4, &D9
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token7
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token7
+
+ EQUB &19, &04, &40, &00, &00
+ EQUB &03
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token8
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token8
+
+ EQUB &19, &04, &C0
+ EQUB &00, &C0, &02
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token9
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token9
+
+ EQUB &19, &04, &C0, &00
+ EQUB &40, &00
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token10
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token10
+
+ EQUB &05, &12, &00, &80
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token11
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token11
+
+ EQUB &05, &12, &00, &81
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token12
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token12
+
+ EQUB &19, &04, &40
+ EQUB &00, &A0, &00
+ EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token13
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token13
+
  EQUS "LANDSCAPE"
  EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token14
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token14
+
  EQUS "SECRET ENTRY CODE"
  EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token15
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token15
+
  EQUS "     "
  EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token16
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token16
+
  EQUS "   "
  EQUB &FF
+
+\ ******************************************************************************
+\
+\       Name: token17
+\       Type: Variable
+\   Category: Text
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.token17
+
  EQUS "PRESS ANY KEY"
  EQUB &FF
 
@@ -15815,8 +16110,10 @@ L5BA0 = L5B00+160
  LDY #0
  LDA #&80
  JSR DrawObject
- LDX #&04
- JSR sub_C36AD
+
+ LDX #4
+ JSR PrintTextToken
+
  JSR sub_C33AB
  JSR sub_C1440
  JMP main5
