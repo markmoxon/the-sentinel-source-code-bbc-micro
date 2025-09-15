@@ -2360,7 +2360,7 @@
      0C0D   00
 .L0C0E
      0C0E   00
-.L0C0F
+.textDropShadow
      0C0F   00
 .L0C10
      0C10   00
@@ -8330,11 +8330,11 @@
 .C33DA
      33DA   8D 07 0C   STA &0C07
      33DD   60         RTS
-.PrintCharacter
+.ProcessCharacter
      33DE   C9 C8      CMP #&C8
      33E0   B0 03      BCS &33E5
      33E2   4C 6A 57   JMP &576A
-.C33E5
+.char1
      33E5   E9 C8      SBC #&C8
      33E7   AA         TAX
      33E8   98         TYA
@@ -14005,7 +14005,7 @@
      5741   FF
      5742   FF
      5743   FF
-.sub_C5744
+.PrintSingleByte
      5744   2C 0F 0C   BIT &0C0F
      5747   30 1E      BMI &5767
      5749   C9 20      CMP #&20
@@ -14017,7 +14017,7 @@
      5757   8A         TXA
      5758   48         PHA
      5759   A2 16      LDX #&16
-.P575B
+.byte1
      575B   BD 96 57   LDA &5796,X
      575E   20 EE FF   JSR &FFEE
      5761   CA         DEX
@@ -14025,23 +14025,23 @@
      5764   68         PLA
      5765   AA         TAX
      5766   60         RTS
-.C5767
+.byte2
      5767   4C EE FF   JMP &FFEE
-.sub_C576A
+.PrintCharacter
      576A   C9 19      CMP #&19
      576C   F0 07      BEQ &5775
      576E   4C 44 57   JMP &5744
-.P5771
+.prin1
      5771   C8         INY
      5772   B9 96 57   LDA &5796,Y
-.C5775
+.prin2
      5775   20 EE FF   JSR &FFEE
      5778   CE 83 57   DEC &5783
      577B   D0 F4      BNE &5771
      577D   A9 06      LDA #&06
      577F   8D 83 57   STA &5783
      5782   60         RTS
-.L5783
+.vduCounter
      5783   06
 .tokenOffset
      5784   17
@@ -14062,33 +14062,30 @@
      5793   A2
      5794   A8
      5795   AC
-.L5796
-     5796   43
-.L5797
+.tokenBase
+.vduShadowFront
+     5796   43 
      5797   02
      5798   00
      5799   12
      579A   00
      579B   04
-     579C   00
-     579D   00
+     579C   00 00
      579E   00
      579F   19
      57A0   08
-.L57A1
-     57A1   43
-.L57A2
+.vduShadowRear
+     57A1   43 
      57A2   03
      57A3   00
      57A4   12
      57A5   FF
      57A6   FC
-     57A7   00
-     57A8   00
+     57A7   00 00
      57A9   00
      57AA   19
      57AB   7F
-     57AC   20
+     57AC   20 
 .token0
      57AD   D2
      57AE   D4
@@ -14103,14 +14100,7 @@
      57B6   D8
      57B7   CF
      57B8   D5
-     57B9   20
-     57BA   4E
-     57BB   55
-     57BC   4D
-     57BD   42
-     57BE   45
-     57BF   52
-     57C0   3F
+     57B9   20 4E 55 ...
      57C1   04
      57C2   1F
      57C3   05
@@ -14120,7 +14110,7 @@
      57C6   D2
      57C7   CF
      57C8   D6
-     57C9   3F
+     57C9   3F 
      57CA   04
      57CB   1F
      57CC   03
@@ -14129,23 +14119,8 @@
 .token3
      57CF   D2
      57D0   CF
-     57D1   57
-     57D2   52
-     57D3   4F
-     57D4   4E
-     57D5   47
-     57D6   20
-     57D7   53
-     57D8   45
-     57D9   43
-     57DA   52
-     57DB   45
-     57DC   54
-     57DD   20
-     57DE   43
-     57DF   4F
-     57E0   44
-     57E1   45
+     57D1   57 52 4F ...
+     57DE   43 4F 44 ...
      57E2   C8
      57E3   FF
 .token4
@@ -14172,26 +14147,20 @@
 .token7
      57F6   19
      57F7   04
-     57F8   40
-     57F9   00
-     57FA   00
-     57FB   03
+     57F8   40 00
+     57FA   00 03
      57FC   FF
 .token8
      57FD   19
      57FE   04
-     57FF   C0
-     5800   00
-     5801   C0
-     5802   02
+     57FF   C0 00
+     5801   C0 02
      5803   FF
 .token9
      5804   19
      5805   04
-     5806   C0
-     5807   00
-     5808   40
-     5809   00
+     5806   C0 00
+     5808   40 00
      580A   FF
 .token10
      580B   05
@@ -14208,10 +14177,8 @@
 .token12
      5815   19
      5816   04
-     5817   40
-     5818   00
-     5819   A0
-     581A   00
+     5817   40 00
+     5819   A0 00
      581B   FF
 .token13
      581C   4C 41 4E ...

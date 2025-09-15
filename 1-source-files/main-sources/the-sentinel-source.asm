@@ -1068,9 +1068,14 @@ L0BAB = L0B00+171
 
  EQUB &00
 
-.L0C0F
+.textDropShadow
 
- EQUB &00
+ EQUB 0                 \ Controls whether text in text tokens is printed with a
+                        \ drop shadow:
+                        \
+                        \   * Bit 7 clear = drop shadow
+                        \
+                        \   * Bit 7 set = no drop shadow
 
 .L0C10
 
@@ -3214,8 +3219,9 @@ L0BAB = L0B00+171
  LDA #0                 \ Call DrawTitleScreen with A = 0 to draw the title
  JSR DrawTitleScreen    \ screen
 
- LDX #0
- JSR PrintTextToken
+ LDX #0                 \ Print text token 0: Background colour blue, print
+ JSR PrintTextToken     \ "PRESS ANY KEY" at (64, 100), set text background to
+                        \ black
 
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
@@ -3226,8 +3232,9 @@ L0BAB = L0B00+171
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDX #1
- JSR PrintTextToken
+ LDX #1                 \ Print text token 1: Print 13 spaces at (64, 100),
+ JSR PrintTextToken     \ print "LANDSCAPE NUMBER?" at (64, 768), switch to text
+                        \ cursor, move text cursor to (5, 27)
 
  LDA #4
  JSR sub_C329F
@@ -3256,8 +3263,9 @@ L0BAB = L0B00+171
 
 .main3
 
- LDX #2
- JSR PrintTextToken
+ LDX #2                 \ Print text token 2: Background colour blue, print
+ JSR PrintTextToken     \ "SECRET ENTRY CODE?" at (64, 768), switch to text
+                        \ cursor, move text cursor to (2, 27)
 
  LDA #8
  JSR sub_C329F
@@ -3281,8 +3289,9 @@ L0BAB = L0B00+171
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
- LDX #3
- JSR PrintTextToken
+ LDX #3                 \ Print text token 3: Background colour blue, print
+ JSR PrintTextToken     \ "WRONG SECRET CODE" at (64, 768), print "PRESS ANY
+                        \ KEY" at (64, 100), set text background to black
 
  JSR sub_C5E07
 
@@ -4090,13 +4099,13 @@ L1145 = C1144+1
  TXA
  LDX #&02
  EOR #&03
- STA L5797
+ STA vduShadowFront+1
  BEQ C13AC
  INX
 
 .C13AC
 
- STX L57A2
+ STX vduShadowRear+1
  STY L140F
  LDA L1403,Y
  STA L0950
@@ -5535,8 +5544,9 @@ L1145 = C1144+1
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape code
 
- LDX #5
- JSR PrintTextToken
+ LDX #5                 \ Print text token 5: Print "SECRET ENTRY CODE" at
+ JSR PrintTextToken     \ (64, 768), "LANDSCAPE" at (192, 704), move cursor
+                        \ right
 
  JMP sub_C33AB
 
@@ -10564,7 +10574,7 @@ L314A = C3148+2
 
  BIT L0C60
  BMI DrawLetter3D
- JMP sub_C5744
+ JMP PrintSingleByte
 
 \ ******************************************************************************
 \
@@ -10885,8 +10895,9 @@ L314A = C3148+2
 
 .sub_C3303
 
- SEC
- ROR L0C0F
+ SEC                    \ Set bit 7 of textDropShadow so the following text is
+ ROR textDropShadow     \ printed without a drop shadow
+
  LDX T
  DEX
 
@@ -10904,8 +10915,11 @@ L314A = C3148+2
  JSR sub_C31C0
  DEX
  BNE P3317
- LSR L0C0F
- RTS
+
+ LSR textDropShadow     \ Clear bit 7 of textDropShadow so text tokens are once
+                        \ again printed with drop shadows
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11130,29 +11144,56 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: PrintCharacter
+\       Name: ProcessCharacter
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Process and print a character from a text token, which can encode
+\             another text token or be a one-byte character or VDU command
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The text token character to be printed
+\
+\   Y                   The offset of the current character within the text
+\                       token being printed
 \
 \ ******************************************************************************
 
-.PrintCharacter
+.ProcessCharacter
 
- CMP #&C8
- BCS C33E5
- JMP sub_C576A
+ CMP #200               \ If the character in A >= 200 then it represents a text
+ BCS char1              \ token, so jump to char1 to print the token
 
-.C33E5
+ JMP PrintCharacter     \ Otherwise the character in A is a simple one-byte
+                        \ character or VDU command, so jump to PrintCharacter to
+                        \ print it
 
- SBC #&C8
- TAX
- TYA
+.char1
+
+ SBC #200               \ Set A = A - 200
+                        \
+                        \ As we store recursive tokens within other tokens by
+                        \ encoding then as 200 + the token number, this extracts
+                        \ the recursive token number into A, so we can print it
+                        \
+                        \ This subtraction works because we jumped here with a
+                        \ BCS, so we know that the C flag is set
+
+ TAX                    \ Set X to the token we want to print, to pass to the
+                        \ PrintTextToken routine
+
+ TYA                    \ Store Y on the stack so we can retrieve it below
  PHA
- JSR PrintTextToken
- PLA
- TAY
- RTS
+
+ JSR PrintTextToken     \ Print the text token in X
+
+ PLA                    \ Retrieve Y from the stack, so Y now contains the
+ TAY                    \ offset of the token we just printed within the parent
+                        \ token that we are still printing
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -11781,7 +11822,7 @@ L314A = C3148+2
  LDA L0CE7
  BPL P3653
 
- LDX #6
+ LDX #6                 \ Print text token 6: Print "PRESS ANY KEY" at (64, 100)
  JSR PrintTextToken
 
  JSR sub_C5E07
@@ -11850,7 +11891,7 @@ L314A = C3148+2
 \       Name: PrintTextToken
 \       Type: Subroutine
 \   Category: Text
-\    Summary: ???
+\    Summary: Print a recursive text token
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11867,12 +11908,15 @@ L314A = C3148+2
 
 .text1
 
- LDA L5796,Y            \ Set A to the Y-th character of the text token
+ LDA tokenBase,Y        \ Set A to the Y-th character of the text token
 
  CMP #&FF               \ If A = &FF then we have reached the end of the token,
  BEQ text2              \ so jump to text2 to return from the subroutine
 
- JSR PrintCharacter     \ Print the character in A
+ JSR ProcessCharacter   \ Process the Y-th character of the text token in A, so
+                        \ if A is a token number in the format 200 + token, we
+                        \ print the text token, otherwise we print A as a simple
+                        \ one-byte character
 
  INY                    \ Increment the character index in Y to point to the
                         \ next character of the text token
@@ -14613,402 +14657,670 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: sub_C5744
+\       Name: PrintSingleByte
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print a simple one-byte character from a text token, optionally
+\             printing it with a drop shadow if the character is alphanumeric
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The one-byte character to be printed
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   X is preserved
 \
 \ ******************************************************************************
 
-.sub_C5744
+.PrintSingleByte
 
- BIT L0C0F
- BMI C5767
- CMP #&20
- BCC C5767
- CMP #&7F
- BCS C5767
- STA L5796
- STA L57A1
- TXA
+ BIT textDropShadow     \ If bit 7 of textDropShadow is set, jump to byte2 to
+ BMI byte2              \ print the character in A as-is (i.e. without a drop
+                        \ shadow if it is alphanumeric)
+
+ CMP #' '               \ If the character in A is a control character, jump to
+ BCC byte2              \ byte2 to print the character as-is
+
+ CMP #127               \ If the character in A is a top-bit-set character, jump
+ BCS byte2              \ jump to byte2 to print the character as-is
+
+                        \ If we get here then bit 7 of textDropShadow is clear
+                        \ and the character in A is alphanumeric, so now we
+                        \ print the character with a drop shadow
+                        \
+                        \ We do this by printing the sequence of VDU commands at
+                        \ vduShadowRear and vduShadowFront, which produce the
+                        \ drop shadow effect
+                        \
+                        \ The drop shadow is printed by first printing the VDU
+                        \ commands in vduShadowRear, to print the rear character
+                        \ in yellow, and then in vduShadowFront, to print the
+                        \ front character in red or cyan
+                        \
+                        \ The rear character is offset down from the front
+                        \ character by four graphics units, which equates to an
+                        \ offset of one pixel in mode 5
+                        \
+                        \ The VDU commands are printed backwards, because that
+                        \ makes the loop condition slightly simpler, and it also
+                        \ means we can poke the character to print into the
+                        \ start of each block of VDU commands, knowing that they
+                        \ will then be printed last in each VDU sequence
+
+ STA vduShadowFront     \ Insert the character to be printed into the sequence
+ STA vduShadowRear      \ of VDU commands at vduShadowRear and vduShadowFront,
+                        \ so that they print the required character with a drop
+                        \ shadow
+
+ TXA                    \ Store X on the stack so we can preserve it
  PHA
- LDX #&16
 
-.P575B
+ LDX #22                \ The vduShadowRear and vduShadowFront variables contain
+                        \ a total of 23 VDU command bytes, so set a byte counter
+                        \ in X so we can work through them from the end of
+                        \ vduShadowRear backwards to the start of vduShadowFront
 
- LDA L5796,X
- JSR OSWRCH
- DEX
- BPL P575B
- PLA
- TAX
- RTS
+.byte1
 
-.C5767
+ LDA vduShadowFront,X   \ Print the X-th character from the vduShadowRear and
+ JSR OSWRCH             \ vduShadowFront variables
 
- JMP OSWRCH
+ DEX                    \ Decrement the byte counter
+
+ BPL byte1              \ Loop back until we have printed all 23 command bytes
+
+ PLA                    \ Retrieve X from the stack so it is preserved across
+ TAX                    \ calls to the routine
+
+ RTS                    \ Return from the subroutine
+
+.byte2
+
+ JMP OSWRCH             \ We jump here if drop shadows are disabled, or if A is
+                        \ not alphanumeric, in which case print the character in
+                        \ A and return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
-\       Name: sub_C576A
+\       Name: PrintCharacter
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print a one-byte character from a text token or a multi-byte
+\             VDU 25 command
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The character to be printed
+\
+\   Y                   The offset of the current character within the text
+\                       token being printed
 \
 \ ******************************************************************************
 
-.sub_C576A
+.PrintCharacter
 
- CMP #&19
- BEQ C5775
- JMP sub_C5744
+ CMP #25                \ If the character in A = 25, jump to prin2 to print a
+ BEQ prin2              \ six-byte command in the form VDU 25, n, x; y;
+                        \
+                        \ We print the VDU 25 commands in its own loop because
+                        \ the 16-bit arguments to the command (x and y) might
+                        \ contain &FF, and we don't want this to be
+                        \ misidentified as the end of the text token
 
-.P5771
+ JMP PrintSingleByte    \ Otherwise jump to PrintSingleByte to print the
+                        \ one-byte character in A, returning from the subroutine
+                        \ using a tail call
 
- INY
- LDA L5796,Y
+.prin1
 
-.C5775
+ INY                    \ Increment the offset of the character being printer to
+                        \ move on to the next character in the 
 
- JSR OSWRCH
- DEC L5783
- BNE P5771
- LDA #&06
- STA L5783
- RTS
+ LDA tokenBase,Y
+
+.prin2
+
+ JSR OSWRCH             \ Print the next character in the VDU 25 command (we
+                        \ jump here from above with A = 25, which starts off
+                        \ the six-byte VDU sequence)
+
+ DEC vduCounter         \ Decrement the byte counter in vduCounter, which is
+                        \ always 6 when we jump into this loop
+
+ BNE prin1
+
+ LDA #6                 \ Reset the byte counter in vduCounter to 6, ready for
+ STA vduCounter         \ the next time we perform a VDU 25 command
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L5783
+\       Name: vduCounter
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: The number of bytes in a VDU 25, n, x; y; command
 \
 \ ******************************************************************************
 
-.L5783
+.vduCounter
 
- EQUB &06
+ EQUB 6
 
 \ ******************************************************************************
 \
 \       Name: tokenOffset
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Address offsets for the text tokens (each offset in the table is
+\             the offset of the token from tokenBase)
 \
 \ ******************************************************************************
 
 .tokenOffset
 
- EQUB token0 - L5796
- EQUB token1 - L5796
- EQUB token2 - L5796
- EQUB token3 - L5796
- EQUB token4 - L5796
- EQUB token5 - L5796
- EQUB token6 - L5796
- EQUB token7 - L5796
- EQUB token8 - L5796
- EQUB token9 - L5796
- EQUB token10 - L5796
- EQUB token11 - L5796
- EQUB token12 - L5796
- EQUB token13 - L5796
- EQUB token14 - L5796
- EQUB token15 - L5796
- EQUB token16 - L5796
- EQUB token17 - L5796
+ EQUB token0 - tokenBase
+ EQUB token1 - tokenBase
+ EQUB token2 - tokenBase
+ EQUB token3 - tokenBase
+ EQUB token4 - tokenBase
+ EQUB token5 - tokenBase
+ EQUB token6 - tokenBase
+ EQUB token7 - tokenBase
+ EQUB token8 - tokenBase
+ EQUB token9 - tokenBase
+ EQUB token10 - tokenBase
+ EQUB token11 - tokenBase
+ EQUB token12 - tokenBase
+ EQUB token13 - tokenBase
+ EQUB token14 - tokenBase
+ EQUB token15 - tokenBase
+ EQUB token16 - tokenBase
+ EQUB token17 - tokenBase
+
+.tokenBase
 
 \ ******************************************************************************
 \
-\       Name: L5796
+\       Name: vduShadowFront
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: VDU commands for printing the front character of a drop shadow
+\
+\ ------------------------------------------------------------------------------
+\
+\ The VDU commands below are printed by working backwards through the table, so
+\ the letter to be printed is actually the first entry in the table.
+\
+\ A drop shadow is printed by first printing the VDU commands in vduShadowRear,
+\ to print the rear character in yellow, and then in vduShadowFront, to print
+\ the front character in red or cyan. The rear character is offset down from the
+\ front character by four graphics units, which equates to an offset of one
+\ pixel in mode 5.
 \
 \ ******************************************************************************
 
-.L5796
+.vduShadowFront
 
- EQUB &43
+ EQUB "C"               \ 9. Print the character in red or cyan, for the front
+                        \ character of the drop shadow
+                        \
+                        \ The "C" is replaced by the character to be printed
 
-.L5797
+ EQUB 2, 0, 18          \ 8. VDU 18, 0, 2
+                        \
+                        \ Set the foreground colour to colour 2 (red or cyan,
+                        \ depending on the current palette)
 
- EQUB &02, &00, &12, &00
- EQUB &04, &00, &00, &00, &19, &08
+ EQUB &00, &04          \ 7. VDU 25, 0, 0; 4;
+ EQUW 0                 \
+ EQUB 0, 25             \ Move the graphics cursor relative to the last position
+                        \ by (0, 4), so we move up the screen by four units, or
+                        \ one pixel in mode 5
 
-.L57A1
+ EQUB 8                 \ 6. VDU 8
+                        \
+                        \ Backspace the cursor by one character, so it is on top
+                        \ of the yellow character that we just printed in
+                        \ vduShadowRear
 
- EQUB &43
+\ ******************************************************************************
+\
+\       Name: vduShadowRear
+\       Type: Variable
+\   Category: Text
+\    Summary: VDU commands for printing the rear character of a drop shadow
+\
+\ ------------------------------------------------------------------------------
+\
+\ The VDU commands below are printed by working backwards through the table, so
+\ the letter to be printed is actually the first entry in the table.
+\
+\ A drop shadow is printed by first printing the VDU commands in vduShadowRear,
+\ to print the rear character in yellow, and then in vduShadowFront, to print
+\ the front character in red or cyan. The rear character is offset down from the
+\ front character by four graphics units, which equates to an offset of one
+\ pixel in mode 5.
+\
+\ ******************************************************************************
 
-.L57A2
+.vduShadowRear
 
- EQUB &03
- EQUB &00, &12, &FF, &FC, &00, &00, &00, &19
- EQUB &7F, &20
+ EQUB "C"               \ 5. Print the character in yellow, for the rear
+                        \ character of the drop shadow
+                        \
+                        \ The "C" is replaced by the character to be printed
+
+ EQUB 3, 0, 18          \ 4. VDU 18, 0, 3
+                        \
+                        \ Set the foreground colour to colour 3 (yellow)
+
+ EQUB &FF, &FC          \ 3. VDU 25, 0, 0; -4;
+ EQUW 0                 \
+ EQUB 0, 25             \ Move the graphics cursor relative to the last position
+                        \ by (0, -4), so we move down the screen by four units,
+                        \ or one pixel in mode 5
+
+ EQUB 127               \ 2. Print a backspace to move the cursor back over the
+                        \ top of the space we just printed
+
+ EQUS " "               \ 1. Print a space to clear the screen for the new drop
+                        \ shadow character
 
 \ ******************************************************************************
 \
 \       Name: token0
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Background colour blue, print "PRESS ANY KEY" at (64, 100), set
+\             text background to black
 \
 \ ******************************************************************************
 
 .token0
 
- EQUB &D2, &D4, &D9, &11, &81
- EQUB &FF
+ EQUB 200 + 10          \ Text token 10: Configure text to be printed at the
+                        \ graphics cursor and set the background colour to
+                        \ colour 0 (blue)
+
+ EQUB 200 + 12          \ Text token 12: Move graphics cursor to (64, 100)
+
+ EQUB 200 + 17          \ Text token 17: Print "PRESS ANY KEY"
+
+ EQUB 17, 129           \ VDU 17, 129
+                        \
+                        \ Set text background to colour 1 (black)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token1
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Print 13 spaces at (64, 100), print "LANDSCAPE NUMBER?" at
+\             (64, 768), switch to text cursor, move text cursor to (5, 27)
 \
 \ ******************************************************************************
 
 .token1
 
- EQUB &D4, &D7, &D7, &D8, &CF, &D5, &20, &4E
- EQUB &55, &4D, &42, &45, &52, &3F, &04, &1F
- EQUB &05, &1B
- EQUB &FF
+ EQUB 200 + 12          \ Text token 12: Move graphics cursor to (64, 100)
+
+ EQUB 200 + 15          \ Text token 15: Print five spaces
+
+ EQUB 200 + 15          \ Text token 15: Print five spaces
+
+ EQUB 200 + 16          \ Text token 16: Print three spaces
+
+ EQUB 200 + 7           \ Text token 7: Move the graphics cursor to (64, 768)
+
+ EQUB 200 + 13          \ Text token 13: Print "LANDSCAPE"
+
+ EQUS " NUMBER?"        \ Print " NUMBER?"
+
+ EQUB 4                 \ VDU 4
+                        \
+                        \ Write text at the text cursor
+
+ EQUB 31, 5, 27         \ VDU 31, 5, 27
+                        \
+                        \ Move the text cursor to (5, 27)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token2
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Background colour blue, print "SECRET ENTRY CODE?" at (64, 768),
+\             switch to text cursor, move text cursor to (2, 27)
 \
 \ ******************************************************************************
 
 .token2
 
- EQUB &D2, &CF, &D6, &3F, &04
- EQUB &1F, &03, &1B
- EQUB &FF
+ EQUB 200 + 10          \ Text token 10: Configure text to be printed at the
+                        \ graphics cursor and set the background colour to
+                        \ colour 0 (blue)
+
+ EQUB 200 + 7           \ Text token 7: Move the graphics cursor to (64, 768)
+
+ EQUB 200 + 14          \ Text token 14: Print "SECRET ENTRY CODE"
+
+ EQUS "?"               \ Print "?"
+
+ EQUB 4                 \ VDU 4
+                        \
+                        \ Write text at the text cursor
+
+ EQUB 31, 3, 27         \ VDU 31, 3, 27
+                        \
+                        \ Move the text cursor to (2, 27)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token3
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Background colour blue, print "WRONG SECRET CODE" at (64, 768),
+\             print "PRESS ANY KEY" at (64, 100), set text background to black
 \
 \ ******************************************************************************
 
 .token3
 
- EQUB &D2, &CF, &57, &52
- EQUB &4F, &4E, &47, &20, &53, &45, &43, &52
- EQUB &45, &54, &20, &43, &4F, &44, &45, &C8
- EQUB &FF
+ EQUB 200 + 10          \ Text token 10: Configure text to be printed at the
+                        \ graphics cursor and set the background colour to
+                        \ colour 0 (blue)
+
+ EQUB 200 + 7           \ Text token 7: Move the graphics cursor to (64, 768)
+
+ EQUS "WRONG SECRET "   \ Print "WRONG SECRET CODE"
+ EQUS "CODE"
+
+ EQUB 200 + 0           \ Text token 0: Background colour blue, print "PRESS
+                        \ ANY KEY" at (64, 100), set text background to black
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token4
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Background colour black, print "PRESS ANY KEY" at (192, 64), print
+\             "LANDSCAPE" two chars right of (64, 768), move cursor right
 \
 \ ******************************************************************************
 
 .token4
 
- EQUB &D3, &D1, &D9, &CF, &09, &09, &D5
- EQUB &09
- EQUB &FF
+ EQUB 200 + 11          \ Text token 11: Configure text to be printed at the
+                        \ graphics cursor and set the background colour to
+                        \ colour 1 (black)
+
+ EQUB 200 + 9           \ Text token 9: Move the graphics cursor to (192, 64)
+
+ EQUB 200 + 17          \ Text token 17: Print "PRESS ANY KEY"
+
+ EQUB 200 + 7           \ Text token 7: Move the graphics cursor to (64, 768)
+
+ EQUB 9, 9              \ VDU 9, 9
+                        \
+                        \ Move the cursor right by two characters
+
+ EQUB 200 + 13          \ Text token 13: Print "LANDSCAPE"
+
+ EQUB 9                 \ VDU 9
+                        \
+                        \ Move the cursor right by one character, so it moves on
+                        \ to the next character
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token5
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 5: Print "SECRET ENTRY CODE" at (64, 768), "LANDSCAPE"
+\             at (192, 704), move cursor right
 \
 \ ******************************************************************************
 
 .token5
 
- EQUB &CF, &D6, &D0, &D5, &09
- EQUB &FF
+ EQUB 200 + 7           \ Text token 7: Move the graphics cursor to (64, 768)
+
+ EQUB 200 + 14          \ Text token 14: Print "SECRET ENTRY CODE"
+
+ EQUB 200 + 8           \ Text token 8: Move the graphics cursor to (192, 704)
+
+ EQUB 200 + 13          \ Text token 13: Print "LANDSCAPE"
+
+ EQUB 9                 \ VDU 9
+                        \
+                        \ Move the cursor right by one character, so it moves on
+                        \ to the next character
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token6
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 6: Print "PRESS ANY KEY" at (64, 100)
 \
 \ ******************************************************************************
 
 .token6
 
- EQUB &D4, &D9
- EQUB &FF
+ EQUB 200 + 12          \ Text token 12: Move graphics cursor to (64, 100)
+
+ EQUB 200 + 17          \ Text token 17: Print "PRESS ANY KEY"
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token7
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 7: Move the graphics cursor to (64, 768)
 \
 \ ******************************************************************************
 
 .token7
 
- EQUB &19, &04, &40, &00, &00
- EQUB &03
- EQUB &FF
+ EQUB 25, 4             \ VDU 25, 4, 64; 768;
+ EQUW 64                \
+ EQUW 768               \ Move graphics cursor to absolute position (64, 768)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token8
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 8: Move the graphics cursor to (192, 704)
 \
 \ ******************************************************************************
 
 .token8
 
- EQUB &19, &04, &C0
- EQUB &00, &C0, &02
- EQUB &FF
+ EQUB 25, 4             \ VDU 25, 4, 192; 704;
+ EQUW 192               \
+ EQUW 704               \ Move graphics cursor to absolute position (192, 704)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token9
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 9: Move the graphics cursor to (192, 64)
 \
 \ ******************************************************************************
 
 .token9
 
- EQUB &19, &04, &C0, &00
- EQUB &40, &00
- EQUB &FF
+ EQUB 25, 4             \ VDU 25, 4, 192; 64;
+ EQUW 192               \
+ EQUW 64                \ Move graphics cursor to absolute position (192, 64)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token10
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 10: Configure text to be printed at the graphics cursor
+\             and set the background colour to colour 0 (blue)
 \
 \ ******************************************************************************
 
 .token10
 
- EQUB &05, &12, &00, &80
- EQUB &FF
+ EQUB 5                 \ VDU 5
+                        \
+                        \ Write text at the graphics cursor rather than the text
+                        \ cursor
+
+ EQUB 18, 0, 128        \ VDU 18, 0, 128
+                        \
+                        \ Set the background colour to colour 0 (blue)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token11
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 11: Configure text to be printed at the graphics cursor
+\             and set the background colour to colour 1 (black)
 \
 \ ******************************************************************************
 
 .token11
 
- EQUB &05, &12, &00, &81
- EQUB &FF
+ EQUB 5                 \ VDU 5
+                        \
+                        \ Write text at the graphics cursor rather than the text
+                        \ cursor
+
+ EQUB 18, 0, 129        \ VDU 18, 0, 129
+                        \
+                        \ Set the background colour to colour 1 (black)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token12
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 12: Move graphics cursor to (64, 100)
 \
 \ ******************************************************************************
 
 .token12
 
- EQUB &19, &04, &40
- EQUB &00, &A0, &00
- EQUB &FF
+ EQUB 25, 4             \ VDU 25, 4, 64; 160;
+ EQUW 64                \
+ EQUW 160               \ Move graphics cursor to absolute position (64, 100)
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token13
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 13: Print "LANDSCAPE"
 \
 \ ******************************************************************************
 
 .token13
 
  EQUS "LANDSCAPE"
- EQUB &FF
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token14
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 14: Print "SECRET ENTRY CODE"
 \
 \ ******************************************************************************
 
 .token14
 
  EQUS "SECRET ENTRY CODE"
- EQUB &FF
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token15
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 15: Print five spaces
 \
 \ ******************************************************************************
 
 .token15
 
  EQUS "     "
- EQUB &FF
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token16
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 16: Print three spaces
 \
 \ ******************************************************************************
 
 .token16
 
  EQUS "   "
- EQUB &FF
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
 \       Name: token17
 \       Type: Variable
 \   Category: Text
-\    Summary: ???
+\    Summary: Text token 17: Print "PRESS ANY KEY"
 \
 \ ******************************************************************************
 
 .token17
 
  EQUS "PRESS ANY KEY"
- EQUB &FF
+
+ EQUB &FF               \ End of token
 
 \ ******************************************************************************
 \
@@ -16111,8 +16423,9 @@ L5BA0 = L5B00+160
  LDA #&80
  JSR DrawObject
 
- LDX #4
- JSR PrintTextToken
+ LDX #4                 \ Print text token 4: Background colour black, print
+ JSR PrintTextToken     \ "PRESS ANY KEY" at (192, 64), print "LANDSCAPE" two
+                        \ characters right of (64, 768), move cursor right
 
  JSR sub_C33AB
  JSR sub_C1440
