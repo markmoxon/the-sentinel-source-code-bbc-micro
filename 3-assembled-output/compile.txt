@@ -8568,9 +8568,9 @@
      354E   E0 04      CPX #&04
      3550   B0 F8      BCS &354A
      3552   60         RTS
-.sub_C3553
+.FlushSoundBuffer
      3553   A2 04      LDX #&04
-.sub_C3555
+.FlushBuffer
      3555   A9 15      LDA #&15
      3557   4C F4 FF   JMP &FFF4
 .sub_C355A
@@ -15421,9 +15421,9 @@
      5E01   FD 40 09   SBC &0940,X
      5E04   85 84      STA &84
      5E06   60         RTS
-.sub_C5E07
+.ReadKeyboard
      5E07   20 20 5E   JSR &5E20
-.sub_C5E0A
+.ReadCharacter
      5E0A   20 E0 FF   JSR &FFE0
      5E0D   90 10      BCC &5E1F
      5E0F   C9 1B      CMP #&1B
@@ -15435,9 +15435,9 @@
      5E1A   68         PLA
      5E1B   A8         TAY
      5E1C   4C 0A 5E   JMP &5E0A
-.CRE40
+.read1
      5E1F   60         RTS
-.sub_C5E20
+.EnableKeyboard
      5E20   A9 02      LDA #&02
      5E22   A2 00      LDX #&00
      5E24   20 F4 FF   JSR &FFF4

@@ -3226,7 +3226,9 @@ L0BAB = L0B00+171
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
- JSR sub_C5E07
+ JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
+                        \ read a character from it (so this waits for a key
+                        \ press)
 
 .main1
 
@@ -3293,9 +3295,11 @@ L0BAB = L0B00+171
  JSR PrintTextToken     \ "WRONG SECRET CODE" at (64, 768), print "PRESS ANY
                         \ KEY" at (64, 100), set text background to black
 
- JSR sub_C5E07
+ JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
+                        \ read a character from it (so this waits for a key
+                        \ press)
 
- JMP main1
+ JMP main1              \ Loop back to main1 to restart the game
 
 \ ******************************************************************************
 \
@@ -3879,14 +3883,18 @@ L1145 = C1144+1
  LSR L0CE5
  JSR sub_C1B0B
  BCS C12E5
- JSR sub_C3553
+
+ JSR FlushSoundBuffer   \ Flush the sound channel 0 buffer
+
  LDA #&02
  JSR sub_C3440
  LDA #&C0
  STA L0C6D
  LSR L0C1E
  JSR sub_C1F84
- JSR sub_C3553
+
+ JSR FlushSoundBuffer   \ Flush the sound channel 0 buffer
+
  JSR sub_C36C7
 
 .C12E5
@@ -5294,7 +5302,7 @@ L1145 = C1144+1
  CMP #&03
  BEQ CRE08
  LDX #&06
- JSR sub_C3555
+ JSR FlushBuffer
 
 .CRE08
 
@@ -10805,12 +10813,21 @@ L314A = C3148+2
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   ???
+\
 \ ******************************************************************************
 
 .sub_C329F
 
  STA T
- JSR sub_C5E20
+
+ JSR EnableKeyboard     \ Select the keyboard as the input stream and flush the
+                        \ keyboard buffer
+
  LDY #&07
  LDA #&20
 
@@ -10827,7 +10844,7 @@ L314A = C3148+2
 
 .C32B3
 
- JSR sub_C5E0A
+ JSR ReadCharacter
  CMP #&0D
  BEQ CRE27
  CMP #&30
@@ -11607,7 +11624,7 @@ L314A = C3148+2
 
 .P354A
 
- JSR sub_C3555
+ JSR FlushBuffer
  DEX
  CPX #&04
  BCS P354A
@@ -11615,30 +11632,39 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3553
+\       Name: FlushSoundBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Sound
+\    Summary: Flush the sound channel 0 buffer
 \
 \ ******************************************************************************
 
-.sub_C3553
+.FlushSoundBuffer
 
- LDX #&04
+ LDX #4                 \ Set X = 4 to denote the sound channel 0 buffer
+
+                        \ Fall through into FlushBuffer to flush the sound
+                        \ channel 0 buffer
 
 \ ******************************************************************************
 \
-\       Name: sub_C3555
+\       Name: FlushBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Flush the specified buffer
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The number of the buffer to flush
 \
 \ ******************************************************************************
 
-.sub_C3555
+.FlushBuffer
 
- LDA #21                \ osbyte_flush_buffer
- JMP OSBYTE
+ LDA #21                \ Call OSBYTE with A = 21 to flush buffer X, returning
+ JMP OSBYTE             \ from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -11711,7 +11737,9 @@ L314A = C3148+2
  LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
 
- JSR sub_C5E07
+ JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
+                        \ read a character from it (so this waits for a key
+                        \ press)
 
  LSR L0CFC              \ Clear bit 7 of L0CFC ???
 
@@ -11825,7 +11853,9 @@ L314A = C3148+2
  LDX #6                 \ Print text token 6: Print "PRESS ANY KEY" at (64, 100)
  JSR PrintTextToken
 
- JSR sub_C5E07
+ JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
+                        \ read a character from it (so this waits for a key
+                        \ press)
 
 .C3663
 
@@ -15950,60 +15980,92 @@ L5BA0 = L5B00+160
 
 \ ******************************************************************************
 \
-\       Name: sub_C5E07
+\       Name: ReadKeyboard
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Enable the keyboard and read a character from it
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The character read from the keyboard
 \
 \ ******************************************************************************
 
-.sub_C5E07
+.ReadKeyboard
 
- JSR sub_C5E20
+ JSR EnableKeyboard     \ Select the keyboard as the input stream and flush the
+                        \ keyboard buffer
+
+                        \ Fall through into ReadCharacter to read a character
+                        \ from the keyboard and return it in A
 
 \ ******************************************************************************
 \
-\       Name: sub_C5E0A
+\       Name: ReadCharacter
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Read a character from the currently selected input stream
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The character read from the input stream
 \
 \ ******************************************************************************
 
-.sub_C5E0A
+.ReadCharacter
 
- JSR OSRDCH
- BCC CRE40
- CMP #&1B
- BNE CRE40
- TYA
- PHA
- LDA #126               \ osbyte_acknowledge_escape
- JSR OSBYTE
- PLA
+ JSR OSRDCH             \ Read a character from the currently selected input
+                        \ stream into A
+
+ BCC read1              \ If the C flag is clear then the call to OSRDCH read a
+                        \ valid character, so jump to read1 to return from the
+                        \ subroutine
+
+ CMP #27                \ If the character read is not ESCAPE, jump to read1 to
+ BNE read1              \ return from the subroutine
+
+                        \ If we get here then we have an ESCAPE condition, so we
+                        \ need to acknowledge it and try again
+
+ TYA                    \ Store Y on the stack to we can preserve it through the
+ PHA                    \ call to OSBYTE
+
+ LDA #126               \ Call OSBYTE with A = 126 to acknowledge the ESCAPE
+ JSR OSBYTE             \ condition
+
+ PLA                    \ Retrieve Y from the stack
  TAY
- JMP sub_C5E0A
 
-.CRE40
+ JMP ReadCharacter      \ Loop back to read another character
 
- RTS
+.read1
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C5E20
+\       Name: EnableKeyboard
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keybpard
+\    Summary: Select the keyboard as the input stream and flush the keyboard
+\             buffer
 \
 \ ******************************************************************************
 
-.sub_C5E20
+.EnableKeyboard
 
- LDA #2                 \ osbyte_select_input_stream
- LDX #0
+ LDA #2                 \ Call OSBYTE with A = 2 and X = 0 to select the
+ LDX #0                 \ keyboard as the input stream and disable the RS423
  JSR OSBYTE
- LDX #0
- JMP sub_C3555
+
+ LDX #0                 \ Set X = 0 to denote the keyboard buffer
+
+ JMP FlushBuffer        \ Call FlushBuffer to flush the keyboard buffer and
+                        \ return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
