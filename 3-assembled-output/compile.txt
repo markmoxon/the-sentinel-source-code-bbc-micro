@@ -2693,14 +2693,12 @@
      0CEF   80
 .inputBuffer
      0CF0   00
-.L0CF1
      0CF1   00
      0CF2   00
      0CF3   00
      0CF4   00
      0CF5   00
      0CF6   00
-.L0CF7
      0CF7   00
      0CF8   00
      0CF9   00
@@ -8188,31 +8186,31 @@
      32EB   C8         INY
      32EC   48         PHA
      32ED   A2 06      LDX #&06
-.P32EF
+.rkey7
      32EF   BD F0 0C   LDA &0CF0,X
      32F2   9D F1 0C   STA &0CF1,X
      32F5   CA         DEX
      32F6   10 F7      BPL &32EF
      32F8   68         PLA
      32F9   8D F0 0C   STA &0CF0
-.C32FC
+.rkey8
      32FC   20 03 33   JSR &3303
      32FF   4C B3 32   JMP &32B3
-.CRE27
+.rkey9
      3302   60         RTS
-.sub_C3303
+.PrintInputBuffer
      3303   38         SEC
      3304   6E 0F 0C   ROR &0C0F
      3307   A6 74      LDX &74
      3309   CA         DEX
-.P330A
+.pinb1
      330A   BD F0 0C   LDA &0CF0,X
      330D   20 C0 31   JSR &31C0
      3310   CA         DEX
      3311   10 F7      BPL &330A
      3313   A6 74      LDX &74
      3315   A9 08      LDA #&08
-.P3317
+.pinb2
      3317   20 C0 31   JSR &31C0
      331A   CA         DEX
      331B   D0 FA      BNE &3317
@@ -14005,7 +14003,7 @@
      5741   FF
      5742   FF
      5743   FF
-.PrintSingleByte
+.PrintCharacter
      5744   2C 0F 0C   BIT &0C0F
      5747   30 1E      BMI &5767
      5749   C9 20      CMP #&20
@@ -14027,7 +14025,7 @@
      5766   60         RTS
 .byte2
      5767   4C EE FF   JMP &FFEE
-.PrintCharacter
+.PrintVduCharacter
      576A   C9 19      CMP #&19
      576C   F0 07      BEQ &5775
      576E   4C 44 57   JMP &5744

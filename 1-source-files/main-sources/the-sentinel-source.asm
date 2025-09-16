@@ -1511,15 +1511,14 @@ L0BAB = L0B00+171
 
 .inputBuffer
 
- EQUB &00
+ EQUB 0, 0, 0, 0        \ The eight-byte keyboard input buffer
+ EQUB 0, 0, 0, 0        \
+                        \ Key presses are stored in the input buffer using an
+                        \ ascending stack, with new input being pushed into
+                        \ inputBuffer, and any existing content in the buffer
+                        \ moving up in memory
 
-.L0CF1
-
- EQUB &00, &00, &00, &00, &00, &00
-
-.L0CF7
-
- EQUB &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
 .L0CFC
 
@@ -3252,7 +3251,7 @@ L0BAB = L0B00+171
 
  JSR sub_C3321
 
- LDY L0CF1
+ LDY inputBuffer+1
  LDX inputBuffer
  JSR sub_C33B7
 
@@ -10611,9 +10610,9 @@ L314A = C3148+2
  BMI DrawLetter3D       \ 3D text, so jump to DrawLetter3D to draw the character
                         \ in 3D
 
- JMP PrintSingleByte    \ Otherwise jump to PrintSingleByte to print the
-                        \ one-byte character in A, returning from the subroutine
-                        \ using a tail call
+ JMP PrintCharacter     \ Otherwise jump to PrintCharacter to print the single-
+                        \ byte VDU command or character in A, returning from the
+                        \ subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -10877,107 +10876,205 @@ L314A = C3148+2
 
  BPL rkey1              \ Loop back until we have cleared the whole input buffer
 
- JSR sub_C3303
+ JSR PrintInputBuffer   \ Print the contents of the keyboard input buffer, which
+                        \ will erase any existing text on-screen as we just
+                        \ filled the input buffer with spaces
 
 .rkey2
 
- LDY #0
+ LDY #0                 \ We now read the specified number of key presses, so
+                        \ set Y as a counter for the number of valid characters
+                        \ in the input buffer, starting from zero (as the buffer
+                        \ is empty at the start)
 
 .rkey3
 
- JSR ReadCharacter
- CMP #&0D
- BEQ CRE27
- CMP #'0'
- BCC rkey3
- CMP #127
- BCC rkey5
- BNE rkey3
- DEY
- BMI rkey2
- LDX #0
+ JSR ReadCharacter      \ Read a character from the keyboard into A, so A is set
+                        \ to the ASCII code of the pressed key
+
+ CMP #13                \ If RETURN was pressed then jump to rkey9 to return
+ BEQ rkey9              \ from the subroutine, as RETURN terminates the input
+
+ CMP #'0'               \ If the key pressed is less than ACSII "0" then it is a
+ BCC rkey3              \ control code, so jump back to rkey3 to keep listening
+                        \ for key presses, as control codes are not valid input
+
+ CMP #127               \ If the key pressed is less than ASCII 127 then it is
+ BCC rkey5              \ a printable ASCII character, so jump to rkey5 to
+                        \ process it
+
+ BNE rkey3              \ If the key pressed is not the DELETE key then jump
+                        \ back to rkey3 to keep listening for key presses, as
+                        \ this is not a valid input
+
+                        \ If we get here then DELETE has been pressed, so we
+                        \ need to delete the most recently entered character
+                        \
+                        \ Because the input buffer is stored as an ascending
+                        \ stack, this means we need to delete the character at
+                        \ inputBuffer, which is the top of the buffer stack,
+                        \ and shuffle the rest of the stack to the left to
+                        \ close up the gap (so that's shuffling then down in
+                        \ memory)
+
+ DEY                    \ Decrement Y to reduce the character count by one, as
+                        \ we are about to delete a character from the buffer
+
+ BMI rkey2              \ If we just decremented Y past zero then the buffer is
+                        \ empty, so jump to rkey2 to reset Y to zero and keep
+                        \ reading characters, as there is nothing to delete
+
+ LDX #0                 \ Otherwise we want to delete the character from the top
+                        \ of the buffer stack at inputBuffer and shuffle the
+                        \ rest of the stack along to the left, so set an index
+                        \ in X to work through the buffer from left to right
 
 .rkey4
 
- LDA L0CF1,X
- STA inputBuffer,X
- INX
- CPX #7
- BNE rkey4
- LDA #' '
- STA L0CF7
- BNE C32FC
+ LDA inputBuffer+1,X    \ Shuffle the character at index X + 1 to the left and
+ STA inputBuffer,X      \ into index X
+
+ INX                    \ Increment the buffer index to point to the next
+                        \ character in the buffer as we work from left to right
+
+ CPX #7                 \ Loop back until we have shuffled all seven characters
+ BNE rkey4              \ to the left
+
+ LDA #' '               \ Set the last character in the input buffer to a space
+ STA inputBuffer+7      \ as the bottom of the stack at inputBuffer+7 is now
+                        \ empty
+
+ BNE rkey8              \ Jump to rkey8 to print the updated contents of the
+                        \ input buffer, so we can see the character being
+                        \ deleted, and loop back to listen for more key presses
+                        \ (this BNE is effectively a JMP as A is never zero)
 
 .rkey5
 
- CMP #':'
- BCS rkey3
- CPY T
- BNE rkey6
+                        \ If we get here then the key press in A is a printable
+                        \ ASCII character
 
- LDA #7
- JSR OSWRCH
+ CMP #':'               \ If the character in A is ASCII ":" or greater then it
+ BCS rkey3              \ is not a number, so jump to rkey3 to keep listening
+                        \ for key presses, as we are only interested in numbers
 
- JMP rkey3
+ CPY T                  \ If Y <> T then the buffer does not yet contain the
+ BNE rkey6              \ maximum number of digits allowed, so jump to rkey6 to
+                        \ process the number key press
+
+ LDA #7                 \ Otherwise the buffer is already full, so perform a
+ JSR OSWRCH             \ VDU 7 command to make a system beep
+
+ JMP rkey3              \ Jump back to rkey3 to listen for more key presses
 
 .rkey6
 
- INY
- PHA
- LDX #&06
+                        \ If we get here then the key press in A is a number key
+                        \ and the input buffer is not full
 
-.P32EF
+ INY                    \ Increment Y to increase the character count by one, as
+                        \ we are about to add a character to the buffer
 
- LDA inputBuffer,X
- STA L0CF1,X
- DEX
- BPL P32EF
- PLA
- STA inputBuffer
+ PHA                    \ Store the key number in A on the stack, so we can
+                        \ retrieve it after the following loop
 
-.C32FC
+ LDX #6                 \ We now want to insert the new character into the top
+                        \ of the buffer stack at inputBuffer and shuffle the
+                        \ stack along to the right (so that's shuffling then up
+                        \ in memory), so set an index in X to work through the
+                        \ buffer from right to left
 
- JSR sub_C3303
- JMP rkey3
+.rkey7
 
-.CRE27
+ LDA inputBuffer,X      \ Shuffle the character at index X to the right and into
+ STA inputBuffer+1,X    \ index X + 1
 
- RTS
+ DEX                    \ Decrement the buffer index to point to the next
+                        \ character in the buffer as we work from right to left
+
+ BPL rkey7              \ Loop back until we have shuffled all seven characters
+                        \ to the right
+
+ PLA                    \ Restore the key number that we stored on the stack
+                        \ above
+
+ STA inputBuffer        \ Store the key press at the top of the stack, in
+                        \ inputBuffer
+
+.rkey8
+
+ JSR PrintInputBuffer   \ Print the contents of the keyboard input buffer so we
+                        \ we can see the characters being entered or deleted
+
+ JMP rkey3              \ Jump back to rkey3 to listen for more key presses
+
+.rkey9
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C3303
+\       Name: PrintInputBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print the contents of the keyboard input buffer
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   T                   The size of the input buffer
 \
 \ ******************************************************************************
 
-.sub_C3303
+.PrintInputBuffer
 
  SEC                    \ Set bit 7 of textDropShadow so the following text is
  ROR textDropShadow     \ printed without a drop shadow
 
- LDX T
- DEX
+                        \ We now print the contents of the input buffer
+                        \
+                        \ Key presses are stored in the input buffer using an
+                        \ ascending stack, with new input being pushed into
+                        \ inputBuffer, so to print the contents of the buffer,
+                        \ we need to print it backwards, from the oldest input
+                        \ at index T - 1 down to the most recent input at
+                        \ index 0
 
-.P330A
+ LDX T                  \ Set X = T - 1 so we can use X as an index into the
+ DEX                    \ buffer, starting from the oldest input
 
- LDA inputBuffer,X
+.pinb1
+
+ LDA inputBuffer,X      \ Set A to the X-th entry in the input buffer
 
  JSR PrintDigit         \ Print the numerical digit in A
 
- DEX
- BPL P330A
- LDX T
- LDA #&08
+ DEX                    \ Decrement the buffer index
 
-.P3317
+ BPL pinb1              \ Loop back until we have printed the whole buffer
 
- JSR PrintDigit         \ Print the numerical digit in A
+                        \ We now want to backspace by the number of characters
+                        \ we just printed, to leave the cursor at the start of
+                        \ the printed number
 
- DEX
- BNE P3317
+ LDX T                  \ Set X to the size of the input buffer, which we can
+                        \ use as a character counter in the following loop to
+                        \ ensure we backspace by the correct number of
+                        \ characters to reach the start of printed number
+
+ LDA #8                 \ Set A = 8 to perform a series of VDU 8 commands, each
+                        \ of which will backspace the cursor by one character
+
+.pinb2
+
+ JSR PrintDigit         \ Print the character in A, which performs a VDU 8 to
+                        \ backspace the cursor by one character
+
+ DEX                    \ Decrement the character counter
+
+ BNE pinb2              \ Loop back until we have backspaced to the start of the
+                        \ buffer contents that we just printed
 
  LSR textDropShadow     \ Clear bit 7 of textDropShadow so text tokens are once
                         \ again printed with drop shadows
@@ -11245,9 +11342,9 @@ L314A = C3148+2
  CMP #200               \ If the character in A >= 200 then it represents a text
  BCS char1              \ token, so jump to char1 to print the token
 
- JMP PrintCharacter     \ Otherwise the character in A is a simple one-byte
-                        \ character or VDU command, so jump to PrintCharacter to
-                        \ print it
+ JMP PrintVduCharacter  \ Otherwise the character in A is a simple one-byte
+                        \ character or VDU command, so jump to PrintVduCharacter
+                        \ to print it
 
 .char1
 
@@ -14749,11 +14846,11 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: PrintSingleByte
+\       Name: PrintCharacter
 \       Type: Subroutine
 \   Category: Text
-\    Summary: Print a simple one-byte character from a text token, optionally
-\             printing it with a drop shadow if the character is alphanumeric
+\    Summary: Print a single-byte VDU command or character from a text token, 
+\             optionally printing a drop shadow if the character is alphanumeric
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14769,7 +14866,7 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.PrintSingleByte
+.PrintCharacter
 
  BIT textDropShadow     \ If bit 7 of textDropShadow is set, jump to byte2 to
  BMI byte2              \ print the character in A as-is (i.e. without a drop
@@ -14839,7 +14936,7 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: PrintCharacter
+\       Name: PrintVduCharacter
 \       Type: Subroutine
 \   Category: Text
 \    Summary: Print a one-byte character from a text token or a multi-byte
@@ -14856,7 +14953,7 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.PrintCharacter
+.PrintVduCharacter
 
  CMP #25                \ If the character in A = 25, jump to prin2 to print a
  BEQ prin2              \ six-byte command in the form VDU 25, n, x; y;
@@ -14866,9 +14963,9 @@ L49C1                = &49C1
                         \ contain &FF, and we don't want this to be
                         \ misidentified as the end of the text token
 
- JMP PrintSingleByte    \ Otherwise jump to PrintSingleByte to print the
-                        \ one-byte character in A, returning from the subroutine
-                        \ using a tail call
+ JMP PrintCharacter     \ Otherwise jump to PrintCharacter to print the single-
+                        \ byte VDU command or character in A, returning from the
+                        \ subroutine using a tail call
 
 .prin1
 
@@ -16074,7 +16171,7 @@ L5BA0 = L5B00+160
 \
 \ Returns:
 \
-\   A                   The character read from the input stream
+\   A                   The character read from the input stream, in ASCII
 \
 \ ******************************************************************************
 
