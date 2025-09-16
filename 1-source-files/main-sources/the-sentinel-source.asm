@@ -1235,9 +1235,14 @@ L0BAB = L0B00+171
 
  EQUB &00
 
-.L0C60
+.printTextIn3D
 
- EQUB &00
+ EQUB 0                 \ Controls whether we are printing text normally or in
+                        \ 3D (as on the tile screen):
+                        \
+                        \   * Bit 7 clear = normal text
+                        \
+                        \   * Bit 7 set = 3D text
 
 .L0C61
 
@@ -1504,7 +1509,7 @@ L0BAB = L0B00+171
 
  EQUB &80, &80, &80, &80, &80
 
-.L0CF0
+.inputBuffer
 
  EQUB &00
 
@@ -1520,13 +1525,17 @@ L0BAB = L0B00+171
 
  EQUB &C0
 
-.L0CFD
+.landscapeCodeLo
 
- EQUB &00
+ EQUB 0                 \ The low byte of the four-digit binary coded decimal
+                        \ (BCD) landscape code (0000 to 9999)
 
-.L0CFE
+.landscapeCodeHi
 
- EQUB &00, &00
+ EQUB 0                 \ The high byte of the four-digit binary coded decimal
+                        \ (BCD) landscape code (0000 to 9999)
+
+ EQUB 0                 \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -3239,12 +3248,12 @@ L0BAB = L0B00+171
                         \ cursor, move text cursor to (5, 27)
 
  LDA #4
- JSR sub_C329F
+ JSR ReadNumber
 
  JSR sub_C3321
 
  LDY L0CF1
- LDX L0CF0
+ LDX inputBuffer
  JSR sub_C33B7
 
  LDA L0C52
@@ -3255,7 +3264,7 @@ L0BAB = L0B00+171
 .main2
 
  LDA L108C,X
- STA L0CF0,X
+ STA inputBuffer,X
 
  DEX
 
@@ -3270,7 +3279,7 @@ L0BAB = L0B00+171
                         \ cursor, move text cursor to (2, 27)
 
  LDA #8
- JSR sub_C329F
+ JSR ReadNumber
 
  JSR sub_C3321
 
@@ -5538,9 +5547,9 @@ L1145 = C1144+1
  SED
  JSR sub_C342C
  CLC
- ADC L0CFD
+ ADC landscapeCodeLo
  TAX
- LDA L0CFE
+ LDA landscapeCodeHi
  ADC #&00
  TAY
  CLD
@@ -5556,7 +5565,8 @@ L1145 = C1144+1
  JSR PrintTextToken     \ (64, 768), "LANDSCAPE" at (192, 704), move cursor
                         \ right
 
- JMP sub_C33AB
+ JMP PrintLandscapeCode \ Print the four-digit landscape code (0000 to 9999) and
+                        \ return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -10540,8 +10550,9 @@ L314A = C3148+2
 \
 \       Name: yStoreRandom
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Temporary storage for Y so it can be preserved through calls to
+\             GetRandomNumber
 \
 \ ******************************************************************************
 
@@ -10551,38 +10562,58 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C31BD
+\       Name: PrintNumber
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print a number as a single digit, printing zero as a capital "O"
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The number to be printed (0 to 9)
 \
 \ ******************************************************************************
 
-.sub_C31BD
+.PrintNumber
 
- CLC
- ADC #&30
+ CLC                    \ Convert the number in A into an ASCII digit by adding
+ ADC #'0'               \ ASCII "0"
+
+                        \ Fall into PrintDigit to print the digit in A
 
 \ ******************************************************************************
 \
-\       Name: sub_C31C0
+\       Name: PrintDigit
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print a numerical digit, printing zero as a capital "O"
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The numerical digit to be printed as an ASCII code
 \
 \ ******************************************************************************
 
-.sub_C31C0
+.PrintDigit
 
- CMP #&30
- BNE C31C6
- LDA #&4F
+ CMP #'0'               \ If the character in A is not a zero, jump to zero1 to
+ BNE zero1              \ skip the following
 
-.C31C6
+ LDA #'O'               \ The character in A is a zero, so set A to ASCII "O" so
+                        \ we print zero as capital "O" instead
 
- BIT L0C60
- BMI DrawLetter3D
- JMP PrintSingleByte
+.zero1
+
+ BIT printTextIn3D      \ If bit 7 of printTextIn3D is set then we are printing
+ BMI DrawLetter3D       \ 3D text, so jump to DrawLetter3D to draw the character
+                        \ in 3D
+
+ JMP PrintSingleByte    \ Otherwise jump to PrintSingleByte to print the
+                        \ one-byte character in A, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -10808,76 +10839,88 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C329F
+\       Name: ReadNumber
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Read a number from the keyboard into the input buffer
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   ???
+\   A                   The maximum number of digits to read
 \
 \ ******************************************************************************
 
-.sub_C329F
+.ReadNumber
 
- STA T
+ STA T                  \ Set T to the maximum number of digits to read
 
  JSR EnableKeyboard     \ Select the keyboard as the input stream and flush the
                         \ keyboard buffer
 
- LDY #&07
- LDA #&20
+                        \ We start by clearing the input buffer by filling it
+                        \ with spaces
 
-.P32A8
+ LDY #7                 \ The input buffer is eight bytes long, so set a byte
+                        \ counter in Y
 
- STA L0CF0,Y
- DEY
- BPL P32A8
+ LDA #' '               \ Set A to the space character for use when clearing the
+                        \ input buffer
+
+.rkey1
+
+ STA inputBuffer,Y      \ Reset the Y-th byte of the input buffer to contain a
+                        \ space character
+
+ DEY                    \ Decrement the byte counter
+
+ BPL rkey1              \ Loop back until we have cleared the whole input buffer
+
  JSR sub_C3303
 
-.P32B1
+.rkey2
 
  LDY #0
 
-.C32B3
+.rkey3
 
  JSR ReadCharacter
  CMP #&0D
  BEQ CRE27
- CMP #&30
- BCC C32B3
- CMP #&7F
- BCC C32DB
- BNE C32B3
+ CMP #'0'
+ BCC rkey3
+ CMP #127
+ BCC rkey5
+ BNE rkey3
  DEY
- BMI P32B1
+ BMI rkey2
  LDX #0
 
-.P32C9
+.rkey4
 
  LDA L0CF1,X
- STA L0CF0,X
+ STA inputBuffer,X
  INX
- CPX #&07
- BNE P32C9
- LDA #&20
+ CPX #7
+ BNE rkey4
+ LDA #' '
  STA L0CF7
  BNE C32FC
 
-.C32DB
+.rkey5
 
- CMP #&3A
- BCS C32B3
+ CMP #':'
+ BCS rkey3
  CPY T
- BNE C32EB
- LDA #&07
- JSR OSWRCH
- JMP C32B3
+ BNE rkey6
 
-.C32EB
+ LDA #7
+ JSR OSWRCH
+
+ JMP rkey3
+
+.rkey6
 
  INY
  PHA
@@ -10885,17 +10928,17 @@ L314A = C3148+2
 
 .P32EF
 
- LDA L0CF0,X
+ LDA inputBuffer,X
  STA L0CF1,X
  DEX
  BPL P32EF
  PLA
- STA L0CF0
+ STA inputBuffer
 
 .C32FC
 
  JSR sub_C3303
- JMP C32B3
+ JMP rkey3
 
 .CRE27
 
@@ -10920,8 +10963,10 @@ L314A = C3148+2
 
 .P330A
 
- LDA L0CF0,X
- JSR sub_C31C0
+ LDA inputBuffer,X
+
+ JSR PrintDigit         \ Print the numerical digit in A
+
  DEX
  BPL P330A
  LDX T
@@ -10929,7 +10974,8 @@ L314A = C3148+2
 
 .P3317
 
- JSR sub_C31C0
+ JSR PrintDigit         \ Print the numerical digit in A
+
  DEX
  BNE P3317
 
@@ -10963,7 +11009,7 @@ L314A = C3148+2
  ASL A
  ASL A
  ORA T
- STA L0CF0,X
+ STA inputBuffer,X
  INX
  INY
  CPY #&08
@@ -10981,12 +11027,12 @@ L314A = C3148+2
 
 .sub_C333E
 
- LDA L0CF0,Y
+ LDA inputBuffer,Y
  CPY #&04
  BCC C334C
  PHA
  LDA #&FF
- STA L0CF0,Y
+ STA inputBuffer,Y
  PLA
 
 .C334C
@@ -11003,24 +11049,37 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3356
+\       Name: Print2DigitBCD
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print a binary coded decimal (BCD) number using two digits
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The number to print (in BCD)
 \
 \ ******************************************************************************
 
-.sub_C3356
+.Print2DigitBCD
 
- PHA
+ PHA                    \ Store A on the stack so we can retrieve it later
+
+ LSR A                  \ Shift the high nibble of A into bits 0-3, so A
+ LSR A                  \ contains the first digit of the BCD number
  LSR A
  LSR A
- LSR A
- LSR A
- JSR sub_C31BD
- PLA
- AND #&0F
- JMP sub_C31BD
+
+ JSR PrintNumber        \ Print the number in A as a single digit
+
+ PLA                    \ Retrieve the original value of A, which contains the
+                        \ BCD number to print
+
+ AND #%00001111         \ Extract the low nibble of the BCD number into A
+
+ JMP PrintNumber        \ Print the number in A as a single digit and return
+                        \ from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -11080,7 +11139,7 @@ L314A = C3148+2
 .DrawLandscapeCode
 
  LDA #&80
- STA L0C60
+ STA printTextIn3D
  JSR DrawLetter3D
  LDA #&C7
  JSR DrawLetter3D
@@ -11092,7 +11151,8 @@ L314A = C3148+2
  JSR sub_C3364
  CPX #&04
  BCS C339E
- JSR sub_C3356
+
+ JSR Print2DigitBCD     \ Print the binary coded decimal (BCD) number in A
 
 .C339E
 
@@ -11102,24 +11162,26 @@ L314A = C3148+2
 
  JSR GetRandomNumber    \ Set A to a random number
 
- LSR L0C60
+ LSR printTextIn3D
  RTS
 
 \ ******************************************************************************
 \
-\       Name: sub_C33AB
+\       Name: PrintLandscapeCode
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Print the four-digit landscape code (0000 to 9999)
 \
 \ ******************************************************************************
 
-.sub_C33AB
+.PrintLandscapeCode
 
- LDA L0CFE
- JSR sub_C3356
- LDA L0CFD
- JMP sub_C3356
+ LDA landscapeCodeHi    \ Print the high byte of the binary coded decimal (BCD)
+ JSR Print2DigitBCD     \ landscape code as a two-digit number
+
+ LDA landscapeCodeLo    \ Print the low byte of the binary coded decimal (BCD)
+ JMP Print2DigitBCD     \ landscape code as a two-digit number and return from
+                        \ the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -11134,8 +11196,8 @@ L314A = C3148+2
 
  STY randomLFSR+1
  STX randomLFSR
- STY L0CFE
- STX L0CFD
+ STY landscapeCodeHi
+ STX landscapeCodeLo
  STY L0C52
  TYA
  BNE C33D8
@@ -11223,7 +11285,7 @@ L314A = C3148+2
 
 .sub_C33F0
 
- LDA L0CFE
+ LDA landscapeCodeHi
  LSR A
  LSR A
  LSR A
@@ -11812,8 +11874,8 @@ L314A = C3148+2
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDY L0CFE
- LDX L0CFD
+ LDY landscapeCodeHi
+ LDX landscapeCodeLo
  JSR sub_C33B7
  JMP main4
 
@@ -14420,7 +14482,7 @@ L49C1                = &49C1
 
 .yStoreHypotenuse
 
- EQUB &41
+ EQUB 65                \ This value is workspace noise and has no meaning
 
 \ ******************************************************************************
 \
@@ -16480,6 +16542,7 @@ L5BA0 = L5B00+160
 .sub_C5FBF
 
  JSR sub_C1410
+
  LDX #&03
  LDY #0
  LDA #&80
@@ -16489,8 +16552,10 @@ L5BA0 = L5B00+160
  JSR PrintTextToken     \ "PRESS ANY KEY" at (192, 64), print "LANDSCAPE" two
                         \ characters right of (64, 768), move cursor right
 
- JSR sub_C33AB
+ JSR PrintLandscapeCode \ Print the four-digit landscape code (0000 to 9999)
+
  JSR sub_C1440
+
  JMP main5
 
 \ ******************************************************************************

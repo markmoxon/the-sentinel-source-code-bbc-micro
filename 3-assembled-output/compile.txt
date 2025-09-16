@@ -2481,7 +2481,7 @@
      0C5E   52
 .L0C5F
      0C5F   00
-.L0C60
+.printTextIn3D
      0C60   00
 .L0C61
      0C61   00
@@ -2691,7 +2691,7 @@
      0CED   80
      0CEE   80
      0CEF   80
-.L0CF0
+.inputBuffer
      0CF0   00
 .L0CF1
      0CF1   00
@@ -2708,9 +2708,9 @@
      0CFB   00
 .L0CFC
      0CFC   C0
-.L0CFD
+.landscapeCodeLo
      0CFD   00
-.L0CFE
+.landscapeCodeHi
      0CFE   00
      0CFF   00
 .NMIHandler
@@ -8015,14 +8015,14 @@
      31BB   60         RTS
 .yStoreRandom
      31BC   00
-.sub_C31BD
+.PrintNumber
      31BD   18         CLC
      31BE   69 30      ADC #&30
-.sub_C31C0
+.PrintDigit
      31C0   C9 30      CMP #&30
      31C2   D0 02      BNE &31C6
      31C4   A9 4F      LDA #&4F
-.C31C6
+.zero1
      31C6   2C 60 0C   BIT &0C60
      31C9   30 03      BMI &31CE
      31CB   4C 44 57   JMP &5744
@@ -8143,19 +8143,19 @@
      3295   80
      3296   C7
      3297   53 45 4E ...
-.sub_C329F
+.ReadNumber
      329F   85 74      STA &74
      32A1   20 20 5E   JSR &5E20
      32A4   A0 07      LDY #&07
      32A6   A9 20      LDA #&20
-.P32A8
+.rkey1
      32A8   99 F0 0C   STA &0CF0,Y
      32AB   88         DEY
      32AC   10 FA      BPL &32A8
      32AE   20 03 33   JSR &3303
-.P32B1
+.rkey2
      32B1   A0 00      LDY #&00
-.C32B3
+.rkey3
      32B3   20 0A 5E   JSR &5E0A
      32B6   C9 0D      CMP #&0D
      32B8   F0 48      BEQ &3302
@@ -8167,7 +8167,7 @@
      32C4   88         DEY
      32C5   30 EA      BMI &32B1
      32C7   A2 00      LDX #&00
-.P32C9
+.rkey4
      32C9   BD F1 0C   LDA &0CF1,X
      32CC   9D F0 0C   STA &0CF0,X
      32CF   E8         INX
@@ -8176,7 +8176,7 @@
      32D4   A9 20      LDA #&20
      32D6   8D F7 0C   STA &0CF7
      32D9   D0 21      BNE &32FC
-.C32DB
+.rkey5
      32DB   C9 3A      CMP #&3A
      32DD   B0 D4      BCS &32B3
      32DF   C4 74      CPY &74
@@ -8184,7 +8184,7 @@
      32E3   A9 07      LDA #&07
      32E5   20 EE FF   JSR &FFEE
      32E8   4C B3 32   JMP &32B3
-.C32EB
+.rkey6
      32EB   C8         INY
      32EC   48         PHA
      32ED   A2 06      LDX #&06
@@ -8253,7 +8253,7 @@
      3352   38         SEC
      3353   E9 30      SBC #&30
      3355   60         RTS
-.sub_C3356
+.Print2DigitBCD
      3356   48         PHA
      3357   4A         LSR A
      3358   4A         LSR A
@@ -8302,7 +8302,7 @@
      33A4   20 94 31   JSR &3194
      33A7   4E 60 0C   LSR &0C60
      33AA   60         RTS
-.sub_C33AB
+.PrintLandscapeCode
      33AB   AD FE 0C   LDA &0CFE
      33AE   20 56 33   JSR &3356
      33B1   AD FD 0C   LDA &0CFD
