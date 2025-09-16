@@ -3275,21 +3275,29 @@ L0BAB = L0B00+171
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
- LDA landscapeZero
- BNE main3
+ LDA landscapeZero      \ If the landscape numnber is not 0000, jump to main3
+ BNE main3              \ to ask for the landscape's secret entry code
 
- LDX #3
+                        \ This is landscape 0000, so we don't ask for a secret
+                        \ entry code, but instead we copy the landscape's code
+                        \ from secretCode0000 into the input buffer, so it's as
+                        \ if the player has typed in the code themselves
+
+ LDX #3                 \ We are copying four bytes of secret code into the
+                        \ input buffer, so set a byte index in X
 
 .main2
 
- LDA L108C,X
- STA inputBuffer,X
+ LDA secretCode0000,X   \ Copy the X-th byte of secretCode0000 to the X-th byte
+ STA inputBuffer,X      \ of the input buffer
 
- DEX
+ DEX                    \ Decrement the byte index
 
- BPL main2
+ BPL main2              \ Loop back until we have copied all four bytes
 
- BMI main4
+ BMI main4              \ Jump to main4 to skip asking the player to enter the
+                        \ code (this BMI is effectively a JMP as we just passed
+                        \ through a BPL)
 
 .main3
 
@@ -3306,10 +3314,17 @@ L0BAB = L0B00+171
 
 .main4
 
+                        \ The player has now chosen a landscape number and has
+                        \ entered the secret code (or, in the case of landscape
+                        \ 0000, we have entered the secret code for them)
+
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- JSR sub_C2A9C
+ JSR PlayGame           \ Call PlayGame to play the game
+                        \
+                        \ This subroutine alters the return stack somehow, need
+                        \ to document this here ???
 
 .main5
 
@@ -3333,16 +3348,16 @@ L0BAB = L0B00+171
 
 \ ******************************************************************************
 \
-\       Name: L108C
+\       Name: secretCode0000
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: The secret entry code for landscape 0000 (06045387)
 \
 \ ******************************************************************************
 
-.L108C
+.secretCode0000
 
- EQUB &87, &53, &04, &06
+ EQUD &06045387
 
 \ ******************************************************************************
 \
@@ -5579,7 +5594,8 @@ L1145 = C1144+1
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
- JSR sub_C2A9C
+ JSR PlayGame
+
  JSR sub_C1410
  JSR sub_C1440
 
@@ -9073,14 +9089,14 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2A9C
+\       Name: PlayGame
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2A9C
+.PlayGame
 
  LDX #&50
 
