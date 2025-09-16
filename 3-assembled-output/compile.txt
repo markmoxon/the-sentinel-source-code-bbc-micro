@@ -8216,10 +8216,10 @@
      331B   D0 FA      BNE &3317
      331D   4E 0F 0C   LSR &0C0F
      3320   60         RTS
-.sub_C3321
+.StringToNumber
      3321   A0 00      LDY #&00
      3323   A2 00      LDX #&00
-.P3325
+.snum1
      3325   20 3E 33   JSR &333E
      3328   85 74      STA &74
      332A   C8         INY
@@ -8235,7 +8235,7 @@
      3339   C0 08      CPY #&08
      333B   D0 E8      BNE &3325
      333D   60         RTS
-.sub_C333E
+.DigitToNumber
      333E   B9 F0 0C   LDA &0CF0,Y
      3341   C0 04      CPY #&04
      3343   90 07      BCC &334C
@@ -8243,11 +8243,11 @@
      3346   A9 FF      LDA #&FF
      3348   99 F0 0C   STA &0CF0,Y
      334B   68         PLA
-.C334C
+.dnum1
      334C   C9 20      CMP #&20
      334E   D0 02      BNE &3352
      3350   A9 30      LDA #&30
-.C3352
+.dnum2
      3352   38         SEC
      3353   E9 30      SBC #&30
      3355   60         RTS

@@ -3246,10 +3246,11 @@ L0BAB = L0B00+171
  JSR PrintTextToken     \ print "LANDSCAPE NUMBER?" at (64, 768), switch to text
                         \ cursor, move text cursor to (5, 27)
 
- LDA #4
- JSR ReadNumber
+ LDA #4                 \ Read a four-digit number from the keyboard into the
+ JSR ReadNumber         \ input buffer, showing the key presses on-screen and
+                        \ supporting the DELETE and RETURN keys
 
- JSR sub_C3321
+ JSR StringToNumber
 
  LDY inputBuffer+1
  LDX inputBuffer
@@ -3277,10 +3278,11 @@ L0BAB = L0B00+171
  JSR PrintTextToken     \ "SECRET ENTRY CODE?" at (64, 768), switch to text
                         \ cursor, move text cursor to (2, 27)
 
- LDA #8
- JSR ReadNumber
+ LDA #8                 \ Read an eight-digit number from the keyboard into the
+ JSR ReadNumber         \ input buffer, showing the key presses on-screen and
+                        \ supporting the DELETE and RETURN keys
 
- JSR sub_C3321
+ JSR StringToNumber
 
 .main4
 
@@ -11083,66 +11085,138 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3321
+\       Name: StringToNumber
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Convert a string of digits in-place into a multi-byte BCD number
 \
 \ ******************************************************************************
 
-.sub_C3321
+.StringToNumber
 
- LDY #0
- LDX #0
+ LDY #0                 \ We want to work through the input buffer, converting
+                        \ each character in turn from an ASCII digit into a
+                        \ number, so set an index in Y to work through the
+                        \ buffer, one ASCII digit at a time
 
-.P3325
+ LDX #0                 \ Each pair of ASCII digits gets converted into a value
+                        \ that will fit into a single BCD byte, which we store
+                        \ in-place, so set an index in X to work through the
+                        \ buffer, so we can store the resulting BCD number one
+                        \ byte at a time (i.e. two ASCII digits at a time)
 
- JSR sub_C333E
- STA T
- INY
- JSR sub_C333E
+.snum1
+
+                        \ We now fetch two digits from the input buffer and
+                        \ convert them into a single BCD number, remembering
+                        \ that the input buffer is stored as an ascending stack,
+                        \ so the digits on the left of the stack (i.e. those
+                        \ that were typed first) are lower significance than
+                        \ those on the right of the stack (i.e. those that were
+                        \ typed last)
+                        \
+                        \ Effectively the stack is little-endian, just like the
+                        \ 6502 processor
+                        \
+                        \ The calls to DigitToNumber will backfill the input
+                        \ buffer with &FF if we are reading from the last four
+                        \ characters of the input buffer, so the final result   
+                        \ will have four BCD numbers at the start of inputBuffer
+                        \ (from inputBuffer to inputBuffer+3), and the rest of
+                        \ the buffer will be padded out with four &FF bytes
+                        \ (from inputBuffer+4 to inputBuffer+7)
+
+ JSR DigitToNumber      \ Set T to the numerical value of the character at index
+ STA T                  \ Y in the input buffer, which is the low significance
+                        \ digit of the number we are fetching, and in the range
+                        \ 0 to 9
+
+ INY                    \ Increment Y to the next character in the input buffer
+
+ JSR DigitToNumber      \ Set A to the numerical value of the character at index
+                        \ Y in the input buffer, which is the high significance
+                        \ digit of the number we are fetching, and in the range
+                        \ 0 to 9
+
+ ASL A                  \ Shift the high significance digit in A into bits 4-7,
+ ASL A                  \ so A contains the first digit of the BCD number
  ASL A
  ASL A
- ASL A
- ASL A
- ORA T
- STA inputBuffer,X
- INX
- INY
- CPY #&08
- BNE P3325
- RTS
+
+ ORA T                  \ Insert the high significance digit in T into bits 0-3,
+                        \ so A now contains both the first and second digits of
+                        \ the BCD number
+
+ STA inputBuffer,X      \ Store the BCD number in-place at index X
+
+ INX                    \ Increment the result index in X to move on to the next
+                        \ BCD number
+
+ INY                    \ Increment the buffer index in Y to move on to the next
+                        \ pair of digits
+
+ CPY #8                 \ Loop back until we have converted the whole string
+ BNE snum1              \ into a multi-byte BCD number
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C333E
+\       Name: DigitToNumber
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Text
+\    Summary: Convert a digit from the input buffer into a number
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   The offset into the input buffer of the digit to convert
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The numerical value of the digit (0 to 9), where spaces
+\                       are converted to 0
 \
 \ ******************************************************************************
 
-.sub_C333E
+.DigitToNumber
 
- LDA inputBuffer,Y
- CPY #&04
- BCC C334C
- PHA
- LDA #&FF
+ LDA inputBuffer,Y      \ Set A to the ASCII digit from the input buffer that we
+                        \ want to convert
+
+ CPY #4                 \ If Y < 4 then jump to dnum1 to skip the following
+ BCC dnum1
+
+                        \ Y is 4 or more, so we set this character in the input
+                        \ buffer to &FF so that as we work through the buffer in
+                        \ the StringToNumber routine, converting pairs of ASCII
+                        \ digits into single-byte BCD numbers, we backfill the
+                        \ buffer with &FF
+
+ PHA                    \ Set the Y-th character in the input buffer to &FF,
+ LDA #&FF               \ making sure not to corrupt the value of A
  STA inputBuffer,Y
  PLA
 
-.C334C
+.dnum1
 
- CMP #&20
- BNE C3352
- LDA #&30
+ CMP #' '               \ If the character in the input buffer is not a space
+ BNE dnum2              \ then it must be a digit, so jump to dmum2 to convert
+                        \ it into a number
 
-.C3352
+ LDA #'0'               \ Otherwise the character from the input buffer is a
+                        \ space, so set A to ASCII "0" so we return a value of
+                        \ zero in the following subtraction
 
- SEC
- SBC #&30
- RTS
+.dnum2
+
+ SEC                    \ Convert the ASCII digit into a number by subtracting
+ SBC #'0'               \ ASCII "0"
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
