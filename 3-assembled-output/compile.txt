@@ -2345,7 +2345,7 @@
      0C05   28
 .L0C06
      0C06   00
-.L0C07
+.maxEnemyCount
      0C07   00
 .L0C08
      0C08   00
@@ -2455,7 +2455,7 @@
      0C50   00
 .L0C51
      0C51   00
-.L0C52
+.landscapeZero
      0C52   00
 .G2
      0C53   00
@@ -8305,7 +8305,7 @@
      33AE   20 56 33   JSR &3356
      33B1   AD FD 0C   LDA &0CFD
      33B4   4C 56 33   JMP &3356
-.sub_C33B7
+.SeedLandscape
      33B7   8C 7C 0C   STY &0C7C
      33BA   8E 7B 0C   STX &0C7B
      33BD   8C FE 0C   STY &0CFE
@@ -8323,9 +8323,9 @@
      33D2   69 01      ADC #&01
      33D4   C9 09      CMP #&09
      33D6   90 02      BCC &33DA
-.C33D8
+.seed1
      33D8   A9 08      LDA #&08
-.C33DA
+.seed2
      33DA   8D 07 0C   STA &0C07
      33DD   60         RTS
 .ProcessCharacter

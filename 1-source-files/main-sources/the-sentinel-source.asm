@@ -1040,9 +1040,18 @@ L0BAB = L0B00+171
 
  EQUB &00
 
-.L0C07
+.maxEnemyCount          \ The maximum number of enemies that can appear on the
+                        \ current landscape, which is calculated as follows:
+                        \
+                        \   min(8, 1 + (landscapeNumber div 10))
+                        \
+                        \ So landscapes 0000 to 0099 have a maximum enemy count
+                        \ of 1, landscapes 0100 to 0199 have a maximum enemy
+                        \ count of 2, and so on up to landscapes 0700 and up,
+                        \ which have a maximum enemy count of 8
 
- EQUB &00
+
+ EQUB 0
 
 .L0C08
 
@@ -1187,9 +1196,14 @@ L0BAB = L0B00+171
 
  EQUB &00
 
-.L0C52
+.landscapeZero
 
- EQUB &00
+ EQUB 0                 \ A flag that is set depending on whether we are playing
+                        \ landscape 0000:
+                        \
+                        \   * Zero = this is landscape 0000
+                        \
+                        \   * Non-zero = this is not landscape 0000
 
 .G2
 
@@ -3250,13 +3264,18 @@ L0BAB = L0B00+171
  JSR ReadNumber         \ input buffer, showing the key presses on-screen and
                         \ supporting the DELETE and RETURN keys
 
- JSR StringToNumber
+ JSR StringToNumber     \ Convert the string of four ASCII digits in the input
+                        \ buffer into a BCD number in inputBuffer(1 0)
 
- LDY inputBuffer+1
- LDX inputBuffer
- JSR sub_C33B7
+ LDY inputBuffer+1      \ Set (Y X) = inputBuffer(1 0)
+ LDX inputBuffer        \
+                        \ So (Y X) is the entered landscape number in BCD
 
- LDA L0C52
+ JSR SeedLandscape      \ Seed the random number generator with the landscape
+                        \ number in (Y X) and set maxEnemyCount and the
+                        \ landscapeZero flag accordingly
+
+ LDA landscapeZero
  BNE main3
 
  LDX #3
@@ -3282,7 +3301,8 @@ L0BAB = L0B00+171
  JSR ReadNumber         \ input buffer, showing the key presses on-screen and
                         \ supporting the DELETE and RETURN keys
 
- JSR StringToNumber
+ JSR StringToNumber     \ Convert the string of eight ASCII digits in the input
+                        \ buffer into a BCD number in inputBuffer(3 2 1 0)
 
 .main4
 
@@ -4269,7 +4289,7 @@ L1145 = C1144+1
 
 .sub_C1410
 
- LDA L0C52
+ LDA landscapeZero
  BNE C1419
  LDA #&01
  BNE C1424
@@ -4277,9 +4297,9 @@ L1145 = C1144+1
 .C1419
 
  JSR sub_C33F0
- CMP L0C07
+ CMP maxEnemyCount
  BCC C1424
- LDA L0C07
+ LDA maxEnemyCount
 
 .C1424
 
@@ -4312,7 +4332,7 @@ L1145 = C1144+1
  STX L000B
  LDA #&0A
  STA L0C0A
- LDA L0C52
+ LDA landscapeZero
  BNE C145F
  LDA #&08
  STA L0024
@@ -5554,7 +5574,11 @@ L1145 = C1144+1
  ADC #&00
  TAY
  CLD
- JSR sub_C33B7
+
+ JSR SeedLandscape      \ Seed the random number generator with the landscape
+                        \ number in (Y X) and set maxEnemyCount and the
+                        \ landscapeZero flag accordingly
+
  JSR sub_C2A9C
  JSR sub_C1410
  JSR sub_C1440
@@ -9067,7 +9091,7 @@ L23E3 = C23E2+1
  STA L5A00,X
  DEX
  BPL P2A9E
- LDA L0C52
+ LDA landscapeZero
  BNE C2AB0
  LDA #&18
  BNE C2AB6
@@ -11088,7 +11112,8 @@ L314A = C3148+2
 \       Name: StringToNumber
 \       Type: Subroutine
 \   Category: Text
-\    Summary: Convert a string of digits in-place into a multi-byte BCD number
+\    Summary: Convert a string of ASCII digits in the input buffer in-place into
+\             a multi-byte BCD number
 \
 \ ******************************************************************************
 
@@ -11356,41 +11381,72 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C33B7
+\       Name: SeedLandscape
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Seed the random number generator with a landscape number and set
+\             the maximum enemy count and landscapeZero flag accordingly
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (Y X)               A landscape number in BCD (0000 to 9999)
 \
 \ ******************************************************************************
 
-.sub_C33B7
+.SeedLandscape
 
- STY randomLFSR+1
- STX randomLFSR
- STY landscapeCodeHi
+ STY randomLFSR+1       \ Seed the random number generator with the landscape
+ STX randomLFSR         \ number by setting bits 0-15 of the five-byte linear
+                        \ feedback shift register in randomLFSR(4 3 2 1 0)
+
+ STY landscapeCodeHi    \ Set (landscapeCodeHi landscapeCodeLo) = (Y X)
  STX landscapeCodeLo
- STY L0C52
- TYA
- BNE C33D8
- TXA
- STA L0C52
- LSR A
- LSR A
- LSR A
- LSR A
+
+ STY landscapeZero      \ If the high byte of the landscape number is non-zero,
+ TYA                    \ then set landscapeZero to this non-zero value (to
+ BNE seed1              \ indicate that we are not playing landscape 0000) and
+                        \ jump to seed1 to set maxEnemyCount = 8
+
+ TXA                    \ Set landscapeZero to the low byte of the landscape,
+ STA landscapeZero      \ so this sets landscapeZero to zero if we are playing
+                        \ landscape 0000, and it sets it to a non-zero value if
+                        \ we are not
+                        \
+                        \ So landscapeZero is now correctly set to indicate
+                        \ whether or not we are playing landscape 0000
+
+ LSR A                  \ Set A to the high byte of the BCD landscape number
+ LSR A                  \ plus 1, which is the same as saying:
+ LSR A                  \
+ LSR A                  \   A = 1 + (landscapeNumber div 10)
  CLC
- ADC #&01
- CMP #&09
- BCC C33DA
+ ADC #1
 
-.C33D8
+ CMP #9                 \ If A < 9 then A is in the range 1 to 8, so jump to
+ BCC seed2              \ seed2 to set maxEnemyCount to this value
 
- LDA #&08
+                        \ Otherwise A is 9 or higher, so we now cap A to 8 as
+                        \ the maximum allowed value for maxEnemyCount
 
-.C33DA
+.seed1
 
- STA L0C07
- RTS
+ LDA #8                 \ Set A = 8 to use as the maximum number of enemies
+
+.seed2
+
+ STA maxEnemyCount      \ Set maxEnemyCount to the value in A, so we get the
+                        \ following:
+                        \
+                        \   A = min(8, 1 + (landscapeNumber div 10))
+                        \
+                        \ So landscapes 0000 to 0099 have a maximum enemy count
+                        \ of 1, landscapes 0100 to 0199 have a maximum enemy
+                        \ count of 2, and so on up to landscapes 0700 and up,
+                        \ which have a maximum enemy count of 8
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12045,9 +12101,13 @@ L314A = C3148+2
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDY landscapeCodeHi
+ LDY landscapeCodeHi    \ Set (Y X) = (landscapeCodeHi landscapeCodeLo)
  LDX landscapeCodeLo
- JSR sub_C33B7
+
+ JSR SeedLandscape      \ Seed the random number generator with the landscape
+                        \ number in (Y X) and set maxEnemyCount and the
+                        \ landscapeZero flag accordingly
+
  JMP main4
 
 .C362C
