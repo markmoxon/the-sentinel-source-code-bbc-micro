@@ -3582,7 +3582,7 @@ L1145 = C1144+1
 
 .rese4
 
- STA sinYawAngleLo,X            \ Set the X-th byte of sinYawAngleLo to A
+ STA sinYawAngleLo,X    \ Set the X-th byte of sinYawAngleLo to A
 
  INX                    \ Increment the byte counter
 
@@ -3628,9 +3628,16 @@ L1145 = C1144+1
 
  BPL resv1              \ Loop back until we have processed X from &3F to 0
 
- INC randomLFSR+2       \ ???
+ INC randomLFSR+2       \ Set bit 16 of the five-byte linear feedback shift
+                        \ register in randomLFSR(4 3 2 1 0), so if we zeroed
+                        \ the whole register in ResetVariables, it now has an
+                        \ initial value of &0000010000
+                        \
+                        \ If we jumped straight to ResetVariables2 instead then
+                        \ this just adds a further random element to the
+                        \ generator
 
- JSR sub_C3923          \ ???
+ JSR sub_C3923          \ ??? Sets L0051, L0052
 
  RTS                    \ Return from the subroutine
 
@@ -4376,7 +4383,9 @@ L1145 = C1144+1
  SBC L0C6F
  SBC L0C6F
  STA U
- JSR sub_C341B
+
+ JSR GetRandomNumber22  \ Set A to a random number in the range 0 to 22
+
  CLC
  ADC #&0A
  CMP U
@@ -7481,7 +7490,7 @@ L1145 = C1144+1
  ROR A
  TAX
  LDA L5B00,X
- CMP L5A00,X
+ CMP landscapeHeight,X
  BCC CRE13
  LDA #&F0
  CLC
@@ -7641,7 +7650,7 @@ L2367 = C2366+1
 .C237F
 
  LDA L5B00,Y
- CMP L5A00,Y
+ CMP landscapeHeight,Y
  BCC CRE13
  TAX
  SBC L0035
@@ -7669,7 +7678,7 @@ L23A2 = C23A1+1
 .C23A6
 
  LDY L001A
- LDA L5A00,Y
+ LDA landscapeHeight,Y
  TAX
  CMP L0036
  BCS C2339
@@ -9091,44 +9100,76 @@ L23E3 = C23E2+1
 \
 \       Name: PlayGame
 \       Type: Subroutine
-\   Category: ???
+\   Category: Main loop
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .PlayGame
 
- LDX #&50
+                        \ We start by generating the height of the landscape for
+                        \ each of the tile corners, using the random number
+                        \ generator that we seeded with the landscape number in
+                        \ MainLoop (so the same sequence of random numbers gets
+                        \ generated each time for each specific landscape, so we
+                        \ get the exact same landscape shape for each landscape
+                        \ number, every time)
+
+ LDX #80                \ Set a tile corner counter in X so we can work through
+                        \ the landscape and set a height for each tile corner
 
 .P2A9E
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
 
- STA L5A00,X
- DEX
- BPL P2A9E
- LDA landscapeZero
+ STA landscapeHeight,X  \ Set the X-th entry in the landscapeHeight table to
+                        \ the random height in A
+
+ DEX                    \ Decrement the tile corner counter
+
+ BPL P2A9E              \ Loop back until we have generated all 81 tile corner
+                        \ heights
+
+                        \ We now set value of L0C08 for this landscape ????
+
+ LDA landscapeZero      \ If this is not landscape 0000, jump to C2AB0
  BNE C2AB0
- LDA #&18
- BNE C2AB6
+
+ LDA #24                \ This is landscape 0000, so set A = 24 to use for the
+                        \ value of L0C08 ????
+
+ BNE C2AB6              \ Jump to C2AB6 to skip the following (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .C2AB0
 
- JSR sub_C341B
- CLC
- ADC #&0E
+ JSR GetRandomNumber22  \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, converted into the range 0 to 22
+
+ CLC                    \ Set A = A + 14
+ ADC #14                \
+                        \ So A is now a number in the range 14 to 36
 
 .C2AB6
 
- STA L0C08
+ STA L0C08              \ Set L0C08 = A ????
+                        \
+                        \ So this is 24 for landscape 0000 and a in the range 14
+                        \ to 36 for all other landscapes
+
  LDA #&80
  JSR sub_C2AF2
+
  LDA #0
  JSR sub_C2B53
+
  LDA #&01
  JSR sub_C2AF2
+
  LDA #&40
  JSR sub_C2B53
+
  LDA #&1E
  STA L0026
 
@@ -9163,25 +9204,42 @@ L23E3 = C23E2+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   ???
+\
 \ ******************************************************************************
 
 .sub_C2AF2
 
- STA L001C
- LDA #&1F
+ STA L001C              \ Store argument in L001C for later
+
+ LDA #&1F               \ Set L0026 = &1F
  STA L0026
 
 .C2AF8
 
- LDA #&1F
+                        \ Outer loop (L0026 &1F to 0)
+
+ LDA #&1F               \ Set L0024 = &1F
  STA L0024
 
 .C2AFC
 
- JSR sub_C2B78
- LDA L001C
- BEQ C2B48
- BMI C2B45
+                        \ Inner loop (L0024 &1F to 0)
+
+ JSR sub_C2B78          \ ??? Sets top byte of address in (L005F L005E), and sets Y
+
+ LDA L001C              \ Set A to the argument in L001C
+
+ BEQ C2B48              \ If A = 0 then jump to C2B48
+
+ BMI C2B45              \ If A = &80 then jump to C2B45
+
+                        \ Get here when argument A is not &80 or 0
+
  LSR A
  LDA (L005E),Y
  BCS C2B1B
@@ -9241,15 +9299,24 @@ L23E3 = C23E2+1
 
 .C2B45
 
+                        \ Jump here when bit 7 of argument in A is set
+
  JSR GetRandomNumber    \ Set A to a random number
 
 .C2B48
 
+                        \ Jump here when argument in A is 0
+
  STA (L005E),Y
- DEC L0024
+
+ DEC L0024              \ Decrement inner loop counter
+
  BPL C2AFC
- DEC L0026
+
+ DEC L0026              \ Decrement outer loop counter
+
  BPL C2AF8
+
  RTS
 
 \ ******************************************************************************
@@ -9313,7 +9380,9 @@ L23E3 = C23E2+1
  AND #&03
  CLC
  ADC #&04
- STA L005F
+ STA L005F              \ (L005F L005E) is being set here, top byte (bottom byte
+                        \ always seems to be zero?)
+
  LDA (L005E),Y
  CMP #&C0
  RTS
@@ -9349,7 +9418,7 @@ L23E3 = C23E2+1
 .C2BA4
 
  JSR sub_C2B78
- STA L5A00,X
+ STA landscapeHeight,X
  DEX
  BPL P2B96
  BIT L001C
@@ -9362,25 +9431,25 @@ L23E3 = C23E2+1
  CMP L5A02,X
  BEQ C2BE8
  BCS C2BCD
- CMP L5A00,X
+ CMP landscapeHeight,X
  BEQ C2BE8
  BCS C2BE8
  LDA L5A02,X
- CMP L5A00,X
+ CMP landscapeHeight,X
  JMP C2BDA
 
 .C2BCD
 
- CMP L5A00,X
+ CMP landscapeHeight,X
  BEQ C2BE8
  BCC C2BE8
- LDA L5A00,X
+ LDA landscapeHeight,X
  CMP L5A02,X
 
 .C2BDA
 
  BCC C2BE2
- LDA L5A00,X
+ LDA landscapeHeight,X
  JMP C2BE5
 
 .C2BE2
@@ -9415,7 +9484,7 @@ L23E3 = C23E2+1
 
  LDA #0
  STA U
- LDA L5A00,X
+ LDA landscapeHeight,X
  CLC
  ADC L5A01,X
  BCC C2C10
@@ -9442,7 +9511,7 @@ L23E3 = C23E2+1
  ROR A
  LSR U
  ROR A
- STA L5A00,X
+ STA landscapeHeight,X
  INX
  CPX #&20
  BCC C2C00
@@ -9468,7 +9537,7 @@ L23E3 = C23E2+1
 .C2C42
 
  JSR sub_C2B78
- LDA L5A00,X
+ LDA landscapeHeight,X
  STA (L005E),Y
  DEX
  BPL P2C36
@@ -9884,7 +9953,7 @@ L23E3 = C23E2+1
  STY L0004
  STY L0006
  LDA L0030
- STA L5A00,Y
+ STA landscapeHeight,Y
  LDA L0031
  STA L5B00,Y
  LDA #0
@@ -10364,7 +10433,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX L5A00
+ STX landscapeHeight
  DEC L30EA
  BEQ C30F8
 
@@ -10437,7 +10506,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX L5A00
+ STX landscapeHeight
  DEC U
  BNE C3137
  JMP CRE26
@@ -11571,27 +11640,32 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C341B
+\       Name: GetRandomNumber22
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Set A to a random number in the range 0 to 22
 \
 \ ******************************************************************************
 
-.sub_C341B
+.GetRandomNumber22
 
  JSR GetRandomNumber    \ Set A to a random number
 
- PHA
- AND #&07
- STA T
+ PHA                    \ Set T to bits 0-2 of A
+ AND #%00000111         \
+ STA T                  \ So T is a random number in the range 0 to 7
  PLA
+
+ LSR A                  \ Set A to bits 3-6 of A and clear the C flag
+ LSR A                  \
+ AND #%00011110         \ So T is a random number in the range 0 to 15
  LSR A
- LSR A
- AND #&1E
- LSR A
- ADC T
- RTS
+
+ ADC T                  \ Set A = A + T
+                        \
+                        \ So A is a random number in the range 0 to 22
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12885,7 +12959,7 @@ L314A = C3148+2
  LDY #1
 
  BNE P390F              \ Jump to P390F to ??? (this BNE is effectively a JMP as
-                        \ Y is never zero
+                        \ Y is never zero)
 
 \ ******************************************************************************
 \
@@ -15794,9 +15868,9 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: L5A00
+\       Name: landscapeHeight
 \       Type: Variable
-\   Category: ???
+\   Category: Landscape
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -15805,7 +15879,7 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.L5A00
+.landscapeHeight
 
  EQUB &44
 

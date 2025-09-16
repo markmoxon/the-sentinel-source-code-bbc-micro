@@ -8370,7 +8370,7 @@
      3416   B0 E4      BCS &33FC
      3418   69 01      ADC #&01
      341A   60         RTS
-.sub_C341B
+.GetRandomNumber22
      341B   20 94 31   JSR &3194
      341E   48         PHA
      341F   29 07      AND #&07
@@ -14635,7 +14635,7 @@
      59FD   FF
      59FE   FF
      59FF   FF
-.L5A00
+.landscapeHeight
      5A00   44
 .L5A01
      5A01   58
