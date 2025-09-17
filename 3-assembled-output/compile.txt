@@ -54,6 +54,7 @@
      001A
 .L001B
      001B
+.tileAction
 .L001C
      001C
 .L001D
@@ -186,7 +187,7 @@
      0064
 .L0065
      0065
-.L0066
+.tileAction2
      0066
 .H
      0067
@@ -2345,7 +2346,7 @@
      0C06   00
 .maxEnemyCount
      0C07   00
-.L0C08
+.tileDataMultiplier
      0C08   00
 .L0C09
      0C09   00
@@ -6947,7 +6948,7 @@
      2A98   20 99 22   JSR &2299
 .CRE18
      2A9B   60         RTS
-.PlayGame
+.GenerateLandscape
      2A9C   A2 50      LDX #&50
 .P2A9E
      2A9E   20 94 31   JSR &3194
@@ -6994,14 +6995,14 @@
      2AEC   A9 02      LDA #&02
      2AEE   20 F2 2A   JSR &2AF2
      2AF1   60         RTS
-.sub_C2AF2
+.ProcessTileData
      2AF2   85 1C      STA &1C
      2AF4   A9 1F      LDA #&1F
      2AF6   85 26      STA &26
-.C2AF8
+.proc1
      2AF8   A9 1F      LDA #&1F
      2AFA   85 24      STA &24
-.C2AFC
+.proc2
      2AFC   20 78 2B   JSR &2B78
      2AFF   A5 1C      LDA &1C
      2B01   F0 45      BEQ &2B48
@@ -7021,7 +7022,7 @@
      2B15   0A         ASL A
      2B16   05 74      ORA &74
      2B18   4C 48 2B   JMP &2B48
-.C2B1B
+.proc3
      2B1B   38         SEC
      2B1C   E9 80      SBC #&80
      2B1E   08         PHP
@@ -7029,7 +7030,7 @@
      2B21   49 FF      EOR #&FF
      2B23   18         CLC
      2B24   69 01      ADC #&01
-.C2B26
+.proc4
      2B26   85 75      STA &75
      2B28   AD 08 0C   LDA &0C08
      2B2B   20 03 0D   JSR &0D03
@@ -7039,17 +7040,17 @@
      2B33   69 06      ADC #&06
      2B35   10 02      BPL &2B39
      2B37   A9 00      LDA #&00
-.C2B39
+.proc5
      2B39   18         CLC
      2B3A   69 01      ADC #&01
      2B3C   C9 0C      CMP #&0C
      2B3E   90 02      BCC &2B42
      2B40   A9 0B      LDA #&0B
-.C2B42
+.proc6
      2B42   4C 48 2B   JMP &2B48
-.C2B45
+.proc7
      2B45   20 94 31   JSR &3194
-.C2B48
+.proc8
      2B48   91 5E      STA (&5E),Y
      2B4A   C6 24      DEC &24
      2B4C   10 AE      BPL &2AFC

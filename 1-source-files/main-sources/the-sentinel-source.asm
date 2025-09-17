@@ -188,6 +188,7 @@
 
  SKIP 1                 \ ???
 
+.tileAction
 .L001C
 
  SKIP 1                 \ ???
@@ -459,7 +460,7 @@
 
  SKIP 1                 \ ???
 
-.L0066
+.tileAction2
 
  SKIP 1                 \ ???
 
@@ -1055,7 +1056,7 @@ L0BAB = L0B00+171
 
  EQUB 0
 
-.L0C08
+.tileDataMultiplier
 
  EQUB &00
 
@@ -3323,7 +3324,8 @@ L0BAB = L0B00+171
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- JSR PlayGame           \ Call PlayGame to play the game
+ JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape and
+                        \ play the game
                         \
                         \ This subroutine alters the return stack somehow, need
                         \ to document this here ???
@@ -5609,7 +5611,11 @@ L1145 = C1144+1
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
- JSR PlayGame
+ JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape and
+                        \ play the game
+                        \
+                        \ This subroutine alters the return stack somehow, need
+                        \ to document this here ???
 
  JSR sub_C1410
  JSR sub_C1440
@@ -8212,7 +8218,7 @@ L23E3 = C23E2+1
  TYA
  ASL A
  ASL A
- STA L0066
+ STA tileAction2
  TYA
  SEC
  SBC #&02
@@ -9047,7 +9053,7 @@ L23E3 = C23E2+1
 
  TAX
  SEC
- SBC L0066
+ SBC tileAction2
  AND #&0F
  TAY
  AND #&03
@@ -9122,14 +9128,14 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: PlayGame
+\       Name: GenerateLandscape
 \       Type: Subroutine
-\   Category: Main loop
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Generate tile data for the whole 32x32-tile landscape
 \
 \ ******************************************************************************
 
-.PlayGame
+.GenerateLandscape
 
                         \ We start by generating the height of the landscape for
                         \ each of the tile corners, using the random number
@@ -9155,13 +9161,15 @@ L23E3 = C23E2+1
  BPL P2A9E              \ Loop back until we have generated all 81 tile corner
                         \ heights
 
-                        \ We now set value of L0C08 for this landscape ????
+                        \ We now set the value of tileDataMultiplier for this
+                        \ landscape, which is a multiplier that we apply to the
+                        \ tile data to scale the data
 
  LDA landscapeZero      \ If this is not landscape 0000, jump to C2AB0
  BNE C2AB0
 
  LDA #24                \ This is landscape 0000, so set A = 24 to use for the
-                        \ value of L0C08 ????
+                        \ tile data multiplier in tileDataMultiplier
 
  BNE C2AB6              \ Jump to C2AB6 to skip the following (this BNE is
                         \ effectively a JMP as A is never zero)
@@ -9169,7 +9177,7 @@ L23E3 = C23E2+1
 .C2AB0
 
  JSR GetRandomNumber22  \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted into the range 0 to 22
+                        \ of random numbers, converted to the range 0 to 22
 
  CLC                    \ Set A = A + 14
  ADC #14                \
@@ -9177,29 +9185,31 @@ L23E3 = C23E2+1
 
 .C2AB6
 
- STA L0C08              \ Set L0C08 = A ????
+ STA tileDataMultiplier \ Set tileDataMultiplier = A
                         \
-                        \ So this is 24 for landscape 0000 and a in the range 14
+                        \ So this is 24 for landscape 0000 and in the range 14
                         \ to 36 for all other landscapes
 
- LDA #&80
- JSR sub_C2AF2
+ LDA #&80               \ Call ProcessTileData with A = &80 to set the tile data
+ JSR ProcessTileData    \ for the whole landscape to the next set of numbers
+                        \ from the landscape's sequence of random numbers
 
  LDA #0
  JSR sub_C2B53
 
- LDA #&01
- JSR sub_C2AF2
+ LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
+ JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
+                        \ before capping each bit of data to between 1 and 11
 
  LDA #&40
  JSR sub_C2B53
 
- LDA #&1E
+ LDA #30
  STA zTile
 
 .P2AD1
 
- LDA #&1E
+ LDA #30
  STA xTile
 
 .P2AD5
@@ -9219,150 +9229,307 @@ L23E3 = C23E2+1
  BPL P2AD5
  DEC zTile
  BPL P2AD1
- LDA #&02
- JSR sub_C2AF2
+
+ LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
+ JSR ProcessTileData    \ low nibbles of all the tile data for the whole
+                        \ landscape
+
  RTS
 
 \ ******************************************************************************
 \
-\       Name: sub_C2AF2
+\       Name: ProcessTileData
 \       Type: Subroutine
-\   Category: ???
+\   Category: Landscape
+\    Summary: Process the tile data for all tiles in the landscape
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   Controls what we do to the tile data:
+\
+\                         * 0 = zero all the tile data
+\
+\                         * 1 = scale all the tile data by the multiplier in
+\                               tileDataMultiplier before capping it to a value
+\                               between 1 and 11
+\
+\                         * 2 = swap the high and low nibbles of all the tile
+\                               data
+\
+\                         * &80 = set the tile data to the next set of numbers
+\                                 from the landscape's sequence of random
+\                                 numbers
+\
+\ ******************************************************************************
+
+.ProcessTileData
+
+ STA tileAction         \ Store the action in tileAction for later
+
+                        \ We now loop through all the tiles in the landscape
+                        \
+                        \ The landscape consists of 32x32 tiles, like a chess
+                        \ board that's sitting on a table in front of us, going
+                        \ into the screen
+                        \
+                        \ The x-axis is along the front edge, from left to
+                        \ right, while the z-axis goes into the screen, away
+                        \ from us
+                        \
+                        \ We iterate through the landscape tiles with a nested
+                        \ loop, with zTile going from 31 to 0 (so that's from
+                        \ back to front)
+                        \
+                        \ For each zTile, xTile also goes from 31 to 0, so
+                        \ that's from right to left
+                        \
+                        \ So we work through the landscape, starting with the
+                        \ row of tiles at the back (which we work through from
+                        \ right to left), and then doing the next row forward,
+                        \ looping until we reach the front row
+
+ LDA #31                \ Set zTile = 31 so we start iterating from the back row
+ STA zTile              \ (so zTile iterates from 31 to 0 in the outer loop)
+
+.proc1
+
+ LDA #31                \ Set xTile = 31 so we start iterating from the right
+ STA xTile              \ end of the current row (so xTile iterates from 31 to 0
+                        \ in the inner loop)
+
+.proc2
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ which we ignore, but this also sets the tile page in
+                        \ tileDataPage and the index in Y, so tileDataPage+Y now
+                        \ points to the tile data entry in the tileData table
+
+ LDA tileAction         \ Set A to the argument that was passed to the routine
+                        \ and which we stored in tileAction, which specifies how
+                        \ we set the tile data
+
+ BEQ proc8              \ If tileAction = 0 then jump to proc8 to zero the
+                        \ tile data for the tile at (xTile, zTile)
+
+ BMI proc7              \ If tileAction = &80 then jump to proc7 to set the
+                        \ tile data for the tile at (xTile, zTile) to the next
+                        \ number from the landscape's sequence of random numbers
+
+                        \ If we get here then tileAction must be 1 or 2 (as the
+                        \ routine is only ever called with A = 0, 1, 2 or &80)
+
+ LSR A                  \ If tileAction = 1 then this sets the C flag, otherwise
+                        \ tileAction = 2 so this clears the C flag
+
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile at coordinates
+                        \ (xTile, zTile)
+
+ BCS proc3              \ If the C flag is set then tileAction = 1, so jump to
+                        \ proc3
+
+                        \ If we get here then tileAction = 2, so now we swap the
+                        \ high and low nibble of the tile data
+
+ LSR A                  \ Set bits 0-3 of T to the high nibble (bits 4-7) of the
+ LSR A                  \ tile data in A
+ LSR A
+ LSR A
+ STA T
+
+ LDA (tileDataPage),Y   \ Set bits 4-7 of A to the low nibble (bits 0-3) of the
+ ASL A                  \ tile data in A 
+ ASL A
+ ASL A
+ ASL A
+
+ ORA T                  \ Merge A and T, so A now contains its original high
+                        \ nibble in bits 0-3 (from T) and its original low
+                        \ nibble in bits 4-7 (from A)
+                        \
+                        \ So this swaps the high and low nibbles around in the
+                        \ tile data in A
+
+ JMP proc8              \ Jump to proc8 to store A as the tile data for the tile
+                        \ we are processing
+
+.proc3
+
+                        \ If we get here then tileAction = 1, so we now do
+                        \ various manipulations, including multuplying the
+                        \ tile data by the multiplier in tileDataMultiplier
+                        \ and capping the result to a positive number between
+                        \ 1 and 11
+
+ SEC                    \ Set A = tile data - 128
+ SBC #128
+
+ PHP                    \ Store the flags from the subtraction, so we can set
+                        \ the sign of the scaled 
+
+ BPL proc4              \ If the result of the subtraction in A is positive,
+                        \ skip the following as A is already positive
+
+ EOR #%11111111         \ The result in A is negative, so negate it using two's
+ CLC                    \ complement, so we have:
+ ADC #1                 \
+                        \   A = |tile data - 128|
+
+.proc4
+
+ STA U                  \ Set U = A
+                        \       = |tile data - 128|
+
+ LDA tileDataMultiplier \ Set A to the multiplier that we need to apply to the
+                        \ tile data
+
+ JSR Multiply8x8        \ Set (A T) = A * U
+                        \           = tileDataMultiplier * |tile data - 128|
+
+ PLP                    \ Restore the flags from the subtraction above, so
+                        \ the N flag contains the sign of (tile data - 128)
+                        \ (clear if it is positive, set if it is negative)
+
+ JSR Absolute16Bit      \ Set the sign of (A T) to match the result of the
+                        \ subtraction above, so we now have:
+                        \
+                        \   (A T) = tileDataMultiplier * (tile data - 128)
+
+                        \ So if the tile data represents a landscape height,
+                        \ with "sea level" at altitude 128, then the high byte
+                        \ of this calculation in A represents a scaling of the
+                        \ altitude by tileDataMultiplier / 256, with the scaling
+                        \ centred around sea level
+                        \
+                        \ As tileDataMultiplier is in the range 14 to 36, this
+                        \ transforms the tile data values as follows:
+                        \
+                        \   * Values start out in the range 0 to 255
+                        \
+                        \   * Subtracting 128 translates then into values in the
+                        \     range -128 to +127
+                        \
+                        \   * Multiplying by 14/256 (the minimum multiplier)
+                        \     changes the range into -7 to +7
+                        \
+                        \   * Multiplying by 36/256 (the maximum multiplier)
+                        \     changes the range into -18 to +18
+                        \
+                        \ So the above takes the random numbers in tile data and
+                        \ transforms then into value of A with a maximum range of
+                        \ -18 to +18
+
+                        \ We now take this result and do various additions and
+                        \ cappings to change the result into a positive number
+                        \ between 1 and 11
+
+ CLC                    \ Set A = A + 6
+ ADC #6                 \
+                        \ So the ranges for A are now:
+                        \
+                        \   * Minimum multiplier range is -1 to +13
+                        \
+                        \   * Maximum multiplier range is -12 to +24
+
+ BPL proc5              \ If A is positive then jump to proc5 to skip the
+                        \ following
+
+ LDA #0                 \ Otherwise A is negative, so set A = 0
+
+.proc5
+
+                        \ By this point A is a positive number between 0 and 24
+                        \ and the ranges for A are now:
+                        \
+                        \   * Minimum multiplier range is 0 to 13
+                        \
+                        \   * Maximum multiplier range is 0 to 24
+
+ CLC                    \ Set A = A + 1
+ ADC #1
+
+                        \ By this point A is a positive number between 1 and 25
+                        \ and the ranges for A are now:
+                        \
+                        \   * Minimum multiplier range is 1 to 14
+                        \
+                        \   * Maximum multiplier range is 1 to 25
+
+ CMP #12                \ If A < 12 then jump to proc6 to skip the following
+ BCC proc6
+
+ LDA #11                \ Otherwise A >= 12, so set A = 11
+
+.proc6
+
+                        \ By this point, A is a positive number between 1 and 11
+                        \
+                        \ For minimum values of the multiplier we have only lost
+                        \ the very low and very high values in the range
+                        \
+                        \ For maximum values of the multiplier we have lost
+                        \ around one-third at the top end and one-third at the
+                        \ bottom end
+
+ JMP proc8              \ Jump to proc8 to store A as the tile data for the tile
+                        \ we are processing
+
+.proc7
+
+                        \ If we get here then the argument in A is &80
+
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
+
+.proc8
+
+ STA (tileDataPage),Y   \ Store A as the tile data for the tile at coordinates
+                        \ (xTile, zTile)
+
+ DEC xTile              \ Decrement the tile x-coordinate in the inner loop
+
+ BPL proc2              \ Loop back until we have processed all the tiles in the
+                        \ tile row at z-coordinate zTile, working from right to
+                        \ left
+
+ DEC zTile              \ Decrement outer loop counter
+
+ BPL proc1              \ Loop back until we have processed all the tile rows in
+                        \ the landscape, working from the back row of the
+                        \ landscape all the way to the front row
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: sub_C2B53
+\       Type: Subroutine
+\   Category: Landscape
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   ???
+\   A                   Controls what we do to the tile data:
 \
-\ ******************************************************************************
-
-.sub_C2AF2
-
- STA L001C              \ Store argument in L001C for later
-
- LDA #&1F               \ Set zTile = &1F
- STA zTile
-
-.C2AF8
-
-                        \ Outer loop (zTile &1F to 0)
-
- LDA #&1F               \ Set xTile = &1F
- STA xTile
-
-.C2AFC
-
-                        \ Inner loop (xTile &1F to 0)
-
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
-
- LDA L001C              \ Set A to the argument in L001C
-
- BEQ C2B48              \ If A = 0 then jump to C2B48
-
- BMI C2B45              \ If A = &80 then jump to C2B45
-
-                        \ Get here when argument A is not &80 or 0
-
- LSR A
- LDA (tileDataPage),Y
- BCS C2B1B
- LSR A
- LSR A
- LSR A
- LSR A
- STA T
- LDA (tileDataPage),Y
- ASL A
- ASL A
- ASL A
- ASL A
- ORA T
- JMP C2B48
-
-.C2B1B
-
- SEC
- SBC #&80
- PHP
- BPL C2B26
- EOR #&FF
- CLC
- ADC #&01
-
-.C2B26
-
- STA U
- LDA L0C08
-
- JSR Multiply8x8        \ Set (A T) = A * U
-
- PLP                    \ Restore the sign of ??? which we stored on the
-                        \ stack above, so the N flag is positive if ???,
-                        \ or negative if ???
-
- JSR Absolute16Bit      \ Set the sign of (A T) to match the result of the
-                        \ subtraction above, so A is now ???
-
- CLC
- ADC #&06
- BPL C2B39
- LDA #0
-
-.C2B39
-
- CLC
- ADC #&01
- CMP #&0C
- BCC C2B42
- LDA #&0B
-
-.C2B42
-
- JMP C2B48
-
-.C2B45
-
-                        \ Jump here when bit 7 of argument in A is set
-
- JSR GetRandomNumber    \ Set A to a random number
-
-.C2B48
-
-                        \ Jump here when argument in A is 0
-
- STA (tileDataPage),Y
-
- DEC xTile              \ Decrement inner loop counter
-
- BPL C2AFC
-
- DEC zTile              \ Decrement outer loop counter
-
- BPL C2AF8
-
- RTS
-
-\ ******************************************************************************
+\                         * 0 = ???
 \
-\       Name: sub_C2B53
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\                         * &40 = ???
 \
 \ ******************************************************************************
 
 .sub_C2B53
 
- STA L0066
- LDA #&02
+ STA tileAction2        \ Store the action in tileAction2 for later
+
+ LDA #2
  STA L0015
 
 .P2B59
 
- LDA #&1F
+ LDA #31
  STA zTile
 
 .P2B5D
@@ -9371,6 +9538,7 @@ L23E3 = C23E2+1
  JSR sub_C2B90
  DEC zTile
  BPL P2B5D
+
  LDA #&1F
  STA xTile
 
@@ -9518,11 +9686,21 @@ L23E3 = C23E2+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   Controls what we do to the tile data:
+\
+\                         * 0 = ???
+\
+\                         * &80 = ???
+\
 \ ******************************************************************************
 
 .sub_C2B90
 
- ORA L0066
+ ORA tileAction2
  STA L001C
  LDX #&22
 
@@ -11000,8 +11178,8 @@ L314A = C3148+2
  SEC                    \ Set bit 7 of L0C4B ???
  ROR L0C4B
 
- LDA #0
- JSR sub_C2AF2
+ LDA #0                 \ Call ProcessTileData with A = 0 to zero the tile data
+ JSR ProcessTileData    \ for the whole landscape
 
  BIT screenType         \ If bit 7 of the screen type is clear, jump to titl1 to
  BPL titl1              \ print "THE SENTINEL" on the title screen
