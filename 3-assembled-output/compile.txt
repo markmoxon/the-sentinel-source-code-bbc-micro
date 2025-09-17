@@ -70,11 +70,11 @@
      0022
 .L0023
      0023
-.L0024
+.xTile
      0024
 .L0025
      0025
-.L0026
+.zTile
      0026
 .L0027
      0027
@@ -172,10 +172,8 @@
      005C
 .bHi
      005D
-.L005E
+.tileDataPage
      005E
-.L005F
-     005F
 .secondAxis
      0060
 .L0061
@@ -279,7 +277,7 @@
      0180
 .L01A0
      01A0
-.L0400
+.tileData
      0400   00
      0401   00
      0402   00
@@ -7080,7 +7078,7 @@
      2B73   C6 15      DEC &15
      2B75   D0 E2      BNE &2B59
      2B77   60         RTS
-.sub_C2B78
+.GetTileData
      2B78   A5 24      LDA &24
      2B7A   0A         ASL A
      2B7B   0A         ASL A

@@ -220,17 +220,23 @@
 
  SKIP 1                 \ ???
 
-.L0024
+.xTile
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Tile x-coordinate
+                        \
+                        \ The tile number along the x-axis, where the x-axis
+                        \ goes from left to right across the screen
 
 .L0025
 
  SKIP 1                 \ ???
 
-.L0026
+.zTile
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Tile z-coordinate
+                        \
+                        \ The tile number along the z-axis, where the z-axis
+                        \ goes into the screen
 
 .L0027
 
@@ -425,13 +431,9 @@
 
  SKIP 1                 \ ???
 
-.L005E
+.tileDataPage
 
- SKIP 1                 \ ???
-
-.L005F
-
- SKIP 1                 \ ???
+ SKIP 2                 \ ???
 
 .secondAxis
 
@@ -663,17 +665,17 @@
 
 \ ******************************************************************************
 \
-\       Name: L0400
+\       Name: tileData
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Height data for landscape tiles
 \
 \ ******************************************************************************
 
-.L0400
+.tileData
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &27
- EQUB &29, &20, &27, &29, &29, &27, &20, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &27        \ These values are workspace
+ EQUB &29, &20, &27, &29, &29, &27, &20, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &29
@@ -3819,14 +3821,17 @@ L1145 = C1144+1
 .C1236
 
  JSR sub_C125A
- STA L0024
+ STA xTile
  JSR sub_C125A
- STA L0026
- JSR sub_C2B78
+ STA zTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ setting the C flag if bits 6 and 7 of the data are set
+
  BCS C122A
  AND #&0F
  BNE C122A
- LDA (L005E),Y
+ LDA (tileDataPage),Y
  LSR A
  LSR A
  LSR A
@@ -4357,9 +4362,9 @@ L1145 = C1144+1
  LDA landscapeZero
  BNE C145F
  LDA #&08
- STA L0024
+ STA xTile
  LDA #&11
- STA L0026
+ STA zTile
  JSR sub_C1EFF
  JMP C146D
 
@@ -4542,13 +4547,13 @@ L1145 = C1144+1
  STA L5B18,X
  STA L5B19,X
  LDA L5B60,X
- STA L0024
+ STA xTile
  LDA L5BA0,X
- STA L0026
+ STA zTile
  LDX L006E
  BNE C155F
  STA L0C1A
- LDA L0024
+ LDA xTile
  STA L0C19
  LDA #&05
  STA L0A40
@@ -4683,7 +4688,7 @@ L1145 = C1144+1
  LDA #&04
  STA L000C
  LDA L001A
- STA L0026
+ STA zTile
  CMP #&1C
  BCC C15E0
  DEC L000C
@@ -4693,17 +4698,18 @@ L1145 = C1144+1
  LDA #&04
  STA L000D
  LDA L0018
- STA L0024
+ STA xTile
  CMP #&1C
  BCC C15EE
  DEC L000D
 
 .C15EE
 
- JSR sub_C2B78
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  AND #&0F
  BNE C1611
- LDA (L005E),Y
+ LDA (tileDataPage),Y
  AND #&F0
  CMP L5B10,X
  BCC C1611
@@ -4714,17 +4720,17 @@ L1145 = C1144+1
 
 .C1607
 
- LDA L0024
+ LDA xTile
  STA L5B60,X
- LDA L0026
+ LDA zTile
  STA L5BA0,X
 
 .C1611
 
- INC L0024
+ INC xTile
  DEC L000D
  BNE C15EE
- INC L0026
+ INC zTile
  DEC L000C
  BNE C15E0
  INX
@@ -5644,10 +5650,14 @@ L1145 = C1144+1
 .C1AB9
 
  LDA L0900,X
- STA L0024
+ STA xTile
  LDA L0980,X
- STA L0026
- JSR sub_C2B78
+ STA zTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ setting the C flag if bits 6 and 7 of the data are set
+                        \ (and clearing it otherwise)
+
  BCC C1AE2
  AND #&3F
  TAY
@@ -5778,7 +5788,11 @@ L1145 = C1144+1
  LDA L0C61
  AND #&20
  BEQ C1BA9
- JSR sub_C2B78
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ setting the C flag if bits 6 and 7 of the data are set
+                        \ (and clearing it otherwise)
+
  BCC C1B98
  AND #&3F
  TAX
@@ -5853,9 +5867,9 @@ L1145 = C1144+1
  BCS C1B98
  LDX L0001
  LDA L003A
- STA L0024
+ STA xTile
  LDA L003C
- STA L0026
+ STA zTile
  JSR sub_C1EFF
  BCC C1BCA
  CLC
@@ -6158,11 +6172,11 @@ L1145 = C1144+1
 
  JSR sub_C1CAA
  LDA L003A
- STA L0024
+ STA xTile
  CMP #&1F
  BCS C1D33
  LDA L003C
- STA L0026
+ STA zTile
  CMP #&1F
  BCS C1D33
  LDA #&80
@@ -6196,10 +6210,10 @@ L1145 = C1144+1
 .C1D21
 
  LDX L006E
- LDA L0024
+ LDA xTile
  CMP L0900,X
  BNE C1D31
- LDA L0026
+ LDA zTile
  CMP L0980,X
  BEQ C1CD7
 
@@ -6218,17 +6232,19 @@ L1145 = C1144+1
  STA S
  STA W
  LSR secondAxis
- INC L0024
+ INC xTile
  JSR sub_C1DE6
  STA V
- INC L0026
+ INC zTile
  JSR sub_C1DE6
  STA U
- DEC L0024
+ DEC xTile
  JSR sub_C1DE6
  STA T
- DEC L0026
- JSR sub_C2B78
+ DEC zTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  AND #&0F
  CMP #&04
  BEQ C1D5F
@@ -6369,7 +6385,9 @@ L1145 = C1144+1
 
 .sub_C1DE6
 
- JSR sub_C2B78
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ setting the C flag if bits 6 and 7 of the data are set
+
  BCS C1E28
  PHA
  AND #&0F
@@ -6560,10 +6578,12 @@ L1145 = C1144+1
 .sub_C1ED8
 
  LDA L0900,X
- STA L0024
+ STA xTile
  LDA L0980,X
- STA L0026
- JSR sub_C2B78
+ STA zTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  LDA L0100,X
  CMP #&40
  BCC C1EF0
@@ -6580,7 +6600,7 @@ L1145 = C1144+1
 
 .C1EF7
 
- STA (L005E),Y
+ STA (tileDataPage),Y
  LDA #&80
  STA L0100,X
  RTS
@@ -6596,11 +6616,15 @@ L1145 = C1144+1
 
 .sub_C1EFF
 
- LDA L0024
+ LDA xTile
  STA L0900,X
- LDA L0026
+ LDA zTile
  STA L0980,X
- JSR sub_C2B78
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ setting the C flag if bits 6 and 7 of the data are set
+                        \ (and clearing it otherwise)
+
  BCC C1F4B
  STY L1F77
  AND #&3F
@@ -6657,7 +6681,7 @@ L1145 = C1144+1
  STA L0940,X
  TXA
  ORA #&C0
- STA (L005E),Y
+ STA (tileDataPage),Y
  LDA #&F5
  STA L0140,X
 
@@ -7273,7 +7297,7 @@ L1145 = C1144+1
 
 .sub_C2202
 
- STA L0026
+ STA zTile
  STY L0057
  TXA
  CMP #&20
@@ -7298,7 +7322,7 @@ L1145 = C1144+1
 
 .C2224
 
- LDX L0026
+ LDX zTile
  LDA L3D83,X
  STA P
  LDA L3DB5,X
@@ -7348,7 +7372,7 @@ L1145 = C1144+1
 
 .C2270
 
- INC L0026
+ INC zTile
  DEC L0057
  BNE C2224
  RTS
@@ -8078,12 +8102,12 @@ L23E3 = C23E2+1
  LDA #&7F
  STA Q
  LDA #&1F
- STA L0026
+ STA zTile
 
 .P25D1
 
  LDA #&1F
- STA L0024
+ STA xTile
  BNE C25DA
 
 .C25D7
@@ -8093,13 +8117,13 @@ L23E3 = C23E2+1
 .C25DA
 
  JSR sub_C1DE6
- LDY L0024
+ LDY xTile
  ROL A
  STA (P),Y
- DEC L0024
+ DEC xTile
  BPL C25DA
  DEC Q
- DEC L0026
+ DEC zTile
  BPL P25D1
  LDA #&20
  STA R
@@ -8241,7 +8265,7 @@ L23E3 = C23E2+1
 .C26A1
 
  LDA #&1F
- STA L0026
+ STA zTile
  LDA L0C48
  STA L0032
  LDA #0
@@ -8260,9 +8284,9 @@ L23E3 = C23E2+1
  LDA L0033
  STA L0038
  JSR sub_C355A
- DEC L0026
+ DEC zTile
  BMI C26D4
- LDY L0026
+ LDY zTile
  CPY L001D
  BNE C26D6
  JMP C2747
@@ -8293,7 +8317,7 @@ L23E3 = C23E2+1
  LDA L0005
  EOR #&20
  STA L0005
- INC L0026
+ INC zTile
  LDY L0037
 
 .P26F5
@@ -8303,7 +8327,7 @@ L23E3 = C23E2+1
  CPY L0032
  BNE P26F5
  STY L0037
- DEC L0026
+ DEC zTile
  LDA L0005
  EOR #&20
  STA L0005
@@ -8328,7 +8352,7 @@ L23E3 = C23E2+1
  LDA L0005
  EOR #&20
  STA L0005
- INC L0026
+ INC zTile
  LDY L0038
 
 .P2723
@@ -8338,7 +8362,7 @@ L23E3 = C23E2+1
  CPY L0033
  BNE P2723
  STY L0038
- DEC L0026
+ DEC zTile
  LDA L0005
  EOR #&20
  STA L0005
@@ -8391,7 +8415,7 @@ L23E3 = C23E2+1
 
  LDA #0
  STA L0005
- INC L0026
+ INC zTile
  LDY L0003
  JSR sub_C2815
  LDA L0AE0,Y
@@ -8402,7 +8426,7 @@ L23E3 = C23E2+1
  STA L0A81,Y
  LDA #&20
  STA L0005
- DEC L0026
+ DEC zTile
  LDA #&FF
  STA L0B00,Y
  STA L0B01,Y
@@ -8452,7 +8476,7 @@ L23E3 = C23E2+1
 
 .P27BA
 
- LDA L0024
+ LDA xTile
  STA L0032
  JSR sub_C280E
  BCS C27D2
@@ -8469,13 +8493,13 @@ L23E3 = C23E2+1
 
 .C27D2
 
- LDA L0024
+ LDA xTile
  STA L0033
  RTS
 
 .C27D7
 
- LDA L0024
+ LDA xTile
  STA L0033
  JSR sub_C2806
  BCS C27FF
@@ -8492,10 +8516,10 @@ L23E3 = C23E2+1
 
 .C27F0
 
- LDA L0024
+ LDA xTile
  STA L0033
  LDA L0032
- STA L0024
+ STA xTile
 
 .P27F8
 
@@ -8508,7 +8532,7 @@ L23E3 = C23E2+1
 
 .C27FF
 
- LDA L0024
+ LDA xTile
  STA L0032
  RTS
 
@@ -8528,7 +8552,7 @@ L23E3 = C23E2+1
 
 .sub_C2806
 
- LDY L0024
+ LDY xTile
  BEQ C2804
  DEY
  JMP sub_C2815
@@ -8544,7 +8568,7 @@ L23E3 = C23E2+1
 
 .sub_C280E
 
- LDY L0024
+ LDY xTile
  INY
  CPY #&20
  BEQ C2804
@@ -8560,7 +8584,7 @@ L23E3 = C23E2+1
 
 .sub_C2815
 
- STY L0024
+ STY xTile
  STY L000F
  TYA
  ORA L0005
@@ -8571,7 +8595,7 @@ L23E3 = C23E2+1
  LDA #&80
  STA L0080
  CLC
- LDA L0024
+ LDA xTile
  SBC L0003
  SEC
  SBC L0C78
@@ -8590,7 +8614,7 @@ L23E3 = C23E2+1
  LDA #&80
  STA L0082
  CLC
- LDA L0026
+ LDA zTile
  SBC L001D
  STA L0088
  BPL C285A
@@ -8617,16 +8641,16 @@ L23E3 = C23E2+1
  BIT L001C
  BMI C288B
  BVS C2880
- LDX L0024
- LDY L0026
+ LDX xTile
+ LDY zTile
  JMP C28A4
 
 .C2880
 
- LDX L0026
+ LDX zTile
  LDA #&1F
  SEC
- SBC L0024
+ SBC xTile
  TAY
  JMP C28A4
 
@@ -8635,11 +8659,11 @@ L23E3 = C23E2+1
  BVS C289C
  LDA #&1F
  SEC
- SBC L0024
+ SBC xTile
  TAX
  LDA #&1F
  SEC
- SBC L0026
+ SBC zTile
  TAY
  JMP C28A4
 
@@ -8647,9 +8671,9 @@ L23E3 = C23E2+1
 
  LDA #&1F
  SEC
- SBC L0026
+ SBC zTile
  TAX
- LDY L0024
+ LDY xTile
 
 .C28A4
 
@@ -8666,8 +8690,8 @@ L23E3 = C23E2+1
  STA T
  CLC
  ADC #&04
- STA L005F
- LDA (L005E),Y
+ STA tileDataPage+1
+ LDA (tileDataPage),Y
  LDX L0021
  STA L0180,X
  CMP #&C0
@@ -8939,7 +8963,7 @@ L23E3 = C23E2+1
  BEQ CRE17
  LDA L0025
  STA L093F
- LDA L0026
+ LDA zTile
  STA L09BF
  LDY #&3F
  JMP sub_C5D33
@@ -9004,7 +9028,7 @@ L23E3 = C23E2+1
 
  LDX #0
  LDA L0025
- EOR L0026
+ EOR zTile
  AND #&01
  BEQ C2A2D
  LDX #&08
@@ -9171,27 +9195,29 @@ L23E3 = C23E2+1
  JSR sub_C2B53
 
  LDA #&1E
- STA L0026
+ STA zTile
 
 .P2AD1
 
  LDA #&1E
- STA L0024
+ STA xTile
 
 .P2AD5
 
  JSR sub_C2C4E
- JSR sub_C2B78
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  TXA
  ASL A
  ASL A
  ASL A
  ASL A
- ORA (L005E),Y
- STA (L005E),Y
- DEC L0024
+ ORA (tileDataPage),Y
+ STA (tileDataPage),Y
+ DEC xTile
  BPL P2AD5
- DEC L0026
+ DEC zTile
  BPL P2AD1
  LDA #&02
  JSR sub_C2AF2
@@ -9216,21 +9242,21 @@ L23E3 = C23E2+1
 
  STA L001C              \ Store argument in L001C for later
 
- LDA #&1F               \ Set L0026 = &1F
- STA L0026
+ LDA #&1F               \ Set zTile = &1F
+ STA zTile
 
 .C2AF8
 
-                        \ Outer loop (L0026 &1F to 0)
+                        \ Outer loop (zTile &1F to 0)
 
- LDA #&1F               \ Set L0024 = &1F
- STA L0024
+ LDA #&1F               \ Set xTile = &1F
+ STA xTile
 
 .C2AFC
 
-                        \ Inner loop (L0024 &1F to 0)
+                        \ Inner loop (xTile &1F to 0)
 
- JSR sub_C2B78          \ ??? Sets top byte of address in (L005F L005E), and sets Y
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
 
  LDA L001C              \ Set A to the argument in L001C
 
@@ -9241,14 +9267,14 @@ L23E3 = C23E2+1
                         \ Get here when argument A is not &80 or 0
 
  LSR A
- LDA (L005E),Y
+ LDA (tileDataPage),Y
  BCS C2B1B
  LSR A
  LSR A
  LSR A
  LSR A
  STA T
- LDA (L005E),Y
+ LDA (tileDataPage),Y
  ASL A
  ASL A
  ASL A
@@ -9307,13 +9333,13 @@ L23E3 = C23E2+1
 
                         \ Jump here when argument in A is 0
 
- STA (L005E),Y
+ STA (tileDataPage),Y
 
- DEC L0024              \ Decrement inner loop counter
+ DEC xTile              \ Decrement inner loop counter
 
  BPL C2AFC
 
- DEC L0026              \ Decrement outer loop counter
+ DEC zTile              \ Decrement outer loop counter
 
  BPL C2AF8
 
@@ -9337,22 +9363,22 @@ L23E3 = C23E2+1
 .P2B59
 
  LDA #&1F
- STA L0026
+ STA zTile
 
 .P2B5D
 
  LDA #0
  JSR sub_C2B90
- DEC L0026
+ DEC zTile
  BPL P2B5D
  LDA #&1F
- STA L0024
+ STA xTile
 
 .P2B6A
 
  LDA #&80
  JSR sub_C2B90
- DEC L0024
+ DEC xTile
  BPL P2B6A
  DEC L0015
  BNE P2B59
@@ -9360,32 +9386,130 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2B78
+\       Name: GetTileData
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Get the tile data and tile data address for a specific tile
+\
+\ ------------------------------------------------------------------------------
+\
+\ The tile data table at tileData is made up of sequences of 32-tile columns
+\ going into the screen, where each column goes from z = 0 to 31 along the same
+\ x-coordinate, with the columns interleaved in steps of 4 like this:
+\
+\ &0400-&041F = 32-tile column going into the screen at x =  0
+\ &0420-&043F = 32-tile column going into the screen at x =  4
+\ &0440-&045F = 32-tile column going into the screen at x =  8
+\ &0460-&047F = 32-tile column going into the screen at x = 12
+\ &0480-&049F = 32-tile column going into the screen at x = 16
+\ &04A0-&04BF = 32-tile column going into the screen at x = 20
+\ &04C0-&04DF = 32-tile column going into the screen at x = 24
+\ &04E0-&04FF = 32-tile column going into the screen at x = 28
+\
+\ &0500-&051F = 32-tile column going into the screen at x =  1
+\ &0520-&053F = 32-tile column going into the screen at x =  5
+\ &0540-&055F = 32-tile column going into the screen at x =  9
+\ &0560-&057F = 32-tile column going into the screen at x = 13
+\ &0580-&059F = 32-tile column going into the screen at x = 17
+\ &05A0-&05BF = 32-tile column going into the screen at x = 21
+\ &05C0-&05DF = 32-tile column going into the screen at x = 25
+\ &05E0-&05FF = 32-tile column going into the screen at x = 29
+\
+\ &0600-&061F = 32-tile column going into the screen at x =  2
+\ &0620-&063F = 32-tile column going into the screen at x =  6
+\ &0640-&065F = 32-tile column going into the screen at x = 10
+\ &0660-&067F = 32-tile column going into the screen at x = 14
+\ &0680-&069F = 32-tile column going into the screen at x = 18
+\ &06A0-&06BF = 32-tile column going into the screen at x = 22
+\ &06C0-&06DF = 32-tile column going into the screen at x = 26
+\ &06E0-&06FF = 32-tile column going into the screen at x = 30
+\
+\ &0700-&071F = 32-tile column going into the screen at x =  3
+\ &0720-&073F = 32-tile column going into the screen at x =  7
+\ &0740-&075F = 32-tile column going into the screen at x = 11
+\ &0760-&077F = 32-tile column going into the screen at x = 15
+\ &0780-&079F = 32-tile column going into the screen at x = 19
+\ &07A0-&07BF = 32-tile column going into the screen at x = 23
+\ &07C0-&07DF = 32-tile column going into the screen at x = 27
+\ &07E0-&07FF = 32-tile column going into the screen at x = 31
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   xTile               A tile x-coordinate (0 to 31)
+\
+\   zTile               A tile z-coordinate (0 to 31)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The tile data for the tile at (xTile, zTile)
+\
+\   tileDataPage(1 0)   The address of the page containing the tile data
+\
+\   Y                   The offset from tileDataPage(1 0) of the tile data
+\
+\   C flag              Depends on bits 6 and 7 of the tile data:
+\
+\                         * Set if both bit 6 and bit 7 of the tile data are set
+\
+\                         * Clear otherwise
 \
 \ ******************************************************************************
 
-.sub_C2B78
+.GetTileData
 
- LDA L0024
+ LDA xTile              \ Set Y = (xTile << 3 and %11100000) + zTile
+ ASL A                  \       = (xTile >> 2 and %00000111) << 5 + zTile
+ ASL A                  \       = (xTile div 4) * &20 + zTile
  ASL A
- ASL A
- ASL A
- AND #&E0
- ORA L0026
+ AND #%11100000
+ ORA zTile
  TAY
- LDA L0024
- AND #&03
- CLC
- ADC #&04
- STA L005F              \ (L005F L005E) is being set here, top byte (bottom byte
-                        \ always seems to be zero?)
 
- LDA (L005E),Y
- CMP #&C0
- RTS
+ LDA xTile              \ Set A = bits 0-1 of xTile
+ AND #%00000011         \       = xTile mod 4
+
+                        \ The low byte of tileDataPage(1 0) gets set to zero in
+                        \ ResetVariables and is never changed
+                        \
+                        \ The low byte of tileData is also zero, as we know that
+                        \ tileData is &0400
+                        \
+                        \ So in the following, we are just adding the high bytes
+                        \ to get a result that is on a page boundary
+
+ CLC                    \ Set the following:
+ ADC #HI(tileData)      \
+ STA tileDataPage+1     \   tileDataPage(1 0) = tileData + (A 0)
+                        \                     = tileData + (xTile mod 4) * &100
+
+                        \ So we now have the following:
+                        \
+                        \   tileDataPage(1 0) = tileData + (xTile mod 4) * &100
+                        \
+                        \   Y = (xTile div 4) * &20 + zTile
+                        \
+                        \ The address in tileDataPage(1 0) is the page within
+                        \ tileData for the tile at coordinates (xTile, zTile),
+                        \ and is one of &0400, &0500, &0600 or &0700 because
+                        \ (xTile mod 4) equals 0, 1, 2 or 3
+                        \
+                        \ The value of Y is the offset within that page of the
+                        \ tile data for the tile at coordinates (xTile, zTile)
+                        \
+                        \ We can therefore fetch the tile data for the specified
+                        \ tile using Y as an index offset from tileDataPage(1 0)
+
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile at coordinates
+                        \ (xTile, zTile)
+
+ CMP #%11000000         \ Set the C flag if A >= %11000000, which will be the
+                        \ case if both bit 6 and bit 7 of A are set
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9408,16 +9532,17 @@ L23E3 = C23E2+1
  AND #&1F
  BIT L001C
  BPL C2BA2
- STA L0026
+ STA zTile
  JMP C2BA4
 
 .C2BA2
 
- STA L0024
+ STA xTile
 
 .C2BA4
 
- JSR sub_C2B78
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  STA landscapeHeight,X
  DEX
  BPL P2B96
@@ -9527,18 +9652,19 @@ L23E3 = C23E2+1
  TXA
  BIT L001C
  BPL C2C40
- STA L0026
+ STA zTile
  JMP C2C42
 
 .C2C40
 
- STA L0024
+ STA xTile
 
 .C2C42
 
- JSR sub_C2B78
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  LDA landscapeHeight,X
- STA (L005E),Y
+ STA (tileDataPage),Y
  DEX
  BPL P2C36
  RTS
@@ -9554,22 +9680,29 @@ L23E3 = C23E2+1
 
 .sub_C2C4E
 
- JSR sub_C2B78
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  AND #&0F
  STA S
- INC L0024
- JSR sub_C2B78
+ INC xTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  AND #&0F
  STA V
- INC L0026
- JSR sub_C2B78
+ INC zTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  AND #&0F
  STA U
- DEC L0024
- JSR sub_C2B78
+ DEC xTile
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  AND #&0F
  STA T
- DEC L0026
+ DEC zTile
  LDA S
  CMP V
  BEQ C2CB1
@@ -10764,7 +10897,7 @@ L314A = C3148+2
  LDA #10                \ osword_read_char
  JSR OSWORD
  LDA L0C4A
- STA L0026
+ STA zTile
  LDX #&07
  LDA L0C6E,X
  CMP rotm8-1,X
@@ -10775,7 +10908,7 @@ L314A = C3148+2
 
  ASL L0C10,X
  LDA L0C49
- STA L0024
+ STA xTile
  LDA #&04
  STA L0015
 
@@ -10789,13 +10922,15 @@ L314A = C3148+2
  TAY
  LDA L3248,Y
  PHA
- JSR sub_C2B78
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+
  PLA
- STA (L005E),Y
- INC L0024
+ STA (tileDataPage),Y
+ INC xTile
  DEC L0015
  BNE P3210
- INC L0026
+ INC zTile
  DEX
  BMI C3239
  BNE C3204
