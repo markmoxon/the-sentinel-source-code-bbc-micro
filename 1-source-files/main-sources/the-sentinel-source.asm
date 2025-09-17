@@ -188,10 +188,9 @@
 
  SKIP 1                 \ ???
 
-.tileAction
-.L001C
+.processAction
 
- SKIP 1                 \ ???
+ SKIP 1                 \ ??? Used in processing and smoothing tiles
 
 .L001D
 
@@ -460,7 +459,7 @@
 
  SKIP 1                 \ ???
 
-.tileAction2
+.smoothingAction
 
  SKIP 1                 \ ???
 
@@ -4537,7 +4536,7 @@ L1145 = C1144+1
  CMP T
  BCS C150B
  TAY
- LDX L5A40,Y
+ LDX landscapeHeight+&40,Y
  LDA #0
  STA L5B07,X
  STA L5B08,X
@@ -4620,7 +4619,7 @@ L1145 = C1144+1
  CMP L0006
  BNE C159D
  TXA
- STA L5A40,Y
+ STA landscapeHeight+&40,Y
  INY
 
 .C159D
@@ -8202,12 +8201,12 @@ L23E3 = C23E2+1
  LDA L09C0,X
  CLC
  ADC #&20
- STA L001C
+ STA processAction
  AND #&3F
  SEC
  SBC #&20
  STA T
- LDA L001C
+ LDA processAction
  ASL A
  ROL A
  ROL A
@@ -8218,7 +8217,7 @@ L23E3 = C23E2+1
  TYA
  ASL A
  ASL A
- STA tileAction2
+ STA smoothingAction
  TYA
  SEC
  SBC #&02
@@ -8227,7 +8226,7 @@ L23E3 = C23E2+1
  SEC
  SBC #&0A
  STA L0020
- BIT L001C
+ BIT processAction
  BMI C267F
  BVS C266F
  LDA L0900,X
@@ -8644,7 +8643,7 @@ L23E3 = C23E2+1
  SBC L0020
  STA L5500,Y
  JSR GetHypotenuse
- BIT L001C
+ BIT processAction
  BMI C288B
  BVS C2880
  LDX xTile
@@ -9053,7 +9052,7 @@ L23E3 = C23E2+1
 
  TAX
  SEC
- SBC tileAction2
+ SBC smoothingAction
  AND #&0F
  TAY
  AND #&03
@@ -9195,14 +9194,14 @@ L23E3 = C23E2+1
                         \ from the landscape's sequence of random numbers
 
  LDA #0
- JSR sub_C2B53
+ JSR SmoothTileData
 
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
                         \ before capping each bit of data to between 1 and 11
 
  LDA #&40
- JSR sub_C2B53
+ JSR SmoothTileData
 
  LDA #30
  STA zTile
@@ -9266,7 +9265,7 @@ L23E3 = C23E2+1
 
 .ProcessTileData
 
- STA tileAction         \ Store the action in tileAction for later
+ STA processAction      \ Store the action in processAction for later
 
                         \ We now loop through all the tiles in the landscape
                         \
@@ -9306,31 +9305,32 @@ L23E3 = C23E2+1
                         \ tileDataPage and the index in Y, so tileDataPage+Y now
                         \ points to the tile data entry in the tileData table
 
- LDA tileAction         \ Set A to the argument that was passed to the routine
-                        \ and which we stored in tileAction, which specifies how
-                        \ we set the tile data
+ LDA processAction      \ Set A to the argument that was passed to the routine
+                        \ and which we stored in processAction, which specifies
+                        \ how we process the tile data
 
- BEQ proc8              \ If tileAction = 0 then jump to proc8 to zero the
+ BEQ proc8              \ If processAction = 0 then jump to proc8 to zero the
                         \ tile data for the tile at (xTile, zTile)
 
- BMI proc7              \ If tileAction = &80 then jump to proc7 to set the
+ BMI proc7              \ If processAction = &80 then jump to proc7 to set the
                         \ tile data for the tile at (xTile, zTile) to the next
                         \ number from the landscape's sequence of random numbers
 
-                        \ If we get here then tileAction must be 1 or 2 (as the
-                        \ routine is only ever called with A = 0, 1, 2 or &80)
+                        \ If we get here then processAction must be 1 or 2 (as
+                        \ the routine is only ever called with A = 0, 1, 2 or
+                        \ &80)
 
- LSR A                  \ If tileAction = 1 then this sets the C flag, otherwise
-                        \ tileAction = 2 so this clears the C flag
+ LSR A                  \ If processAction = 1 then this sets the C flag,
+                        \ otherwise processAction = 2 and this clears the C flag
 
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile at coordinates
                         \ (xTile, zTile)
 
- BCS proc3              \ If the C flag is set then tileAction = 1, so jump to
-                        \ proc3
+ BCS proc3              \ If the C flag is set then processAction = 1, so jump
+                        \ to proc3
 
-                        \ If we get here then tileAction = 2, so now we swap the
-                        \ high and low nibble of the tile data
+                        \ If we get here then processAction = 2, so now we swap
+                        \ the high and low nibble of the tile data
 
  LSR A                  \ Set bits 0-3 of T to the high nibble (bits 4-7) of the
  LSR A                  \ tile data in A
@@ -9356,7 +9356,7 @@ L23E3 = C23E2+1
 
 .proc3
 
-                        \ If we get here then tileAction = 1, so we now do
+                        \ If we get here then processAction = 1, so we now do
                         \ various manipulations, including multuplying the
                         \ tile data by the multiplier in tileDataMultiplier
                         \ and capping the result to a positive number between
@@ -9503,7 +9503,7 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2B53
+\       Name: SmoothTileData
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: ???
@@ -9520,22 +9520,23 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.sub_C2B53
+.SmoothTileData
 
- STA tileAction2        \ Store the action in tileAction2 for later
+ STA smoothingAction    \ Store the action in smoothingAction so the calls to
+                        \ SmoothTileStrip can access it
 
- LDA #2
+ LDA #2                 \ Set L0015 = 2
  STA L0015
 
 .P2B59
 
- LDA #31
+ LDA #31                \ We now work along the z-axis from 31 to 0
  STA zTile
 
 .P2B5D
 
  LDA #0
- JSR sub_C2B90
+ JSR SmoothTileStrip
  DEC zTile
  BPL P2B5D
 
@@ -9545,7 +9546,7 @@ L23E3 = C23E2+1
 .P2B6A
 
  LDA #&80
- JSR sub_C2B90
+ JSR SmoothTileStrip
  DEC xTile
  BPL P2B6A
  DEC L0015
@@ -9681,7 +9682,7 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2B90
+\       Name: SmoothTileStrip
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
@@ -9698,17 +9699,17 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.sub_C2B90
+.SmoothTileStrip
 
- ORA tileAction2
- STA L001C
+ ORA smoothingAction
+ STA processAction
  LDX #&22
 
 .P2B96
 
  TXA
  AND #&1F
- BIT L001C
+ BIT processAction
  BPL C2BA2
  STA zTile
  JMP C2BA4
@@ -9724,20 +9725,20 @@ L23E3 = C23E2+1
  STA landscapeHeight,X
  DEX
  BPL P2B96
- BIT L001C
+ BIT processAction
  BVC C2BFE
  LDX #&1F
 
 .C2BB3
 
- LDA L5A01,X
- CMP L5A02,X
+ LDA landscapeHeight+1,X
+ CMP landscapeHeight+2,X
  BEQ C2BE8
  BCS C2BCD
  CMP landscapeHeight,X
  BEQ C2BE8
  BCS C2BE8
- LDA L5A02,X
+ LDA landscapeHeight+2,X
  CMP landscapeHeight,X
  JMP C2BDA
 
@@ -9747,7 +9748,7 @@ L23E3 = C23E2+1
  BEQ C2BE8
  BCC C2BE8
  LDA landscapeHeight,X
- CMP L5A02,X
+ CMP landscapeHeight+2,X
 
 .C2BDA
 
@@ -9757,11 +9758,11 @@ L23E3 = C23E2+1
 
 .C2BE2
 
- LDA L5A02,X
+ LDA landscapeHeight+2,X
 
 .C2BE5
 
- STA L5A01,X
+ STA landscapeHeight+1,X
 
 .C2BE8
 
@@ -9789,21 +9790,21 @@ L23E3 = C23E2+1
  STA U
  LDA landscapeHeight,X
  CLC
- ADC L5A01,X
+ ADC landscapeHeight+1,X
  BCC C2C10
  CLC
  INC U
 
 .C2C10
 
- ADC L5A02,X
+ ADC landscapeHeight+2,X
  BCC C2C18
  CLC
  INC U
 
 .C2C18
 
- ADC L5A03,X
+ ADC landscapeHeight+3,X
  BCC C2C20
  CLC
  INC U
@@ -9818,7 +9819,7 @@ L23E3 = C23E2+1
  INX
  CPX #&20
  BCC C2C00
- LDA L5A2E,X
+ LDA landscapeHeight+&2E,X
  STA rotm6+4,X
 
 .C2C34
@@ -9828,7 +9829,7 @@ L23E3 = C23E2+1
 .P2C36
 
  TXA
- BIT L001C
+ BIT processAction
  BPL C2C40
  STA zTile
  JMP C2C42
@@ -16194,33 +16195,14 @@ L49C1                = &49C1
 
 .landscapeHeight
 
- EQUB &44
-
-.L5A01
-
- EQUB &58
-
-.L5A02
-
- EQUB &20
-
-.L5A03
-
- EQUB &45, &54, &45, &4D, &0D
+ EQUB &44, &58, &20, &45, &54, &45, &4D, &0D
  EQUB &14, &3C, &05, &20, &0D, &14, &46, &23
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
  EQUB &41, &3A, &4A, &53, &52, &20, &45, &4D
  EQUB &49, &52, &54, &45, &53, &54, &3A, &42
- EQUB &43, &43, &20, &6D, &65, &61
-
-.L5A2E
-
- EQUB &32, &0D
+ EQUB &43, &43, &20, &6D, &65, &61, &32, &0D
  EQUB &14, &50, &05, &20, &0D, &14, &5A, &1A
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
-
-.L5A40
-
  EQUB &41, &3A, &53, &54, &41, &20, &4D, &45
  EQUB &41, &4E, &59, &2C, &58, &20, &0D, &14
  EQUB &64, &05, &20, &0D, &14, &6E, &1C, &20

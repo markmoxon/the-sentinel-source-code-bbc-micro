@@ -54,8 +54,7 @@
      001A
 .L001B
      001B
-.tileAction
-.L001C
+.processAction
      001C
 .L001D
      001D
@@ -187,7 +186,7 @@
      0064
 .L0065
      0065
-.tileAction2
+.smoothingAction
      0066
 .H
      0067
@@ -7057,7 +7056,7 @@
      2B4E   C6 26      DEC &26
      2B50   10 A6      BPL &2AF8
      2B52   60         RTS
-.sub_C2B53
+.SmoothTileData
      2B53   85 66      STA &66
      2B55   A9 02      LDA #&02
      2B57   85 15      STA &15
@@ -7095,7 +7094,7 @@
      2B8B   B1 5E      LDA (&5E),Y
      2B8D   C9 C0      CMP #&C0
      2B8F   60         RTS
-.sub_C2B90
+.SmoothTileStrip
      2B90   05 66      ORA &66
      2B92   85 1C      STA &1C
      2B94   A2 22      LDX #&22
@@ -14636,11 +14635,8 @@
      59FF   FF
 .landscapeHeight
      5A00   44
-.L5A01
      5A01   58
-.L5A02
      5A02   20
-.L5A03
      5A03   45
      5A04   54
      5A05   45
@@ -14684,7 +14680,6 @@
      5A2B   6D
      5A2C   65
      5A2D   61
-.L5A2E
      5A2E   32
      5A2F   0D
      5A30   14
@@ -14703,7 +14698,6 @@
      5A3D   20
      5A3E   54
      5A3F   59
-.L5A40
      5A40   41
      5A41   3A
      5A42   53
