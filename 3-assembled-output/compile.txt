@@ -7098,16 +7098,16 @@
      2B90   05 66      ORA &66
      2B92   85 1C      STA &1C
      2B94   A2 22      LDX #&22
-.P2B96
+.stri1
      2B96   8A         TXA
      2B97   29 1F      AND #&1F
      2B99   24 1C      BIT &1C
      2B9B   10 05      BPL &2BA2
      2B9D   85 26      STA &26
      2B9F   4C A4 2B   JMP &2BA4
-.C2BA2
+.stri2
      2BA2   85 24      STA &24
-.C2BA4
+.stri3
      2BA4   20 78 2B   JSR &2B78
      2BA7   9D 00 5A   STA &5A00,X
      2BAA   CA         DEX
@@ -7115,7 +7115,7 @@
      2BAD   24 1C      BIT &1C
      2BAF   50 4D      BVC &2BFE
      2BB1   A2 1F      LDX #&1F
-.C2BB3
+.stri4
      2BB3   BD 01 5A   LDA &5A01,X
      2BB6   DD 02 5A   CMP &5A02,X
      2BB9   F0 2D      BEQ &2BE8
@@ -7126,21 +7126,21 @@
      2BC4   BD 02 5A   LDA &5A02,X
      2BC7   DD 00 5A   CMP &5A00,X
      2BCA   4C DA 2B   JMP &2BDA
-.C2BCD
+.stri5
      2BCD   DD 00 5A   CMP &5A00,X
      2BD0   F0 16      BEQ &2BE8
      2BD2   90 14      BCC &2BE8
      2BD4   BD 00 5A   LDA &5A00,X
      2BD7   DD 02 5A   CMP &5A02,X
-.C2BDA
+.stri6
      2BDA   90 06      BCC &2BE2
      2BDC   BD 00 5A   LDA &5A00,X
      2BDF   4C E5 2B   JMP &2BE5
-.C2BE2
+.stri7
      2BE2   BD 02 5A   LDA &5A02,X
-.C2BE5
+.stri8
      2BE5   9D 01 5A   STA &5A01,X
-.C2BE8
+.stri9
      2BE8   CA         DEX
      2BE9   10 C8      BPL &2BB3
      2BEB   2C 71 0C   BIT &0C71
@@ -7150,11 +7150,11 @@
      2BF5   CA         DEX
      2BF6   A9 7D      LDA #&7D
      2BF8   9D 00 01   STA &0100,X
-.C2BFB
+.stri10
      2BFB   4C 34 2C   JMP &2C34
-.C2BFE
+.stri11
      2BFE   A2 00      LDX #&00
-.C2C00
+.stri12
      2C00   A9 00      LDA #&00
      2C02   85 75      STA &75
      2C04   BD 00 5A   LDA &5A00,X
@@ -7163,17 +7163,17 @@
      2C0B   90 03      BCC &2C10
      2C0D   18         CLC
      2C0E   E6 75      INC &75
-.C2C10
+.stri13
      2C10   7D 02 5A   ADC &5A02,X
      2C13   90 03      BCC &2C18
      2C15   18         CLC
      2C16   E6 75      INC &75
-.C2C18
+.stri14
      2C18   7D 03 5A   ADC &5A03,X
      2C1B   90 03      BCC &2C20
      2C1D   18         CLC
      2C1E   E6 75      INC &75
-.C2C20
+.stri15
      2C20   46 75      LSR &75
      2C22   6A         ROR A
      2C23   46 75      LSR &75
@@ -7184,17 +7184,17 @@
      2C2C   90 D2      BCC &2C00
      2C2E   BD 2E 5A   LDA &5A2E,X
      2C31   9D 1D 0F   STA &0F1D,X
-.C2C34
+.stri16
      2C34   A2 1F      LDX #&1F
-.P2C36
+.stri17
      2C36   8A         TXA
      2C37   24 1C      BIT &1C
      2C39   10 05      BPL &2C40
      2C3B   85 26      STA &26
      2C3D   4C 42 2C   JMP &2C42
-.C2C40
+.stri18
      2C40   85 24      STA &24
-.C2C42
+.stri19
      2C42   20 78 2B   JSR &2B78
      2C45   BD 00 5A   LDA &5A00,X
      2C48   91 5E      STA (&5E),Y
@@ -14633,7 +14633,8 @@
      59FD   FF
      59FE   FF
      59FF   FF
-.landscapeHeight
+.landscapeRandom
+.stripData
      5A00   44
      5A01   58
      5A02   20

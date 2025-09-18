@@ -4536,7 +4536,7 @@ L1145 = C1144+1
  CMP T
  BCS C150B
  TAY
- LDX landscapeHeight+&40,Y
+ LDX landscapeRandom+&40,Y
  LDA #0
  STA L5B07,X
  STA L5B08,X
@@ -4619,7 +4619,7 @@ L1145 = C1144+1
  CMP L0006
  BNE C159D
  TXA
- STA landscapeHeight+&40,Y
+ STA landscapeRandom+&40,Y
  INY
 
 .C159D
@@ -6587,7 +6587,10 @@ L1145 = C1144+1
  LDA L0980,X
  STA zTile
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ which we ignore, but this also sets the tile page in
+                        \ tileDataPage and the index in Y, so tileDataPage+Y now
+                        \ points to the tile data entry in the tileData table
 
  LDA L0100,X
  CMP #&40
@@ -7519,7 +7522,7 @@ L1145 = C1144+1
  ROR A
  TAX
  LDA L5B00,X
- CMP landscapeHeight,X
+ CMP landscapeRandom,X
  BCC CRE13
  LDA #&F0
  CLC
@@ -7679,7 +7682,7 @@ L2367 = C2366+1
 .C237F
 
  LDA L5B00,Y
- CMP landscapeHeight,Y
+ CMP landscapeRandom,Y
  BCC CRE13
  TAX
  SBC L0035
@@ -7707,7 +7710,7 @@ L23A2 = C23A1+1
 .C23A6
 
  LDY L001A
- LDA landscapeHeight,Y
+ LDA landscapeRandom,Y
  TAX
  CMP L0036
  BCS C2339
@@ -9143,6 +9146,10 @@ L23E3 = C23E2+1
                         \ generated each time for each specific landscape, so we
                         \ get the exact same landscape shape for each landscape
                         \ number, every time)
+                        \
+                        \ ??? Does landscapeRandom get used again? It doesn't
+                        \ appear to be read again and it gets reused as
+                        \ temporary workspace by the smoothing routines
 
  LDX #80                \ Set a tile corner counter in X so we can work through
                         \ the landscape and set a height for each tile corner
@@ -9152,7 +9159,7 @@ L23E3 = C23E2+1
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
 
- STA landscapeHeight,X  \ Set the X-th entry in the landscapeHeight table to
+ STA landscapeRandom,X  \ Set the X-th entry in the landscapeRandom table to
                         \ the random height in A
 
  DEX                    \ Decrement the tile corner counter
@@ -9193,14 +9200,14 @@ L23E3 = C23E2+1
  JSR ProcessTileData    \ for the whole landscape to the next set of numbers
                         \ from the landscape's sequence of random numbers
 
- LDA #0
+ LDA #%00000000
  JSR SmoothTileData
 
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
                         \ before capping each bit of data to between 1 and 11
 
- LDA #&40
+ LDA #%01000000
  JSR SmoothTileData
 
  LDA #30
@@ -9215,7 +9222,10 @@ L23E3 = C23E2+1
 
  JSR sub_C2C4E
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ which we ignore, but this also sets the tile page in
+                        \ tileDataPage and the index in Y, so tileDataPage+Y now
+                        \ points to the tile data entry in the tileData table
 
  TXA
  ASL A
@@ -9705,10 +9715,14 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SmoothTileStrip
+\       Name: SmoothTileStrip (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a single row or column of tiles
+\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part copies the strip of tiles to a temporary workspace.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9726,152 +9740,380 @@ L23E3 = C23E2+1
 
 .SmoothTileStrip
 
- ORA smoothingAction
- STA processAction
- LDX #&22
+ ORA smoothingAction    \ We configured the smoothing action in bit 6 of
+ STA processAction      \ smoothingAction in the SmoothTileData routine before
+                        \ calling this routine, and bit 7 of A tells us whether
+                        \ to smooth a row or a column of tiles, so this combines
+                        \ both configurations from bit 6 and bit 7 into one byte
+                        \ that we store in processAction
 
-.P2B96
+                        \ In the following I will talk about a "strip" to refer
+                        \ to the row or column that we are smoothing
 
- TXA
- AND #&1F
- BIT processAction
- BPL C2BA2
- STA zTile
- JMP C2BA4
+ LDX #34                \ We start by copying the tile data for the strip we
+                        \ want to smooth into the stripData workspace, so we can
+                        \ process it before copying it back into the tileData
+                        \ table
+                        \
+                        \ We actually create a strip of tile data containing 35
+                        \ tiles, with offsets 0 to 31 being the tile data for
+                        \ the strip we are smooting and offsets 32 to 34 being
+                        \ repeats of the data for tiles 0 to 2
+                        \
+                        \ So we effectively duplicate the first three tiles onto
+                        \ the end of the strip so we can wrap the smoothing
+                        \ calculations around past the end of the strip
 
-.C2BA2
+.stri1
 
- STA xTile
+ TXA                    \ Set A = X mod 32
+ AND #31                \
+                        \ This ensures that for X = 32 to 34, we copy the tile
+                        \ data for tiles 0 to 2 (as A = 0 to 2 for X = 32 to 34)
 
-.C2BA4
+ BIT processAction      \ If bit 7 of processAction is clear then we are
+ BPL stri2              \ smoothing a row of tiles at z-coordinate zTile, so
+                        \ jump to stri2 to iterate across xTile
+
+ STA zTile              \ If we get here then we are smoothing a column of tiles
+                        \ so set zTile to the counter in X so we iterate along
+                        \ the z-coordinate (i.e. coming out of the screen)
+
+ JMP stri3              \ Jump to stri3 to skip the following
+
+.stri2
+
+ STA xTile              \ If we get here then we are smoothing a row of tiles
+                        \ so set xTile to the counter in X so we iterate along
+                        \ the x-coordinate (i.e. from right to left)
+
+.stri3
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
 
- STA landscapeHeight,X
- DEX
- BPL P2B96
- BIT processAction
- BVC C2BFE
- LDX #&1F
+ STA stripData,X        \ Store the tile data for (xTile, zTile) into the X-th
+                        \ byte in our temporary workspace
 
-.C2BB3
+ DEX                    \ Decrement the tile counter in X
 
- LDA landscapeHeight+1,X
- CMP landscapeHeight+2,X
- BEQ C2BE8
- BCS C2BCD
- CMP landscapeHeight,X
- BEQ C2BE8
- BCS C2BE8
- LDA landscapeHeight+2,X
- CMP landscapeHeight,X
- JMP C2BDA
+ BPL stri1              \ Loop back until we have copied tile data for all 32
+                        \ tiles in the strip, plus three more tiles on the end
 
-.C2BCD
+ BIT processAction      \ If bit 6 of processAction is clear then we are ???
+ BVC stri11             \ so jump to part 3 to ???
 
- CMP landscapeHeight,X
- BEQ C2BE8
- BCC C2BE8
- LDA landscapeHeight,X
- CMP landscapeHeight+2,X
+                        \ Otherwise fall through into part 2 to ???
 
-.C2BDA
+\ ******************************************************************************
+\
+\       Name: SmoothTileStrip (Part 2 of 4)
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part smoothes the strip by working along the strip and applying the
+\ following algorithm:
+\
+\   * If this tile is higher then both its neighbours, move it down
+\
+\   * If this tile is lower then both its neighbours, move it up
+\
+\ In each case, we move the tile until it is level with the closest one to its
+\ original height.
+\
+\ ******************************************************************************
 
- BCC C2BE2
- LDA landscapeHeight,X
- JMP C2BE5
+                        \ If we get here then bit 6 of processAction is set, so
+                        \ we are ???
 
-.C2BE2
+ LDX #31                \ We now work our way along the strip, smoothing the
+                        \ heights of tiles 1 to 32, so set a tile counter in X
+                        \
+                        \ Note that we smooth tiles 1 to 32 rather than tiles
+                        \ 0 to 31 (tile 0 remains unchanged by the smoothing
+                        \ process)
 
- LDA landscapeHeight+2,X
+.stri4
 
-.C2BE5
+                        \ In the following, we are processing the tile at
+                        \ position X + 1, i.e. stripData+1,X
+                        \
+                        \ We smooth a tile by looking at the heights of the
+                        \ two tiles either side of that tile, i.e. stripData,X
+                        \ and stripData+2,X
+                        \
+                        \ We are smoothing from high values of X to low values,
+                        \ so by this point the tile at stripData+2,X has already
+                        \ been smoothed
+                        \
+                        \ Let's name the tiles as follows:
+                        \
+                        \   * stripData+2,X = "previous tile" (as it has already
+                        \                     been smoothed)
+                        \
+                        \   * stripData+1,X = "this tile" (as this is the tile
+                        \                      we are smoothing)
+                        \
+                        \   * stripData,X   = "next tile" (as this is the tile
+                        \                      we will be smoothing next)
+                        \
+                        \ The smoothing algorithm is implemented as follows,
+                        \ where we are comparing the height of each tile (as at
+                        \ this stage tileData only contains tile heights):
+                        \
+                        \   * If this = previous, do nothing
+                        \
+                        \   * If this < previous and this >= next, do nothing
+                        \
+                        \   * If this < previous and this < next, set
+                        \     this = min(previous, next)
+                        \
+                        \   * If this > previous and this <= next, do nothing
+                        \
+                        \   * If this > previous and this > next, set
+                        \     this = max(previous, next)
+                        \
+                        \ Or to simplify:
+                        \
+                        \  * If this tile is higher then both its neighbours,
+                        \    move it down until it isn't
+                        \
+                        \  * If this tile is lower then both its neighbours,
+                        \    move it up until it isn't
+                        \
+                        \ So this algorithm smoothes the landscape by squeezing
+                        \ the landscape into a flatter shape, moving outlier
+                        \ tiles closer to the landscape's overall shape
 
- STA landscapeHeight+1,X
+ LDA stripData+1,X      \ If this tile is the same height as the previous tile,
+ CMP stripData+2,X      \ jump to stri9 to move on to smoothing the next tile,
+ BEQ stri9              \ as the transition from the previous tile to this tile
+                        \ is already flat
 
-.C2BE8
+ BCS stri5              \ If this tile is higher than the previous tile, jump to
+                        \ stri5
 
- DEX
- BPL C2BB3
- BIT L0C71
- BMI C2BFB
- LDA #&5F
- STA L0100,X
+                        \ If we get here then this tile is lower than the
+                        \ previous tile
+
+ CMP stripData,X        \ If this tile is at the same height or higher than the
+ BEQ stri9              \ next tile, jump to stri9 to move on to smoothing the
+ BCS stri9              \ next tile
+
+                        \ If we get here then this tile is lower than the
+                        \ previous tile and lower than the next tile
+
+ LDA stripData+2,X      \ Set the flags from comparing the previous and next
+ CMP stripData,X        \ tiles (so in stri6, tile A is the previous tile and
+                        \ tile B is the next tile)
+
+ JMP stri6              \ Jump to stri6, so that:
+                        \
+                        \   * If previous < next, set this = previous
+                        \
+                        \   * If previous >= next, set this = next
+                        \
+                        \ In other words, set:
+                        \
+                        \   this = min(previous, next)
+                        \
+                        \ before moving on to the next tile
+
+.stri5
+
+                        \ If we get here then this tile is higher than the
+                        \ previous tile
+
+ CMP stripData,X        \ If this tile is at the same height or lower than the
+ BEQ stri9              \ next tile jump to stri9 to move on to smoothing the
+ BCC stri9              \ next tile
+
+                        \ If we get here then this tile is higher than the
+                        \ previous tile and this tile is higher than the next
+                        \ tile
+
+ LDA stripData,X        \ Set the flags from comparing the next and previous
+ CMP stripData+2,X      \ tiles (so in stri6, tile A is the next tile and
+                        \ tile B is the previous tile)
+
+                        \ Fall through into stri6, so that:
+                        \
+                        \   * If next < previous, set this = previous
+                        \
+                        \   * If next >= previous, set this = next
+                        \
+                        \ In other words, set:
+                        \
+                        \   this = max(previous, next)
+                        \
+                        \ before moving on to the next tile
+.stri6
+
+                        \ We get here after comparing two tiles; let's call them
+                        \ tile A and tile B
+
+ BCC stri7              \ If tile A is lower than tile B, jump to stri7 to set
+                        \ the height of this tile to the height of the previous
+                        \ tile
+
+ LDA stripData,X        \ Set A to the height of the next tile and jump to stri8
+ JMP stri8              \ to set the height of this tile to the height of the
+                        \ next tile
+
+.stri7
+
+ LDA stripData+2,X      \ Set A to the height of the previous tile
+
+.stri8
+
+ STA stripData+1,X      \ Set the height of this tile to the value in A
+
+.stri9
+
+ DEX                    \ Decrement the strip tile counter in X
+
+ BPL stri4              \ Loop back until we have worked our way through the
+                        \ whole strip
+
+ BIT L0C71              \ If bit 7 of L0C71 is set, jump to stri10 to skip the
+ BMI stri10             \ following ???
+
+                        \ The above loop ended with X set to &FF
+
+ LDA #&5F               \ Set the return address on the bottom of the stack at
+ STA L0100,X            \ (&01FE &01FF) to &5F7D ???
  DEX
  LDA #&7D
  STA L0100,X
 
-.C2BFB
+.stri10
 
- JMP C2C34
+ JMP stri16             \ Jump to stri16 to copy the tile data for the smoothed
+                        \ strip back into the tileData table
 
-.C2BFE
+\ ******************************************************************************
+\
+\       Name: SmoothTileStrip (Part 3 of 4)
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part smoothes the strip using ???.
+\
+\ ******************************************************************************
+
+.stri11
+
+                        \ If we get here then bit 6 of processAction is clear,
+                        \ so we are ???
 
  LDX #0
 
-.C2C00
+.stri12
 
  LDA #0
  STA U
- LDA landscapeHeight,X
+ LDA stripData,X
  CLC
- ADC landscapeHeight+1,X
- BCC C2C10
- CLC
- INC U
-
-.C2C10
-
- ADC landscapeHeight+2,X
- BCC C2C18
+ ADC stripData+1,X
+ BCC stri13
  CLC
  INC U
 
-.C2C18
+.stri13
 
- ADC landscapeHeight+3,X
- BCC C2C20
+ ADC stripData+2,X
+ BCC stri14
  CLC
  INC U
 
-.C2C20
+.stri14
+
+ ADC stripData+3,X
+ BCC stri15
+ CLC
+ INC U
+
+.stri15
 
  LSR U
  ROR A
  LSR U
  ROR A
- STA landscapeHeight,X
+ STA stripData,X
+
  INX
- CPX #&20
- BCC C2C00
- LDA landscapeHeight+&2E,X
+
+ CPX #32
+ BCC stri12
+
+ LDA stripData+&2E,X
  STA rotm6+4,X
 
-.C2C34
+\ ******************************************************************************
+\
+\       Name: SmoothTileStrip (Part 4 of 4)
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This part copies the smoothed strip back into the tileData table.
+\
+\ ******************************************************************************
 
- LDX #&1F
+.stri16
 
-.P2C36
+                        \ By this point we have smoothed the whole strip, so we
+                        \ can now copy the smoothed tile data back into the
+                        \ tileData table
 
- TXA
- BIT processAction
- BPL C2C40
- STA zTile
- JMP C2C42
+ LDX #31                \ Set A counter in X to work through the tile data for
+                        \ the 32 tiles in the strip we just smoothed
 
-.C2C40
+.stri17
 
- STA xTile
+ TXA                    \ Set A to the tile index
 
-.C2C42
+ BIT processAction      \ If bit 7 of processAction is clear then we are
+ BPL stri18             \ smoothing a row of tiles at z-coordinate zTile, so
+                        \ jump to stri18 to iterate across xTile
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ STA zTile              \ If we get here then we are smoothing a column of tiles
+                        \ so set zTile to the counter in X so we iterate along
+                        \ the z-coordinate (i.e. coming out of the screen)
 
- LDA landscapeHeight,X
- STA (tileDataPage),Y
- DEX
- BPL P2C36
- RTS
+ JMP stri19             \ Jump to stri19 to skip the following
+
+.stri18
+
+ STA xTile              \ If we get here then we are smoothing a row of tiles
+                        \ so set xTile to the counter in X so we iterate along
+                        \ the x-coordinate (i.e. from right to left)
+
+.stri19
+
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ which we ignore, but this also sets the tile page in
+                        \ tileDataPage and the index in Y, so tileDataPage+Y now
+                        \ points to the tile data entry in the tileData table
+
+ LDA stripData,X        \ Copy the X-th byte of tile data from the smoothed
+ STA (tileDataPage),Y   \ strip into the corresponding entry for (xTile, zTile)
+                        \ in the tileData table
+
+ DEX                    \ Decrement the tile counter in X so we work our way
+                        \ along to the next tile in the strip we are smoothing
+
+ BPL stri17             \ Loop back to smooth the next tile until we have
+                        \ smoothed the whole strip
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -10290,7 +10532,7 @@ L23E3 = C23E2+1
  STY L0004
  STY L0006
  LDA L0030
- STA landscapeHeight,Y
+ STA landscapeRandom,Y
  LDA L0031
  STA L5B00,Y
  LDA #0
@@ -10770,7 +11012,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX landscapeHeight
+ STX landscapeRandom
  DEC L30EA
  BEQ C30F8
 
@@ -10843,7 +11085,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX landscapeHeight
+ STX landscapeRandom
  DEC U
  BNE C3137
  JMP CRE26
@@ -11127,7 +11369,10 @@ L314A = C3148+2
  LDA L3248,Y
  PHA
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
+                        \ which we ignore, but this also sets the tile page in
+                        \ tileDataPage and the index in Y, so tileDataPage+Y now
+                        \ points to the tile data entry in the tileData table
 
  PLA
  STA (tileDataPage),Y
@@ -16207,7 +16452,7 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: landscapeHeight
+\       Name: landscapeRandom
 \       Type: Variable
 \   Category: Landscape
 \    Summary: ???
@@ -16218,7 +16463,8 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.landscapeHeight
+.landscapeRandom
+.stripData
 
  EQUB &44, &58, &20, &45, &54, &45, &4D, &0D
  EQUB &14, &3C, &05, &20, &0D, &14, &46, &23
