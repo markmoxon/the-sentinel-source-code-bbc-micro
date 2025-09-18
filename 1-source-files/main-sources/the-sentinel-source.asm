@@ -160,7 +160,7 @@
 
  SKIP 1                 \ ???
 
-.L0015
+.loopCounter
 
  SKIP 1                 \ ???
 
@@ -3385,12 +3385,12 @@ L0BAB = L0B00+171
  CMP #&03
  BNE CRE04
  LDA #&03
- STA L0015
+ STA loopCounter
 
 .P10AF
 
  JSR sub_C56D5
- DEC L0015
+ DEC loopCounter
  BNE P10AF
 
 .CRE04
@@ -3808,11 +3808,11 @@ L1145 = C1144+1
 
  STA L0006
  LDA #0
- STA L0015
+ STA loopCounter
 
 .C122A
 
- DEC L0015
+ DEC loopCounter
  BNE C1236
  INC L0006
  LDA L0006
@@ -6831,7 +6831,7 @@ L1145 = C1144+1
  LDA L2093
  STA L0065
  LDA L0C69
- STA L0015
+ STA loopCounter
  JMP C2058
 
 .C203D
@@ -6856,7 +6856,7 @@ L1145 = C1144+1
 
  LDY L0008
  JSR sub_C3832
- DEC L0015
+ DEC loopCounter
  BNE C203D
 
 .C2061
@@ -7334,7 +7334,7 @@ L1145 = C1144+1
  STA Q
  LDX L0025
  LDA #&01
- STA L0015
+ STA loopCounter
 
 .C2236
 
@@ -7368,7 +7368,7 @@ L1145 = C1144+1
  STA (P),Y
  DEX
  BNE C2238
- DEC L0015
+ DEC loopCounter
  BMI C2270
  LDX L001E
  BMI C2270
@@ -9147,7 +9147,7 @@ L23E3 = C23E2+1
  LDX #80                \ Set a tile corner counter in X so we can work through
                         \ the landscape and set a height for each tile corner
 
-.P2A9E
+.land1
 
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
@@ -9157,23 +9157,23 @@ L23E3 = C23E2+1
 
  DEX                    \ Decrement the tile corner counter
 
- BPL P2A9E              \ Loop back until we have generated all 81 tile corner
+ BPL land1              \ Loop back until we have generated all 81 tile corner
                         \ heights
 
                         \ We now set the value of tileDataMultiplier for this
                         \ landscape, which is a multiplier that we apply to the
                         \ tile data to scale the data
 
- LDA landscapeZero      \ If this is not landscape 0000, jump to C2AB0
- BNE C2AB0
+ LDA landscapeZero      \ If this is not landscape 0000, jump to land2
+ BNE land2
 
  LDA #24                \ This is landscape 0000, so set A = 24 to use for the
                         \ tile data multiplier in tileDataMultiplier
 
- BNE C2AB6              \ Jump to C2AB6 to skip the following (this BNE is
+ BNE land3              \ Jump to land3 to skip the following (this BNE is
                         \ effectively a JMP as A is never zero)
 
-.C2AB0
+.land2
 
  JSR GetRandomNumber22  \ Set A to the next number from the landscape's sequence
                         \ of random numbers, converted to the range 0 to 22
@@ -9182,7 +9182,7 @@ L23E3 = C23E2+1
  ADC #14                \
                         \ So A is now a number in the range 14 to 36
 
-.C2AB6
+.land3
 
  STA tileDataMultiplier \ Set tileDataMultiplier = A
                         \
@@ -9206,12 +9206,12 @@ L23E3 = C23E2+1
  LDA #30
  STA zTile
 
-.P2AD1
+.land4
 
  LDA #30
  STA xTile
 
-.P2AD5
+.land5
 
  JSR sub_C2C4E
 
@@ -9225,9 +9225,9 @@ L23E3 = C23E2+1
  ORA (tileDataPage),Y
  STA (tileDataPage),Y
  DEC xTile
- BPL P2AD5
+ BPL land5
  DEC zTile
- BPL P2AD1
+ BPL land4
 
  LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
  JSR ProcessTileData    \ low nibbles of all the tile data for the whole
@@ -9506,17 +9506,17 @@ L23E3 = C23E2+1
 \       Name: SmoothTileData
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Smooth the entire landscape
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   Controls what we do to the tile data:
+\   A                   Controls how we smooth the tile data:
 \
-\                         * 0 = ???
+\                         * Bit 6 clear = ???
 \
-\                         * &40 = ???
+\                         * Bit 6 set = ???
 \
 \ ******************************************************************************
 
@@ -9525,33 +9525,56 @@ L23E3 = C23E2+1
  STA smoothingAction    \ Store the action in smoothingAction so the calls to
                         \ SmoothTileStrip can access it
 
- LDA #2                 \ Set L0015 = 2
- STA L0015
+ LDA #2                 \ We perform the smoothing process twice, so set a loop
+ STA loopCounter        \ counter in loopCounter to count down from 2
 
-.P2B59
+.smoo1
 
- LDA #31                \ We now work along the z-axis from 31 to 0
- STA zTile
+                        \ We start by working our way through the landscape,
+                        \ smoothing the row of tiles at the back (i.e. at tile
+                        \ z-coordinate 31), and then smoothing the next row
+                        \ forward, looping until we reach the front row
 
-.P2B5D
+ LDA #31                \ Set zTile = 31 so we start iterating from the back row
+ STA zTile              \ (so zTile iterates from 31 to 0 in the following loop)
 
- LDA #0
- JSR SmoothTileStrip
- DEC zTile
- BPL P2B5D
+.smoo2
 
- LDA #&1F
- STA xTile
+ LDA #00000000          \ Call SmoothTileStrip with bit 7 of A clear to smooth
+ JSR SmoothTileStrip    \ the row of tiles at z-coordinate zTile
 
-.P2B6A
+ DEC zTile              \ Decrement the tile z-coordinate to move forward by one
+                        \ tile row
 
- LDA #&80
- JSR SmoothTileStrip
- DEC xTile
- BPL P2B6A
- DEC L0015
- BNE P2B59
- RTS
+ BPL smoo2              \ Loop back until we have smoothed all 32 rows
+
+                        \ Next we work our way through the landscape from right
+                        \ to left, smoothing the column of tiles on the right
+                        \ (i.e. the column of tiles going into the screen at
+                        \ tile x-coordinate 31), and then smoothing the next
+                        \ column to the left, looping until we reach the column
+                        \ along the left edge of the landscape
+
+ LDA #31                \ Set xTile = 31 so we start iterating from the right
+ STA xTile              \ column (so xTile iterates from 31 to 0 in the
+                        \ following loop)
+
+.smoo3
+
+ LDA #%10000000         \ Call SmoothTileStrip with bit 7 of A set to smooth
+ JSR SmoothTileStrip    \ the column of tiles at x-coordinate xTile
+
+ DEC xTile              \ Decrement the tile x-coordinate to move left by one
+                        \ tile column
+
+ BPL smoo3              \ Loop back until we have smoothed all 32 columns
+
+ DEC loopCounter        \ Decrement the loop counter
+
+ BNE smoo1              \ Loop back until we have done the whole smoothing
+                        \ process twice
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9684,18 +9707,20 @@ L23E3 = C23E2+1
 \
 \       Name: SmoothTileStrip
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Smooth a single row or column of tiles
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   Controls what we do to the tile data:
+\   A                   Controls which tiles we smooth in the tile data:
 \
-\                         * 0 = ???
+\                         * Bit 7 clear = smooth the row of tiles at
+\                                         z-coordinate zTile
 \
-\                         * &80 = ???
+\                         * Bit 7 set = smooth the column of tiles at
+\                                       x-coordinate xTile
 \
 \ ******************************************************************************
 
@@ -11089,7 +11114,7 @@ L314A = C3148+2
  LDA L0C49
  STA xTile
  LDA #&04
- STA L0015
+ STA loopCounter
 
 .P3210
 
@@ -11107,7 +11132,7 @@ L314A = C3148+2
  PLA
  STA (tileDataPage),Y
  INC xTile
- DEC L0015
+ DEC loopCounter
  BNE P3210
  INC zTile
  DEX
@@ -12682,15 +12707,15 @@ L314A = C3148+2
  STA L0C05
  JSR sub_C373A
  LDA L0C0A
- STA L0015
+ STA loopCounter
 
 .P36D4
 
- LDA L0015
+ LDA loopCounter
  CMP #&0F
  BCC C36EB
  SBC #&0F
- STA L0015
+ STA loopCounter
  LDA #&06
  JSR sub_C373A
  LDA #0
@@ -12699,11 +12724,11 @@ L314A = C3148+2
 
 .C36EB
 
- LDA L0015
+ LDA loopCounter
  CMP #&03
  BCC C3702
  SBC #&03
- STA L0015
+ STA loopCounter
  LDA #&01
  JSR sub_C373A
  LDA #0
@@ -17072,13 +17097,13 @@ L5BA0 = L5B00+160
 .P5F6A
 
  LDA #&1E
- STA L0015
+ STA loopCounter
 
 .P5F6E
 
  JSR sub_C56D9
  JSR sub_C355A
- DEC L0015
+ DEC loopCounter
  BNE P5F6E
  DEC L001E
  BNE P5F6A

@@ -40,7 +40,7 @@
      0013
 .L0014
      0014
-.L0015
+.loopCounter
      0015
 .L0016
      0016
@@ -6949,7 +6949,7 @@
      2A9B   60         RTS
 .GenerateLandscape
      2A9C   A2 50      LDX #&50
-.P2A9E
+.land1
      2A9E   20 94 31   JSR &3194
      2AA1   9D 00 5A   STA &5A00,X
      2AA4   CA         DEX
@@ -6958,11 +6958,11 @@
      2AAA   D0 04      BNE &2AB0
      2AAC   A9 18      LDA #&18
      2AAE   D0 06      BNE &2AB6
-.C2AB0
+.land2
      2AB0   20 1B 34   JSR &341B
      2AB3   18         CLC
      2AB4   69 0E      ADC #&0E
-.C2AB6
+.land3
      2AB6   8D 08 0C   STA &0C08
      2AB9   A9 80      LDA #&80
      2ABB   20 F2 2A   JSR &2AF2
@@ -6974,10 +6974,10 @@
      2ACA   20 53 2B   JSR &2B53
      2ACD   A9 1E      LDA #&1E
      2ACF   85 26      STA &26
-.P2AD1
+.land4
      2AD1   A9 1E      LDA #&1E
      2AD3   85 24      STA &24
-.P2AD5
+.land5
      2AD5   20 4E 2C   JSR &2C4E
      2AD8   20 78 2B   JSR &2B78
      2ADB   8A         TXA
@@ -7060,17 +7060,17 @@
      2B53   85 66      STA &66
      2B55   A9 02      LDA #&02
      2B57   85 15      STA &15
-.P2B59
+.smoo1
      2B59   A9 1F      LDA #&1F
      2B5B   85 26      STA &26
-.P2B5D
+.smoo2
      2B5D   A9 00      LDA #&00
      2B5F   20 90 2B   JSR &2B90
      2B62   C6 26      DEC &26
      2B64   10 F7      BPL &2B5D
      2B66   A9 1F      LDA #&1F
      2B68   85 24      STA &24
-.P2B6A
+.smoo3
      2B6A   A9 80      LDA #&80
      2B6C   20 90 2B   JSR &2B90
      2B6F   C6 24      DEC &24
