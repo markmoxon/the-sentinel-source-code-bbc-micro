@@ -2704,9 +2704,9 @@
      0CFB   00
 .L0CFC
      0CFC   C0
-.landscapeCodeLo
+.secretCodeLo
      0CFD   00
-.landscapeCodeHi
+.secretCodeHi
      0CFE   00
      0CFF   00
 .NMIHandler
@@ -7201,7 +7201,7 @@
      2C4A   CA         DEX
      2C4B   10 E9      BPL &2C36
      2C4D   60         RTS
-.sub_C2C4E
+.SetTileSlope
      2C4E   20 78 2B   JSR &2B78
      2C51   29 0F      AND #&0F
      2C53   85 73      STA &73
@@ -8275,7 +8275,7 @@
      337F   60         RTS
 .L3380
      3380   00
-.DrawLandscapeCode
+.DrawSecretCode
      3381   A9 80      LDA #&80
      3383   8D 60 0C   STA &0C60
      3386   20 CE 31   JSR &31CE
@@ -8295,7 +8295,7 @@
      33A4   20 94 31   JSR &3194
      33A7   4E 60 0C   LSR &0C60
      33AA   60         RTS
-.PrintLandscapeCode
+.PrintSecretCode
      33AB   AD FE 0C   LDA &0CFE
      33AE   20 56 33   JSR &3356
      33B1   AD FD 0C   LDA &0CFD

@@ -1577,15 +1577,15 @@ L0BAB = L0B00+171
 
  EQUB &C0
 
-.landscapeCodeLo
+.secretCodeLo
 
  EQUB 0                 \ The low byte of the four-digit binary coded decimal
-                        \ (BCD) landscape code (0000 to 9999)
+                        \ (BCD) secret code (0000 to 9999)
 
-.landscapeCodeHi
+.secretCodeHi
 
  EQUB 0                 \ The high byte of the four-digit binary coded decimal
-                        \ (BCD) landscape code (0000 to 9999)
+                        \ (BCD) secret code (0000 to 9999)
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -3327,9 +3327,9 @@ L0BAB = L0B00+171
  BNE main3              \ to ask for the landscape's secret entry code
 
                         \ This is landscape 0000, so we don't ask for a secret
-                        \ entry code, but instead we copy the landscape's code
-                        \ from secretCode0000 into the input buffer, so it's as
-                        \ if the player has typed in the code themselves
+                        \ entry code, but instead we copy the landscape's secret
+                        \ code from secretCode0000 into the input buffer, so
+                        \ it's as if the player has typed in the code themselves
 
  LDX #3                 \ We are copying four bytes of secret code into the
                         \ input buffer, so set a byte index in X
@@ -3377,8 +3377,8 @@ L0BAB = L0B00+171
                         \ that follows directly after this JSR instruction, so
                         \ performing a normal RTS at the end of the
                         \ GenerateLandscape routine will return to the following
-                        \ code, which is what happens if the secret code doesn't
-                        \ match the landscape code
+                        \ code, which is what happens if the secret code entered
+                        \ doesn't match the landscape's secret code
                         \
                         \ However, if the secret code does match the landscape,
                         \ then the SmoothTileData routine that is called from
@@ -5676,9 +5676,9 @@ L1145 = C1144+1
  SED
  JSR sub_C342C
  CLC
- ADC landscapeCodeLo
+ ADC secretCodeLo
  TAX
- LDA landscapeCodeHi
+ LDA secretCodeHi
  ADC #&00
  TAY
  CLD
@@ -5697,13 +5697,13 @@ L1145 = C1144+1
  JSR sub_C1440
 
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
- JSR DrawTitleScreen    \ showing the landscape code
+ JSR DrawTitleScreen    \ showing the landscape's secret code
 
  LDX #5                 \ Print text token 5: Print "SECRET ENTRY CODE" at
  JSR PrintTextToken     \ (64, 768), "LANDSCAPE" at (192, 704), move cursor
                         \ right
 
- JMP PrintLandscapeCode \ Print the four-digit landscape code (0000 to 9999) and
+ JMP PrintSecretCode    \ Print the four-digit secret code (0000 to 9999) and
                         \ return from the subroutine using a tail call
 
 \ ******************************************************************************
@@ -9924,10 +9924,12 @@ L23E3 = C23E2+1
  BPL stri1              \ Loop back until we have copied tile data for all 32
                         \ tiles in the strip, plus three more tiles on the end
 
- BIT processAction      \ If bit 6 of processAction is clear then we are ???
- BVC stri11             \ so jump to part 3 to ???
+ BIT processAction      \ If bit 6 of processAction is clear then we need to
+ BVC stri11             \ smooth the strip by averaging tile heights, so jump
+                        \ to part 3 to implement this
 
-                        \ Otherwise fall through into part 2 to ???
+                        \ Otherwise fall through into part 2 to smooth the strip
+                        \ by moving outlier tiles
 
 \ ******************************************************************************
 \
@@ -11585,7 +11587,7 @@ L314A = C3148+2
 \       Name: DrawTitleScreen
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: Draw the title screen or the screen showing the landscape code
+\    Summary: Draw the title screen or the screen showing the secret code
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11595,7 +11597,7 @@ L314A = C3148+2
 \
 \                         * If bit 7 = 0 then draw the title screen
 \
-\                         * If bit 7 = 1 then draw the landscape code screen
+\                         * If bit 7 = 1 then draw the secret code screen
 \
 \ ******************************************************************************
 
@@ -11623,9 +11625,9 @@ L314A = C3148+2
  BPL titl1              \ print "THE SENTINEL" on the title screen
 
                         \ If we get here then bit 7 of the argument is set, so
-                        \ we now draw the landscape code
+                        \ we now draw the secret code
 
- JSR DrawLandscapeCode  \ Draw the landscape code in 3D ???
+ JSR DrawSecretCode     \ Draw the secret code in 3D ???
 
  LDX #3
 
@@ -11662,7 +11664,7 @@ L314A = C3148+2
  LDY #1
 
  JSR DrawObject         \ Draw the Sentinel on the title screen or the robot on
-                        \ the landscape code screen ???
+                        \ the secret code screen ???
 
  LSR L0C4B              \ Clear bit 7 of L0C4B ???
 
@@ -11674,7 +11676,7 @@ L314A = C3148+2
 \       Type: Variable
 \   Category: Title screen
 \    Summary: A variable that determines whether we are drawing the title screen
-\             or the landscape code screen in the DrawTitleScreen routine
+\             or the secret code screen in the DrawTitleScreen routine
 \
 \ ******************************************************************************
 
@@ -12161,14 +12163,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DrawLandscapeCode
+\       Name: DrawSecretCode
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.DrawLandscapeCode
+.DrawSecretCode
 
  LDA #&80
  STA printTextIn3D
@@ -12199,20 +12201,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: PrintLandscapeCode
+\       Name: PrintSecretCode
 \       Type: Subroutine
 \   Category: Text
-\    Summary: Print the four-digit landscape code (0000 to 9999)
+\    Summary: Print a four-digit secret code (0000 to 9999)
 \
 \ ******************************************************************************
 
-.PrintLandscapeCode
+.PrintSecretCode
 
- LDA landscapeCodeHi    \ Print the high byte of the binary coded decimal (BCD)
- JSR Print2DigitBCD     \ landscape code as a two-digit number
+ LDA secretCodeHi       \ Print the high byte of the binary coded decimal (BCD)
+ JSR Print2DigitBCD     \ secret code as a two-digit number
 
- LDA landscapeCodeLo    \ Print the low byte of the binary coded decimal (BCD)
- JMP Print2DigitBCD     \ landscape code as a two-digit number and return from
+ LDA secretCodeLo       \ Print the low byte of the binary coded decimal (BCD)
+ JMP Print2DigitBCD     \ secret code as a two-digit number and return from
                         \ the subroutine using a tail call
 
 \ ******************************************************************************
@@ -12237,8 +12239,8 @@ L314A = C3148+2
  STX randomLFSR         \ number by setting bits 0-15 of the five-byte linear
                         \ feedback shift register in randomLFSR(4 3 2 1 0)
 
- STY landscapeCodeHi    \ Set (landscapeCodeHi landscapeCodeLo) = (Y X)
- STX landscapeCodeLo
+ STY secretCodeHi       \ Set (secretCodeHi secretCodeLo) = (Y X)
+ STX secretCodeLo
 
  STY landscapeZero      \ If the high byte of the landscape number is non-zero,
  TYA                    \ then set landscapeZero to this non-zero value (to
@@ -12348,7 +12350,7 @@ L314A = C3148+2
 
 .sub_C33F0
 
- LDA landscapeCodeHi
+ LDA secretCodeHi
  LSR A
  LSR A
  LSR A
@@ -12942,8 +12944,8 @@ L314A = C3148+2
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDY landscapeCodeHi    \ Set (Y X) = (landscapeCodeHi landscapeCodeLo)
- LDX landscapeCodeLo
+ LDY secretCodeHi       \ Set (Y X) = (secretCodeHi secretCodeLo)
+ LDX secretCodeLo
 
  JSR SeedLandscape      \ Seed the random number generator with the landscape
                         \ number in (Y X) and set maxEnemyCount and the
@@ -17634,7 +17636,7 @@ L5BA0 = L5B00+160
  JSR PrintTextToken     \ "PRESS ANY KEY" at (192, 64), print "LANDSCAPE" two
                         \ characters right of (64, 768), move cursor right
 
- JSR PrintLandscapeCode \ Print the four-digit landscape code (0000 to 9999)
+ JSR PrintSecretCode    \ Print the four-digit secret code (0000 to 9999)
 
  JSR sub_C1440
 
