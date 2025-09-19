@@ -2512,7 +2512,7 @@
      0C6F   00
 .L0C70
      0C70   00
-.L0C71
+.showCodeError
      0C71   00
 .L0C72
      0C72   00
@@ -15615,7 +15615,7 @@
      5F78   C6 1E      DEC &1E
      5F7A   D0 EE      BNE &5F6A
      5F7C   60         RTS
-.sub_C5F7D
+.JumpToPreview
      5F7D   4C
      5F7E   30 3F      BMI &5FBF
 .sub_C5F80
@@ -15646,7 +15646,7 @@
      5FBC   05
      5FBD   07
      5FBE   07
-.sub_C5FBF
+.PreviewLandscape
      5FBF   20 10 14   JSR &1410
      5FC2   A2 03      LDX #&03
      5FC4   A0 00      LDY #&00

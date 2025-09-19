@@ -1320,9 +1320,31 @@ L0BAB = L0B00+171
 
  EQUB &00
 
-.L0C71
+.showCodeError
 
- EQUB &00
+ EQUB 0                 \ A flag that controls whether the SmoothTileData
+                        \ routine modifies the return address at the top of the
+                        \ stack, and therefore whether the:
+                        \
+                        \   * Bit 7 clear = do modify address (so when we
+                        \                   return from the GenerateLandscape
+                        \                   routine, we jump to PreviewLandscape
+                        \                   via JumpToPreview to draw the
+                        \                   landscape preview)
+                        \
+                        \   * Bit 7 set = do not modify address (so when we
+                        \                 return from the GenerateLandscape
+                        \                 routine, we return to main5 in the
+                        \                 main loop to display the "incorrect
+                        \                 secret code" error message)
+                        \
+                        \ This variable is reset to zero by the ResetVariables
+                        \ routine, so when a new game starts the default
+                        \ behaviour is set to jump to PreviewLandscape after
+                        \ GenerateLandscape
+                        \
+                        \ Bit 7 is set if the secret code entered is not valid
+                        \ ???
 
 .L0C72
 
@@ -3234,6 +3256,14 @@ L0BAB = L0B00+171
  LDX #&FF               \ Set the stack pointer to &01FF, which is the standard
  TXS                    \ location for the 6502 stack, so this instruction
                         \ effectively resets the stack
+                        \
+                        \ This means that the JSR GenerateLandscape instruction
+                        \ below will put its return address onto the top of the
+                        \ stack, so we can maniupulate the return address by
+                        \ modifying (&01FE &01FF)
+                        \
+                        \ See the notes on the JSR GenerateLandscape instruction
+                        \ below for more details
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -3326,8 +3356,27 @@ L0BAB = L0B00+171
  JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape and
                         \ play the game
                         \
-                        \ This subroutine alters the return stack somehow, need
-                        \ to document this here ???
+                        \ Calling this subroutine puts a return address of main5
+                        \ on the stack, so performing a normal RTS at the end of
+                        \ the GenerateLandscape routine will return to the
+                        \ following code, which is what happens if the secret
+                        \ code doesn't match the landscape code
+                        \
+                        \ However, if the secret code does match the landscape,
+                        \ then the SmoothTileData routine that is called from
+                        \ GenerateLandscape alters the return address on the
+                        \ stack, so instead of returning here, the RTS at the
+                        \ end of the GenerateLandscape routine actually takes us
+                        \ to the PreviewLandscape routine
+                        \
+                        \ Because we reset the stack with a YSX instruction at
+                        \ the start of the MainLoop routine above, we know that
+                        \ the JSR GenerateLandscape instruction will put its
+                        \ return address onto the top of the stack, so we can
+                        \ maniupulate the return address in the SmoothTileData
+                        \ routine by modifying (&01FE &01FF)
+                        \
+                        \ See the SmoothTileData routine for more details
 
 .main5
 
@@ -4416,7 +4465,7 @@ L1145 = C1144+1
 
  LDX #&AA
  LDY L0BAB,X
- BIT L0C71
+ BIT showCodeError
  BPL C14A6
  LDX #&A5
 
@@ -4437,7 +4486,7 @@ L1145 = C1144+1
  INY
  DEX
  BMI C14A6
- ASL L0C71
+ ASL showCodeError
  BCC C14CC
 
 .CRE06
@@ -7194,8 +7243,9 @@ L1145 = C1144+1
  BNE C2191
  LDA #&C0
  STA L0CDE
- LDA #&80
- STA L0C71
+
+ LDA #%10000000
+ STA showCodeError
 
 .C2191
 
@@ -9242,8 +9292,22 @@ L23E3 = C23E2+1
  LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
  JSR ProcessTileData    \ low nibbles of all the tile data for the whole
                         \ landscape
+                        \
+                        \ This also sets the N flag, so a BMI branch would be
+                        \ taken (see the following instruction)
 
- RTS
+ RTS                    \ Return from the subroutine
+                        \
+                        \ If the SmoothTileStrip routine has modified the return
+                        \ address on the stack, then this RTS instruction will
+                        \ actually take us to JumpToPreview+1, and the BMI
+                        \ branch instruction at JumpToPreview+1 will be taken
+                        \ because the call to ProcessTileData sets the N flag,
+                        \ so this RTS will end up taking us to PreviewLandscape
+                        \
+                        \ If the SmoothTileStrip routine has not modified the
+                        \ return address, then the RTS will take us back to the
+                        \ main5 label in MainLoop
 
 \ ******************************************************************************
 \
@@ -9270,6 +9334,12 @@ L23E3 = C23E2+1
 \                         * &80 = set the tile data to the next set of numbers
 \                                 from the landscape's sequence of random
 \                                 numbers
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   N flag              The N flag is set (so a BMI branch will be taken)
 \
 \ ******************************************************************************
 
@@ -9508,6 +9578,13 @@ L23E3 = C23E2+1
  BPL proc1              \ Loop back until we have processed all the tile rows in
                         \ the landscape, working from the back row of the
                         \ landscape all the way to the front row
+
+                        \ Note that by this point the N flag is set, which means
+                        \ a BMI branch would be taken (this is important when
+                        \ analysing the intentionally confusing main loop flow
+                        \ structure created by the stack modifications in the
+                        \ GenerateLandscape, SmoothTileStrip and JumpToPreview
+                        \ routines)
 
  RTS                    \ Return from the subroutine
 
@@ -9977,16 +10054,32 @@ L23E3 = C23E2+1
  BPL stri4              \ Loop back until we have worked our way through the
                         \ whole strip
 
- BIT L0C71              \ If bit 7 of L0C71 is set, jump to stri10 to skip the
- BMI stri10             \ following ???
+ BIT showCodeError      \ If bit 7 of showCodeError is set, jump to stri10 to
+ BMI stri10             \ skip the following, so the stack is unmodified and the
+                        \ RTS at the end of the GenerateLandscape routine will
+                        \ return to main5 to display the "incorrect secret code"
+                        \ error message
 
-                        \ The above loop ended with X set to &FF
+                        \ The above loop ended with X set to &FF, so &0100 + X
+                        \ points to the top of the stack at &01FF
 
- LDA #&5F               \ Set the return address on the bottom of the stack at
- STA L0100,X            \ (&01FE &01FF) to &5F7D ???
- DEX
- LDA #&7D
- STA L0100,X
+ LDA #HI(JumpToPreview) \ Set the return address on the bottom of the stack at
+ STA &0100,X            \ (&01FE &01FF) to JumpToPreview
+ DEX                    \
+ LDA #LO(JumpToPreview) \ Note that when an RTS instruction is executed, it pops
+ STA &0100,X            \ the address off the top of the stack and then jumps to
+                        \ that address + 1, so putting the JumpToPreview address
+                        \ on the stack means that the RTS at the end of the
+                        \ GenerateLandscape routine will actually send us to
+                        \ address JumpToPreview+1
+                        \
+                        \ This is intentional and is intended to confuse any
+                        \ crackers who might have reached this point, because
+                        \ the JumpToPreview routine not only contains a JMP
+                        \ instruction at JumpToPreview, but it also contains a
+                        \ BMI instruction at JumpToPreview+1, if our crackers
+                        \ forgot about this subtlty of the RTS instruction, they
+                        \ might end up going down a rabbit hole
 
 .stri10
 
@@ -17357,17 +17450,19 @@ L5BA0 = L5B00+160
 
 \ ******************************************************************************
 \
-\       Name: sub_C5F7D
+\       Name: JumpToPreview
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C5F7D
+.JumpToPreview
 
  EQUB &4C
- BMI sub_C5FBF
+
+ BMI PreviewLandscape   \ We jump to JumpToPreview via the RTS at the end of the
+                        \
 
 \ ******************************************************************************
 \
@@ -17419,18 +17514,18 @@ L5BA0 = L5B00+160
 
 \ ******************************************************************************
 \
-\       Name: sub_C5FBF
+\       Name: PreviewLandscape
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Draw an aerial preview of the landscape
 \
 \ ******************************************************************************
 
-.sub_C5FBF
+.PreviewLandscape
 
  JSR sub_C1410
 
- LDX #&03
+ LDX #3
  LDY #0
  LDA #&80
  JSR DrawObject
