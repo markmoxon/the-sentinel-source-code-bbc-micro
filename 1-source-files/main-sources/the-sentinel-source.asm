@@ -190,7 +190,16 @@
 
 .processAction
 
- SKIP 1                 \ ??? Used in processing and smoothing tiles
+ SKIP 1                 \ Defines the following:
+                        \
+                        \   * The action that's applied to tile data by the
+                        \     ProcessTileData routine
+                        \
+                        \   * The action that's applied to tile data by the
+                        \     SmoothTileData routine
+                        \
+                        \ See the ProcessTileData and SmoothTileData routines
+                        \ for details
 
 .L001D
 
@@ -433,7 +442,8 @@
 
 .tileDataPage
 
- SKIP 2                 \ ???
+ SKIP 2                 \ The address of the tileData page containing the
+                        \ current tile's data
 
 .secondAxis
 
@@ -461,7 +471,10 @@
 
 .smoothingAction
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The action that's applied to tile data by the
+                        \ SmoothTileData routine
+                        \
+                        \ See the SmoothTileData routine for details
 
 .H
 
@@ -1016,23 +1029,23 @@ L0BAB = L0B00+171
 
 .sinYawAngleLo
 
- EQUB &00
+ EQUB 0
 
 .cosYawAngleLo
 
- EQUB &00
+ EQUB 0
 
 .sinYawAngleHi
 
- EQUB &00
+ EQUB 0
 
 .cosYawAngleHi
 
- EQUB &00
+ EQUB 0
 
 .L0C04
 
- EQUB &00
+ EQUB 0
 
 .L0C05
 
@@ -1040,7 +1053,7 @@ L0BAB = L0B00+171
 
 .L0C06
 
- EQUB &00
+ EQUB 0
 
 .maxEnemyCount          \ The maximum number of enemies that can appear on the
                         \ current landscape, which is calculated as follows:
@@ -1057,27 +1070,27 @@ L0BAB = L0B00+171
 
 .tileDataMultiplier
 
- EQUB &00
+ EQUB 0
 
 .L0C09
 
- EQUB &00
+ EQUB 0
 
 .L0C0A
 
- EQUB &00, &00
+ EQUB 0, 0
 
 .J
 
- EQUB &00
+ EQUB 0
 
 .L0C0D
 
- EQUB &00
+ EQUB 0
 
 .L0C0E
 
- EQUB &00
+ EQUB 0
 
 .textDropShadow
 
@@ -1090,85 +1103,85 @@ L0BAB = L0B00+171
 
 .L0C10
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0
 
 .L0C19
 
- EQUB &00
+ EQUB 0
 
 .L0C1A
 
- EQUB &00
+ EQUB 0
 
 .L0C1B
 
- EQUB &00
+ EQUB 0
 
 .L0C1C
 
- EQUB &05
+ EQUB 5
 
 .L0C1D
 
- EQUB &00
+ EQUB 0
 
 .L0C1E
 
- EQUB &00
+ EQUB 0
 
 .L0C1F
 
- EQUB &00
+ EQUB 0
 
 .L0C20
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0C28
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0C30
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0C40
 
- EQUB &00
+ EQUB 0
 
 .L0C41
 
- EQUB &00
+ EQUB 0
 
 .L0C42
 
- EQUB &00
+ EQUB 0
 
 .L0C43
 
- EQUB &00
+ EQUB 0
 
 .L0C44
 
- EQUB &00, &00, &00
+ EQUB 0, 0, 0
 
 .L0C47
 
- EQUB &00
+ EQUB 0
 
 .L0C48
 
- EQUB &02
+ EQUB 2
 
 .L0C49
 
- EQUB &20
+ EQUB 32
 
 .L0C4A
 
- EQUB &07
+ EQUB 7
 
 .L0C4B
 
@@ -1176,27 +1189,27 @@ L0BAB = L0B00+171
 
 .L0C4C
 
- EQUB &01
+ EQUB 1
 
 .L0C4D
 
- EQUB &00
+ EQUB 0
 
 .L0C4E
 
- EQUB &00
+ EQUB 0
 
 .L0C4F
 
- EQUB &00
+ EQUB 0
 
 .L0C50
 
- EQUB &00
+ EQUB 0
 
 .L0C51
 
- EQUB &00
+ EQUB 0
 
 .landscapeZero
 
@@ -1209,27 +1222,27 @@ L0BAB = L0B00+171
 
 .G2
 
- EQUB &00
+ EQUB 0
 
 .H2
 
- EQUB &00, &00
+ EQUB 0, 0
 
 .L0C56
 
- EQUB &00
+ EQUB 0
 
 .L0C57
 
- EQUB &0D
+ EQUB 13
 
 .L0C58
 
- EQUB &00
+ EQUB 0
 
 .L0C59
 
- EQUB &16, &00
+ EQUB &16, 0
 
 .L0C5B
 
@@ -1249,7 +1262,7 @@ L0BAB = L0B00+171
 
 .L0C5F
 
- EQUB &00
+ EQUB 0
 
 .printTextIn3D
 
@@ -1262,113 +1275,115 @@ L0BAB = L0B00+171
 
 .L0C61
 
- EQUB &00
+ EQUB 0
 
 .L0C62
 
- EQUB &00
+ EQUB 0
 
 .L0C63
 
- EQUB &00
+ EQUB 0
 
 .L0C64
 
- EQUB &00
+ EQUB 0
 
 .L0C65
 
- EQUB &00, &00
+ EQUB 0, 0
 
 .L0C67
 
- EQUB &00
+ EQUB 0
 
 .L0C68
 
- EQUB &00
+ EQUB 0
 
 .L0C69
 
- EQUB &00
+ EQUB 0
 
 .L0C6A
 
- EQUB &00
+ EQUB 0
 
 .L0C6B
 
- EQUB &00
+ EQUB 0
 
 .L0C6C
 
- EQUB &00
+ EQUB 0
 
 .L0C6D
 
- EQUB &00
+ EQUB 0
 
 .L0C6E
 
- EQUB &00
+ EQUB 0
 
 .L0C6F
 
- EQUB &00
+ EQUB 0
 
 .L0C70
 
- EQUB &00
+ EQUB 0
 
 .showCodeError
 
  EQUB 0                 \ A flag that controls whether the SmoothTileData
                         \ routine modifies the return address at the top of the
-                        \ stack, and therefore whether the:
+                        \ stack, and therefore whether the RTS at the end of the
+                        \ GenerateLandscape routine jumps to SecretCodeError or
+                        \ PreviewLandscape:
                         \
-                        \   * Bit 7 clear = do modify address (so when we
+                        \   * Bit 7 clear = modify the address, so when we
                         \                   return from the GenerateLandscape
                         \                   routine, we jump to PreviewLandscape
                         \                   via JumpToPreview to draw the
-                        \                   landscape preview)
+                        \                   landscape preview
                         \
-                        \   * Bit 7 set = do not modify address (so when we
+                        \   * Bit 7 set = do not modify address, so when we
                         \                 return from the GenerateLandscape
-                        \                 routine, we return to main5 in the
-                        \                 main loop to display the "incorrect
-                        \                 secret code" error message)
+                        \                 routine, we return to SecretCodeError
+                        \                 to display the "WRONG SECRET CODE"
+                        \                 error message
                         \
                         \ This variable is reset to zero by the ResetVariables
                         \ routine, so when a new game starts the default
-                        \ behaviour is set to jump to PreviewLandscape after
-                        \ GenerateLandscape
+                        \ behaviour is set to jump to PreviewLandscape when we
+                        \ reach the end of GenerateLandscape
                         \
                         \ Bit 7 is set if the secret code entered is not valid
                         \ ???
 
 .L0C72
 
- EQUB &00
+ EQUB 0
 
 .L0C73
 
- EQUB &00
+ EQUB 0
 
 .L0C74
 
- EQUB &00
+ EQUB 0
 
 .L0C75
 
- EQUB &00
+ EQUB 0
 
 .L0C76
 
- EQUB &00, &00
+ EQUB 0, 0
 
 .L0C78
 
- EQUB &EF, &00
+ EQUB &EF, 0
 
 .L0C7A
 
@@ -1384,40 +1399,40 @@ L0BAB = L0B00+171
 
 .L0C80
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0C88
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0C90
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0C98
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0CA0
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0CA8
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0CB0
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
 
 .L0CB8
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00
+ EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0
 
 .L0CC1
 
- EQUB &00
+ EQUB 0
 
 .L0CC2
 
@@ -1429,27 +1444,27 @@ L0BAB = L0B00+171
 
 .L0CC4
 
- EQUB &00
+ EQUB 0
 
 .L0CC5
 
- EQUB &00
+ EQUB 0
 
 .L0CC6
 
- EQUB &00
+ EQUB 0
 
 .L0CC7
 
- EQUB &00
+ EQUB 0
 
 .L0CC8
 
- EQUB &00
+ EQUB 0
 
 .L0CC9
 
- EQUB &00
+ EQUB 0
 
 .L0CCA
 
@@ -1461,59 +1476,59 @@ L0BAB = L0B00+171
 
 .L0CCC
 
- EQUB &00
+ EQUB 0
 
 .L0CCD
 
- EQUB &00
+ EQUB 0
 
 .L0CCE
 
- EQUB &00
+ EQUB 0
 
 .L0CCF
 
- EQUB &00
+ EQUB 0
 
 .L0CD0
 
- EQUB &00
+ EQUB 0
 
 .L0CD1
 
- EQUB &00
+ EQUB 0
 
 .L0CD2
 
- EQUB &00
+ EQUB 0
 
 .L0CD3
 
- EQUB &00
+ EQUB 0
 
 .L0CD4
 
- EQUB &00, &00, &00
+ EQUB 0, 0, 0
 
 .L0CD7
 
- EQUB &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0
 
 .L0CDC
 
- EQUB &00
+ EQUB 0
 
 .L0CDD
 
- EQUB &00
+ EQUB 0
 
 .L0CDE
 
- EQUB &00
+ EQUB 0
 
 .L0CDF
 
- EQUB &00, &00, &00, &00, &00
+ EQUB 0, 0, 0, 0, 0
 
 .L0CE4
 
@@ -3245,9 +3260,10 @@ L0BAB = L0B00+171
 \
 \   MainLoop-1          Contains an RTS
 \
-\   main4               ???
+\   main1               The entry point for rejoining the main loop after the
+\                       player enters an incorrect secret code
 \
-\   main5               ???
+\   main4               ???
 \
 \ ******************************************************************************
 
@@ -3356,11 +3372,13 @@ L0BAB = L0B00+171
  JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape and
                         \ play the game
                         \
-                        \ Calling this subroutine puts a return address of main5
-                        \ on the stack, so performing a normal RTS at the end of
-                        \ the GenerateLandscape routine will return to the
-                        \ following code, which is what happens if the secret
-                        \ code doesn't match the landscape code
+                        \ Calling this subroutine puts a return address of
+                        \ SecretCodeError on the stack (as that's the routine
+                        \ that follows directly after this JSR instruction, so
+                        \ performing a normal RTS at the end of the
+                        \ GenerateLandscape routine will return to the following
+                        \ code, which is what happens if the secret code doesn't
+                        \ match the landscape code
                         \
                         \ However, if the secret code does match the landscape,
                         \ then the SmoothTileData routine that is called from
@@ -3378,7 +3396,17 @@ L0BAB = L0B00+171
                         \
                         \ See the SmoothTileData routine for more details
 
-.main5
+\ ******************************************************************************
+\
+\       Name: SecretCodeError
+\       Type: Subroutine
+\   Category: Main loop
+\    Summary: Display the "WRONG SECRET CODE" error, wait for a key press and
+\             rejoin the main loop
+\
+\ ******************************************************************************
+
+.SecretCodeError
 
  JSR ResetVariables     \ Reset all the game's main variables
 
@@ -3396,7 +3424,7 @@ L0BAB = L0B00+171
                         \ read a character from it (so this waits for a key
                         \ press)
 
- JMP main1              \ Loop back to main1 to restart the game
+ JMP main1              \ Loop back to main1 to restart the main loop
 
 \ ******************************************************************************
 \
@@ -9250,15 +9278,24 @@ L23E3 = C23E2+1
  JSR ProcessTileData    \ for the whole landscape to the next set of numbers
                         \ from the landscape's sequence of random numbers
 
- LDA #%00000000
- JSR SmoothTileData
+ LDA #%00000000         \ Call SmoothTileData with bit 6 of A clear to smooth
+ JSR SmoothTileData     \ the landscape in strips, from the rear row to the
+                        \ front row and then from the right column to the left
+                        \ column, smoothing each tile by setting each tile's
+                        \ height to the average of its height with the three
+                        \ following tiles, working along rows from left to right
+                        \ and along columns from front to back
 
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
                         \ before capping each bit of data to between 1 and 11
 
- LDA #%01000000
- JSR SmoothTileData
+ LDA #%01000000         \ Call SmoothTileData with bit 6 of A set to smooth
+ JSR SmoothTileData     \ the landscape in strips, from the rear row to the
+                        \ front row and then from the right column to the left
+                        \ column, smoothing each outlier tile by setting its
+                        \ height to that of its closest immediate neighbour (in
+                        \ terms of height)
 
  LDA #30
  STA zTile
@@ -9306,8 +9343,10 @@ L23E3 = C23E2+1
                         \ so this RTS will end up taking us to PreviewLandscape
                         \
                         \ If the SmoothTileStrip routine has not modified the
-                        \ return address, then the RTS will take us back to the
-                        \ main5 label in MainLoop
+                        \ return address, then the RTS will take us to the
+                        \ SecretCodeError routine, just after the original
+                        \ caller, i.e. the JSR GenerateLandscape instruction at
+                        \ the end of the main loop
 
 \ ******************************************************************************
 \
@@ -9601,9 +9640,18 @@ L23E3 = C23E2+1
 \
 \   A                   Controls how we smooth the tile data:
 \
-\                         * Bit 6 clear = ???
+\                         * Bit 6 clear = smooth the tile strip by working our
+\                                         way along the strip and setting each
+\                                         tile's height to the average of its
+\                                         height with the three following tiles,
+\                                         working along rows from left to right
+\                                         and along columns from front to back
 \
-\                         * Bit 6 set = ???
+\                         * Bit 6 set = smooth the tile strip by working our way
+\                                       along the strip and setting the height
+\                                       of each outlier tile to that of its
+\                                       closest immediate neighbour in terms of
+\                                       height
 \
 \ ******************************************************************************
 
@@ -9676,41 +9724,41 @@ L23E3 = C23E2+1
 \ going into the screen, where each column goes from z = 0 to 31 along the same
 \ x-coordinate, with the columns interleaved in steps of 4 like this:
 \
-\ &0400-&041F = 32-tile column going into the screen at x =  0
-\ &0420-&043F = 32-tile column going into the screen at x =  4
-\ &0440-&045F = 32-tile column going into the screen at x =  8
-\ &0460-&047F = 32-tile column going into the screen at x = 12
-\ &0480-&049F = 32-tile column going into the screen at x = 16
-\ &04A0-&04BF = 32-tile column going into the screen at x = 20
-\ &04C0-&04DF = 32-tile column going into the screen at x = 24
-\ &04E0-&04FF = 32-tile column going into the screen at x = 28
+\   &0400-&041F = 32-tile column going into the screen at x =  0
+\   &0420-&043F = 32-tile column going into the screen at x =  4
+\   &0440-&045F = 32-tile column going into the screen at x =  8
+\   &0460-&047F = 32-tile column going into the screen at x = 12
+\   &0480-&049F = 32-tile column going into the screen at x = 16
+\   &04A0-&04BF = 32-tile column going into the screen at x = 20
+\   &04C0-&04DF = 32-tile column going into the screen at x = 24
+\   &04E0-&04FF = 32-tile column going into the screen at x = 28
 \
-\ &0500-&051F = 32-tile column going into the screen at x =  1
-\ &0520-&053F = 32-tile column going into the screen at x =  5
-\ &0540-&055F = 32-tile column going into the screen at x =  9
-\ &0560-&057F = 32-tile column going into the screen at x = 13
-\ &0580-&059F = 32-tile column going into the screen at x = 17
-\ &05A0-&05BF = 32-tile column going into the screen at x = 21
-\ &05C0-&05DF = 32-tile column going into the screen at x = 25
-\ &05E0-&05FF = 32-tile column going into the screen at x = 29
+\   &0500-&051F = 32-tile column going into the screen at x =  1
+\   &0520-&053F = 32-tile column going into the screen at x =  5
+\   &0540-&055F = 32-tile column going into the screen at x =  9
+\   &0560-&057F = 32-tile column going into the screen at x = 13
+\   &0580-&059F = 32-tile column going into the screen at x = 17
+\   &05A0-&05BF = 32-tile column going into the screen at x = 21
+\   &05C0-&05DF = 32-tile column going into the screen at x = 25
+\   &05E0-&05FF = 32-tile column going into the screen at x = 29
 \
-\ &0600-&061F = 32-tile column going into the screen at x =  2
-\ &0620-&063F = 32-tile column going into the screen at x =  6
-\ &0640-&065F = 32-tile column going into the screen at x = 10
-\ &0660-&067F = 32-tile column going into the screen at x = 14
-\ &0680-&069F = 32-tile column going into the screen at x = 18
-\ &06A0-&06BF = 32-tile column going into the screen at x = 22
-\ &06C0-&06DF = 32-tile column going into the screen at x = 26
-\ &06E0-&06FF = 32-tile column going into the screen at x = 30
+\   &0600-&061F = 32-tile column going into the screen at x =  2
+\   &0620-&063F = 32-tile column going into the screen at x =  6
+\   &0640-&065F = 32-tile column going into the screen at x = 10
+\   &0660-&067F = 32-tile column going into the screen at x = 14
+\   &0680-&069F = 32-tile column going into the screen at x = 18
+\   &06A0-&06BF = 32-tile column going into the screen at x = 22
+\   &06C0-&06DF = 32-tile column going into the screen at x = 26
+\   &06E0-&06FF = 32-tile column going into the screen at x = 30
 \
-\ &0700-&071F = 32-tile column going into the screen at x =  3
-\ &0720-&073F = 32-tile column going into the screen at x =  7
-\ &0740-&075F = 32-tile column going into the screen at x = 11
-\ &0760-&077F = 32-tile column going into the screen at x = 15
-\ &0780-&079F = 32-tile column going into the screen at x = 19
-\ &07A0-&07BF = 32-tile column going into the screen at x = 23
-\ &07C0-&07DF = 32-tile column going into the screen at x = 27
-\ &07E0-&07FF = 32-tile column going into the screen at x = 31
+\   &0700-&071F = 32-tile column going into the screen at x =  3
+\   &0720-&073F = 32-tile column going into the screen at x =  7
+\   &0740-&075F = 32-tile column going into the screen at x = 11
+\   &0760-&077F = 32-tile column going into the screen at x = 15
+\   &0780-&079F = 32-tile column going into the screen at x = 19
+\   &07A0-&07BF = 32-tile column going into the screen at x = 23
+\   &07C0-&07DF = 32-tile column going into the screen at x = 27
+\   &07E0-&07FF = 32-tile column going into the screen at x = 31
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9886,7 +9934,8 @@ L23E3 = C23E2+1
 \       Name: SmoothTileStrip (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\    Summary: Smooth a strip by moving each outlier tile to the height of its
+\             closest immediate neighbour (in terms of height)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9903,7 +9952,9 @@ L23E3 = C23E2+1
 \ ******************************************************************************
 
                         \ If we get here then bit 6 of processAction is set, so
-                        \ we are ???
+                        \ we smooth the tile strip by moving each outlier tile
+                        \ to the height of its closest immediate neighbour (in
+                        \ terms of height)
 
  LDX #31                \ We now work our way along the strip, smoothing the
                         \ heights of tiles 1 to 32, so set a tile counter in X
@@ -10057,8 +10108,8 @@ L23E3 = C23E2+1
  BIT showCodeError      \ If bit 7 of showCodeError is set, jump to stri10 to
  BMI stri10             \ skip the following, so the stack is unmodified and the
                         \ RTS at the end of the GenerateLandscape routine will
-                        \ return to main5 to display the "incorrect secret code"
-                        \ error message
+                        \ return to SecretCodeError to display the "WRONG SECRET
+                        \ CODE" error message
 
                         \ The above loop ended with X set to &FF, so &0100 + X
                         \ points to the top of the stack at &01FF
@@ -10091,61 +10142,84 @@ L23E3 = C23E2+1
 \       Name: SmoothTileStrip (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\    Summary: Smooth a strip by setting the tile heights to the average of the
+\             current tile height and the three following tiles
 \
 \ ------------------------------------------------------------------------------
 \
-\ This part smoothes the strip using ???.
+\ This part smoothes the strip by working along the strip and replacing the
+\ height of each tile with the average of that tile's height plus the next three
+\ tiles, working along rows from left to right and columns from near to far.
 \
 \ ******************************************************************************
 
 .stri11
 
                         \ If we get here then bit 6 of processAction is clear,
-                        \ so we are ???
+                        \ so we smooth the tile strip by working our way along
+                        \ the strip and setting each tile's height to the
+                        \ average of its height with the three following tiles
 
- LDX #0
+ LDX #0                 \ We now work our way along the strip, smoothing the
+                        \ heights of tiles 0 to 31, so set a tile counter in X
+                        \
+                        \ We work along rows from left to right and columns from
+                        \ near to far
 
 .stri12
 
- LDA #0
- STA U
- LDA stripData,X
- CLC
+ LDA #0                 \ Set U = 0 to use as the high byte of (U A), which we
+ STA U                  \ will use to calculate the sum of the neighbouring tile
+                        \ heights
+
+ LDA stripData,X        \ Set A to the height of the tile we are smoothing (the
+                        \ one at index X)
+
+ CLC                    \ Add the height of the next tile along
  ADC stripData+1,X
- BCC stri13
- CLC
- INC U
+
+ BCC stri13             \ If the addition overflowed then increment the high
+ CLC                    \ byte in U, so we have the correct result of the sum
+ INC U                  \ in (U A)
 
 .stri13
 
- ADC stripData+2,X
- BCC stri14
- CLC
- INC U
+ ADC stripData+2,X      \ Add the height of the next tile along
+
+ BCC stri14             \ If the addition overflowed then increment the high
+ CLC                    \ byte in U, so we have the correct result of the sum
+ INC U                  \ in (U A)
 
 .stri14
 
- ADC stripData+3,X
- BCC stri15
- CLC
- INC U
+ ADC stripData+3,X      \ Add the height of the next tile along
+
+ BCC stri15             \ If the addition overflowed then increment the high
+ CLC                    \ byte in U, so we have the correct result of the sum
+ INC U                  \ in (U A)
 
 .stri15
 
- LSR U
- ROR A
- LSR U
- ROR A
- STA stripData,X
+                        \ So by this point (U A) contains the sum of the heights
+                        \ of the tile we are smoothing, and the next three tiles
+                        \ along the strip
 
- INX
+ LSR U                  \ Set (U A) = (U A) / 4
+ ROR A                  \
+ LSR U                  \ So (U A) contains the average of the four heights, and
+ ROR A                  \ we know that the high byte in U will be zero as each
+                        \ of the four elements of the sum fits into one byte
 
- CPX #32
- BCC stri12
+ STA stripData,X        \ Set the height of the tile we are smoothing to the
+                        \ average that we just calculated
 
- LDA stripData+&2E,X
- STA rotm6+4,X
+ INX                    \ Increment the tile counter to move along the strip
+
+ CPX #32                \ Loop back until we have worked our way through the
+ BCC stri12             \ strip and have smoothed tiles 0 to 31
+
+ LDA stripData+&2E,X    \ Modify the LDA #1 instruction in part 5 of
+ STA rotm6+4,X          \ GetRotationMatrix ???
 
 \ ******************************************************************************
 \
@@ -17452,17 +17526,43 @@ L5BA0 = L5B00+160
 \
 \       Name: JumpToPreview
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Main loop
+\    Summary: An intentionally confusing jump point for controlling the flow of
+\             the main loop when returning from the GenerateLandscape routine
 \
 \ ******************************************************************************
 
 .JumpToPreview
 
- EQUB &4C
-
- BMI PreviewLandscape   \ We jump to JumpToPreview via the RTS at the end of the
+ EQUB &4C               \ This byte is never executed, as the stack modification
+                        \ in the SmoothTileData routine sets the return address
+                        \ on the stack to JumpToPreview, and the RTS instruction
+                        \ will therefore jump to JumpToPreview+1 (as that's how
+                        \ the RTS instruction works)
                         \
+                        \ This byte is the opcode for a JMP instruction, so this
+                        \ makes it look like there is a JumpToPreview routine
+                        \ that contains the following:
+                        \
+                        \   &4C &30 &3F     JMP &3F30
+                        \
+                        \ as the BMI instruction below assembles into &30 &3F
+                        \
+                        \ This would jump to a valid instruction halfway through
+                        \ the ConfigureMachine routine, so this byte, although
+                        \ unused, is presumably a JMP opcode to confuse any
+                        \ crackers who have reached this point in their analysis
+
+ BMI PreviewLandscape   \ We only get here if the stack has been modified by the
+                        \ SmoothTileData routine, which makes the RTS at the end
+                        \ end of the GenerateLandscape routine jump here
+                        \
+                        \ The penultimate instruction in GenerateLandscape is a
+                        \ call to the ProcessTileData routine, which happens to
+                        \ set the N flag, so when the RTS instruction jumps here
+                        \ using the modified return address, this BMI branch is
+                        \ taken, so this instruction is effectively a JMP to the
+                        \ PreviewLandscape routine
 
 \ ******************************************************************************
 \
@@ -17538,7 +17638,7 @@ L5BA0 = L5B00+160
 
  JSR sub_C1440
 
- JMP main5
+ JMP SecretCodeError
 
 \ ******************************************************************************
 \

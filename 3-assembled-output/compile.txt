@@ -3208,7 +3208,7 @@
      106C   A9 04      LDA #&04
      106E   20 2C 5E   JSR &5E2C
      1071   20 9C 2A   JSR &2A9C
-.main5
+.SecretCodeError
      1074   20 49 11   JSR &1149
      1077   A9 00      LDA #&00
      1079   20 4C 32   JSR &324C
