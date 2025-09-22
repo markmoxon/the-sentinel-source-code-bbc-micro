@@ -9213,6 +9213,19 @@ L23E3 = C23E2+1
 \   Category: Landscape
 \    Summary: Generate tile data for the whole 32x32-tile landscape
 \
+\ ------------------------------------------------------------------------------
+\
+\ This routine populates the tileData table with tile data for each of the tiles
+\ in the 32x32 landscape.
+\
+\ Each byte of tile data contains two pieces of information:
+\
+\   * The low nibble of each byte contains the tile slope.
+\
+\   * The high nibble of each byte contains the tile height.
+\
+\ See the SetTileSlope routine for a list of the different types of tile slope.
+\
 \ ******************************************************************************
 
 .GenerateLandscape
@@ -9297,38 +9310,73 @@ L23E3 = C23E2+1
                         \ height to that of its closest immediate neighbour (in
                         \ terms of height)
 
- LDA #30
- STA zTile
+                        \ The tileData table now contains the tile heights, with
+                        \ each height in the range 1 to 11, so the height data
+                        \ is in the low nibble of each byte of tile data
+                        \
+                        \ We now calculate the tile slope and put this into the
+                        \ high nibble of the tile data, which we do by iterating
+                        \ across all the tiles bar the last one in each row and
+                        \ column, as we can only calculate a slope when there is
+                        \ a neighbouring tile
+
+ LDA #30                \ Set zTile = 30 so we start iterating from the
+ STA zTile              \ penultimate back row (so zTile iterates from 30 to 0
+                        \ in the outer loop)
 
 .land4
 
- LDA #30
- STA xTile
+ LDA #30                \ Set xTile = 30 so we start iterating from the
+ STA xTile              \ penultimate right column (so xTile iterates from 30 to
+                        \ 0 in the inner loop)
 
 .land5
 
- JSR SetTileSlope       \ ???
+ JSR SetTileSlope       \ Set X to the slope for the tile at (xTIle, zTile),
+                        \ which will be in the range 1 to 11 (so it fits into
+                        \ the low nibble
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
                         \ which we ignore, but this also sets the tile page in
                         \ tileDataPage and the index in Y, so tileDataPage+Y now
                         \ points to the tile data entry in the tileData table
 
- TXA
- ASL A
- ASL A
- ASL A
- ASL A
- ORA (tileDataPage),Y
+                        \ We now put the tile slope into the high nibble of the
+                        \ tile data, so the low nibble of the tile data contains
+                        \ the tile height and the high nibble contains the tile
+                        \ slope (note that we swap these around afterwards)
+
+ TXA                    \ Put the tile slope in X into the top nibble of A by
+ ASL A                  \ shifting X to the left by three spaces and OR'ing the
+ ASL A                  \ result into the tile data at tileData + Y
+ ASL A                  \
+ ASL A                  \ This works because both the tile height and tile slope
+ ORA (tileDataPage),Y   \ fit into the range 0 to 15, or four bits
  STA (tileDataPage),Y
- DEC xTile
- BPL land5
- DEC zTile
- BPL land4
+
+ DEC xTile              \ Decrement the tile x-coordinate in the inner loop
+
+ BPL land5              \ Loop back until we have processed all the tiles in the
+                        \ tile row at z-coordinate zTile, working from right to
+                        \ left
+
+ DEC zTile              \ Decrement outer loop counter
+
+ BPL land4              \ Loop back until we have processed all the tile rows in
+                        \ the landscape, working from the back row of the
+                        \ landscape all the way to the front row
+
+                        \ By this point the high nibble of each byte of tile
+                        \ data contains the tile slope and the low nibble
+                        \ contains the tile height, so now we swap these around
 
  LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
  JSR ProcessTileData    \ low nibbles of all the tile data for the whole
                         \ landscape
+                        \
+                        \ So now the low nibble of each byte of tile data
+                        \ contains the tile slope and the high nibble contains
+                        \ the tile height, as required
                         \
                         \ This also sets the N flag, so a BMI branch would be
                         \ taken (see the following instruction)
