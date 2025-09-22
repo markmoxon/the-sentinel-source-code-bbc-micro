@@ -9307,7 +9307,7 @@ L23E3 = C23E2+1
 
 .land5
 
- JSR sub_C2C4E
+ JSR SetTileSlope       \ ???
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
                         \ which we ignore, but this also sets the tile page in
@@ -9536,8 +9536,8 @@ L23E3 = C23E2+1
                         \     changes the range into -18 to +18
                         \
                         \ So the above takes the random numbers in tile data and
-                        \ transforms then into value of A with a maximum range of
-                        \ -18 to +18
+                        \ transforms then into value of A with a maximum range
+                        \ of -18 to +18
 
                         \ We now take this result and do various additions and
                         \ cappings to change the result into a positive number
@@ -10286,145 +10286,392 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2C4E
+\       Name: SetTileSlope
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Calculate the slope of the tile at (xTile, zTile)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Given a tile of height S, with neighbouring heights T, U and V:
+\
+\      ^           [T]  [U]
+\      |
+\      |           [S]  [V]
+\   z-axis
+\    into
+\   screen      x-axis from left to right --->
+\
+\ The slope is calculated as follows, where:
+\
+\   * 0, 1, 2 represent arbitrary heights that are in that order, with 2 being
+\     higher than 1 being higher than 0
+\
+\   * a, b represent arbitrary heights where a <> b <> 1
+\
+\   * c represents an arbitrary height where b <> c (so c can equal 1)
+\
+\ These are all the different types of slope (note there is no slope 8, and
+\ slopes 4 and 12 can have multiple shapes):
+\
+\   Slope   S vs V      S vs T      S vs U      U vs V      U vs T      Shape
+\   -----   ------      ------      ------      ------      ------      -----
+\
+\   0       S == V      S == T      S == U                              1 1
+\                                                                       1 1
+\
+\   1       S == V      S <> T                  U <  V      U == T      0 0
+\                                                                       1 1
+\
+\   2       S <> V      S <> T      S <= U      U == V      U == T      2 2
+\                                                                       1 2
+\
+\   3       S == V      S == T      S >  U                              1 0
+\                                                                       1 1
+\
+\   4a      S <> V      S <> T                  U == V      U <> T      a 1
+\                                                                       b 1
+\
+\   4b      S <> V      S == T                  U <> V      U <> T      1 a
+\                                                                       1 b
+\
+\   5       S <> V      S == T                  U == V      U <  T      1 0
+\                                                                       1 0
+\
+\   6       S == V      S <> T                  U == V      U <  T      2 1
+\                                                                       1 1
+\
+\   7       S <> V      S == T                  U >= V      U == T      1 1
+\                                                                       1 0
+\
+\   9       S == V      S <> T                  U >= V      U == T      2 2
+\                                                                       1 1
+\
+\   10      S == V      S == T      S <  U                              1 2
+\                                                                       1 1
+\
+\   11      S <> V      S <> T      S >  U      U == V      U == T      0 0
+\                                                                       1 0
+\
+\   12a     S <> V      S <> T                  U <> V                  1 c
+\                                                                       a b
+\
+\   12b     S == V      S <> T                  U <> V      U <> T      a b
+\                                                                       1 1
+\
+\   13      S <> V      S == T                  U == V      U >= T      1 2
+\                                                                       1 2
+\
+\   14      S <> V      S == T                  U <  V      U == T      1 1
+\                                                                       1 2
+\
+\   15      S == V      S <> T                  U == V      U >= T      0 1
+\                                                                       1 1
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   The slope of the tile at (xTile, zTile)
 \
 \ ******************************************************************************
 
-.sub_C2C4E
+.SetTileSlope
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
 
- AND #&0F
+ AND #%00001111         \ Extract the low nibble and store it in S
  STA S
- INC xTile
+
+ INC xTile              \ Move along the x-axis to fetch the next tile to the
+                        \ right
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
 
- AND #&0F
+ AND #%00001111         \ Extract the low nibble and store it in V
  STA V
- INC zTile
+
+ INC zTile              \ Move along the x-axis to fetch the next tile into the
+                        \ screen
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
 
- AND #&0F
+ AND #%00001111         \ Extract the low nibble and store it in U
  STA U
- DEC xTile
+
+ DEC xTile              \ Move back along the x-axis to fetch the next tile to
+                        \ the left
 
  JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
 
- AND #&0F
+ AND #%00001111         \ Extract the low nibble and store it in T
  STA T
- DEC zTile
- LDA S
+
+ DEC zTile              \ Move out of the screen, back along the z-axis to take
+                        \ us back to the tile we are processing
+
+                        \ So at this point we have the heights of four tiles, as
+                        \ follows, with the view from above:
+                        \
+                        \      ^           [T]  [U]
+                        \      |
+                        \      |           [S]  [V]
+                        \   z-axis
+                        \    into
+                        \   screen      x-axis from left to right --->
+                        \
+                        \ S is the height of the tile for which we are
+                        \ calculating the slope
+
+ LDA S                  \ If S = V then jump to slop10
  CMP V
- BEQ C2CB1
- CMP T
- BEQ C2C92
- LDA U
+ BEQ slop10
+
+ CMP T                  \ If S = T then jump to slop4
+ BEQ slop4
+
+ LDA U                  \ If U = V then jump to slop2
  CMP V
- BEQ C2C85
+ BEQ slop2
 
-.C2C82
+.slop1
 
- LDX #&0C
- RTS
+                        \ If we get here then we either fell through from above:
+                        \
+                        \   * S <> V
+                        \   * S <> T
+                        \   * U <> V
+                        \
+                        \ or we jumped here from slop10 and:
+                        \
+                        \   * S == V
+                        \   * S <> T
+                        \   * U <> T
+                        \   * U <> V
 
-.C2C85
+ LDX #12                \ Return a slope value of 12 in X
 
- CMP T
- BNE C2C9C
- LDX #&02
- CMP S
- BCS CRE19
- LDX #&0B
+ RTS                    \ Return from the subroutine
 
-.CRE19
+.slop2
 
- RTS
+                        \ If we get here then then:
+                        \
+                        \   * S <> V
+                        \   * S <> T
+                        \   * U == V
+                        \
+                        \ and A is set to U
 
-.C2C92
+ CMP T                  \ If U <> T then jump to slop5
+ BNE slop5
 
- LDA U
+                        \ If we get here then:
+                        \
+                        \   * S <> V
+                        \   * S <> T
+                        \   * U == V
+                        \   * U == T
+                        \
+                        \ and A is set to U
+
+ LDX #2                 \ Set X = 2 to return as the slope if U >= S
+
+ CMP S                  \ If U >= S then jump to slop3 to return a slope value
+ BCS slop3              \ of 2
+
+ LDX #11                \ U < S so return a slope value of 11 in X
+
+.slop3
+
+ RTS                    \ Return from the subroutine
+
+.slop4
+
+                        \ If we get here then:
+                        \
+                        \   * S <> V
+                        \   * S == T
+
+ LDA U                  \ If U = V then jump to slop8
  CMP V
- BEQ C2CA8
+ BEQ slop8
+
+                        \ If we get here then:
+                        \
+                        \   * S <> V
+                        \   * S == T
+                        \   * U <> V
+                        \
+                        \ and A is set to U
+
+ CMP T                  \ If U = T then jump to slop6
+ BEQ slop6
+
+.slop5
+
+                        \ If we get here then either we jumped from slop2:
+                        \
+                        \   * S <> V
+                        \   * S <> T
+                        \   * U == V
+                        \   * U <> T
+                        \
+                        \ or we fell through from above:
+                        \
+                        \   * S <> V
+                        \   * S == T
+                        \   * U <> V
+                        \   * U <> T
+
+ LDX #4                 \ Return a slope value of 4 in X
+
+ RTS                    \ Return from the subroutine
+
+.slop6
+
+                        \ If we get here then:
+                        \
+                        \   * S <> V
+                        \   * S == T
+                        \   * U <> V
+                        \   * U == T
+                        \
+                        \ and A is set to U
+
+ LDX #14                \ Set X = 14 to return as the slope if U < V
+
+ CMP V                  \ If U < V then jump to slop7 to return a slope value
+ BCC slop7              \ of 14
+
+ LDX #7                 \ U >= V so return a slope value of 7 in X
+
+.slop7
+
+ RTS                    \ Return from the subroutine
+
+.slop8
+
+                        \ If we get here then:
+                        \
+                        \   * S <> V
+                        \   * S == T
+                        \   * U == V
+                        \
+                        \ and A is set to U
+
+ LDX #5                 \ Set X = 5 to return as the slope if U < T
+
+ CMP T                  \ If U < T then jump to slop7 to return a slope value
+ BCC slop9              \ of 5
+
+ LDX #13                \ U >= T so return a slope value of 13 in X
+
+.slop9
+
+ RTS                    \ Return from the subroutine
+
+.slop10
+
+                        \ If we get here then:
+                        \
+                        \   * S == V
+                        \
+                        \ and A is set to S
+
+ CMP T                  \ If S = T then jump to slop14
+ BEQ slop14
+
+ LDA U                  \ If U = T then jump to slop12
  CMP T
- BEQ C2C9F
+ BEQ slop12
 
-.C2C9C
+                        \ If we get here then:
+                        \
+                        \   * S == V
+                        \   * S <> T
+                        \   * U <> T
+                        \
+                        \ and A is set to U
 
- LDX #&04
- RTS
+ CMP V                  \ If U <> V then jump to slop1
+ BNE slop1
 
-.C2C9F
+                        \ If we get here then:
+                        \
+                        \   * S == V
+                        \   * S <> T
+                        \   * U <> T
+                        \   * U == V
+                        \
+                        \ and A is set to U
 
- LDX #&0E
- CMP V
- BCC CRE20
- LDX #&07
+ LDX #6                 \ Set X = 6 to return as the slope if U < T
 
-.CRE20
+ CMP T                  \ If U < T then jump to slop11 to return a slope value
+ BCC slop11             \ of 6
 
- RTS
+ LDX #15                \ U >= T so return a slope value of 15 in X
 
-.C2CA8
+.slop11
 
- LDX #&05
- CMP T
- BCC CRE21
- LDX #&0D
+ RTS                    \ Return from the subroutine
 
-.CRE21
+.slop12
 
- RTS
+                        \ If we get here then:
+                        \
+                        \   * S == V
+                        \   * S <> T
+                        \   * U == T
+                        \
+                        \ and A is set to U
 
-.C2CB1
+ LDX #1                 \ Set X = 1 to return as the slope if U < V
 
- CMP T
- BEQ C2CD1
- LDA U
- CMP T
- BEQ C2CC8
- CMP V
- BNE C2C82
- LDX #&06
- CMP T
- BCC CRE22
- LDX #&0F
+ CMP V                  \ If U < V then jump to slop11 to return a slope value
+ BCC slop13             \ of 1
 
-.CRE22
+ LDX #9                 \ U >= V so return a slope value of 9 in X
 
- RTS
+.slop13
 
-.C2CC8
+ RTS                    \ Return from the subroutine
 
- LDX #&01
- CMP V
- BCC CRE23
- LDX #&09
+.slop14
 
-.CRE23
+                        \ If we get here then:
+                        \
+                        \   * S == V
+                        \   * S == T
+                        \
+                        \ and A is set to S
 
- RTS
+ CMP U                  \ If S = U then jump to slop16
+ BEQ slop16
 
-.C2CD1
+ LDX #10                \ Set X = 10 to return as the slope if S < U
 
- CMP U
- BEQ C2CDC
- LDX #&0A
- BCC CRE24
- LDX #&03
+ BCC slop15             \ If S < U then jump to slop15 to return a slope value
+                        \ of 10
 
-.CRE24
+ LDX #3                 \ S > U so return a slope value of 93 in X
 
- RTS
+.slop15
 
-.C2CDC
+ RTS                    \ Return from the subroutine
 
- LDX #0
- RTS
+.slop16
+
+                        \ If we get here then:
+                        \
+                        \   * S == V
+                        \   * S == T
+                        \   * S == U
+
+ LDX #0                 \ Return a slope value of 0 in X
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \

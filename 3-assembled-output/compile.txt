@@ -7226,42 +7226,42 @@
      2C7C   A5 75      LDA &75
      2C7E   C5 76      CMP &76
      2C80   F0 03      BEQ &2C85
-.C2C82
+.slop1
      2C82   A2 0C      LDX #&0C
      2C84   60         RTS
-.C2C85
+.slop2
      2C85   C5 74      CMP &74
      2C87   D0 13      BNE &2C9C
      2C89   A2 02      LDX #&02
      2C8B   C5 73      CMP &73
      2C8D   B0 02      BCS &2C91
      2C8F   A2 0B      LDX #&0B
-.CRE19
+.slop3
      2C91   60         RTS
-.C2C92
+.slop4
      2C92   A5 75      LDA &75
      2C94   C5 76      CMP &76
      2C96   F0 10      BEQ &2CA8
      2C98   C5 74      CMP &74
      2C9A   F0 03      BEQ &2C9F
-.C2C9C
+.slop5
      2C9C   A2 04      LDX #&04
      2C9E   60         RTS
-.C2C9F
+.slop6
      2C9F   A2 0E      LDX #&0E
      2CA1   C5 76      CMP &76
      2CA3   90 02      BCC &2CA7
      2CA5   A2 07      LDX #&07
-.CRE20
+.slop7
      2CA7   60         RTS
-.C2CA8
+.slop8
      2CA8   A2 05      LDX #&05
      2CAA   C5 74      CMP &74
      2CAC   90 02      BCC &2CB0
      2CAE   A2 0D      LDX #&0D
-.CRE21
+.slop9
      2CB0   60         RTS
-.C2CB1
+.slop10
      2CB1   C5 74      CMP &74
      2CB3   F0 1C      BEQ &2CD1
      2CB5   A5 75      LDA &75
@@ -7273,24 +7273,24 @@
      2CC1   C5 74      CMP &74
      2CC3   90 02      BCC &2CC7
      2CC5   A2 0F      LDX #&0F
-.CRE22
+.slop11
      2CC7   60         RTS
-.C2CC8
+.slop12
      2CC8   A2 01      LDX #&01
      2CCA   C5 76      CMP &76
      2CCC   90 02      BCC &2CD0
      2CCE   A2 09      LDX #&09
-.CRE23
+.slop13
      2CD0   60         RTS
-.C2CD1
+.slop14
      2CD1   C5 75      CMP &75
      2CD3   F0 07      BEQ &2CDC
      2CD5   A2 0A      LDX #&0A
      2CD7   90 02      BCC &2CDB
      2CD9   A2 03      LDX #&03
-.CRE24
+.slop15
      2CDB   60         RTS
-.C2CDC
+.slop16
      2CDC   A2 00      LDX #&00
      2CDE   60         RTS
 .L2CDF
