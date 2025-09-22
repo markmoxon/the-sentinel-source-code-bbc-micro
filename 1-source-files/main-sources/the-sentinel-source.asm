@@ -231,21 +231,45 @@
 
 .xTile
 
- SKIP 1                 \ Tile x-coordinate
+ SKIP 1                 \ Tile corner x-coordinate
                         \
-                        \ The tile number along the x-axis, where the x-axis
-                        \ goes from left to right across the screen
+                        \ The tile corner coordinate along the x-axis, where the
+                        \ x-axis goes from left to right across the screen, with
+                        \ one x-coordinate per tile (so this is also the corner
+                        \ number along the axis)
+                        \
+                        \ Each tile in the landscape is defined by a tile
+                        \ corner (the "anchor") and the tile slope, with the
+                        \ anchor being in the front-left corner of the tile,
+                        \ nearest the origin
+                        \
+                        \ As a result we tend to use the terms "tile" and "tile
+                        \ corner" interchangeably, depending on the context
 
-.L0025
+.yTile
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Tile corner y-coordinate
+                        \
+                        \ The tile corner coordinate along the y-axis, where the
+                        \ y-axis goes up the screen (so this is also the corner
+                        \ number along the axis)
 
 .zTile
 
- SKIP 1                 \ Tile z-coordinate
+ SKIP 1                 \ Tile corner z-coordinate
                         \
-                        \ The tile number along the z-axis, where the z-axis
-                        \ goes into the screen
+                        \ The tile corner coordinate along the z-axis, where the
+                        \ z-axis goes into the screen, with one z-coordinate per
+                        \ tile (so this is also the corner number along the
+                        \ axis)
+                        \
+                        \ Each tile in the landscape is defined by a tile
+                        \ corner (the "anchor") and the tile slope, with the
+                        \ anchor being in the front-left corner of the tile,
+                        \ nearest the origin
+                        \
+                        \ As a result we tend to use the terms "tile" and "tile
+                        \ corner" interchangeably, depending on the context
 
 .L0027
 
@@ -681,7 +705,37 @@
 \       Name: tileData
 \       Type: Variable
 \   Category: Landscape
-\    Summary: Height data for landscape tiles
+\    Summary: Height and slope data for landscape tiles
+\
+\ ------------------------------------------------------------------------------
+\
+\ The landscape in The Sentinel consists of a tiled area of 31x31 tiles, like an
+\ undulating chess board that's sitting on a table in front of us, going into
+\ the screen.
+\
+\ The shape of the landscape is defined by the heights of the corners of each
+\ tile, so that's a 32x32 grid of heights, one for each tile corner.
+\
+\ The x-axis is along the front edge, from left to right, while the z-axis goes
+\ into the screen from front to back, away from us.
+\
+\ This table contains one byte of data for each tile corner in the landscape.
+\ The data contained in each byte is as follows:
+\
+\   * The low nibble of each byte contains the tile slope, which describes the
+\     shape of the tile.
+\
+\   * The high nibble of each byte contains the height of the tile corner in the
+\     front-left corner of the tile (i.e. the corner closest to the landscape
+\     origin). We call this tile corner the "anchor".
+\
+\ As each tile is defined by a tile corner and a slope, we tend to use the terms
+\ "tile" and "tile corner" interchangeably, depending on the context. That said,
+\ for tile corners along the furthest back and rightmost edges of the landscape,
+\ the slope data is ignored, as there are no slopes beyond the edges.
+\
+\ See the SetTileSlope routine for information on the different types of tile
+\ slope.
 \
 \ ******************************************************************************
 
@@ -1118,9 +1172,10 @@ L0BAB = L0B00+171
 
  EQUB 0
 
-.L0C1C
+.titleObjectToDraw
 
- EQUB 5
+ EQUB 5                 \ The object we are drawing in the DrawTitleObject
+                        \ routine
 
 .L0C1D
 
@@ -1267,7 +1322,7 @@ L0BAB = L0B00+171
 .printTextIn3D
 
  EQUB 0                 \ Controls whether we are printing text normally or in
-                        \ 3D (as on the tile screen):
+                        \ 3D (as in the game's title on the title screen):
                         \
                         \   * Bit 7 clear = normal text
                         \
@@ -3643,7 +3698,7 @@ L1145 = C1144+1
  CPX #&90               \ If X >= &90 then skip the following instruction
  BCS rese2
 
- STA L0000,X            \ Zero the X-th byte of L0000
+ STA L0000,X            \ Zero the X-th byte of zero page
 
 .rese2
 
@@ -3903,8 +3958,9 @@ L1145 = C1144+1
  JSR sub_C125A
  STA zTile
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ setting the C flag if bits 6 and 7 of the data are set
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
+                        \ the data are set
 
  BCS C122A
  AND #&0F
@@ -4228,18 +4284,51 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: DrawObject
+\       Name: DrawTitleObject
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The object to draw on the title screen (or subsequent
+\                       screens):
+\
+\                         * 0 = draw a robot on the right of the screen (for the
+\                               secret code screen)
+\
+\                         * 5 = draw the Sentinel on the right of the screen
+\                               (for the title screen)
+\
+\                         * &80 = draw the landscape preview
+\
+\   X                   ???
+\
+\                         * 0 = ???
+\
+\                         * 1 = ???
+\
+\                         * 3 = ???
+\                         
+\   Y                   ???
+\
+\                         * 0 = ???
+\
+\                         * 1 = ???
+\
 \ ******************************************************************************
 
-.DrawObject
+.DrawTitleObject
 
- STA L0C1C
- STX L0C4C
+ STA titleObjectToDraw  \ Set titleObjectToDraw to the object that we are
+                        \ drawing so we can refer to it later
+
+ STX L0C4C              \ Store the X argument in L0C4C (0, 1, 3)
+
  TXA
+
  LDX #&02
  EOR #&03
  STA vduShadowFront+1
@@ -4249,7 +4338,9 @@ L1145 = C1144+1
 .C13AC
 
  STX vduShadowRear+1
- STY L140F
+
+ STY L140F              \ Store the Y argument in L140F (0, 1)
+
  LDA L1403,Y
  STA L0950
  LDA L1405,Y
@@ -4263,7 +4354,7 @@ L1145 = C1144+1
  LDA L1409,Y
  PHA
  JSR sub_C1090
- LDA L0C1C
+ LDA titleObjectToDraw
  BMI C13DF
  JSR sub_C5FE5
 
@@ -4783,7 +4874,8 @@ L1145 = C1144+1
 
 .C15EE
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
  AND #&0F
  BNE C1611
@@ -4987,7 +5079,7 @@ L1145 = C1144+1
 
 .C16B9
 
- STA L0C1C
+ STA titleObjectToDraw
  LDA L0100,X
  BPL C16D9
  JSR sub_C1A54
@@ -5039,7 +5131,7 @@ L1145 = C1144+1
  BEQ C1754
  JSR sub_C2147
  LDA #&04
- STA L0C1C
+ STA titleObjectToDraw
  JMP C16C9
 
 .C171B
@@ -5736,9 +5828,9 @@ L1145 = C1144+1
  LDA L0980,X
  STA zTile
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ setting the C flag if bits 6 and 7 of the data are set
-                        \ (and clearing it otherwise)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
+                        \ the data are set (and clearing it otherwise)
 
  BCC C1AE2
  AND #&3F
@@ -5841,7 +5933,7 @@ L1145 = C1144+1
  BNE C1B1C
  JSR sub_C2147
  LDA #0
- STA L0C1C
+ STA titleObjectToDraw
 
 .P1B1A
 
@@ -5871,9 +5963,9 @@ L1145 = C1144+1
  AND #&20
  BEQ C1BA9
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ setting the C flag if bits 6 and 7 of the data are set
-                        \ (and clearing it otherwise)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
+                        \ the data are set (and clearing it otherwise)
 
  BCC C1B98
  AND #&3F
@@ -6325,7 +6417,8 @@ L1145 = C1144+1
  STA T
  DEC zTile
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
  AND #&0F
  CMP #&04
@@ -6467,8 +6560,9 @@ L1145 = C1144+1
 
 .sub_C1DE6
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ setting the C flag if bits 6 and 7 of the data are set
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
+                        \ the data are set
 
  BCS C1E28
  PHA
@@ -6664,10 +6758,11 @@ L1145 = C1144+1
  LDA L0980,X
  STA zTile
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ which we ignore, but this also sets the tile page in
-                        \ tileDataPage and the index in Y, so tileDataPage+Y now
-                        \ points to the tile data entry in the tileData table
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), which we ignore, but this also sets
+                        \ the tile page in tileDataPage and the index in Y, so
+                        \ tileDataPage+Y now points to the tile data entry in
+                        \ the tileData table
 
  LDA L0100,X
  CMP #&40
@@ -6706,9 +6801,9 @@ L1145 = C1144+1
  LDA zTile
  STA L0980,X
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ setting the C flag if bits 6 and 7 of the data are set
-                        \ (and clearing it otherwise)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
+                        \ the data are set (and clearing it otherwise)
 
  BCC C1F4B
  STY L1F77
@@ -7399,7 +7494,7 @@ L1145 = C1144+1
 .C2213
 
  STA L001E
- STX L0025
+ STX yTile
  LDX L0C4C
  LDA L2277,X
  STA T
@@ -7413,7 +7508,7 @@ L1145 = C1144+1
  STA P
  LDA L3DB5,X
  STA Q
- LDX L0025
+ LDX yTile
  LDA #&01
  STA loopCounter
 
@@ -8522,7 +8617,7 @@ L23E3 = C23E2+1
  STA L5520+1,Y
  STA L5500+1,Y
  LDA L0003
- STA L0025
+ STA yTile
  JSR sub_C2A1B
 
 .C27A9
@@ -8861,7 +8956,7 @@ L23E3 = C23E2+1
 .sub_C292D
 
  LDA L0037
- STA L0025
+ STA yTile
 
 .P2931
 
@@ -8870,8 +8965,8 @@ L23E3 = C23E2+1
  CMP L0003
  BCS C2943
  JSR sub_C29E2
- INC L0025
- LDA L0025
+ INC yTile
+ LDA yTile
  JMP P2931
 
 .C2943
@@ -8883,13 +8978,13 @@ L23E3 = C23E2+1
  SEC
  SBC #&01
  BMI CRE16
- STA L0025
+ STA yTile
  CMP L0037
  BCC CRE16
  CMP L0003
  BCC CRE16
  JSR sub_C29E2
- LDA L0025
+ LDA yTile
  JMP P2945
 
 .CRE16
@@ -9047,7 +9142,7 @@ L23E3 = C23E2+1
  AND #&0F
  STA L0A7F
  BEQ CRE17
- LDA L0025
+ LDA yTile
  STA L093F
  LDA zTile
  STA L09BF
@@ -9066,7 +9161,7 @@ L23E3 = C23E2+1
 .sub_C29E2
 
  JSR sub_C355A
- LDA L0025
+ LDA yTile
  ORA L0005
  CLC
  ADC L001B
@@ -9113,7 +9208,7 @@ L23E3 = C23E2+1
 .sub_C2A1B
 
  LDX #0
- LDA L0025
+ LDA yTile
  EOR zTile
  AND #&01
  BEQ C2A2D
@@ -9211,39 +9306,41 @@ L23E3 = C23E2+1
 \       Name: GenerateLandscape
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Generate tile data for the whole 32x32-tile landscape
+\    Summary: Generate tile data for the landscape
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine populates the tileData table with tile data for each of the tiles
-\ in the 32x32 landscape.
+\ This routine populates the tileData table with tile data for each of the tile
+\ corners in the landscape. The landscape consists of 31x31 square tiles, made
+\ up of a 32x32 grid of tile corners.
 \
-\ Each byte of tile data contains two pieces of information:
+\ One byte of tile data is generated for each tile corner in the landscape. Each
+\ byte of tile data contains two pieces of information:
 \
-\   * The low nibble of each byte contains the tile slope.
+\   * The low nibble of each byte contains the tile slope, which describes the
+\     shape of the tile.
 \
-\   * The high nibble of each byte contains the tile height.
+\   * The high nibble of each byte contains the height of the tile corner in the
+\     front-left corner of the tile (i.e. the corner closest to the landscape
+\     origin). We call this tile corner the "anchor".
 \
-\ See the SetTileSlope routine for a list of the different types of tile slope.
+\ As each tile is defined by a tile corner and a slope, we tend to use the terms
+\ "tile" and "tile corner" interchangeably, depending on the context. That said,
+\ for tile corners along the furthest back and rightmost edges of the landscape,
+\ the slope data is ignored, as there are no slopes beyond the edges.
+\
+\ See the SetTileSlope routine for information on the different types of tile
+\ slope.
 \
 \ ******************************************************************************
 
 .GenerateLandscape
 
-                        \ We start by generating the height of the landscape for
-                        \ each of the tile corners, using the random number
-                        \ generator that we seeded with the landscape number in
-                        \ MainLoop (so the same sequence of random numbers gets
-                        \ generated each time for each specific landscape, so we
-                        \ get the exact same landscape shape for each landscape
-                        \ number, every time)
-                        \
-                        \ ??? Does landscapeRandom get used again? It doesn't
-                        \ appear to be read again and it gets reused as
-                        \ temporary workspace by the smoothing routines
+                        \ We start by filling the landscapeRandom table with 81
+                        \ random values, though these are discarded ???
 
- LDX #80                \ Set a tile corner counter in X so we can work through
-                        \ the landscape and set a height for each tile corner
+ LDX #80                \ Set a counter in X so we can generate 81 random
+                        \ numbers
 
 .land1
 
@@ -9251,16 +9348,17 @@ L23E3 = C23E2+1
                         \ of random numbers
 
  STA landscapeRandom,X  \ Set the X-th entry in the landscapeRandom table to
-                        \ the random height in A
+                        \ the random number in A
 
- DEX                    \ Decrement the tile corner counter
+ DEX                    \ Decrement the counter
 
- BPL land1              \ Loop back until we have generated all 81 tile corner
-                        \ heights
+ BPL land1              \ Loop back until we have generated all 81 random
+                        \ numbers
 
                         \ We now set the value of tileDataMultiplier for this
                         \ landscape, which is a multiplier that we apply to the
-                        \ tile data to scale the data
+                        \ tile corner heights to alter the steepness of the
+                        \ landscape
 
  LDA landscapeZero      \ If this is not landscape 0000, jump to land2
  BNE land2
@@ -9287,66 +9385,84 @@ L23E3 = C23E2+1
                         \ So this is 24 for landscape 0000 and in the range 14
                         \ to 36 for all other landscapes
 
+                        \ We now populate the tileData table with tile corner
+                        \ heights, which we store in the low nibble of the tile
+                        \ data (for now)
+
  LDA #&80               \ Call ProcessTileData with A = &80 to set the tile data
  JSR ProcessTileData    \ for the whole landscape to the next set of numbers
                         \ from the landscape's sequence of random numbers
 
- LDA #%00000000         \ Call SmoothTileData with bit 6 of A clear to smooth
- JSR SmoothTileData     \ the landscape in strips, from the rear row to the
-                        \ front row and then from the right column to the left
-                        \ column, smoothing each tile by setting each tile's
-                        \ height to the average of its height with the three
-                        \ following tiles, working along rows from left to right
-                        \ and along columns from front to back
+ LDA #%00000000         \ Call SmoothTileData with bit 6 of A clear, to smooth
+ JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
+                        \ row to the front row and then from the right column to
+                        \ the left column, smoothing each tile by setting each
+                        \ tile corner's height to the average of its height with
+                        \ the three following tile corners, working along rows
+                        \ from left to right and along columns from front to
+                        \ back
 
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
                         \ before capping each bit of data to between 1 and 11
 
- LDA #%01000000         \ Call SmoothTileData with bit 6 of A set to smooth
- JSR SmoothTileData     \ the landscape in strips, from the rear row to the
-                        \ front row and then from the right column to the left
-                        \ column, smoothing each outlier tile by setting its
-                        \ height to that of its closest immediate neighbour (in
-                        \ terms of height)
+ LDA #%01000000         \ Call SmoothTileData with bit 6 of A set, to smooth
+ JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
+                        \ row to the front row and then from the right column to
+                        \ the left column, smoothing each outlier tile corner by
+                        \ setting its height to that of its closest immediate
+                        \ neighbour (in terms of height)
 
-                        \ The tileData table now contains the tile heights, with
-                        \ each height in the range 1 to 11, so the height data
-                        \ is in the low nibble of each byte of tile data
+                        \ The tileData table now contains the height of each
+                        \ tile corner, with each height in the range 1 to 11, so
+                        \ the height data is in the low nibble of each byte of
+                        \ tile data
                         \
-                        \ We now calculate the tile slope and put this into the
-                        \ high nibble of the tile data, which we do by iterating
-                        \ across all the tiles bar the last one in each row and
-                        \ column, as we can only calculate a slope when there is
-                        \ a neighbouring tile
+                        \ We now calculate the tile slope for the tiles anchored
+                        \ at each tile corner in turn, where the anchor is in
+                        \ the front-left corner of the tile (i.e. nearest the
+                        \ origin)
+                        \
+                        \ Note that the last tile corners at the right end of
+                        \ each row or at the back of each column do not anchor
+                        \ any tiles, as they are at the edge (so their slopes
+                        \ are not calculated)
+                        \
+                        \ We put the tile slope into the high nibble of the tile
+                        \ data (for now)
 
- LDA #30                \ Set zTile = 30 so we start iterating from the
- STA zTile              \ penultimate back row (so zTile iterates from 30 to 0
-                        \ in the outer loop)
+ LDA #30                \ Set zTile = 30 so we start iterating from the rear, 
+ STA zTile              \ skipping the row right at the back as the tile corners
+                        \ in that row do not anchor any tiles (so zTile iterates
+                        \ from 30 to 0 in the outer loop)
 
 .land4
 
- LDA #30                \ Set xTile = 30 so we start iterating from the
- STA xTile              \ penultimate right column (so xTile iterates from 30 to
-                        \ 0 in the inner loop)
+ LDA #30                \ Set xTile = 30 so we start iterating from the right,
+ STA xTile              \ skipping the rightmost column as the tile corners
+                        \ in that column do not anchor any tiles (so xTile
+                        \ iterates from 30 to 0 in the inner loop)
 
 .land5
 
- JSR SetTileSlope       \ Set X to the slope for the tile at (xTIle, zTile),
-                        \ which will be in the range 1 to 11 (so it fits into
-                        \ the low nibble
+ JSR SetTileSlope       \ Set X to the slope of the tile anchored at
+                        \ (xTile, zTile)
+                        \
+                        \ This will be in the range 1 to 11 (so it fits into
+                        \ the low nibble)
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ which we ignore, but this also sets the tile page in
-                        \ tileDataPage and the index in Y, so tileDataPage+Y now
-                        \ points to the tile data entry in the tileData table
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), which we ignore, but this also sets
+                        \ the tile page in tileDataPage and the index in Y, so
+                        \ tileDataPage+Y now points to the tile data entry in
+                        \ the tileData table
 
                         \ We now put the tile slope into the high nibble of the
                         \ tile data, so the low nibble of the tile data contains
                         \ the tile height and the high nibble contains the tile
-                        \ slope (note that we swap these around afterwards)
+                        \ slope (for now)
 
- TXA                    \ Put the tile slope in X into the top nibble of A by
+ TXA                    \ Put the tile slope in X into the high nibble of A by
  ASL A                  \ shifting X to the left by three spaces and OR'ing the
  ASL A                  \ result into the tile data at tileData + Y
  ASL A                  \
@@ -9356,15 +9472,15 @@ L23E3 = C23E2+1
 
  DEC xTile              \ Decrement the tile x-coordinate in the inner loop
 
- BPL land5              \ Loop back until we have processed all the tiles in the
-                        \ tile row at z-coordinate zTile, working from right to
-                        \ left
+ BPL land5              \ Loop back until we have processed all the tile corners
+                        \ in the tile row at z-coordinate zTile, working from
+                        \ right to left
 
  DEC zTile              \ Decrement outer loop counter
 
  BPL land4              \ Loop back until we have processed all the tile rows in
-                        \ the landscape, working from the back row of the
-                        \ landscape all the way to the front row
+                        \ the landscape, working from the back of the landscape
+                        \ all the way to the front row
 
                         \ By this point the high nibble of each byte of tile
                         \ data contains the tile slope and the low nibble
@@ -9379,22 +9495,22 @@ L23E3 = C23E2+1
                         \ the tile height, as required
                         \
                         \ This also sets the N flag, so a BMI branch would be
-                        \ taken (see the following instruction)
+                        \ taken at this point (see the following instruction)
 
  RTS                    \ Return from the subroutine
                         \
-                        \ If the SmoothTileStrip routine has modified the return
-                        \ address on the stack, then this RTS instruction will
-                        \ actually take us to JumpToPreview+1, and the BMI
+                        \ If the SmoothTileCorners routine has modified the
+                        \ return address on the stack, then this RTS instruction
+                        \ will actually take us to JumpToPreview+1, and the BMI
                         \ branch instruction at JumpToPreview+1 will be taken
                         \ because the call to ProcessTileData sets the N flag,
                         \ so this RTS will end up taking us to PreviewLandscape
                         \
-                        \ If the SmoothTileStrip routine has not modified the
+                        \ If the SmoothTileCorners routine has not modified the
                         \ return address, then the RTS will take us to the
                         \ SecretCodeError routine, just after the original
-                        \ caller, i.e. the JSR GenerateLandscape instruction at
-                        \ the end of the main loop
+                        \ caller, i.e. just after the JSR GenerateLandscape
+                        \ instruction at the end of the main loop
 
 \ ******************************************************************************
 \
@@ -9436,15 +9552,18 @@ L23E3 = C23E2+1
 
                         \ We now loop through all the tiles in the landscape
                         \
-                        \ The landscape consists of 32x32 tiles, like a chess
-                        \ board that's sitting on a table in front of us, going
-                        \ into the screen
+                        \ The landscape consists of 31x31 square tiles, like a
+                        \ chess board that's sitting on a table in front of us,
+                        \ going into the screen
+                        \
+                        \ The landscape is defined by the heights of the corners
+                        \ of each of the tile, so that's a 32x32 grid of heights
                         \
                         \ The x-axis is along the front edge, from left to
                         \ right, while the z-axis goes into the screen, away
                         \ from us
                         \
-                        \ We iterate through the landscape tiles with a nested
+                        \ We iterate through the tile corners with a nested
                         \ loop, with zTile going from 31 to 0 (so that's from
                         \ back to front)
                         \
@@ -9452,9 +9571,9 @@ L23E3 = C23E2+1
                         \ that's from right to left
                         \
                         \ So we work through the landscape, starting with the
-                        \ row of tiles at the back (which we work through from
-                        \ right to left), and then doing the next row forward,
-                        \ looping until we reach the front row
+                        \ row of tile corners at the back (which we work through
+                        \ from right to left), and then doing the next row
+                        \ forward, looping until we reach the front row
 
  LDA #31                \ Set zTile = 31 so we start iterating from the back row
  STA zTile              \ (so zTile iterates from 31 to 0 in the outer loop)
@@ -9467,21 +9586,24 @@ L23E3 = C23E2+1
 
 .proc2
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ which we ignore, but this also sets the tile page in
-                        \ tileDataPage and the index in Y, so tileDataPage+Y now
-                        \ points to the tile data entry in the tileData table
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), which we ignore, but this also sets
+                        \ the tile page in tileDataPage and the index in Y, so
+                        \ tileDataPage+Y now points to the tile data entry in
+                        \ the tileData table
 
  LDA processAction      \ Set A to the argument that was passed to the routine
-                        \ and which we stored in processAction, which specifies
-                        \ how we process the tile data
+                        \ and which we stored in processAction,
+                        \
+                        \ This specifies how we process the tile data
 
  BEQ proc8              \ If processAction = 0 then jump to proc8 to zero the
-                        \ tile data for the tile at (xTile, zTile)
+                        \ tile data for the tile anchored at (xTile, zTile)
 
  BMI proc7              \ If processAction = &80 then jump to proc7 to set the
-                        \ tile data for the tile at (xTile, zTile) to the next
-                        \ number from the landscape's sequence of random numbers
+                        \ tile data for the tile anchored at (xTile, zTile) to
+                        \ the next number from the landscape's sequence of
+                        \ random numbers
 
                         \ If we get here then processAction must be 1 or 2 (as
                         \ the routine is only ever called with A = 0, 1, 2 or
@@ -9490,7 +9612,7 @@ L23E3 = C23E2+1
  LSR A                  \ If processAction = 1 then this sets the C flag,
                         \ otherwise processAction = 2 and this clears the C flag
 
- LDA (tileDataPage),Y   \ Set A to the tile data for the tile at coordinates
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
  BCS proc3              \ If the C flag is set then processAction = 1, so jump
@@ -9505,9 +9627,11 @@ L23E3 = C23E2+1
  LSR A
  STA T
 
- LDA (tileDataPage),Y   \ Set bits 4-7 of A to the low nibble (bits 0-3) of the
- ASL A                  \ tile data in A 
- ASL A
+ LDA (tileDataPage),Y   \ Set A once again to the tile data for the tile
+                        \ anchored at (xTile, zTile)
+
+ ASL A                  \ Set bits 4-7 of A to the low nibble (bits 0-3) of the
+ ASL A                  \ tile data in A
  ASL A
  ASL A
 
@@ -9524,10 +9648,14 @@ L23E3 = C23E2+1
 .proc3
 
                         \ If we get here then processAction = 1, so we now do
-                        \ various manipulations, including multuplying the
+                        \ various manipulations, including multiplying the
                         \ tile data by the multiplier in tileDataMultiplier
                         \ and capping the result to a positive number between
                         \ 1 and 11
+                        \
+                        \ At this point the tile data contains a random number,
+                        \ so this processs converts it into a value that we can
+                        \ use as the height of the tile corner
 
  SEC                    \ Set A = tile data - 128
  SBC #128
@@ -9563,11 +9691,11 @@ L23E3 = C23E2+1
                         \
                         \   (A T) = tileDataMultiplier * (tile data - 128)
 
-                        \ So if the tile data represents a landscape height,
-                        \ with "sea level" at altitude 128, then the high byte
-                        \ of this calculation in A represents a scaling of the
-                        \ altitude by tileDataMultiplier / 256, with the scaling
-                        \ centred around sea level
+                        \ So if the original tile data represents a landscape
+                        \ height, with "sea level" at altitude 128, then the
+                        \ high byte of this calculation in A represents a
+                        \ scaling of the altitude by tileDataMultiplier / 256,
+                        \ with the scaling centred around sea level
                         \
                         \ As tileDataMultiplier is in the range 14 to 36, this
                         \ transforms the tile data values as follows:
@@ -9583,9 +9711,9 @@ L23E3 = C23E2+1
                         \   * Multiplying by 36/256 (the maximum multiplier)
                         \     changes the range into -18 to +18
                         \
-                        \ So the above takes the random numbers in tile data and
-                        \ transforms then into value of A with a maximum range
-                        \ of -18 to +18
+                        \ So the above takes the random numbers in the original
+                        \ tile data and transforms then into value of A with a
+                        \ maximum range of -18 to +18
 
                         \ We now take this result and do various additions and
                         \ cappings to change the result into a positive number
@@ -9638,20 +9766,26 @@ L23E3 = C23E2+1
                         \ For maximum values of the multiplier we have lost
                         \ around one-third at the top end and one-third at the
                         \ bottom end
+                        \
+                        \ We can now use this as the height of the tile corner,
+                        \ which we can feed into the smoothing routines to
+                        \ generate a gently rolling landscape that is suitable
+                        \ for the game
 
  JMP proc8              \ Jump to proc8 to store A as the tile data for the tile
                         \ we are processing
 
 .proc7
 
-                        \ If we get here then the argument in A is &80
+                        \ If we get here then the argument in A is &80, so we
+                        \ fill the tile data table with random numbers
 
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
 
 .proc8
 
- STA (tileDataPage),Y   \ Store A as the tile data for the tile at coordinates
+ STA (tileDataPage),Y   \ Store A as the tile data for the tile anchored at
                         \ (xTile, zTile)
 
  DEC xTile              \ Decrement the tile x-coordinate in the inner loop
@@ -9670,7 +9804,7 @@ L23E3 = C23E2+1
                         \ a BMI branch would be taken (this is important when
                         \ analysing the intentionally confusing main loop flow
                         \ structure created by the stack modifications in the
-                        \ GenerateLandscape, SmoothTileStrip and JumpToPreview
+                        \ GenerateLandscape, SmoothTileCorners and JumpToPreview
                         \ routines)
 
  RTS                    \ Return from the subroutine
@@ -9688,25 +9822,26 @@ L23E3 = C23E2+1
 \
 \   A                   Controls how we smooth the tile data:
 \
-\                         * Bit 6 clear = smooth the tile strip by working our
-\                                         way along the strip and setting each
-\                                         tile's height to the average of its
-\                                         height with the three following tiles,
-\                                         working along rows from left to right
-\                                         and along columns from front to back
+\                         * Bit 6 clear = smooth each row/column of tile corners
+\                                         by working along the row/column and
+\                                         setting each tile corner's height to
+\                                         the average of its height with the
+\                                         three following tile corners, working
+\                                         along rows from left to right and
+\                                         along columns from front to back
 \
-\                         * Bit 6 set = smooth the tile strip by working our way
-\                                       along the strip and setting the height
-\                                       of each outlier tile to that of its
-\                                       closest immediate neighbour in terms of
-\                                       height
+\                         * Bit 6 set = smooth each row/column of tile corners
+\                                       by working along the row/column and
+\                                       setting the height of each outlier tile
+\                                       corner to that of its closest immediate
+\                                       neighbour in terms of height
 \
 \ ******************************************************************************
 
 .SmoothTileData
 
  STA smoothingAction    \ Store the action in smoothingAction so the calls to
-                        \ SmoothTileStrip can access it
+                        \ SmoothTileCorners can access it
 
  LDA #2                 \ We perform the smoothing process twice, so set a loop
  STA loopCounter        \ counter in loopCounter to count down from 2
@@ -9714,8 +9849,8 @@ L23E3 = C23E2+1
 .smoo1
 
                         \ We start by working our way through the landscape,
-                        \ smoothing the row of tiles at the back (i.e. at tile
-                        \ z-coordinate 31), and then smoothing the next row
+                        \ smoothing the row of tile corners at the back (i.e. at
+                        \ tile z-coordinate 31), and then smoothing the next row
                         \ forward, looping until we reach the front row
 
  LDA #31                \ Set zTile = 31 so we start iterating from the back row
@@ -9723,8 +9858,8 @@ L23E3 = C23E2+1
 
 .smoo2
 
- LDA #00000000          \ Call SmoothTileStrip with bit 7 of A clear to smooth
- JSR SmoothTileStrip    \ the row of tiles at z-coordinate zTile
+ LDA #00000000          \ Call SmoothTileCorners with bit 7 of A clear to smooth
+ JSR SmoothTileCorners  \ the row of tile corners at z-coordinate zTile
 
  DEC zTile              \ Decrement the tile z-coordinate to move forward by one
                         \ tile row
@@ -9732,11 +9867,11 @@ L23E3 = C23E2+1
  BPL smoo2              \ Loop back until we have smoothed all 32 rows
 
                         \ Next we work our way through the landscape from right
-                        \ to left, smoothing the column of tiles on the right
-                        \ (i.e. the column of tiles going into the screen at
-                        \ tile x-coordinate 31), and then smoothing the next
-                        \ column to the left, looping until we reach the column
-                        \ along the left edge of the landscape
+                        \ to left, smoothing the column of tile corners on the
+                        \ right (i.e. the column of tile corners going into the
+                        \ screen at tile x-coordinate 31), and then smoothing
+                        \ the next column to the left, looping until we reach
+                        \ the column along the left edge of the landscape
 
  LDA #31                \ Set xTile = 31 so we start iterating from the right
  STA xTile              \ column (so xTile iterates from 31 to 0 in the
@@ -9744,8 +9879,8 @@ L23E3 = C23E2+1
 
 .smoo3
 
- LDA #%10000000         \ Call SmoothTileStrip with bit 7 of A set to smooth
- JSR SmoothTileStrip    \ the column of tiles at x-coordinate xTile
+ LDA #%10000000         \ Call SmoothTileCorners with bit 7 of A set to smooth
+ JSR SmoothTileCorners  \ the column of tile corners at x-coordinate xTile
 
  DEC xTile              \ Decrement the tile x-coordinate to move left by one
                         \ tile column
@@ -9768,59 +9903,63 @@ L23E3 = C23E2+1
 \
 \ ------------------------------------------------------------------------------
 \
-\ The tile data table at tileData is made up of sequences of 32-tile columns
-\ going into the screen, where each column goes from z = 0 to 31 along the same
-\ x-coordinate, with the columns interleaved in steps of 4 like this:
+\ The tile data table at tileData is made up of sequences of 32 columns of tile
+\ corners going into the screen, where each column goes from z = 0 to 31 along
+\ the same x-coordinate, with the columns interleaved in steps of 4 like this:
 \
-\   &0400-&041F = 32-tile column going into the screen at x =  0
-\   &0420-&043F = 32-tile column going into the screen at x =  4
-\   &0440-&045F = 32-tile column going into the screen at x =  8
-\   &0460-&047F = 32-tile column going into the screen at x = 12
-\   &0480-&049F = 32-tile column going into the screen at x = 16
-\   &04A0-&04BF = 32-tile column going into the screen at x = 20
-\   &04C0-&04DF = 32-tile column going into the screen at x = 24
-\   &04E0-&04FF = 32-tile column going into the screen at x = 28
+\   &0400-&041F = 32-corner column going into the screen at x =  0
+\   &0420-&043F = 32-corner column going into the screen at x =  4
+\   &0440-&045F = 32-corner column going into the screen at x =  8
+\   &0460-&047F = 32-corner column going into the screen at x = 12
+\   &0480-&049F = 32-corner column going into the screen at x = 16
+\   &04A0-&04BF = 32-corner column going into the screen at x = 20
+\   &04C0-&04DF = 32-corner column going into the screen at x = 24
+\   &04E0-&04FF = 32-corner column going into the screen at x = 28
 \
-\   &0500-&051F = 32-tile column going into the screen at x =  1
-\   &0520-&053F = 32-tile column going into the screen at x =  5
-\   &0540-&055F = 32-tile column going into the screen at x =  9
-\   &0560-&057F = 32-tile column going into the screen at x = 13
-\   &0580-&059F = 32-tile column going into the screen at x = 17
-\   &05A0-&05BF = 32-tile column going into the screen at x = 21
-\   &05C0-&05DF = 32-tile column going into the screen at x = 25
-\   &05E0-&05FF = 32-tile column going into the screen at x = 29
+\   &0500-&051F = 32-corner column going into the screen at x =  1
+\   &0520-&053F = 32-corner column going into the screen at x =  5
+\   &0540-&055F = 32-corner column going into the screen at x =  9
+\   &0560-&057F = 32-corner column going into the screen at x = 13
+\   &0580-&059F = 32-corner column going into the screen at x = 17
+\   &05A0-&05BF = 32-corner column going into the screen at x = 21
+\   &05C0-&05DF = 32-corner column going into the screen at x = 25
+\   &05E0-&05FF = 32-corner column going into the screen at x = 29
 \
-\   &0600-&061F = 32-tile column going into the screen at x =  2
-\   &0620-&063F = 32-tile column going into the screen at x =  6
-\   &0640-&065F = 32-tile column going into the screen at x = 10
-\   &0660-&067F = 32-tile column going into the screen at x = 14
-\   &0680-&069F = 32-tile column going into the screen at x = 18
-\   &06A0-&06BF = 32-tile column going into the screen at x = 22
-\   &06C0-&06DF = 32-tile column going into the screen at x = 26
-\   &06E0-&06FF = 32-tile column going into the screen at x = 30
+\   &0600-&061F = 32-corner column going into the screen at x =  2
+\   &0620-&063F = 32-corner column going into the screen at x =  6
+\   &0640-&065F = 32-corner column going into the screen at x = 10
+\   &0660-&067F = 32-corner column going into the screen at x = 14
+\   &0680-&069F = 32-corner column going into the screen at x = 18
+\   &06A0-&06BF = 32-corner column going into the screen at x = 22
+\   &06C0-&06DF = 32-corner column going into the screen at x = 26
+\   &06E0-&06FF = 32-corner column going into the screen at x = 30
 \
-\   &0700-&071F = 32-tile column going into the screen at x =  3
-\   &0720-&073F = 32-tile column going into the screen at x =  7
-\   &0740-&075F = 32-tile column going into the screen at x = 11
-\   &0760-&077F = 32-tile column going into the screen at x = 15
-\   &0780-&079F = 32-tile column going into the screen at x = 19
-\   &07A0-&07BF = 32-tile column going into the screen at x = 23
-\   &07C0-&07DF = 32-tile column going into the screen at x = 27
-\   &07E0-&07FF = 32-tile column going into the screen at x = 31
+\   &0700-&071F = 32-corner column going into the screen at x =  3
+\   &0720-&073F = 32-corner column going into the screen at x =  7
+\   &0740-&075F = 32-corner column going into the screen at x = 11
+\   &0760-&077F = 32-corner column going into the screen at x = 15
+\   &0780-&079F = 32-corner column going into the screen at x = 19
+\   &07A0-&07BF = 32-corner column going into the screen at x = 23
+\   &07C0-&07DF = 32-corner column going into the screen at x = 27
+\   &07E0-&07FF = 32-corner column going into the screen at x = 31
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   xTile               A tile x-coordinate (0 to 31)
+\   xTile               A tile corner x-coordinate (0 to 31)
 \
-\   zTile               A tile z-coordinate (0 to 31)
+\   zTile               A tile corner z-coordinate (0 to 31)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
-\   A                   The tile data for the tile at (xTile, zTile)
+\   A                   The tile data for the tile anchored at (xTile, zTile):
+\
+\                         * The tile slope is in the low nibble
+\
+\                         * The tile height is in the high nibble
 \
 \   tileDataPage(1 0)   The address of the page containing the tile data
 \
@@ -9868,17 +10007,17 @@ L23E3 = C23E2+1
                         \   Y = (xTile div 4) * &20 + zTile
                         \
                         \ The address in tileDataPage(1 0) is the page within
-                        \ tileData for the tile at coordinates (xTile, zTile),
-                        \ and is one of &0400, &0500, &0600 or &0700 because
-                        \ (xTile mod 4) equals 0, 1, 2 or 3
+                        \ tileData for the tile anchored at (xTile, zTile), and
+                        \ is always one of &0400, &0500, &0600 or &0700 because
+                        \ (xTile mod 4) is one of 0, 1, 2 or 3
                         \
                         \ The value of Y is the offset within that page of the
-                        \ tile data for the tile at coordinates (xTile, zTile)
+                        \ tile data for the tile anchored at (xTile, zTile)
                         \
                         \ We can therefore fetch the tile data for the specified
                         \ tile using Y as an index offset from tileDataPage(1 0)
 
- LDA (tileDataPage),Y   \ Set A to the tile data for the tile at coordinates
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
  CMP #%11000000         \ Set the C flag if A >= %11000000, which will be the
@@ -9888,54 +10027,57 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SmoothTileStrip (Part 1 of 4)
+\       Name: SmoothTileCorners (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\    Summary: Smooth a row or column of tile corners (a "strip of tiles")
 \
 \ ------------------------------------------------------------------------------
 \
-\ This part copies the strip of tiles to a temporary workspace.
+\ This part copies the row or column of tile corners to a temporary workspace.
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   Controls which tiles we smooth in the tile data:
+\   A                   Controls which tile corners we smooth in the tile data:
 \
-\                         * Bit 7 clear = smooth the row of tiles at
+\                         * Bit 7 clear = smooth the row of tile corners at
 \                                         z-coordinate zTile
 \
-\                         * Bit 7 set = smooth the column of tiles at
+\                         * Bit 7 set = smooth the column of tile corners at
 \                                       x-coordinate xTile
 \
 \ ******************************************************************************
 
-.SmoothTileStrip
+.SmoothTileCorners
 
  ORA smoothingAction    \ We configured the smoothing action in bit 6 of
  STA processAction      \ smoothingAction in the SmoothTileData routine before
                         \ calling this routine, and bit 7 of A tells us whether
-                        \ to smooth a row or a column of tiles, so this combines
-                        \ both configurations from bit 6 and bit 7 into one byte
-                        \ that we store in processAction
+                        \ to smooth a row or a column of tile cornser, so this
+                        \ combines both configurations from bit 6 and bit 7 into
+                        \ one byte that we store in processAction
 
-                        \ In the following I will talk about a "strip" to refer
-                        \ to the row or column that we are smoothing
-
- LDX #34                \ We start by copying the tile data for the strip we
-                        \ want to smooth into the stripData workspace, so we can
-                        \ process it before copying it back into the tileData
-                        \ table
+ LDX #34                \ We start by copying the tile data for the row/column
+                        \ that we want to smooth into the stripData workspace,
+                        \ so we can process it before copying it back into the
+                        \ tileData table
+                        \
+                        \ In the following commentary I will refer to this
+                        \ copied row or column of tile corners as a "strip of
+                        \ tiles", as saying "row or column of tile corners"
+                        \ every time is a bit of a monthful
                         \
                         \ We actually create a strip of tile data containing 35
-                        \ tiles, with offsets 0 to 31 being the tile data for
-                        \ the strip we are smooting and offsets 32 to 34 being
-                        \ repeats of the data for tiles 0 to 2
+                        \ tile corners, with offsets 0 to 31 being the tile data
+                        \ for the strip we are smoothing and offsets 32 to 34
+                        \ being repeats of the data for tile corners 0 to 2
                         \
-                        \ So we effectively duplicate the first three tiles onto
-                        \ the end of the strip so we can wrap the smoothing
-                        \ calculations around past the end of the strip
+                        \ So we effectively duplicate the first three tile
+                        \ corners onto the end of the strip so we can wrap the
+                        \ smoothing calculations around past the end of the
+                        \ strip
 
 .stri1
 
@@ -9962,7 +10104,8 @@ L23E3 = C23E2+1
 
 .stri3
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
  STA stripData,X        \ Store the tile data for (xTile, zTile) into the X-th
                         \ byte in our temporary workspace
@@ -9981,23 +10124,23 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SmoothTileStrip (Part 2 of 4)
+\       Name: SmoothTileCorners (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip by moving each outlier tile to the height of its
-\             closest immediate neighbour (in terms of height)
+\    Summary: Smooth a strip by moving each outlier tile corner to the height of
+\             its closest immediate neighbour (in terms of height)
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part smoothes the strip by working along the strip and applying the
 \ following algorithm:
 \
-\   * If this tile is higher then both its neighbours, move it down
+\   * If this tile corner is higher then both its neighbours, move it down
 \
-\   * If this tile is lower then both its neighbours, move it up
+\   * If this tile corner is lower then both its neighbours, move it up
 \
-\ In each case, we move the tile until it is level with the closest one to its
-\ original height.
+\ In each case, we move the tile corner until it is level with the closest one
+\ to its original height.
 \
 \ ******************************************************************************
 
@@ -10189,17 +10332,18 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SmoothTileStrip (Part 3 of 4)
+\       Name: SmoothTileCorners (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip by setting the tile heights to the average of the
-\             current tile height and the three following tiles
+\    Summary: Smooth a strip by setting the tile corner heights to the average
+\             of the current tile corner height and the three following corners
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part smoothes the strip by working along the strip and replacing the
-\ height of each tile with the average of that tile's height plus the next three
-\ tiles, working along rows from left to right and columns from near to far.
+\ height of each tile corner with the average of that corner's height plus the
+\ next three corners, working along rows from left to right and columns from
+\ near to far.
 \
 \ ******************************************************************************
 
@@ -10273,10 +10417,10 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SmoothTileStrip (Part 4 of 4)
+\       Name: SmoothTileCorners (Part 4 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip of tiles (i.e. a single row or column)
+\    Summary: Copy the smoothed strip data back into the tileData table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10315,10 +10459,11 @@ L23E3 = C23E2+1
 
 .stri19
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ which we ignore, but this also sets the tile page in
-                        \ tileDataPage and the index in Y, so tileDataPage+Y now
-                        \ points to the tile data entry in the tileData table
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), which we ignore, but this also sets
+                        \ the tile page in tileDataPage and the index in Y, so
+                        \ tileDataPage+Y now points to the tile data entry in
+                        \ the tileData table
 
  LDA stripData,X        \ Copy the X-th byte of tile data from the smoothed
  STA (tileDataPage),Y   \ strip into the corresponding entry for (xTile, zTile)
@@ -10337,7 +10482,7 @@ L23E3 = C23E2+1
 \       Name: SetTileSlope
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Calculate the slope of the tile at (xTile, zTile)
+\    Summary: Calculate the slope of the tile anchored at (xTile, zTile)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10420,46 +10565,50 @@ L23E3 = C23E2+1
 \
 \ Returns:
 \
-\   X                   The slope of the tile at (xTile, zTile)
+\   X                   The slope of the tile anchored at (xTile, zTile)
 \
 \ ******************************************************************************
 
 .SetTileSlope
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
- AND #%00001111         \ Extract the low nibble and store it in S
- STA S
+ AND #%00001111         \ Extract the tile height from the low nibble and
+ STA S                  \ store it in S
 
  INC xTile              \ Move along the x-axis to fetch the next tile to the
                         \ right
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
- AND #%00001111         \ Extract the low nibble and store it in V
- STA V
+ AND #%00001111         \ Extract the tile height from the low nibble and
+ STA V                  \ store it in V
 
  INC zTile              \ Move along the x-axis to fetch the next tile into the
                         \ screen
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
- AND #%00001111         \ Extract the low nibble and store it in U
- STA U
+ AND #%00001111         \ Extract the tile height from the low nibble and
+ STA U                  \ store it in U
 
  DEC xTile              \ Move back along the x-axis to fetch the next tile to
                         \ the left
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile)
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
- AND #%00001111         \ Extract the low nibble and store it in T
- STA T
+ AND #%00001111         \ Extract the tile height from the low nibble and
+ STA T                  \ store it in T
 
  DEC zTile              \ Move out of the screen, back along the z-axis to take
                         \ us back to the tile we are processing
 
-                        \ So at this point we have the heights of four tiles, as
-                        \ follows, with the view from above:
+                        \ So at this point we have the heights of four tile
+                        \ corners, as follows, with the view from above:
                         \
                         \      ^           [T]  [U]
                         \      |
@@ -10468,8 +10617,10 @@ L23E3 = C23E2+1
                         \    into
                         \   screen      x-axis from left to right --->
                         \
-                        \ S is the height of the tile for which we are
-                        \ calculating the slope
+                        \ S is the height of the tile corner that anchors the
+                        \ tile for which we are calculating the slope, and T, U
+                        \ and V are the heights of the tile's other three
+                        \ corners, so now we can analyse the slope of the tile
 
  LDA S                  \ If S = V then jump to slop10
  CMP V
@@ -10798,7 +10949,7 @@ L23E3 = C23E2+1
 
 .sub_C2D36
 
- LDA L0025
+ LDA yTile
  ORA L0005
  BIT L003B
  BMI C2D13
@@ -11833,10 +11984,11 @@ L314A = C3148+2
  LDA L3248,Y
  PHA
 
- JSR GetTileData        \ Set A to the tile data for the tile at (xTile, zTile),
-                        \ which we ignore, but this also sets the tile page in
-                        \ tileDataPage and the index in Y, so tileDataPage+Y now
-                        \ points to the tile data entry in the tileData table
+ JSR GetTileData        \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile), which we ignore, but this also sets
+                        \ the tile page in tileDataPage and the index in Y, so
+                        \ tileDataPage+Y now points to the tile data entry in
+                        \ the tileData table
 
  PLA
  STA (tileDataPage),Y
@@ -11926,8 +12078,8 @@ L314A = C3148+2
 
  LDX #3
 
- LDA #0                 \ Set A = 0 so the call to DrawObject draws a robot on
-                        \ the right of the screen
+ LDA #0                 \ Set A = 0 so the call to DrawTitleObject draws a robot
+                        \ on the right of the screen
 
  BEQ titl3              \ Jump to titl3 to ??? (this BEQ is effectively a JMP as
                         \ A is always zero)
@@ -11951,14 +12103,14 @@ L314A = C3148+2
 
  LDX #1
 
- LDA #5                 \ Set A = 5 so the call to DrawObject draws the Sentinel
-                        \ on the right of the screen
+ LDA #5                 \ Set A = 5 so the call to DrawTitleObject draws the
+                        \ Sentinel on the right of the screen
 
 .titl3
 
  LDY #1
 
- JSR DrawObject         \ Draw the Sentinel on the title screen or the robot on
+ JSR DrawTitleObject    \ Draw the Sentinel on the title screen or the robot on
                         \ the secret code screen ???
 
  LSR L0C4B              \ Clear bit 7 of L0C4B ???
@@ -17775,7 +17927,7 @@ L5BA0 = L5B00+160
  LDY #0
  STY L0CC9
  STY L0C5F
- LDA L0C1C
+ LDA titleObjectToDraw
  JSR sub_C5F80
  LDA #&03
  STA L0C4C
@@ -17925,7 +18077,7 @@ L5BA0 = L5B00+160
  LDX #3
  LDY #0
  LDA #&80
- JSR DrawObject
+ JSR DrawTitleObject
 
  LDX #4                 \ Print text token 4: Background colour black, print
  JSR PrintTextToken     \ "PRESS ANY KEY" at (192, 64), print "LANDSCAPE" two

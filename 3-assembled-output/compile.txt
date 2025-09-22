@@ -72,7 +72,7 @@
      0023
 .xTile
      0024
-.L0025
+.yTile
      0025
 .zTile
      0026
@@ -2376,7 +2376,7 @@
      0C1A   00
 .L0C1B
      0C1B   00
-.L0C1C
+.titleObjectToDraw
      0C1C   05
 .L0C1D
      0C1D   00
@@ -3648,7 +3648,7 @@
      1398   0B
      1399   0F
      139A   8D
-.DrawObject
+.DrawTitleObject
      139B   8D 1C 0C   STA &0C1C
      139E   8E 4C 0C   STX &0C4C
      13A1   8A         TXA
@@ -7094,7 +7094,7 @@
      2B8B   B1 5E      LDA (&5E),Y
      2B8D   C9 C0      CMP #&C0
      2B8F   60         RTS
-.SmoothTileStrip
+.SmoothTileCorners
      2B90   05 66      ORA &66
      2B92   85 1C      STA &1C
      2B94   A2 22      LDX #&22
