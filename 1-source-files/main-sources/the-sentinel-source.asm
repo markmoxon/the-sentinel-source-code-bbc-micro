@@ -1380,7 +1380,7 @@ L0BAB = L0B00+171
 
  EQUB 0
 
-.L0C6F
+.enemyCount
 
  EQUB 0
 
@@ -1632,15 +1632,15 @@ L0BAB = L0B00+171
 
  EQUB &C0
 
-.secretCodeLo
+.landscapeNumberLo
 
  EQUB 0                 \ The low byte of the four-digit binary coded decimal
-                        \ (BCD) secret code (0000 to 9999)
+                        \ landscape number (0000 to 9999)
 
-.secretCodeHi
+.landscapeNumberHi
 
  EQUB 0                 \ The high byte of the four-digit binary coded decimal
-                        \ (BCD) secret code (0000 to 9999)
+                        \ landscape number (0000 to 9999)
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -4485,23 +4485,38 @@ L1145 = C1144+1
 
 .sub_C1410
 
- LDA landscapeZero
+ LDA landscapeZero      \ If this is not landscape 0000, jump to C1419
  BNE C1419
- LDA #&01
- BNE C1424
+
+ LDA #1                 \ This is landscape 0000, so set A = 1 to use for the
+                        \ total number of enemies
+
+ BNE C1424              \ Jump to C1424 to store the value of A in 
 
 .C1419
 
- JSR sub_C33F0
- CMP maxEnemyCount
- BCC C1424
- LDA maxEnemyCount
+ JSR GetEnemyCount      \ Set A to the enemy count for this landscape, which is
+                        \ derived from the top digit of the landscape number and
+                        \ the next number in the landscape's sequence of random
+                        \ numbers, so it is always the same value for the same
+                        \ landscape number
+                        \
+                        \ At this point A is in the range 1 to 8, with higher
+                        \ values for higher landscape numbers
+
+ CMP maxEnemyCount      \ If A < maxEnemyCount then skip the following
+ BCC C1424              \ instruction
+
+ LDA maxEnemyCount      \ Set A = maxEnemyCount, so the number of enemies does
+                        \ not exceed the value of maxEnemyCount
 
 .C1424
 
- STA L0C6F
+ STA enemyCount         \ Store the number of enemies for this landscape in
+                        \ enemyCount
+
  JSR sub_C14EB
- LDA L0C6F
+ LDA enemyCount
  SEC
  SBC #&01
  AND #&07
@@ -4553,9 +4568,9 @@ L1145 = C1144+1
 
  LDA #&30
  SEC
- SBC L0C6F
- SBC L0C6F
- SBC L0C6F
+ SBC enemyCount
+ SBC enemyCount
+ SBC enemyCount
  STA U
 
  JSR GetRandomNumber22  \ Set A to a random number in the range 0 to 22
@@ -4592,7 +4607,7 @@ L1145 = C1144+1
 
  JSR sub_C3364
  SEC
- SBC L0C6F,X
+ SBC enemyCount,X
  BEQ C14B0
  CLC
 
@@ -4693,7 +4708,7 @@ L1145 = C1144+1
  SBC #&10
  STA L0006
  BNE P14F7
- STX L0C6F
+ STX enemyCount
  JMP C1582
 
 .C150B
@@ -4752,7 +4767,7 @@ L1145 = C1144+1
 
  STA L4A37,X
  INX
- CPX L0C6F
+ CPX enemyCount
  BCS C1582
  JMP C14F0
 
@@ -5768,9 +5783,9 @@ L1145 = C1144+1
  SED
  JSR sub_C342C
  CLC
- ADC secretCodeLo
+ ADC landscapeNumberLo
  TAX
- LDA secretCodeHi
+ LDA landscapeNumberHi
  ADC #&00
  TAY
  CLD
@@ -5786,7 +5801,8 @@ L1145 = C1144+1
                         \ to document this here ???
 
  JSR sub_C1410
- JSR sub_C1440
+
+ JSR sub_C1440          \ This changes the stack ???
 
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape's secret code
@@ -5795,7 +5811,7 @@ L1145 = C1144+1
  JSR PrintTextToken     \ (64, 768), "LANDSCAPE" at (192, 704), move cursor
                         \ right
 
- JMP PrintSecretCode    \ Print the four-digit secret code (0000 to 9999) and
+ JMP PrintLandscapeNum  \ Print the four-digit landscape (0000 to 9999) and
                         \ return from the subroutine using a tail call
 
 \ ******************************************************************************
@@ -12648,20 +12664,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: PrintSecretCode
+\       Name: PrintLandscapeNum
 \       Type: Subroutine
 \   Category: Text
-\    Summary: Print a four-digit secret code (0000 to 9999)
+\    Summary: Print the four-digit landscape number (0000 to 9999)
 \
 \ ******************************************************************************
 
-.PrintSecretCode
+.PrintLandscapeNum
 
- LDA secretCodeHi       \ Print the high byte of the binary coded decimal (BCD)
- JSR Print2DigitBCD     \ secret code as a two-digit number
+ LDA landscapeNumberHi  \ Print the high byte of the binary coded decimal (BCD)
+ JSR Print2DigitBCD     \ landscape number as a two-digit number
 
- LDA secretCodeLo       \ Print the low byte of the binary coded decimal (BCD)
- JMP Print2DigitBCD     \ secret code as a two-digit number and return from
+ LDA landscapeNumberLo  \ Print the low byte of the binary coded decimal (BCD)
+ JMP Print2DigitBCD     \ landscape number as a two-digit number and return from
                         \ the subroutine using a tail call
 
 \ ******************************************************************************
@@ -12686,8 +12702,8 @@ L314A = C3148+2
  STX randomLFSR         \ number by setting bits 0-15 of the five-byte linear
                         \ feedback shift register in randomLFSR(4 3 2 1 0)
 
- STY secretCodeHi       \ Set (secretCodeHi secretCodeLo) = (Y X)
- STX secretCodeLo
+ STY landscapeNumberHi  \ Set (landscapeNumberHi landscapeNumberLo) = (Y X)
+ STX landscapeNumberLo
 
  STY landscapeZero      \ If the high byte of the landscape number is non-zero,
  TYA                    \ then set landscapeZero to this non-zero value (to
@@ -12788,55 +12804,106 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C33F0
+\       Name: GetEnemyCount
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Calculate the number of enemies for the current landscape
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The enemy count for the landscape (in the range 1 to 8,
+\                       with higher values for higher landscape numbers)
 \
 \ ******************************************************************************
 
-.sub_C33F0
+.GetEnemyCount
 
- LDA secretCodeHi
- LSR A
- LSR A
- LSR A
- LSR A
- CLC
- ADC #&02
+ LDA landscapeNumberHi  \ Set T = (landscapeNumberHi / 4) + 2
+ LSR A                  \
+ LSR A                  \ Because the landscape number is in BCD and in the form
+ LSR A                  \ 0000 to 9999, this extracts the top digit and adds 2
+ LSR A                  \
+ CLC                    \ So T is in the range 2 to 11, with higher values of T
+ ADC #2                 \ for higher landscape numbers
  STA T
 
-.P33FC
+.enem1
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, which we now use to calculate the
+                        \ enemy count for this landscape (so the same number is
+                        \ calculated for the same landscape number each time)
 
- LDY #&07
- ASL A
- PHP
- BEQ C340B
- LDY #&FF
+ LDY #7                 \ Set Y = 7 to use as the count of clear bits in A when
+                        \ A is zero
 
-.P3407
+ ASL A                  \ Set the C flag from bit 7 of this landscape's random
+                        \ number and clear bit 0 of A, leaving bits 6 to 0 of
+                        \ the original A in bits 7 to 1
 
- INY
- ASL A
- BCC P3407
+ PHP                    \ Store the status flags on the stack, so we can use the
+                        \ C flag below to decide whether to negate the result
 
-.C340B
+                        \ We now count the number of continuous clear bits at
+                        \ the top of A, ignoring bit 0, so we count zeroes from
+                        \ bit 7 down until we hit a 1, and put the result into Y
 
- TYA
- PLP
- BCC C3411
- EOR #&FF
+ BEQ enem3              \ If A = 0 then jump to enem3 with Y = 7, as we have a
+                        \ continuous run of seven clear bits in bits 7 to 1
 
-.C3411
+ LDY #&FF               \ Otherwise set A = &FF so the next instruction sets
+                        \ Y = 0, so we count the number of zeroes correctly
 
- CLC
- ADC T
- CMP #&08
- BCS P33FC
- ADC #&01
- RTS
+.enem2
+
+ INY                    \ Increment the zero counter in Y
+
+ ASL A                  \ Shift A to the left, moving the top bit into the C
+                        \ flag
+
+ BCC enem2              \ Loop back to keep shifting and counting zeroes until
+                        \ we shift a 1 out of bit 7, at which point Y contains
+                        \ the length of the run of zeroes in bits 6 to 0 of the
+                        \ landscape's original random number
+
+.enem3
+
+ TYA                    \ At this point Y contains a number in the range 0 to 7,
+                        \ so copy this into A
+
+ PLP                    \ If the C flag we stored on the stack above was set,
+ BCC enem4              \ invert A, so this flips the result into the range -1
+ EOR #%11111111         \ to -8 if bit 7 of the landscape's original random
+                        \ number was set
+
+.enem4
+
+                        \ At this point A is in the range -8 to 7
+
+ CLC                    \ Set A = A + T
+ ADC T                  \
+                        \ T is in the range 2 to 11, so A is now in the range
+                        \ -6 to 18
+
+ CMP #8                 \ If A < 0 or A >= 8 then loop back to enem1 to try
+ BCS enem1              \ again
+
+                        \ If we get here then A is now in the range 0 to 7, with
+                        \ higher values for higher landscape numbers
+
+ ADC #1                 \ Set A = A + 1
+                        \
+                        \ This addition works as we know the C flag is clear
+                        \ because we just passed through a BCS
+
+                        \ So A is now a number in the range 1 to 8, with higher
+                        \ values for higher landscape numbers, which we can use
+                        \ as our enemy count (after capping it to the value of
+                        \ maxEnemyCount after we return from the subroutine)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -13391,8 +13458,8 @@ L314A = C3148+2
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDY secretCodeHi       \ Set (Y X) = (secretCodeHi secretCodeLo)
- LDX secretCodeLo
+ LDY landscapeNumberHi  \ Set (Y X) = (landscapeNumberHi landscapeNumberLo)
+ LDX landscapeNumberLo
 
  JSR SeedLandscape      \ Seed the random number generator with the landscape
                         \ number in (Y X) and set maxEnemyCount and the
@@ -18077,15 +18144,16 @@ L5BA0 = L5B00+160
  LDX #3
  LDY #0
  LDA #&80
- JSR DrawTitleObject
+
+ JSR DrawTitleObject    \ Draw the landscape preview
 
  LDX #4                 \ Print text token 4: Background colour black, print
  JSR PrintTextToken     \ "PRESS ANY KEY" at (192, 64), print "LANDSCAPE" two
                         \ characters right of (64, 768), move cursor right
 
- JSR PrintSecretCode    \ Print the four-digit secret code (0000 to 9999)
+ JSR PrintLandscapeNum  \ Print the four-digit landscape number (0000 to 9999)
 
- JSR sub_C1440
+ JSR sub_C1440          \ This changes the stack ???
 
  JMP SecretCodeError
 

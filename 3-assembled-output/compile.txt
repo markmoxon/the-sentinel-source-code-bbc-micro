@@ -2508,7 +2508,7 @@
      0C6D   00
 .L0C6E
      0C6E   00
-.L0C6F
+.enemyCount
      0C6F   00
 .L0C70
      0C70   00
@@ -2704,9 +2704,9 @@
      0CFB   00
 .L0CFC
      0CFC   C0
-.secretCodeLo
+.landscapeNumberLo
      0CFD   00
-.secretCodeHi
+.landscapeNumberHi
      0CFE   00
      0CFF   00
 .NMIHandler
@@ -8295,7 +8295,7 @@
      33A4   20 94 31   JSR &3194
      33A7   4E 60 0C   LSR &0C60
      33AA   60         RTS
-.PrintSecretCode
+.PrintLandscapeNum
      33AB   AD FE 0C   LDA &0CFE
      33AE   20 56 33   JSR &3356
      33B1   AD FD 0C   LDA &0CFD
@@ -8336,7 +8336,7 @@
      33ED   68         PLA
      33EE   A8         TAY
      33EF   60         RTS
-.sub_C33F0
+.GetEnemyCount
      33F0   AD FE 0C   LDA &0CFE
      33F3   4A         LSR A
      33F4   4A         LSR A
@@ -8345,23 +8345,23 @@
      33F7   18         CLC
      33F8   69 02      ADC #&02
      33FA   85 74      STA &74
-.P33FC
+.enem1
      33FC   20 94 31   JSR &3194
      33FF   A0 07      LDY #&07
      3401   0A         ASL A
      3402   08         PHP
      3403   F0 06      BEQ &340B
      3405   A0 FF      LDY #&FF
-.P3407
+.enem2
      3407   C8         INY
      3408   0A         ASL A
      3409   90 FC      BCC &3407
-.C340B
+.enem3
      340B   98         TYA
      340C   28         PLP
      340D   90 02      BCC &3411
      340F   49 FF      EOR #&FF
-.C3411
+.enem4
      3411   18         CLC
      3412   65 74      ADC &74
      3414   C9 08      CMP #&08
