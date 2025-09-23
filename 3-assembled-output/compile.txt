@@ -3807,7 +3807,7 @@
      14C1   90 09      BCC &14CC
 .CRE06
      14C3   60         RTS
-.L14C4
+.landscapeColour3
      14C4   02
      14C5   01
      14C6   03
@@ -3831,7 +3831,7 @@
      14DF   69 6E      ADC #&6E
      14E1   48         PHA
      14E2   60         RTS
-.L14E3
+.landscapeColour2
      14E3   07
      14E4   03
      14E5   06

@@ -1382,7 +1382,8 @@ L0BAB = L0B00+171
 
 .enemyCount
 
- EQUB 0
+ EQUB 0                 \ The number of enemies in the current landscape,
+                        \ including the Sentinel (in the range 1 to 8)
 
 .L0C70
 
@@ -4515,17 +4516,25 @@ L1145 = C1144+1
  STA enemyCount         \ Store the number of enemies for this landscape in
                         \ enemyCount
 
- JSR sub_C14EB
- LDA enemyCount
- SEC
- SBC #&01
- AND #&07
- TAX
- LDA L14C4,X
- STA colourPalettes+3
- LDA L14E3,X
- STA colourPalettes+2
- RTS
+ JSR sub_C14EB          \ ???
+
+                        \ We now update colours 2 and 3 in the first palette in
+                        \ colourPalettes according to the number of enemies
+
+ LDA enemyCount         \ Set X = (enemyCount - 1) mod 8
+ SEC                    \
+ SBC #1                 \ The mod 8 is not strictly necessary as enemyCount is
+ AND #7                 \ in the range 1 to 8, but doing this ensures we can
+ TAX                    \ safely use X as an index into the landscapeColour
+                        \ tables
+
+ LDA landscapeColour3,X \ Set colour 3 in the game palette to the X-th entry
+ STA colourPalettes+3   \ from landscapeColour3
+
+ LDA landscapeColour2,X \ Set colour 2 in the game palette to the X-th entry
+ STA colourPalettes+2   \ from landscapeColour2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4629,16 +4638,31 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L14C4
+\       Name: landscapeColour3
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Physical colours for colour 3 in the game palette for the
+\             different numbers of enemies
 \
 \ ******************************************************************************
 
-.L14C4
+.landscapeColour3
 
- EQUB &02, &01, &03, &06, &01, &06, &01, &03
+ EQUB 2                 \ Enemy count = 1: blue, black, white, green
+
+ EQUB 1                 \ Enemy count = 2: blue, black, yellow, red
+
+ EQUB 3                 \ Enemy count = 3: blue, black, cyan, yellow
+
+ EQUB 6                 \ Enemy count = 4: blue, black, red, cyan
+
+ EQUB 1                 \ Enemy count = 5: blue, black, white, red
+
+ EQUB 6                 \ Enemy count = 6: blue, black, yellow, cyan
+
+ EQUB 1                 \ Enemy count = 7: blue, black, cyan, red
+
+ EQUB 3                 \ Enemy count = 8: blue, black, red, yellow
 
 \ ******************************************************************************
 \
@@ -4668,16 +4692,31 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L14E3
+\       Name: landscapeColour2
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Physical colours for colour 2 in the game palette for the
+\             different numbers of enemies
 \
 \ ******************************************************************************
 
-.L14E3
+.landscapeColour2
 
- EQUB &07, &03, &06, &01, &07, &03, &06, &01
+ EQUB 7                 \ Enemy count = 1: blue, black, white, green
+
+ EQUB 3                 \ Enemy count = 2: blue, black, yellow, red
+
+ EQUB 6                 \ Enemy count = 3: blue, black, cyan, yellow
+
+ EQUB 1                 \ Enemy count = 4: blue, black, red, cyan
+
+ EQUB 7                 \ Enemy count = 5: blue, black, white, red
+
+ EQUB 3                 \ Enemy count = 6: blue, black, yellow, cyan
+
+ EQUB 6                 \ Enemy count = 7: blue, black, cyan, red
+
+ EQUB 1                 \ Enemy count = 8: blue, black, red, yellow
 
 \ ******************************************************************************
 \
@@ -4713,7 +4752,8 @@ L1145 = C1144+1
 
 .C150B
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
 
  AND L0027
  CMP T
