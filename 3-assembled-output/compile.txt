@@ -11,6 +11,7 @@
 .L0005
      0005
 .L0006
+.heightOfPeak
      0006
 .L0007
      0007
@@ -23,8 +24,10 @@
 .L000B
      000B
 .L000C
+.zCounter
      000C
 .L000D
+.xCounter
      000D
 .L000E
      000E
@@ -47,10 +50,12 @@
 .L0017
      0017
 .L0018
+.xBlock
      0018
 .L0019
      0019
 .L001A
+.zBlock
      001A
 .L001B
      001B
@@ -3715,17 +3720,17 @@
      140E   12
 .L140F
      140F   01
-.sub_C1410
+.SpawnEnemies
      1410   AD 52 0C   LDA &0C52
      1413   D0 04      BNE &1419
      1415   A9 01      LDA #&01
      1417   D0 0B      BNE &1424
-.C1419
+.popu1
      1419   20 F0 33   JSR &33F0
      141C   CD 07 0C   CMP &0C07
      141F   90 03      BCC &1424
      1421   AD 07 0C   LDA &0C07
-.C1424
+.popu2
      1424   8D 6F 0C   STA &0C6F
      1427   20 EB 14   JSR &14EB
      142A   AD 6F 0C   LDA &0C6F
@@ -3738,7 +3743,7 @@
      1439   BD E3 14   LDA &14E3,X
      143C   8D 59 5E   STA &5E59
      143F   60         RTS
-.sub_C1440
+.SpawnPlayerTrees
      1440   A9 00      LDA #&00
      1442   20 0E 21   JSR &210E
      1445   86 0B      STX &0B
@@ -3760,7 +3765,7 @@
 .C1468
      1468   20 24 12   JSR &1224
      146B   B0 F2      BCS &145F
-.C146D
+.SpawnTrees
      146D   A9 30      LDA #&30
      146F   38         SEC
      1470   ED 6F 0C   SBC &0C6F
@@ -3840,7 +3845,7 @@
      14E8   03
      14E9   06
      14EA   01
-.sub_C14EB
+.CreateEnemies
      14EB   20 BC 15   JSR &15BC
      14EE   A2 00      LDX #&00
 .C14F0
@@ -3954,10 +3959,10 @@
      15B9   07
      15BA   03
      15BB   01
-.sub_C15BC
+.GetHighestTiles
      15BC   A2 00      LDX #&00
      15BE   86 06      STX &06
-.C15C0
+.high1
      15C0   8A         TXA
      15C1   29 07      AND #&07
      15C3   0A         ASL A
@@ -3976,7 +3981,7 @@
      15DA   C9 1C      CMP #&1C
      15DC   90 02      BCC &15E0
      15DE   C6 0C      DEC &0C
-.C15E0
+.high2
      15E0   A9 04      LDA #&04
      15E2   85 0D      STA &0D
      15E4   A5 18      LDA &18
@@ -3984,7 +3989,7 @@
      15E8   C9 1C      CMP #&1C
      15EA   90 02      BCC &15EE
      15EC   C6 0D      DEC &0D
-.C15EE
+.high3
      15EE   20 78 2B   JSR &2B78
      15F1   29 0F      AND #&0F
      15F3   D0 1C      BNE &1611
@@ -3996,12 +4001,12 @@
      1601   C5 06      CMP &06
      1603   90 02      BCC &1607
      1605   85 06      STA &06
-.C1607
+.high4
      1607   A5 24      LDA &24
      1609   9D 60 5B   STA &5B60,X
      160C   A5 26      LDA &26
      160E   9D A0 5B   STA &5BA0,X
-.C1611
+.high5
      1611   E6 24      INC &24
      1613   C6 0D      DEC &0D
      1615   D0 D7      BNE &15EE
@@ -14908,6 +14913,7 @@
      5B0D   45
      5B0E   52
      5B0F   53
+.maxTileHeight
      5B10   4F
      5B11   4E
      5B12   0D
@@ -14988,6 +14994,7 @@
      5B5D   43
      5B5E   3A
      5B5F   53
+.xMaxTileHeight
      5B60   42
      5B61   43
      5B62   23
@@ -15052,6 +15059,7 @@
      5B9D   20
      5B9E   20
      5B9F   20
+.zMaxTileHeight
      5BA0   20
      5BA1   20
      5BA2   20
@@ -15148,7 +15156,6 @@
      5BFD   1E
      5BFE   20
      5BFF   5C
-.sub_C5C00
      5C00   60         RTS
 .sub_C5C01
      5C01   84 6F      STY &6F

@@ -101,6 +101,7 @@
  SKIP 1                 \ ???
 
 .L0006
+.heightOfPeak
 
  SKIP 1                 \ ???
 
@@ -125,10 +126,12 @@
  SKIP 1                 \ ???
 
 .L000C
+.zCounter
 
  SKIP 1                 \ ???
 
 .L000D
+.xCounter
 
  SKIP 1                 \ ???
 
@@ -173,6 +176,7 @@
  SKIP 1                 \ ???
 
 .L0018
+.xBlock
 
  SKIP 1                 \ ???
 
@@ -181,6 +185,7 @@
  SKIP 1                 \ ???
 
 .L001A
+.zBlock
 
  SKIP 1                 \ ???
 
@@ -4477,24 +4482,25 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1410
+\       Name: SpawnEnemies
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Calculate the number of enemies for this landscape, add them to
+\             the landscape and set the palette accordingly
 \
 \ ******************************************************************************
 
-.sub_C1410
+.SpawnEnemies
 
- LDA landscapeZero      \ If this is not landscape 0000, jump to C1419
- BNE C1419
+ LDA landscapeZero      \ If this is not landscape 0000, jump to popu1
+ BNE popu1
 
  LDA #1                 \ This is landscape 0000, so set A = 1 to use for the
                         \ total number of enemies
 
- BNE C1424              \ Jump to C1424 to store the value of A in 
+ BNE popu2              \ Jump to popu2 to store the value of A in 
 
-.C1419
+.popu1
 
  JSR GetEnemyCount      \ Set A to the enemy count for this landscape, which is
                         \ derived from the top digit of the landscape number and
@@ -4506,17 +4512,17 @@ L1145 = C1144+1
                         \ values for higher landscape numbers
 
  CMP maxEnemyCount      \ If A < maxEnemyCount then skip the following
- BCC C1424              \ instruction
+ BCC popu2              \ instruction
 
  LDA maxEnemyCount      \ Set A = maxEnemyCount, so the number of enemies does
                         \ not exceed the value of maxEnemyCount
 
-.C1424
+.popu2
 
  STA enemyCount         \ Store the number of enemies for this landscape in
                         \ enemyCount
 
- JSR sub_C14EB          \ ???
+ JSR CreateEnemies      \ Add the required number of enemies to the landscape
 
                         \ We now update colours 2 and 3 in the first palette in
                         \ colourPalettes according to the number of enemies
@@ -4538,14 +4544,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1440 (Part 1 of 2)
+\       Name: SpawnPlayerTrees (Part 1 of 2)
 \       Type: Subroutine
-\   Category: ???
+\   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C1440
+.SpawnPlayerTrees
 
  LDA #0
  JSR sub_C210E
@@ -4559,7 +4565,7 @@ L1145 = C1144+1
  LDA #&11
  STA zTile
  JSR sub_C1EFF
- JMP C146D
+ JMP SpawnTrees
 
 .C145F
 
@@ -4573,7 +4579,7 @@ L1145 = C1144+1
  JSR sub_C1224
  BCS C145F
 
-.C146D
+.SpawnTrees
 
  LDA #&30
  SEC
@@ -4666,9 +4672,9 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1440 (Part 2 of 2)
+\       Name: SpawnPlayerTrees (Part 2 of 2)
 \       Type: Subroutine
-\   Category: ???
+\   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -4679,6 +4685,7 @@ L1145 = C1144+1
  AND #&1E
  CMP #&1E
  BNE CRE06
+
  PLA
  PLA
  CLC
@@ -4688,7 +4695,8 @@ L1145 = C1144+1
  CLC
  ADC #&6E
  PHA
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4720,16 +4728,17 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C14EB
+\       Name: CreateEnemies
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Add the required number of enemies to the landscape
 \
 \ ******************************************************************************
 
-.sub_C14EB
+.CreateEnemies
 
- JSR sub_C15BC
+ JSR GetHighestTiles
+
  LDX #0
 
 .C14F0
@@ -4765,14 +4774,14 @@ L1145 = C1144+1
  STA L5B08,X
  STA L5B09,X
  STA L5B0F,X
- STA L5B10,X
- STA L5B11,X
- STA L5B17,X
- STA L5B18,X
- STA L5B19,X
- LDA L5B60,X
+ STA maxTileHeight,X
+ STA maxTileHeight+1,X
+ STA maxTileHeight+7,X
+ STA maxTileHeight+8,X
+ STA maxTileHeight+9,X
+ LDA xMaxTileHeight,X
  STA xTile
- LDA L5BA0,X
+ LDA zMaxTileHeight,X
  STA zTile
  LDX L006E
  BNE C155F
@@ -4838,7 +4847,7 @@ L1145 = C1144+1
 
 .P1591
 
- LDA L5B10,X
+ LDA maxTileHeight,X
  CMP L0006
  BNE C159D
  TXA
@@ -4884,84 +4893,213 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C15BC
+\       Name: GetHighestTiles
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Calculate both the highest tiles in each 4x4 block of tiles in the
+\             landscape and the height of the landscape peak
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   maxTileHeight       The height of the highest tile in each 4x4 block in the
+\                       landscape
+\
+\   xMaxTileHeight      The tile x-coordinate of the highest tile in each 4x4
+\                       block in the landscape
+\
+\   zMaxTileHeight      The tile z-coordinate of the highest tile in each 4x4
+\                       block in the landscape
+\
+\   heightOfPeak        The height of the highest tile in the landscape
 \
 \ ******************************************************************************
 
-.sub_C15BC
+.GetHighestTiles
 
- LDX #0
- STX L0006
+                        \ This routine works through the tile corners in the
+                        \ landscape in 4x4 blocks and finds the highest flat
+                        \ tile within each block, so we can consider putting an
+                        \ enemy there
+                        \
+                        \ To do this we split the 32x32-corner landscape up into
+                        \ 8x8 blocks of 4x4 tile corners each, iterating along
+                        \ each row of 4x4 blocks from left to right, and then
+                        \ moving back four rows to the next row of 4x4 blocks
+                        \ behind
+                        \
+                        \ Because the tile corners along the right and back
+                        \ edges of the landscape don't have tile heights
+                        \ associated with them, we ignore those corners
 
-.C15C0
+ LDX #0                 \ Set X to loop from 0 to 63, to use as a block counter
+                        \ while we work through the landscape in blocks of 4x4
+                        \ tiles, of which there are 64 in total
 
- TXA
- AND #&07
- ASL A
- ASL A
- STA L0018
- TXA
- AND #&38
- LSR A
- STA L001A
- LDA #0
- STA L5B10,X
- LDA #&04
- STA L000C
- LDA L001A
- STA zTile
- CMP #&1C
- BCC C15E0
- DEC L000C
+ STX heightOfPeak       \ Set heightOfPeak = 0 so we can use it to store the
+                        \ maximum tile height as we work through the landscape
+                        \ (so that's the height of the landscape's peak)
 
-.C15E0
+.high1
 
- LDA #&04
- STA L000D
- LDA L0018
- STA xTile
- CMP #&1C
- BCC C15EE
- DEC L000D
+ TXA                    \ Set A = X mod 8
+ AND #7                 \
+                        \ The 32x32-tile landscape splits up into 8x8 blocks of
+                        \ 4x4 tiles each, so this sets A to the number of the
+                        \ block along the left-to-right x-axis row that we are
+                        \ working along (so A goes from 0 to 7 and around again)
 
-.C15EE
+ ASL A                  \ Set xBlock = A * 4
+ ASL A                  \
+ STA xBlock             \ So xBlock is the tile x-coordinate of the tile in the
+                        \ front-left corner of the 4x4 block we are analysing
+                        \ (so xBlock goes 0, 4, 8 ... 24, 28)
+
+ TXA                    \ Set A = X div 8
+ AND #%00111000         \
+                        \ X is in the range 0 to 64, so this instruction has the
+                        \ same effect as AND #%11111000, which is equivalent to
+                        \ a div 8 operation
+                        \
+                        \ The 32x32-tile landscape splits up into 8x8 blocks of
+                        \ 4x4 tiles each, so this sets A to the number of the
+                        \ row of 4x4 blocks along the front-to-back z-axis row
+                        \ that we are working along (so A goes 0, 8, 16 ... 56)
+
+ LSR A                  \ Set zBlock = A / 2
+ STA zBlock             \
+                        \ So zBlock is the tile z-coordinate of the tile in the
+                        \ front-left corner of each of the 4x4 blocks in the row
+                        \ that we are analysing (so zBlock goes 0, 4, 8 ... 24,
+                        \ 28)
+
+                        \ Essentially, by this point we have converted the loop
+                        \ counter in X from the sequence 0 to 63 into an inner
+                        \ loop of xBlock and an outer loop of zBlock, with both
+                        \ variables counting 0, 4, 8 ... 24, 28
+                        \
+                        \ We can now use (xBlock, zBlock) as a tile coordinate
+                        \ and we can store the highest tile height within each
+                        \ 4x4 block using the index in X
+
+ LDA #0                 \ Zero the X-th entry in the maxTileHeight table, which
+ STA maxTileHeight,X    \ is where we will store the highest tile height within
+                        \ block X
+
+ LDA #4                 \ Set zCounter = 4 to iterate along the z-axis through
+ STA zCounter           \ each tile in the 4x4 block we are analysing, so
+                        \ zCounter iterates from 4 down to 1
+
+ LDA zBlock             \ Set zTile = zBlock
+ STA zTile              \
+                        \ So we can use zTile as the tile z-coordinate of the
+                        \ tile to analyse within the 4x4 block
+
+ CMP #28                \ If zBlock < 28 then then we are not on the tile row at
+ BCC high2              \ the back of the landscape, so jump to high2 to skip
+                        \ the following instruction
+
+ DEC zCounter           \ We are on the tile row at the back of the landscape,
+                        \ so set zCounter = 3 so it iterates from 3 down to 1
+                        \ for this block, because the blocks along the back row
+                        \ are only three tiles deep (as the landscape is 31
+                        \ tiles deep)
+
+.high2
+
+ LDA #4                 \ Set xCounter = 4 to iterate along the x-axis through
+ STA xCounter           \ each tile in the 4x4 block we are analysing, so
+                        \ xCounter iterates from 4 down to 1
+
+ LDA xBlock             \ Set xTile = xBlock
+ STA xTile              \
+                        \ So we can use xTile as the tile x-coordinate of the
+                        \ tile to analyse within the 4x4 block
+
+ CMP #28                \ If xBlock < 28 then we are not at the right end of the
+ BCC high3              \ tile row, so jump to high3 to skip the following
+                        \ instruction
+
+ DEC xCounter           \ We are at the right end of the tile row, so set
+                        \ xCounter = 3 so it iterates from 3 down to 1 for this
+                        \ block, because the last block on the row is only three
+                        \ tiles across (as the landscape is 31 tiles across)
+
+.high3
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
+                        \
+                        \ This also sets the tile page in tileDataPage and the
+                        \ index in Y, so tileDataPage+Y now points to the tile
+                        \ data entry in the tileData table
 
- AND #&0F
- BNE C1611
- LDA (tileDataPage),Y
- AND #&F0
- CMP L5B10,X
- BCC C1611
- STA L5B10,X
- CMP L0006
- BCC C1607
- STA L0006
+ AND #%00001111         \ Set A to the tile slope for the tile, which is in the
+                        \ bottom nibble of the tile data
 
-.C1607
+ BNE high5              \ If the slope is non-zero then the tile is not flat, so
+                        \ jump to high5 to move on to the next tile in the
 
- LDA xTile
- STA L5B60,X
- LDA zTile
- STA L5BA0,X
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
 
-.C1611
+ AND #%11110000         \ Set A to the tile height, which is in the top nibble
+                        \ of the tile data
 
- INC xTile
- DEC L000D
- BNE C15EE
- INC zTile
- DEC L000C
- BNE C15E0
- INX
- CPX #&40
- BCC C15C0
- RTS
+ CMP maxTileHeight,X    \ If the height of the tile we are analysing is lower
+ BCC high5              \ than the height we have currently stored in the
+                        \ maxTileHeight table for this 4x4 tile block, jump to
+                        \ high5 to move on to the next tile, as this one isn't
+                        \ the highest in either this block or the landscape
+
+ STA maxTileHeight,X    \ If we get here then ths tile we are analysing is the
+                        \ highest in the 4x4 block so far, so store the height
+                        \ in the maxTileHeight table forthis 4x4 tile block so
+                        \ the table ends up recording the highest tile height
+                        \ in each 4x4 block
+
+ CMP heightOfPeak       \ Set heightOfPeak = max(heightOfPeak, A)
+ BCC high4              \
+ STA heightOfPeak       \ So heightOfPeak contains the height of the highest
+                        \ tile that we've analysed so far, which means that
+                        \ heightOfPeak ends up being set to the highest value
+                        \ in the entire landscape, or the height of the peak
+
+.high4
+
+ LDA xTile              \ Store the x-coordinate of the highest tile corner 
+ STA xMaxTileHeight,X   \ in this block (so far) in the xMaxTileHeight table
+                        \ entry for this 4x4 block
+
+ LDA zTile              \ Store the z-coordinate of the highest tile corner 
+ STA zMaxTileHeight,X   \ in this block (so far) in the zMaxTileHeight table
+                        \ entry for this 4x4 block
+
+.high5
+
+ INC xTile              \ Increment xTile to move on to the next tile to the
+                        \ right, for the inner loop
+
+ DEC xCounter           \ Decrement the x-axis counter within this 4x4 block
+
+ BNE high3              \ Loop back until we have processed all the tiles in the
+                        \ 4x4 block, working from left to right
+
+ INC zTile              \ Increment zTile to move on to the next tile towards
+                        \ the back, for the outer loop
+
+ DEC zCounter           \ Decrement the z-axis counter within this 4x4 block
+
+ BNE high2              \ Loop back until we have processed all the tile rows in
+                        \ the 4x4 block, working from front to back
+
+ INX                    \ Increment the block counter in X
+
+ CPX #64                \ Loop back until we have processed all 63 4x4 blocks
+ BCC high1
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -5840,9 +5978,11 @@ L1145 = C1144+1
                         \ This subroutine alters the return stack somehow, need
                         \ to document this here ???
 
- JSR sub_C1410
+ JSR SpawnEnemies       \ Calculate the number of enemies for this landscape,
+                        \ add them to the landscape and set the palette
+                        \ accordingly
 
- JSR sub_C1440          \ This changes the stack ???
+ JSR SpawnPlayerTrees   \ This changes the stack ???
 
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape's secret code
@@ -11360,7 +11500,7 @@ L23E3 = C23E2+1
 L2F2A = C2F29+1
 L2F2B = C2F29+2
 
- STX L5B9F
+ STX xMaxTileHeight+63
  DEC L2F2A
  BEQ C2F37
 
@@ -11436,7 +11576,7 @@ L2F6F = C2F6E+1
 L2F78 = C2F77+1
 L2F79 = C2F77+2
 
- STX L5B9E
+ STX xMaxTileHeight+62
 
 .C2F7A
 
@@ -15228,7 +15368,8 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
-\ This variable contains original fragments of source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -17182,7 +17323,8 @@ L49C1                = &49C1
 \
 \ ------------------------------------------------------------------------------
 \
-\ This variable contains original fragments of source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -17231,7 +17373,8 @@ L49C1                = &49C1
 \
 \ ------------------------------------------------------------------------------
 \
-\ This variable contains original fragments of source code.
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -17241,18 +17384,41 @@ L5B07 = L5B00+7
 L5B08 = L5B00+8
 L5B09 = L5B00+9
 L5B0F = L5B00+15
-L5B10 = L5B00+16
-L5B11 = L5B00+17
-L5B17 = L5B00+23
-L5B18 = L5B00+24
-L5B19 = L5B00+25
-L5B60 = L5B00+96
-L5B9E = L5B00+158
-L5B9F = L5B00+159
-L5BA0 = L5B00+160
 
  EQUB &AA, &14, &2E, &54, &41, &4B, &45, &20
  EQUB &4C, &44, &58, &20, &50, &45, &52, &53
+
+\ ******************************************************************************
+\
+\       Name: maxTileHeight
+\       Type: Variable
+\   Category: Landscape
+\    Summary: The maximum tile height for each 4x4 block of tiles
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table stores the maximum tile height for each 4x4 block of tiles in the
+\ landscape.
+\
+\ The table is laid out with one byte for each 4x4 block, starting in the
+\ front-left corner of the landscape at tile coordinate (0, 0), and moving along
+\ the front row from left to right, and then moving back by four tiles and
+\ moving that row from left to right, until we reach the rear row of 4x4 blocks.
+\
+\ The rear row and rightmost column of blocks are one tile smaller, so they are
+\ 4x3-tile and 3x4-tile blocks, with the far-right block being 3x3 tiles.
+\
+\ You can picture this as partitioning the 31x31-tile landscape into an 8x8
+\ chess board, where each square on the chess board is made up of a 4x4 block of
+\ landscape tiles (and with smaller squares along the right and rear edges).
+\
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
+\
+\ ******************************************************************************
+
+.maxTileHeight
+
  EQUB &4F, &4E, &0D, &14, &B4, &22, &20, &20
  EQUB &20, &20, &20, &20, &43, &50, &58, &20
  EQUB &50, &4C, &41, &59, &45, &52, &49, &4E
@@ -17263,6 +17429,39 @@ L5BA0 = L5B00+160
  EQUB &3A, &42, &45, &51, &20, &74, &61, &6B
  EQUB &35, &0D, &14, &C8, &1E, &20, &20, &20
  EQUB &20, &20, &20, &53, &45, &43, &3A, &53
+
+\ ******************************************************************************
+\
+\       Name: xMaxTileHeight
+\       Type: Variable
+\   Category: Landscape
+\    Summary: The tile x-coordinate of the highest tile within each 4x4 block of
+\             tiles
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table stores the tile x-coordinate of the highest tile within each 4x4
+\ block of tiles in the landscape.
+\
+\ The table is laid out with one byte for each 4x4 block, starting in the
+\ front-left corner of the landscape at tile coordinate (0, 0), and moving along
+\ the front row from left to right, and then moving back by four tiles and
+\ moving that row from left to right, until we reach the rear row of 4x4 blocks.
+\
+\ The rear row and rightmost column of blocks are one tile smaller, so they are
+\ 4x3-tile and 3x4-tile blocks, with the far-right block being 3x3 tiles.
+\
+\ You can picture this as partitioning the 31x31-tile landscape into an 8x8
+\ chess board, where each square on the chess board is made up of a 4x4 block of
+\ landscape tiles (and with smaller squares along the right and rear edges).
+\
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
+\
+\ ******************************************************************************
+
+.xMaxTileHeight
+
  EQUB &42, &43, &23, &31, &3A, &53, &54, &41
  EQUB &20, &45, &4E, &45, &52, &47, &59, &0D
  EQUB &14, &D2, &12, &20, &20, &20, &20, &20
@@ -17271,6 +17470,39 @@ L5BA0 = L5B00+160
  EQUB &20, &20, &20, &4C, &44, &41, &23, &35
  EQUB &3A, &4A, &53, &52, &20, &56, &49, &50
  EQUB &4F, &0D, &14, &E6, &16, &20, &20, &20
+
+\ ******************************************************************************
+\
+\       Name: zMaxTileHeight
+\       Type: Variable
+\   Category: Landscape
+\    Summary: The tile z-coordinate of the highest tile within each 4x4 block of
+\             tiles
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table stores the tile z-coordinate of the highest tile within each 4x4
+\ block of tiles in the landscape.
+\
+\ The table is laid out with one byte for each 4x4 block, starting in the
+\ front-left corner of the landscape at tile coordinate (0, 0), and moving along
+\ the front row from left to right, and then moving back by four tiles and
+\ moving that row from left to right, until we reach the rear row of 4x4 blocks.
+\
+\ The rear row and rightmost column of blocks are one tile smaller, so they are
+\ 4x3-tile and 3x4-tile blocks, with the far-right block being 3x3 tiles.
+\
+\ You can picture this as partitioning the 31x31-tile landscape into an 8x8
+\ chess board, where each square on the chess board is made up of a 4x4 block of
+\ landscape tiles (and with smaller squares along the right and rear edges).
+\
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
+\
+\ ******************************************************************************
+
+.zMaxTileHeight
+
  EQUB &20, &20, &20, &53, &45, &43, &3A, &4A
  EQUB &4D, &50, &20, &74, &61, &6B, &33, &0D
  EQUB &14, &F0, &05, &20, &0D, &14, &FA, &05
@@ -17279,23 +17511,23 @@ L5BA0 = L5B00+160
  EQUB &53, &52, &20, &45, &4D, &49, &52, &50
  EQUB &54, &0D, &15, &0E, &05, &20, &0D, &15
  EQUB &18, &1F, &20, &20, &20, &20, &20, &20
- EQUB &4C, &44, &41, &20, &4F, &42, &54, &59
- EQUB &50, &45, &2C, &58, &3A, &42, &4E, &45
- EQUB &20, &74, &61, &6B, &34, &0D, &15, &22
- EQUB &05, &20, &0D, &15, &2C, &1E, &20, &5C
 
-\ ******************************************************************************
-\
-\       Name: sub_C5C00
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C5C00
-
- RTS
+ EQUB &4C, &44          \ These bytes appear to be unused
+ EQUB &41, &20
+ EQUB &4F, &42
+ EQUB &54, &59
+ EQUB &50, &45
+ EQUB &2C, &58
+ EQUB &3A, &42
+ EQUB &4E, &45
+ EQUB &20, &74
+ EQUB &61, &6B
+ EQUB &34, &0D
+ EQUB &15, &22
+ EQUB &05, &20
+ EQUB &0D, &15
+ EQUB &2C, &1E
+ EQUB &20, &5C
 
 \ ******************************************************************************
 \
@@ -17305,6 +17537,8 @@ L5BA0 = L5B00+160
 \    Summary: ???
 \
 \ ******************************************************************************
+
+ RTS                    \ This instruction appears to be unused
 
 .sub_C5C01
 
@@ -18179,7 +18413,9 @@ L5BA0 = L5B00+160
 
 .PreviewLandscape
 
- JSR sub_C1410
+ JSR SpawnEnemies       \ Calculate the number of enemies for this landscape,
+                        \ add them to the landscape and set the palette
+                        \ accordingly
 
  LDX #3
  LDY #0
@@ -18193,7 +18429,7 @@ L5BA0 = L5B00+160
 
  JSR PrintLandscapeNum  \ Print the four-digit landscape number (0000 to 9999)
 
- JSR sub_C1440          \ This changes the stack ???
+ JSR SpawnPlayerTrees   \ This changes the stack ???
 
  JMP SecretCodeError
 
