@@ -1,6 +1,6 @@
 .L0000
      0000
-.L0001
+.objectSlot
      0001
 .L0002
      0002
@@ -270,7 +270,7 @@
      008E
 .L008F
      008F
-.L0100
+.objectFlags
      0100
 .L0140
      0140
@@ -2486,7 +2486,7 @@
      0C5F   00
 .printTextIn3D
      0C60   00
-.L0C61
+.objectType
      0C61   00
 .L0C62
      0C62   00
@@ -5524,18 +5524,17 @@
      210B   4A
      210C   4E
      210D   C1
-.sub_C210E
+.SpawnObject
      210E   8D 61 0C   STA &0C61
-.sub_C2111
      2111   A2 3F      LDX #&3F
-.P2113
+.sobj1
      2113   BD 00 01   LDA &0100,X
      2116   30 05      BMI &211D
      2118   CA         DEX
      2119   10 F8      BPL &2113
      211B   38         SEC
      211C   60         RTS
-.C211D
+.sobj2
      211D   86 01      STX &01
      211F   AD 61 0C   LDA &0C61
      2122   9D 40 0A   STA &0A40,X

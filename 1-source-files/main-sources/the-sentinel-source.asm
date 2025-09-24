@@ -80,7 +80,7 @@
 
  SKIP 1                 \ ???
 
-.L0001
+.objectSlot
 
  SKIP 1                 \ ???
 
@@ -671,9 +671,12 @@
 
  ORG &0100              \ Set the assembly address to &0100
 
-.L0100
+.objectFlags
 
- SKIP 64                \ ???
+ SKIP 64                \ Object flags for up to 64 3D objects
+                        \
+                        \   * Bit 7 set   = slot is free
+                        \           clear = slot is occupied
 
 .L0140
 
@@ -985,8 +988,10 @@ L09FF = L0900+255
 L0A01 = L0A00+1
 L0A02 = L0A00+2
 L0A3F = L0A00+63
-L0A40 = L0A00+64
+
+objectTypes = L0A00+64
 L0A41 = L0A00+65
+
 L0A7F = L0A00+127
 L0A80 = L0A00+128
 L0A81 = L0A00+129
@@ -1333,9 +1338,9 @@ L0BAB = L0B00+171
                         \
                         \   * Bit 7 set = 3D text
 
-.L0C61
+.objectType
 
- EQUB 0
+ EQUB 0                 \ Storage for the type of object that we are spawning
 
 .L0C62
 
@@ -3704,14 +3709,14 @@ L1145 = C1144+1
  CPX #&90               \ If X >= &90 then skip the following instruction
  BCS rese2
 
- STA L0000,X            \ Zero the X-th byte of zero page
+ STA &0000,X            \ Zero the X-th byte of zero page
 
 .rese2
 
  CPX #&C0               \ If X >= &C0 then skip the following instruction
  BCS rese3
 
- STA L0100,X            \ Zero the X-th byte of L0100
+ STA &0100,X            \ Zero the X-th byte of &0100
 
 .rese3
 
@@ -3737,7 +3742,7 @@ L1145 = C1144+1
 \       Name: ResetVariables2
 \       Type: Subroutine
 \   Category: Main Loop
-\    Summary: Reset the L3E80, L3EC0 and L0100 variable blocks ???
+\    Summary: Reset the L3E80, L3EC0 and objectFlags variable blocks ???
 \
 \ ******************************************************************************
 
@@ -3749,9 +3754,9 @@ L1145 = C1144+1
                         \
                         \   * &3EC0 to &3EFF
                         \
-                        \ and set the following variable block to &80:
+                        \ and set the following variable block to %10000000:
                         \
-                        \   * &0100 to &01EF
+                        \   * objectFlags to objectFlags+63
 
  LDX #&3F               \ Set X to use as a byte counter to run from &3F to 0
 
@@ -3762,8 +3767,8 @@ L1145 = C1144+1
 
  STA L3EC0,X            \ Set the X-th byte of L3EC0 to &FF
 
- LDA #&80               \ Set the X-th byte of L0100 to &80
- STA L0100,X
+ LDA #%10000000         \ Set bit 7 of the X-th byte of objectFlags, to empty
+ STA objectFlags,X      \ the X-th object slot
 
  DEX                    \ Decrement the byte counter
 
@@ -4076,7 +4081,7 @@ L1145 = C1144+1
 
 .C12C1
 
- STA L0C61
+ STA objectType
  LSR L0CE5
  JSR sub_C1B0B
  BCS C12E5
@@ -4553,9 +4558,11 @@ L1145 = C1144+1
 
 .SpawnPlayerTrees
 
- LDA #0
- JSR sub_C210E
- STX L000B
+ LDA #0                 \ Spawn an object of type 0
+ JSR SpawnObject
+
+ STX L000B              \ Set L000B to the slot of the newly spawned object
+
  LDA #&0A
  STA L0C0A
  LDA landscapeZero
@@ -4602,8 +4609,9 @@ L1145 = C1144+1
 
 .P1489
 
- LDA #&02
- JSR sub_C210E
+ LDA #2                 \ Spawn an object of type 2
+ JSR SpawnObject
+
  LDA L0C06
  JSR sub_C1224
  BCS C149A
@@ -4630,7 +4638,7 @@ L1145 = C1144+1
 
  ROL L0C65
  CLC
- ADC L0100
+ ADC objectFlags
  STA sub_C3F00,Y
  INY
  DEX
@@ -4689,7 +4697,7 @@ L1145 = C1144+1
  PLA
  PLA
  CLC
- LDA L0100
+ LDA objectFlags
  ADC #&B6
  PHA
  CLC
@@ -4737,15 +4745,39 @@ L1145 = C1144+1
 
 .CreateEnemies
 
- JSR GetHighestTiles
+ JSR GetHighestTiles    \ Calculate both the highest tiles in each 4x4 block of
+                        \ tiles in the landscape and the height of the
+                        \ landscape peak, putting the results in the following
+                        \ variables:
+                        \
+                        \   * maxTileHeight contains the height of the highest
+                        \     tile in each 4x4 block in the landscape
+                        \
+                        \   * xMaxTileHeight contains the tile x-coordinate of
+                        \     the highest tile in each 4x4 block in the
+                        \     landscape
+                        \
+                        \   * zMaxTileHeight contains the tile z-coordinate of
+                        \     the highest tile in each 4x4 block in the
+                        \     landscape
+                        \
+                        \   * heightOfPeak contains the height of the highest
+                        \     tile in the landscape
 
- LDX #0
+ LDX #0                 \ We now loop through the number of enemies, adding one
+                        \ enemy for each loop and iterating enemyCount tiles, so
+                        \ set an enemy counter in X
+                        \
+                        \ If this is a level with only one enemy, then that
+                        \ enemy must be the Sentinel, so when X = 0, we add the
+                        \ Sentinel to the landscape, otherwise we add a sentry
 
 .C14F0
 
- STX L006E
- LDA #&01
- STA L0A40,X
+ STX L006E              \ Set L006E to the enemy counter in X
+
+ LDA #1
+ STA objectTypes,X
 
 .P14F7
 
@@ -4768,7 +4800,7 @@ L1145 = C1144+1
  CMP T
  BCS C150B
  TAY
- LDX landscapeRandom+&40,Y
+ LDX landscapeRandom+64,Y
  LDA #0
  STA L5B07,X
  STA L5B08,X
@@ -4783,26 +4815,40 @@ L1145 = C1144+1
  STA xTile
  LDA zMaxTileHeight,X
  STA zTile
- LDX L006E
- BNE C155F
+
+ LDX L006E              \ Set X to the enemy counter from L006E
+
+ BNE C155F              \ If the enemy counter is non-zero then we are adding a
+                        \ sentry, so jump to C155F
+
+                        \ If we get here then the enemy counter is zero, so we
+                        \ are adding the Sentinel
+
  STA L0C1A
  LDA xTile
  STA L0C19
- LDA #&05
- STA L0A40
- LDA #&06
- JSR sub_C210E
+
+ LDA #5
+ STA objectTypes
+
+ LDA #6                 \ Spawn an object of type 6
+ JSR SpawnObject
+
  JSR sub_C1EFF
+
  LDA #0
  STA L09C0,X
+
  LDX L006E
 
 .C155F
 
  JSR sub_C1EFF
+
  JSR sub_C196A
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
 
  LSR A
  AND #&3F
@@ -4815,10 +4861,13 @@ L1145 = C1144+1
 .C1576
 
  STA L4A37,X
- INX
- CPX enemyCount
- BCS C1582
- JMP C14F0
+
+ INX                    \ Increment the enemy loop counter in X
+
+ CPX enemyCount         \ If we have added a total of enemyCount enemies, jump
+ BCS C1582              \ to C1582 to finish off
+
+ JMP C14F0              \ Otherewise loop back to add another enemy
 
 .C1582
 
@@ -4851,7 +4900,7 @@ L1145 = C1144+1
  CMP L0006
  BNE C159D
  TXA
- STA landscapeRandom+&40,Y
+ STA landscapeRandom+64,Y
  INY
 
 .C159D
@@ -5264,7 +5313,7 @@ L1145 = C1144+1
  TSX
  STX L0C0D
  LDX L0000
- LDA L0A40,X
+ LDA objectTypes,X
  CMP #&01
  BEQ C16B9
  CMP #&05
@@ -5273,7 +5322,7 @@ L1145 = C1144+1
 .C16B9
 
  STA titleObjectToDraw
- LDA L0100,X
+ LDA objectFlags,X
  BPL C16D9
  JSR sub_C1A54
  BCS C16C9
@@ -5311,7 +5360,7 @@ L1145 = C1144+1
 
  STA L006E
  LDY L0CA8,X
- LDA L0100,Y
+ LDA objectFlags,Y
  BMI C174F
  LDA #0
  JSR sub_C1882
@@ -5371,7 +5420,7 @@ L1145 = C1144+1
  LDA #&80
  STA L0CA0,Y
  LDA #&02
- STA L0A40,X
+ STA objectTypes,X
  JMP C1871
 
 .C176A
@@ -5550,7 +5599,7 @@ L1145 = C1144+1
 
 .C1876
 
- STX L0001
+ STX objectSlot
  LDA L000B
  STA L006E
  JSR sub_C1F84
@@ -5575,9 +5624,9 @@ L1145 = C1144+1
  STY L0C58
  LDA #0
  STA L0014
- LDA L0100,Y
+ LDA objectFlags,Y
  BMI C1911
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP T
  BNE C1911
  JSR sub_C5C01
@@ -5686,9 +5735,9 @@ L1145 = C1144+1
 
 .C1920
 
- LDA L0100,X
+ LDA objectFlags,X
  BMI C1945
- LDA L0A40,X
+ LDA objectTypes,X
  CMP #&01
  BEQ C1930
  CMP #&05
@@ -5782,9 +5831,9 @@ L1145 = C1144+1
 
  DEC L0C80,X
  DEY
- LDA L0100,Y
+ LDA objectFlags,Y
  BMI C1986
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&02
  BNE C1986
  LDA L0CA8,X
@@ -5824,7 +5873,7 @@ L1145 = C1144+1
  TYA
  STA L0CA0,X
  LDA #&04
- STA L0A40,Y
+ STA objectTypes,Y
  LDA #&68
  STA L0CD4
  CLC
@@ -5870,7 +5919,7 @@ L1145 = C1144+1
 
  TXA
  JSR sub_C1AE7
- LDA L0A40,X
+ LDA objectTypes,X
  BNE C1A31
  LDY L0000
  LDA #0
@@ -5893,7 +5942,7 @@ L1145 = C1144+1
 
 .C1A42
 
- STA L0A40,X
+ STA objectTypes,X
 
 .C1A45
 
@@ -5925,8 +5974,10 @@ L1145 = C1144+1
  SEC
  LDA L0C88,X
  BEQ CRE09
- LDA #&02
- JSR sub_C210E
+
+ LDA #2                 \ Spawn an object of type 2
+ JSR SpawnObject
+
  LDA L0C06
  JSR sub_C1224
  BCS CRE09
@@ -5935,7 +5986,7 @@ L1145 = C1144+1
  BCC C1A78
  LDX L0000
  DEC L0C88,X
- LDX L0001
+ LDX objectSlot
  CLC
 
 .CRE09
@@ -6009,11 +6060,11 @@ L1145 = C1144+1
 
 .C1AA9
 
- LDA L0100,X
+ LDA objectFlags,X
  BMI C1AE2
  CMP #&40
  BCS C1AB9
- LDA L0A40,X
+ LDA objectTypes,X
  CMP #&03
  BNE C1AE2
 
@@ -6031,7 +6082,7 @@ L1145 = C1144+1
  BCC C1AE2
  AND #&3F
  TAY
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&02
  BEQ C1AD6
  CMP #&03
@@ -6096,7 +6147,7 @@ L1145 = C1144+1
  SEC
  BIT L0C1F
  BPL CRE10
- STA L0001
+ STA objectSlot
  LDA L000B
  STA L006E
  TXA
@@ -6124,7 +6175,7 @@ L1145 = C1144+1
 
 .sub_C1B0B
 
- LDA L0C61
+ LDA objectType
  CMP #&22
  BNE C1B1C
  JSR sub_C2147
@@ -6155,7 +6206,7 @@ L1145 = C1144+1
  JSR sub_C1BFF
  JSR sub_C1CCC
  BCS C1B98
- LDA L0C61
+ LDA objectType
  AND #&20
  BEQ C1BA9
 
@@ -6166,24 +6217,24 @@ L1145 = C1144+1
  BCC C1B98
  AND #&3F
  TAX
- LDA L0C61
+ LDA objectType
  LSR A
  BCC C1B7D
- LDY L0A40,X
+ LDY objectTypes,X
  BNE C1B98
  JSR sub_C1200
  STX L000B
 
 .P1B5D
 
- LDA L0100,X
+ LDA objectFlags,X
  CMP #&40
  BCC C1B71
  AND #&3F
  TAX
  EOR #&3F
  BNE P1B5D
- LDA L0A40,X
+ LDA objectTypes,X
  STA L0CE6
 
 .C1B71
@@ -6200,9 +6251,9 @@ L1145 = C1144+1
 
 .C1B7D
 
- LDA L0100
+ LDA objectFlags
  BMI C1B98
- LDA L0A40,X
+ LDA objectTypes,X
  CMP #&04
  BEQ C1BDB
  CMP #&06
@@ -6211,7 +6262,7 @@ L1145 = C1144+1
 .C1B8D
 
  JSR sub_C1ED8
- STX L0001
+ STX objectSlot
  CLC
  JSR sub_C2127
  CLC
@@ -6230,12 +6281,13 @@ L1145 = C1144+1
 
 .C1BA9
 
- JSR sub_C2111
+ JSR SpawnObject+3      \ Spawn an object of type objectType
+
  BCS C1B98
  SEC
  JSR sub_C2127
  BCS C1B98
- LDX L0001
+ LDX objectSlot
  LDA L003A
  STA xTile
  LDA L003C
@@ -6248,7 +6300,7 @@ L1145 = C1144+1
 
 .C1BCA
 
- LDA L0A40,X
+ LDA objectTypes,X
  BNE C1BD9
  LDY L000B
  LDA L09C0,Y
@@ -6266,9 +6318,9 @@ L1145 = C1144+1
 
 .P1BDD
 
- LDA L0100,Y
+ LDA objectFlags,Y
  BMI C1BFA
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&01
  BEQ C1BED
  CMP #&05
@@ -6780,7 +6832,7 @@ L1145 = C1144+1
 
 .C1DFF
 
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&03
  BEQ C1E31
  CMP #&02
@@ -6814,7 +6866,7 @@ L1145 = C1144+1
  JSR sub_C1E98
  CMP #&40
  BCS C1E82
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&02
  BEQ C1E52
  SEC
@@ -6859,7 +6911,7 @@ L1145 = C1144+1
 
 .C1E82
 
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&02
  BEQ C1E8D
  LDA #&C0
@@ -6867,7 +6919,7 @@ L1145 = C1144+1
 
 .C1E8D
 
- LDA L0100,Y
+ LDA objectFlags,Y
  CMP #&40
  BCS C1E28
  LDA L0940,Y
@@ -6960,7 +7012,7 @@ L1145 = C1144+1
                         \ tileDataPage+Y now points to the tile data entry in
                         \ the tileData table
 
- LDA L0100,X
+ LDA objectFlags,X
  CMP #&40
  BCC C1EF0
  ORA #&C0
@@ -6978,7 +7030,7 @@ L1145 = C1144+1
 
  STA (tileDataPage),Y
  LDA #&80
- STA L0100,X
+ STA objectFlags,X
  RTS
 
 \ ******************************************************************************
@@ -7005,7 +7057,7 @@ L1145 = C1144+1
  STY L1F77
  AND #&3F
  TAY
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&03
  BEQ C1F1F
  CMP #&06
@@ -7015,8 +7067,8 @@ L1145 = C1144+1
 
  TYA
  ORA #&40
- STA L0100,X
- LDA L0A40,Y
+ STA objectFlags,X
+ LDA objectTypes,Y
  CMP #&06
  BNE C1F37
  LDA L0A00,Y
@@ -7043,7 +7095,7 @@ L1145 = C1144+1
 
  PHA
  LDA #0
- STA L0100,X
+ STA objectFlags,X
  LDA #&E0
  STA L0A00,X
  PLA
@@ -7139,7 +7191,7 @@ L1145 = C1144+1
  JSR sub_C2202
  BIT L0C4D
  BPL C1FD2
- LDY L0001
+ LDY objectSlot
  JSR sub_C5D33
  JMP C1FD5
 
@@ -7347,12 +7399,12 @@ L1145 = C1144+1
 
 .sub_C2096
 
- LDY L0001
+ LDY objectSlot
  CPY L000B
  BEQ C2105
  JSR sub_C5C01
- LDY L0001
- LDX L0A40,Y
+ LDY objectSlot
+ LDX objectTypes,Y
  LDA L2107,X
  CMP L0CD4
  BCS C20AF
@@ -7435,46 +7487,101 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C210E
+\       Name: SpawnObject
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: Add a new object of the specified type to the objectTypes table
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine spawns a new object by searching the objectFlags table for a free
+\ slot. If there is no free slot then the routine returns with the C flag set,
+\ otherwise the C flag is clear, X and objectSlot are set to the slot number of
+\ of the new object, and the object type is added to the objectTypes table.
+\
+\ Note that this routine only adds the object to the objectTypes table; it
+\ doesn't update the flags or add any other information about the object.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The type of object to spawn:
+\
+\                         * 0 = ???
+\
+\                         * 2 = ???
+\
+\                         * 6 = ???
+\
+\                         * There may be others
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   The slot number of the new object (if successful)
+\
+\   objectSlot          The slot number of the new object (if successful)
+\
+\   C flag              Success flag:
+\
+\                         * Clear if the object was successfully spawned
+\
+\                         * Set if there are no free slots for the new object
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   SpawnObject+3       Spawn an object of the type specified in objectType
 \
 \ ******************************************************************************
 
-.sub_C210E
+.SpawnObject
 
- STA L0C61
+ STA objectType         \ Store the object type in objectType for future
+                        \ reference
 
-\ ******************************************************************************
-\
-\       Name: sub_C2111
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
+ LDX #63                \ In order to be able to create a new object, we need to
+                        \ find a free slot in the objectFlags table
+                        \
+                        \ The game can support up to 64 objects, each with its
+                        \ own slot, so set a counter in X to work through the
+                        \ slots until we find a free space
 
-.sub_C2111
+.sobj1
 
- LDX #&3F
+ LDA objectFlags,X      \ If bit 7 of the X-th entry in the objectFlags table is
+ BMI sobj2              \ set then this slot is empty, so jump to sobj2 use this
+                        \ slot for our new object
 
-.P2113
+ DEX                    \ Otherwise decrement the slot counter in X to move on
+                        \ to the next slot
 
- LDA L0100,X
- BMI C211D
- DEX
- BPL P2113
- SEC
- RTS
+ BPL sobj1              \ Loop back to sobj1 to check the next slot
 
-.C211D
+ SEC                    \ If we get here then we have checked all 64 slots and
+                        \ none of them are free, so set the C flag to indicate
+                        \ that we have failed to spawn the object
 
- STX L0001
- LDA L0C61
- STA L0A40,X
- CLC
- RTS
+ RTS                    \ Return from the subroutine
+
+.sobj2
+
+                        \ If we get here then we have found an empty slot in the
+                        \ objectFlags table at index X
+
+ STX objectSlot         \ Set objectSlot to the slot number in X
+
+ LDA objectType         \ Set the corresponding entry in the objectTypes table
+ STA objectTypes,X      \ to the object type that we are spawning, which we
+                        \ stored in objectType above
+
+ CLC                    \ Clear the C flag to indicate that we have successfully
+                        \ added a new object to the objectFlags table
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7487,7 +7594,7 @@ L1145 = C1144+1
 
 .sub_C2127
 
- LDY L0A40,X
+ LDY objectTypes,X
  LDA L0C0A
  BCC C2136
  SBC L2140,Y
@@ -7530,13 +7637,14 @@ L1145 = C1144+1
 
 .sub_C2147
 
- LDA #0
- JSR sub_C210E
+ LDA #0                 \ Spawn an object of type 0
+ JSR SpawnObject
+
  LDX L000B
  LDA L0940,X
  CLC
  ADC #&01
- LDX L0001
+ LDX objectSlot
  JSR sub_C1224
  BCS CRE11
  SEC
@@ -7569,7 +7677,7 @@ L1145 = C1144+1
 .C2191
 
  JSR sub_C1200
- LDX L0001
+ LDX objectSlot
  STX L000B
 
 .C2198
@@ -7602,7 +7710,7 @@ L1145 = C1144+1
  INX
  AND #&3F
  TAY
- LDA L0100,Y
+ LDA objectFlags,Y
  CMP #&40
  BCS P21A6
  DEX
@@ -7621,7 +7729,7 @@ L1145 = C1144+1
  BMI C21F0
  ORA T
  BNE C21D5
- LDA L0A40,Y
+ LDA objectTypes,Y
  CMP #&06
  BEQ C21F0
 
@@ -7636,7 +7744,7 @@ L1145 = C1144+1
 
 .P21E5
 
- LDA L0100,Y
+ LDA objectFlags,Y
  AND #&3F
  TAY
  DEX
@@ -7653,7 +7761,7 @@ L1145 = C1144+1
 .C21F3
 
  JSR sub_C5D33
- LDA L0100,Y
+ LDA objectFlags,Y
  AND #&3F
  TAY
  DEC L0C6B
@@ -9078,7 +9186,7 @@ L23E3 = C23E2+1
 
  AND #&3F
  TAY
- LDA L0100,Y
+ LDA objectFlags,Y
  CMP #&40
  BCS P28C4
  LDA L0940,Y
@@ -17543,7 +17651,7 @@ L5B0F = L5B00+15
 .sub_C5C01
 
  STY L006F
- LDA L0A40,Y
+ LDA objectTypes,Y
  STA L004C
  LDX L006E
  JSR sub_C5DC4
@@ -18273,7 +18381,7 @@ L5B0F = L5B00+15
  LDA #&03
  STA L0C4C
  LDA #&01
- STA L0001
+ STA objectSlot
  LDA #&C0
  STA L0C4D
  STA L0C6D
