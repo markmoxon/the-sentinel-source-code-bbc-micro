@@ -925,24 +925,27 @@ L0901 = L0900+1
 L0902 = L0900+2
 L0910 = L0900+16
 L093F = L0900+63
+
 L0940 = L0900+64
 L0941 = L0900+65
 L0942 = L0900+66
 L0950 = L0900+80
 L097F = L0900+127
+
 L0980 = L0900+128
 L0981 = L0900+129
 L0982 = L0900+130
 L0990 = L0900+144
 L09BF = L0900+191
+
 L09C0 = L0900+192
 L09C1 = L0900+193
 L09C2 = L0900+194
 L09D0 = L0900+208
 L09FF = L0900+255
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -985,37 +988,48 @@ L09FF = L0900+255
 
 .L0A00
 
-L0A01 = L0A00+1
-L0A02 = L0A00+2
-L0A3F = L0A00+63
-
-objectTypes = L0A00+64
-L0A41 = L0A00+65
-
-L0A7F = L0A00+127
-L0A80 = L0A00+128
-L0A81 = L0A00+129
-L0AE0 = L0A00+224
-L0AE1 = L0A00+225
-
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &E0
- EQUB &00, &06, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: objectTypes
+\       Type: Variable
+\   Category: 3D objects
+\    Summary: The object types table for up to 64 objects
+\
+\ ******************************************************************************
+
+.objectTypes
+
+ EQUB &00, &06, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &09
- EQUB &6F, &70, &71, &73, &74, &75, &76, &78
- EQUB &79, &7B, &7C, &7E, &7F, &81, &82, &84
+
+\ ******************************************************************************
+\
+\       Name: L0A00
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L0A80
+
+ EQUB &6F, &70, &71, &73, &74, &75, &76, &78        \ These values are workspace
+ EQUB &79, &7B, &7C, &7E, &7F, &81, &82, &84        \ noise and have no meaning
  EQUB &86, &87, &89, &8B, &8D, &8E, &90, &92
  EQUB &95, &96, &98, &9A, &9C, &9E, &A0, &A2
  EQUB &73, &75, &76, &77, &78, &79, &7A, &7C
@@ -1026,8 +1040,20 @@ L0AE1 = L0A00+225
  EQUB &58, &59, &5A, &5A, &A1, &A3, &B1, &B0
  EQUB &AC, &AD, &B3, &B3, &A9, &AA, &B9, &B9
  EQUB &BC, &BC, &C6, &C6, &C4, &C4, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: L0A00
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L0AE0
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
@@ -1042,22 +1068,23 @@ L0AE1 = L0A00+225
 
 .L0B00
 
-L0B01 = L0B00+1
-L0B40 = L0B00+64
-L0B56 = L0B00+86
-L0BA0 = L0B00+160
-L0BAB = L0B00+171
-
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &10, &10
- EQUB &10, &10, &10, &10, &10, &10, &10, &10
- EQUB &10, &10, &10, &10, &10, &10, &10, &10
+
+.L0B40
+
+L0B56 = L0B00+86
+L0BA0 = L0B00+160
+L0BAB = L0B00+171
+
+ EQUB &10, &10, &10, &10, &10, &10, &10, &10        \ These values are workspace
+ EQUB &10, &10, &10, &10, &10, &10, &10, &10        \ noise and have no meaning
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
@@ -1119,7 +1146,9 @@ L0BAB = L0B00+171
 
  EQUB 0
 
-.maxEnemyCount          \ The maximum number of enemies that can appear on the
+.maxEnemyCount
+
+ EQUB 0                 \ The maximum number of enemies that can appear on the
                         \ current landscape, which is calculated as follows:
                         \
                         \   min(8, 1 + (landscapeNumber div 10))
@@ -1128,9 +1157,6 @@ L0BAB = L0B00+171
                         \ of 1, landscapes 0100 to 0199 have a maximum enemy
                         \ count of 2, and so on up to landscapes 0700 and up,
                         \ which have a maximum enemy count of 8
-
-
- EQUB 0
 
 .tileDataMultiplier
 
@@ -4776,19 +4802,24 @@ L1145 = C1144+1
 
  STX L006E              \ Set L006E to the enemy counter in X
 
- LDA #1
+ LDA #1                 \ Set the object type for object X to 1 ???
  STA objectTypes,X
 
 .P14F7
 
  JSR sub_C158D
+
  BCC C150B
- LDA L0006
+
+ LDA heightOfPeak
  SEC
- SBC #&10
- STA L0006
+ SBC #16
+ STA heightOfPeak
+
  BNE P14F7
+
  STX enemyCount
+
  JMP C1582
 
 .C150B
@@ -4800,7 +4831,7 @@ L1145 = C1144+1
  CMP T
  BCS C150B
  TAY
- LDX landscapeRandom+64,Y
+ LDX landscapePeaks,Y
  LDA #0
  STA L5B07,X
  STA L5B08,X
@@ -4884,32 +4915,68 @@ L1145 = C1144+1
 \
 \       Name: sub_C158D
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Return a list of the highest peaks in the landscape (which may be
+\             just one peak, or multiple peaks that are all the same height)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Success flag:
+\
+\                         * Clear if the list of highest peaks is non-empty
+\
+\                         * Set if the list of highest peaks is empty
 \
 \ ******************************************************************************
 
 .sub_C158D
 
- LDX #&3F
- LDY #0
+                        \ We start by fetching all the 4x4 tile blocks from the
+                        \ landscape whose height matches heightOfPeak (so that's
+                        \ all the 4x4 blocks whose highest tile is equal to the
+                        \ highest peak in the landscape)
+                        \
+                        \ There may be one or several of these tile blocks
+
+ LDX #63                \ Set an index in X to work through the 4x4 tile blocks,
+                        \ of which there are 64
+
+ LDY #0                 \ Set Y = 0 to count the number of tile blocks whose
+                        \ height matches the highest peak
 
 .P1591
 
- LDA maxTileHeight,X
- CMP L0006
- BNE C159D
- TXA
- STA landscapeRandom+64,Y
- INY
+ LDA maxTileHeight,X    \ If the highest tile in the X-th tile block does not
+ CMP heightOfPeak       \ equal the height of the highest peak, jump to C159D to
+ BNE C159D              \ move on to the next tile block
+
+ TXA                    \ Store the number of the tile block in the Y-th byte of,
+ STA landscapePeaks,Y   \ landscapePeaks, so we end up compiling a list of all
+                        \ the tile blocks that equal the height of the highest
+                        \ peak at landscapePeaks
+
+ INY                    \ Increment the counter in Y as we have just added a
+                        \ block number to landscapePeaks
 
 .C159D
 
- DEX
- BPL P1591
- TYA
- BEQ C15B2
- STA T
+ DEX                    \ Decrement the block counter in X
+
+ BPL P1591              \ Loop back until we have checked the heights of all the
+                        \ tile blocks
+
+                        \ By this point we have a list of all the highest tile
+                        \ blocks in a list of length Y at landscapePeaks
+
+ TYA                    \ Set A to the length of the list at landscapePeaks
+
+ BEQ C15B2              \ If the list is empty then jump to C15B2 return a
+                        \ failure response
+
+ STA T                  \ Set T to the length of the list at landscapePeaks
+
  LDY #&FF
 
 .P15A7
@@ -4919,13 +4986,22 @@ L1145 = C1144+1
  BCC P15A7
  LDA L15B4,Y
  STA L0027
- CLC
- RTS
+
+ CLC                    \ Clear the C flag to indicate that we have successfully
+                        \ found at least one tile block that matches the height
+                        \ of the highest peak
+
+ RTS                    \ Return from the subroutine
 
 .C15B2
 
- SEC
- RTS
+ SEC                    \ If we get here then we have checked all 64 tile blocks
+                        \ and none of them are at a height of heightOfPeak, so
+                        \ set the C flag to indicate that we have failed to find
+                        \ any tile blocks that match the height of the highest
+                        \ peak
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -8906,15 +8982,15 @@ L23E3 = C23E2+1
  LDA L0AE0,Y
  CMP #&02
  BCS C27A9
- STA L0AE1,Y
+ STA L0AE0+1,Y
  LDA L0A80,Y
- STA L0A81,Y
+ STA L0A80+1,Y
  LDA #&20
  STA L0005
  DEC zTile
  LDA #&FF
  STA L0B00,Y
- STA L0B01,Y
+ STA L0B00+1,Y
  STA L5520,Y
  STA L5500,Y
  LDA #&14
@@ -9444,7 +9520,7 @@ L23E3 = C23E2+1
 
  LDA L0180,X
  AND #&0F
- STA L0A7F
+ STA objectTypes+63
  BEQ CRE17
  LDA yTile
  STA L093F
@@ -12360,8 +12436,8 @@ L314A = C3148+2
  LDA #&80               \ Set L09FF = &80 ???
  STA L09FF
 
- LDA #&E0               \ Set L0A3F = &E0 ???
- STA L0A3F
+ LDA #&E0               \ Set L0A00+63 = &E0 ???
+ STA L0A00+63
 
  LDA #2                 \ Set L097F = 2 ???
  STA L097F
@@ -17437,16 +17513,22 @@ L49C1                = &49C1
 \ ******************************************************************************
 
 .landscapeRandom
+
 .stripData
 
  EQUB &44, &58, &20, &45, &54, &45, &4D, &0D
  EQUB &14, &3C, &05, &20, &0D, &14, &46, &23
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
  EQUB &41, &3A, &4A, &53, &52, &20, &45, &4D
- EQUB &49, &52, &54, &45, &53, &54, &3A, &42
+ EQUB &49, &52
+
+ EQUB &54, &45, &53, &54, &3A, &42
  EQUB &43, &43, &20, &6D, &65, &61, &32, &0D
  EQUB &14, &50, &05, &20, &0D, &14, &5A, &1A
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
+
+.landscapePeaks
+
  EQUB &41, &3A, &53, &54, &41, &20, &4D, &45
  EQUB &41, &4E, &59, &2C, &58, &20, &0D, &14
  EQUB &64, &05, &20, &0D, &14, &6E, &1C, &20
@@ -18473,7 +18555,7 @@ L5B0F = L5B00+15
 
 .sub_C5F80
 
- STA L0A41
+ STA objectTypes+1
  LDA L5FBC,Y
  CLC
  ADC L0982
@@ -18489,8 +18571,8 @@ L5B0F = L5B00+15
  LDA L5FE2,Y
  STA L09C2
  LDA #0
- STA L0A02
- STA L0A01
+ STA L0A00+2
+ STA L0A00+1
  LDA L5FDF,Y
  STA L09C1
  LDX #&02
