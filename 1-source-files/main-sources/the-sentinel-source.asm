@@ -101,7 +101,7 @@
  SKIP 1                 \ ???
 
 .L0006
-.heightOfPeak
+.tileAltitude
 
  SKIP 1                 \ ???
 
@@ -276,7 +276,7 @@
                         \ As a result we tend to use the terms "tile" and "tile
                         \ corner" interchangeably, depending on the context
 
-.L0027
+.bitMask
 
  SKIP 1                 \ ???
 
@@ -1142,7 +1142,7 @@ L0BAB = L0B00+171
 
  EQUB &28
 
-.L0C06
+.lowestEnemyHeight
 
  EQUB 0
 
@@ -4602,7 +4602,7 @@ L1145 = C1144+1
 
 .C145F
 
- LDA L0C06
+ LDA lowestEnemyHeight
  CMP #&06
  BCC C1468
  LDA #&06
@@ -4638,7 +4638,7 @@ L1145 = C1144+1
  LDA #2                 \ Spawn an object of type 2
  JSR SpawnObject
 
- LDA L0C06
+ LDA lowestEnemyHeight
  JSR sub_C1224
  BCS C149A
  DEC L001E
@@ -4772,9 +4772,8 @@ L1145 = C1144+1
 .CreateEnemies
 
  JSR GetHighestTiles    \ Calculate both the highest tiles in each 4x4 block of
-                        \ tiles in the landscape and the height of the
-                        \ landscape peak, putting the results in the following
-                        \ variables:
+                        \ tiles in the landscape and the altitude of the highest
+                        \ tile, putting the results in the following variables:
                         \
                         \   * maxTileHeight contains the height of the highest
                         \     tile in each 4x4 block in the landscape
@@ -4787,7 +4786,7 @@ L1145 = C1144+1
                         \     the highest tile in each 4x4 block in the
                         \     landscape
                         \
-                        \   * heightOfPeak contains the height of the highest
+                        \   * tileAltitude contains the height of the highest
                         \     tile in the landscape
 
  LDX #0                 \ We now loop through the number of enemies, adding one
@@ -4798,40 +4797,55 @@ L1145 = C1144+1
                         \ enemy must be the Sentinel, so when X = 0, we add the
                         \ Sentinel to the landscape, otherwise we add a sentry
 
-.C14F0
+.cren1
 
  STX L006E              \ Set L006E to the enemy counter in X
 
  LDA #1                 \ Set the object type for object X to 1 ???
  STA objectTypes,X
 
-.P14F7
+                        \ We now work down the landscape, from the highest peaks
+                        \ down to lower altitudes, looking for suitable tile
+                        \ blocks to place an enemy
+                        \
+                        \ To do this we start with tile blocks that are at a
+                        \ height of tileAltitude (which we set above to the
+                        \ height of the highest tile in the landscape), and we
+                        \ work down in steps of 16
 
- JSR sub_C158D
+.cren2
 
- BCC C150B
+ JSR GetTilesAtHeight   \ Set tilesAtHeight to a list of tile block numbers
+                        \ whose highest tiles are at height tileAltitude,
+                        \ returning the length of the list in T and a bitmask
+                        \ in bitMask that has a matching number of leading
+                        \ zeroes as T
 
- LDA heightOfPeak
+ BCC cren3              \ If the call to GetTilesAtHeight returns no tile blocks
+                        \ at this height then the C flag will be clear, so jump
+                        \ to cren3 to skip the following
+
+ LDA tileAltitude       \ Set tileAltitude = tileAltitude - 16
  SEC
  SBC #16
- STA heightOfPeak
+ STA tileAltitude
 
- BNE P14F7
+ BNE cren2
 
  STX enemyCount
 
- JMP C1582
+ JMP cren6
 
-.C150B
+.cren3
 
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
 
- AND L0027
+ AND bitMask
  CMP T
- BCS C150B
+ BCS cren3
  TAY
- LDX landscapePeaks,Y
+ LDX tilesAtHeight,Y
  LDA #0
  STA L5B07,X
  STA L5B08,X
@@ -4849,8 +4863,8 @@ L1145 = C1144+1
 
  LDX L006E              \ Set X to the enemy counter from L006E
 
- BNE C155F              \ If the enemy counter is non-zero then we are adding a
-                        \ sentry, so jump to C155F
+ BNE cren4              \ If the enemy counter is non-zero then we are adding a
+                        \ sentry, so jump to cren4
 
                         \ If we get here then the enemy counter is zero, so we
                         \ are adding the Sentinel
@@ -4872,7 +4886,7 @@ L1145 = C1144+1
 
  LDX L006E
 
-.C155F
+.cren4
 
  JSR sub_C1EFF
 
@@ -4886,38 +4900,43 @@ L1145 = C1144+1
  ORA #&05
  STA L0C30,X
  LDA #&14
- BCC C1576
+ BCC cren5
  LDA #&EC
 
-.C1576
+.cren5
 
  STA L4A37,X
 
  INX                    \ Increment the enemy loop counter in X
 
  CPX enemyCount         \ If we have added a total of enemyCount enemies, jump
- BCS C1582              \ to C1582 to finish off
+ BCS cren6              \ to cren6 to finish off
 
- JMP C14F0              \ Otherewise loop back to add another enemy
+ JMP cren1              \ Otherewise loop back to add another enemy
 
-.C1582
+.cren6
 
- LDA L0006
+ LDA tileAltitude
  LSR A
  LSR A
  LSR A
  LSR A
- STA L0C06
+ STA lowestEnemyHeight
  CLC
  RTS
 
 \ ******************************************************************************
 \
-\       Name: sub_C158D
+\       Name: GetTilesAtHeight
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Return a list of the highest peaks in the landscape (which may be
-\             just one peak, or multiple peaks that are all the same height)
+\    Summary: Return a list of tile blocks at a specified height
+\
+\ ------------------------------------------------------------------------------
+\
+\ Argument:
+\
+\   tileAltitude        The tile height to match
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4925,67 +4944,94 @@ L1145 = C1144+1
 \
 \   C flag              Success flag:
 \
-\                         * Clear if the list of highest peaks is non-empty
+\                         * Set if no tile blocks are at height tileAltitude
 \
-\                         * Set if the list of highest peaks is empty
+\                         * Clear if at least one tile block is at height
+\                           tileAltitude
+\
+\   tilesAtHeight       A list of tile block numbers whose highest tiles match
+\                       the height in tileAltitude
+\
+\   T                   The number of entries in the list at tilesAtHeight
+\
+\   bitMask             A bitmask with a matching number of leading zeroes as T
 \
 \ ******************************************************************************
 
-.sub_C158D
+.GetTilesAtHeight
 
                         \ We start by fetching all the 4x4 tile blocks from the
-                        \ landscape whose height matches heightOfPeak (so that's
-                        \ all the 4x4 blocks whose highest tile is equal to the
-                        \ highest peak in the landscape)
-                        \
-                        \ There may be one or several of these tile blocks
+                        \ landscape whose height matches tileAltitude (so that's
+                        \ all the 4x4 blocks whose highest tile is at a height
+                        \ of tileAltitude)
 
- LDX #63                \ Set an index in X to work through the 4x4 tile blocks,
+ LDX #63                \ Set an index in X to work through all 4x4 tile blocks,
                         \ of which there are 64
 
  LDY #0                 \ Set Y = 0 to count the number of tile blocks whose
-                        \ height matches the highest peak
+                        \ height matches tileAltitude
 
-.P1591
+.peak1
 
  LDA maxTileHeight,X    \ If the highest tile in the X-th tile block does not
- CMP heightOfPeak       \ equal the height of the highest peak, jump to C159D to
- BNE C159D              \ move on to the next tile block
+ CMP tileAltitude       \ have a height of tileAltitude, jump to peak2 to move
+ BNE peak2              \ on to the next tile block
 
  TXA                    \ Store the number of the tile block in the Y-th byte of,
- STA landscapePeaks,Y   \ landscapePeaks, so we end up compiling a list of all
-                        \ the tile blocks that equal the height of the highest
-                        \ peak at landscapePeaks
+ STA tilesAtHeight,Y    \ tilesAtHeight, so we end up compiling a list of all
+                        \ the tile blocks that have a height of tileAltitude
 
  INY                    \ Increment the counter in Y as we have just added a
-                        \ block number to landscapePeaks
+                        \ block number to tilesAtHeight
 
-.C159D
+.peak2
 
  DEX                    \ Decrement the block counter in X
 
- BPL P1591              \ Loop back until we have checked the heights of all the
+ BPL peak1              \ Loop back until we have checked the heights of all the
                         \ tile blocks
 
-                        \ By this point we have a list of all the highest tile
-                        \ blocks in a list of length Y at landscapePeaks
+                        \ By this point we have all the tile blocks of height
+                        \ tileAltitude in a list of length Y at tilesAtHeight
 
- TYA                    \ Set A to the length of the list at landscapePeaks
+ TYA                    \ Set A to the length of the list at tilesAtHeight
 
- BEQ C15B2              \ If the list is empty then jump to C15B2 return a
-                        \ failure response
+ BEQ peak4              \ If the list is empty then jump to peak4 return from
+                        \ the subroutine with the C flag clear
 
- STA T                  \ Set T to the length of the list at landscapePeaks
+ STA T                  \ Set T to the length of the list at tilesAtHeight
 
- LDY #&FF
+                        \ We now set bitMask to a bit mask that covers all the
+                        \ non-zero bits in the list length in A, so if A is of
+                        \ the form %001xxxxx, for example, then bitMask will
+                        \ contain %00111111, while A being like %000001xx will
+                        \ give a bitMask of %00000111
+                        \
+                        \ To do this we count the number of continuous clear
+                        \ bits at the top of A, and then use this as an index
+                        \ into the bitMasks table
+                        \
+                        \ So we count zeroes from bit 7 down until we hit a 1,
+                        \ and put the result into Y
 
-.P15A7
+ LDY #&FF               \ Set Y = -1 so the following loop counts the number of
+                        \ zeroes correctly
 
- ASL A
- INY
- BCC P15A7
- LDA L15B4,Y
- STA L0027
+.peak3
+
+ ASL A                  \ Shift A to the left, moving the top bit into the C
+                        \ flag
+
+ INY                    \ Increment the zero counter in Y
+
+ BCC peak3              \ Loop back to keep shifting and counting zeroes until
+                        \ we shift a 1 out of bit 7, at which point Y contains
+                        \ the length of the run of zeroes in bits 7 to 0 of the
+                        \ length of the list at tilesAtHeight
+
+ LDA bitMasks,Y         \ Set bitMask to the Y-th entry from the bitMasks table,
+ STA bitMask            \ which will give us a bitmask with a matching number of
+                        \ leading zeroes as A
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ found at least one tile block that matches the height
@@ -4993,28 +5039,35 @@ L1145 = C1144+1
 
  RTS                    \ Return from the subroutine
 
-.C15B2
+.peak4
 
  SEC                    \ If we get here then we have checked all 64 tile blocks
-                        \ and none of them are at a height of heightOfPeak, so
-                        \ set the C flag to indicate that we have failed to find
-                        \ any tile blocks that match the height of the highest
-                        \ peak
+                        \ and none of them are at a height of tileAltitude, so
+                        \ set the C flag to indicate that the returned list is
+                        \ empty
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L15B4
+\       Name: bitMasks
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: A table for converting the number of leading clear bits in a
+\             number into a bitmask with the same number of leading zeroes
 \
 \ ******************************************************************************
 
-.L15B4
+.bitMasks
 
- EQUB &FF, &7F, &3F, &1F, &0F, &07, &03, &01
+ EQUB %11111111
+ EQUB %01111111
+ EQUB %00111111
+ EQUB %00011111
+ EQUB %00001111
+ EQUB %00000111
+ EQUB %00000011
+ EQUB %00000001
 
 \ ******************************************************************************
 \
@@ -5037,7 +5090,7 @@ L1145 = C1144+1
 \   zMaxTileHeight      The tile z-coordinate of the highest tile in each 4x4
 \                       block in the landscape
 \
-\   heightOfPeak        The height of the highest tile in the landscape
+\   tileAltitude        The altitude of the highest tile in the landscape
 \
 \ ******************************************************************************
 
@@ -5062,7 +5115,7 @@ L1145 = C1144+1
                         \ while we work through the landscape in blocks of 4x4
                         \ tiles, of which there are 64 in total
 
- STX heightOfPeak       \ Set heightOfPeak = 0 so we can use it to store the
+ STX tileAltitude       \ Set tileAltitude = 0 so we can use it to store the
                         \ maximum tile height as we work through the landscape
                         \ (so that's the height of the landscape's peak)
 
@@ -5184,11 +5237,11 @@ L1145 = C1144+1
                         \ the table ends up recording the highest tile height
                         \ in each 4x4 block
 
- CMP heightOfPeak       \ Set heightOfPeak = max(heightOfPeak, A)
+ CMP tileAltitude       \ Set tileAltitude = max(tileAltitude, A)
  BCC high4              \
- STA heightOfPeak       \ So heightOfPeak contains the height of the highest
+ STA tileAltitude       \ So tileAltitude contains the height of the highest
                         \ tile that we've analysed so far, which means that
-                        \ heightOfPeak ends up being set to the highest value
+                        \ tileAltitude ends up being set to the highest value
                         \ in the entire landscape, or the height of the peak
 
 .high4
@@ -6054,7 +6107,7 @@ L1145 = C1144+1
  LDA #2                 \ Spawn an object of type 2
  JSR SpawnObject
 
- LDA L0C06
+ LDA lowestEnemyHeight
  JSR sub_C1224
  BCS CRE09
  TXA
@@ -8447,7 +8500,7 @@ L23E3 = C23E2+1
  TAY
  LDA L24E2,Y
  EOR #&FF
- STA L0027
+ STA bitMask
  LDA L0180,X
  ORA L0180+1,X
  ORA L01A0,X
@@ -8457,7 +8510,7 @@ L23E3 = C23E2+1
  STA U
  LDY T
  LDA L3E80,Y
- AND L0027
+ AND bitMask
  ORA U
  STA L3E80,Y
  DEX
@@ -13217,8 +13270,8 @@ L314A = C3148+2
  BEQ enem3              \ If A = 0 then jump to enem3 with Y = 7, as we have a
                         \ continuous run of seven clear bits in bits 7 to 1
 
- LDY #&FF               \ Otherwise set A = &FF so the next instruction sets
-                        \ Y = 0, so we count the number of zeroes correctly
+ LDY #&FF               \ Otherwise set Y = -1 so the following loop counts the
+                        \ number of zeroes correctly
 
 .enem2
 
@@ -17527,7 +17580,7 @@ L49C1                = &49C1
  EQUB &14, &50, &05, &20, &0D, &14, &5A, &1A
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
 
-.landscapePeaks
+.tilesAtHeight
 
  EQUB &41, &3A, &53, &54, &41, &20, &4D, &45
  EQUB &41, &4E, &59, &2C, &58, &20, &0D, &14
@@ -18329,7 +18382,7 @@ L5B0F = L5B00+15
  ASL A
  INY
  BCC P5E74
- LDA L15B4,Y
+ LDA bitMasks,Y
 
 .C5E7B
 

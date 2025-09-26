@@ -11,7 +11,7 @@
 .L0005
      0005
 .L0006
-.heightOfPeak
+.tileAltitude
      0006
 .L0007
      0007
@@ -81,7 +81,7 @@
      0025
 .zTile
      0026
-.L0027
+.bitMask
      0027
 .L0028
      0028
@@ -2350,7 +2350,7 @@
      0C04   00
 .L0C05
      0C05   28
-.L0C06
+.lowestEnemyHeight
      0C06   00
 .maxEnemyCount
      0C07   00
@@ -3852,11 +3852,11 @@
 .CreateEnemies
      14EB   20 BC 15   JSR &15BC
      14EE   A2 00      LDX #&00
-.C14F0
+.cren1
      14F0   86 6E      STX &6E
      14F2   A9 01      LDA #&01
      14F4   9D 40 0A   STA &0A40,X
-.P14F7
+.cren2
      14F7   20 8D 15   JSR &158D
      14FA   90 0F      BCC &150B
      14FC   A5 06      LDA &06
@@ -3866,7 +3866,7 @@
      1503   D0 F2      BNE &14F7
      1505   8E 6F 0C   STX &0C6F
      1508   4C 82 15   JMP &1582
-.C150B
+.cren3
      150B   20 94 31   JSR &3194
      150E   25 27      AND &27
      1510   C5 74      CMP &74
@@ -3900,7 +3900,7 @@
      1558   A9 00      LDA #&00
      155A   9D C0 09   STA &09C0,X
      155D   A6 6E      LDX &6E
-.C155F
+.cren4
      155F   20 FF 1E   JSR &1EFF
      1562   20 6A 19   JSR &196A
      1565   20 94 31   JSR &3194
@@ -3911,13 +3911,13 @@
      1570   A9 14      LDA #&14
      1572   90 02      BCC &1576
      1574   A9 EC      LDA #&EC
-.C1576
+.cren5
      1576   9D 37 4A   STA &4A37,X
      1579   E8         INX
      157A   EC 6F 0C   CPX &0C6F
      157D   B0 03      BCS &1582
      157F   4C F0 14   JMP &14F0
-.C1582
+.cren6
      1582   A5 06      LDA &06
      1584   4A         LSR A
      1585   4A         LSR A
@@ -3926,24 +3926,24 @@
      1588   8D 06 0C   STA &0C06
      158B   18         CLC
      158C   60         RTS
-.sub_C158D
+.GetTilesAtHeight
      158D   A2 3F      LDX #&3F
      158F   A0 00      LDY #&00
-.P1591
+.peak1
      1591   BD 10 5B   LDA &5B10,X
      1594   C5 06      CMP &06
      1596   D0 05      BNE &159D
      1598   8A         TXA
      1599   99 40 5A   STA &5A40,Y
      159C   C8         INY
-.C159D
+.peak2
      159D   CA         DEX
      159E   10 F1      BPL &1591
      15A0   98         TYA
      15A1   F0 0F      BEQ &15B2
      15A3   85 74      STA &74
      15A5   A0 FF      LDY #&FF
-.P15A7
+.peak3
      15A7   0A         ASL A
      15A8   C8         INY
      15A9   90 FC      BCC &15A7
@@ -3951,10 +3951,10 @@
      15AE   85 27      STA &27
      15B0   18         CLC
      15B1   60         RTS
-.C15B2
+.peak4
      15B2   38         SEC
      15B3   60         RTS
-.L15B4
+.bitMasks
      15B4   FF
      15B5   7F
      15B6   3F
@@ -14707,7 +14707,7 @@
      5A3D   20
      5A3E   54
      5A3F   59
-.landscapePeaks
+.tilesAtHeight
      5A40   41
      5A41   3A
      5A42   53
