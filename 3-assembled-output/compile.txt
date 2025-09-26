@@ -208,6 +208,7 @@
 .L006D
      006D
 .L006E
+.enemyNumber
      006E
 .L006F
      006F
@@ -2379,9 +2380,9 @@
      0C16   00
      0C17   00
      0C18   00
-.L0C19
+.xTileSentinel
      0C19   00
-.L0C1A
+.zTileSentinel
      0C1A   00
 .L0C1B
      0C1B   00
@@ -3849,14 +3850,14 @@
      14E8   03
      14E9   06
      14EA   01
-.CreateEnemies
+.AddEnemiesToTiles
      14EB   20 BC 15   JSR &15BC
      14EE   A2 00      LDX #&00
-.cren1
+.aden1
      14F0   86 6E      STX &6E
      14F2   A9 01      LDA #&01
      14F4   9D 40 0A   STA &0A40,X
-.cren2
+.aden2
      14F7   20 8D 15   JSR &158D
      14FA   90 0F      BCC &150B
      14FC   A5 06      LDA &06
@@ -3866,7 +3867,7 @@
      1503   D0 F2      BNE &14F7
      1505   8E 6F 0C   STX &0C6F
      1508   4C 82 15   JMP &1582
-.cren3
+.aden3
      150B   20 94 31   JSR &3194
      150E   25 27      AND &27
      1510   C5 74      CMP &74
@@ -3900,7 +3901,7 @@
      1558   A9 00      LDA #&00
      155A   9D C0 09   STA &09C0,X
      155D   A6 6E      LDX &6E
-.cren4
+.aden4
      155F   20 FF 1E   JSR &1EFF
      1562   20 6A 19   JSR &196A
      1565   20 94 31   JSR &3194
@@ -3911,13 +3912,13 @@
      1570   A9 14      LDA #&14
      1572   90 02      BCC &1576
      1574   A9 EC      LDA #&EC
-.cren5
+.aden5
      1576   9D 37 4A   STA &4A37,X
      1579   E8         INX
      157A   EC 6F 0C   CPX &0C6F
      157D   B0 03      BCS &1582
      157F   4C F0 14   JMP &14F0
-.cren6
+.aden6
      1582   A5 06      LDA &06
      1584   4A         LSR A
      1585   4A         LSR A

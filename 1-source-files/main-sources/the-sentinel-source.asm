@@ -534,6 +534,7 @@
  SKIP 1                 \ ???
 
 .L006E
+.enemyNumber
 
  SKIP 1                 \ ???
 
@@ -1196,13 +1197,13 @@ L0BAB = L0B00+171
  EQUB 0, 0, 0, 0, 0, 0, 0, 0
  EQUB 0
 
-.L0C19
+.xTileSentinel
 
- EQUB 0
+ EQUB 0                 \ The tile x-coordinate of the Sentinel
 
-.L0C1A
+.zTileSentinel
 
- EQUB 0
+ EQUB 0                 \ The tile z-coordinate of the Sentinel
 
 .L0C1B
 
@@ -4553,7 +4554,9 @@ L1145 = C1144+1
  STA enemyCount         \ Store the number of enemies for this landscape in
                         \ enemyCount
 
- JSR CreateEnemies      \ Add the required number of enemies to the landscape
+ JSR AddEnemiesToTiles  \ Add the required number of enemies to the landscape,
+                        \ starting from the highest altitude and working down,
+                        \ with one enemy per contour
 
                         \ We now update colours 2 and 3 in the first palette in
                         \ colourPalettes according to the number of enemies
@@ -4762,14 +4765,15 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: CreateEnemies
+\       Name: AddEnemiesToTiles
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Add the required number of enemies to the landscape
+\    Summary: Add the required number of enemies to the landscape, starting from
+\             the highest altitude and working down, with one enemy per contour
 \
 \ ******************************************************************************
 
-.CreateEnemies
+.AddEnemiesToTiles
 
  JSR GetHighestTiles    \ Calculate both the highest tiles in each 4x4 block of
                         \ tiles in the landscape and the altitude of the highest
@@ -4797,9 +4801,10 @@ L1145 = C1144+1
                         \ enemy must be the Sentinel, so when X = 0, we add the
                         \ Sentinel to the landscape, otherwise we add a sentry
 
-.cren1
+.aden1
 
- STX L006E              \ Set L006E to the enemy counter in X
+ STX enemyNumber        \ Set enemyNumber to the enemy counter in X, so this is
+                        \ the number of the enemy we are looking to create
 
  LDA #1                 \ Set the object type for object X to 1 ???
  STA objectTypes,X
@@ -4813,71 +4818,115 @@ L1145 = C1144+1
                         \ height of the highest tile in the landscape), and we
                         \ work down in steps of 16
 
-.cren2
+.aden2
 
  JSR GetTilesAtHeight   \ Set tilesAtHeight to a list of tile block numbers
                         \ whose highest tiles are at height tileAltitude,
-                        \ returning the length of the list in T and a bitmask
+                        \ returning the length of the list in T and a bit mask
                         \ in bitMask that has a matching number of leading
                         \ zeroes as T
 
- BCC cren3              \ If the call to GetTilesAtHeight returns no tile blocks
-                        \ at this height then the C flag will be clear, so jump
-                        \ to cren3 to skip the following
+ BCC aden3              \ If the call to GetTilesAtHeight returns at least one
+                        \ tile block at this height then the C flag will be
+                        \ clear, so jump to aden3 to add an enemy to one of the
+                        \ matched tile blocks
 
- LDA tileAltitude       \ Set tileAltitude = tileAltitude - 16
- SEC
- SBC #16
- STA tileAltitude
+ LDA tileAltitude       \ Otherwise we didn't find any tile blocks at this
+ SEC                    \ height, so subtract 1 from the high nibble of
+ SBC #%00010000         \ tileAltitude to move down one level (we subtract from
+ STA tileAltitude       \ the high nibble because tileAltitude contains tile
+                        \ data, which has the tile height in the high nibble and
+                        \ the tile slope in the low nibble)
 
- BNE cren2
+ BNE aden2              \ Loop back to check for tile blocks at the lower height
+                        \ until we have reached a height of zero
 
- STX enemyCount
+ STX enemyCount         \ When the GetTilesAtHeight routine returns with no
+                        \ matching tile blocks, it also returns a value of &FF
+                        \ in X, so this sets enemyCount to -1
 
- JMP cren6
+ JMP aden6              \ Jump to aden6 to set the value of lowestEnemyHeight
+                        \ and return from the subroutine
 
-.cren3
+.aden3
+
+                        \ If we get here then we have found at least one tile
+                        \ block at the current height, so we now pick one of
+                        \ them and add an enemy
+                        \
+                        \ We only pick one tile at this height so that the
+                        \ enemies are spread out over various heights
 
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
 
- AND bitMask
- CMP T
- BCS cren3
- TAY
- LDX tilesAtHeight,Y
- LDA #0
- STA L5B07,X
- STA L5B08,X
- STA L5B09,X
- STA L5B0F,X
- STA maxTileHeight,X
+ AND bitMask            \ The call to GetTilesAtHeight above sets bitMask to a
+                        \ bit mask that has a matching number of leading zeroes
+                        \ as the number of tile blocks at this height, so this
+                        \ instruction converts A into a random number with the
+                        \ same range of non-zero bits as T
+
+ CMP T                  \ If A >= T then jump back to fetch another random
+ BCS aden3              \ number
+
+                        \ When we get here, A is a random number and A < T, so
+                        \ A can be used as an offset into the list of tile
+                        \ blocks in tilesAtHeight (which contains T entries)
+
+ TAY                    \ Set Y to the random index in A so we can use it as an
+                        \ offset
+
+ LDX tilesAtHeight,Y    \ Set X to the Y-th tile block number in the list of
+                        \ tile blocks at height tilesAtHeight
+
+                        \ We now zero the maximum tile heights for tile block X
+                        \ and the eight surrounding tile blocks, so the 
+                        \ won't be able to put any enemies on those blocks (this
+                        \ ensures we don't create enemies too close to each
+                        \ other)
+
+ LDA #0                 \ Set A = 0 so we can zero the maximum tile heights for
+                        \ tile block X and the eight surrounding blocks
+
+ STA maxTileHeight-9,X  \ Zero the heights of the three tile blocks in the row
+ STA maxTileHeight-8,X  \ in front of tile block X
+ STA maxTileHeight-7,X
+
+ STA maxTileHeight-1,X  \ Zero the heights of tile block X and the two blocks
+ STA maxTileHeight,X    \ to the left and right
  STA maxTileHeight+1,X
- STA maxTileHeight+7,X
- STA maxTileHeight+8,X
+
+ STA maxTileHeight+7,X  \ Zero the heights of the three tile blocks in the row
+ STA maxTileHeight+8,X  \ behind tile block X
  STA maxTileHeight+9,X
- LDA xMaxTileHeight,X
- STA xTile
- LDA zMaxTileHeight,X
+
+ LDA xMaxTileHeight,X   \ Set (xTile, zTile) to the tile coordinates of the
+ STA xTile              \ highest tile in the tile block, which is where we can
+ LDA zMaxTileHeight,X   \ place an enemy
  STA zTile
 
- LDX L006E              \ Set X to the enemy counter from L006E
+ LDX enemyNumber        \ Set X to the enemy number that we stored in
+                        \ enemyNumber above
 
- BNE cren4              \ If the enemy counter is non-zero then we are adding a
-                        \ sentry, so jump to cren4
+ BNE aden4              \ If the enemy number is non-zero then we are adding a
+                        \ sentry, so jump to aden4
 
-                        \ If we get here then the enemy counter is zero, so we
+                        \ If we get here then the enemy number is zero, so we
                         \ are adding the Sentinel
 
- STA L0C1A
- LDA xTile
- STA L0C19
+ STA zTileSentinel      \ Set (xTileSentinel, zTileSentinel) to the tile
+ LDA xTile              \ coordinates of the highest tile in the tile block,
+ STA xTileSentinel      \ which we put in (xTile, zTile) above, so this is the
+                        \ tile coordinate where we now spawn the Sentinel
 
- LDA #5
- STA objectTypes
+ LDA #5                 \ Set the object type for object in slot #0 in the
+ STA objectTypes        \ objectTypes table to 5, which denotes the Sentinel
+                        \ (so the Sentinel is always in slot #0, as it is the
+                        \ first object to be spawned)
 
- LDA #6                 \ Spawn an object of type 6
- JSR SpawnObject
+ LDA #6                 \ Spawn an object of type 6 in slot #0 (we know the slot
+ JSR SpawnObject        \ number in X is zero as we passed through a BNE above)
+                        \ (what is object 6 ???)
 
  JSR sub_C1EFF
 
@@ -4886,7 +4935,7 @@ L1145 = C1144+1
 
  LDX L006E
 
-.cren4
+.aden4
 
  JSR sub_C1EFF
 
@@ -4900,30 +4949,37 @@ L1145 = C1144+1
  ORA #&05
  STA L0C30,X
  LDA #&14
- BCC cren5
+ BCC aden5
  LDA #&EC
 
-.cren5
+.aden5
 
  STA L4A37,X
 
  INX                    \ Increment the enemy loop counter in X
 
  CPX enemyCount         \ If we have added a total of enemyCount enemies, jump
- BCS cren6              \ to cren6 to finish off
+ BCS aden6              \ to aden6 to finish off
 
- JMP cren1              \ Otherewise loop back to add another enemy
+ JMP aden1              \ Otherewise loop back to add another enemy
 
-.cren6
+.aden6
 
- LDA tileAltitude
+ LDA tileAltitude       \ Extract the height from tileAltitude, which is in the
+ LSR A                  \ high nibble (as tileAltitude contains tile data, which
+ LSR A                  \ has the tile height in the high nibble and the tile
+ LSR A                  \ slope in the low nibble)
  LSR A
- LSR A
- LSR A
- LSR A
- STA lowestEnemyHeight
- CLC
- RTS
+
+ STA lowestEnemyHeight  \ Store the result in lowestEnemyHeight, which contains
+                        \ the lowest height of the enemies we just added to the
+                        \ landscape)
+
+ CLC                    \ Clear the C flag (though this has no effect as the C
+                        \ flag is set as soon as we return to the SpawnEnemies
+                        \ routine)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4944,7 +5000,8 @@ L1145 = C1144+1
 \
 \   C flag              Success flag:
 \
-\                         * Set if no tile blocks are at height tileAltitude
+\                         * Set if no tile blocks are at height tileAltitude, in
+\                           which case X is set to &FF
 \
 \                         * Clear if at least one tile block is at height
 \                           tileAltitude
@@ -4954,7 +5011,7 @@ L1145 = C1144+1
 \
 \   T                   The number of entries in the list at tilesAtHeight
 \
-\   bitMask             A bitmask with a matching number of leading zeroes as T
+\   bitMask             A bit mask with a matching number of leading zeroes as T
 \
 \ ******************************************************************************
 
@@ -5030,8 +5087,8 @@ L1145 = C1144+1
                         \ length of the list at tilesAtHeight
 
  LDA bitMasks,Y         \ Set bitMask to the Y-th entry from the bitMasks table,
- STA bitMask            \ which will give us a bitmask with a matching number of
-                        \ leading zeroes as A
+ STA bitMask            \ which will give us a bit mask with a matching number
+                        \ of leading zeroes as A
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ found at least one tile block that matches the height
@@ -5054,7 +5111,7 @@ L1145 = C1144+1
 \       Type: Variable
 \   Category: Landscape
 \    Summary: A table for converting the number of leading clear bits in a
-\             number into a bitmask with the same number of leading zeroes
+\             number into a bit mask with the same number of leading zeroes
 \
 \ ******************************************************************************
 
@@ -7792,10 +7849,10 @@ L1145 = C1144+1
  JSR sub_C5FF6
  LDX L000B
  LDA L0900,X
- CMP L0C19
+ CMP xTileSentinel
  BNE C2191
  LDA L0980,X
- CMP L0C1A
+ CMP zTileSentinel
  BNE C2191
  LDA #&C0
  STA L0CDE
@@ -17622,11 +17679,6 @@ L49C1                = &49C1
 \ ******************************************************************************
 
 .L5B00
-
-L5B07 = L5B00+7
-L5B08 = L5B00+8
-L5B09 = L5B00+9
-L5B0F = L5B00+15
 
  EQUB &AA, &14, &2E, &54, &41, &4B, &45, &20
  EQUB &4C, &44, &58, &20, &50, &45, &52, &53
