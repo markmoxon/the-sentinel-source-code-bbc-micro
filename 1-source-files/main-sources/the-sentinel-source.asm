@@ -913,37 +913,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L0900
+\       Name: xTileObject
 \       Type: Variable
-\   Category: ???
+\   Category: 3D objects
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L0900
-
-L0901 = L0900+1
-L0902 = L0900+2
-L0910 = L0900+16
-L093F = L0900+63
-
-L0940 = L0900+64
-L0941 = L0900+65
-L0942 = L0900+66
-L0950 = L0900+80
-L097F = L0900+127
-
-L0980 = L0900+128
-L0981 = L0900+129
-L0982 = L0900+130
-L0990 = L0900+144
-L09BF = L0900+191
-
-L09C0 = L0900+192
-L09C1 = L0900+193
-L09C2 = L0900+194
-L09D0 = L0900+208
-L09FF = L0900+255
+.xTileObject
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -953,22 +930,63 @@ L09FF = L0900+255
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &18
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: zTileObject
+\       Type: Variable
+\   Category: 3D objects
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.yTileObject
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &4B, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &02
- EQUB &00, &07, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: zTileObject
+\       Type: Variable
+\   Category: 3D objects
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.zTileObject
+
+ EQUB &00, &07, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &BF, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &07
+
+\ ******************************************************************************
+\
+\       Name: L09C0
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L09C0
+
+L09C1 = xTileObject+193
+L09C2 = xTileObject+194
+L09D0 = xTileObject+208
+L09FF = xTileObject+255
+
  EQUB &00, &CE, &F8, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &12, &00, &00, &00, &00, &00, &00, &00
@@ -3729,7 +3747,7 @@ L1145 = C1144+1
 
  LDA #0                 \ Set A = 0 so we can zero the following variable blocks
 
- STA L0900,X            \ Zero the X-th byte of L0900
+ STA xTileObject,X            \ Zero the X-th byte of xTileObject
 
  STA L0A00,X            \ Zero the X-th byte of L0A00
 
@@ -4380,13 +4398,13 @@ L1145 = C1144+1
  STY L140F              \ Store the Y argument in L140F (0, 1)
 
  LDA L1403,Y
- STA L0950
+ STA yTileObject+16
  LDA L1405,Y
  STA L0150
  LDA L1407,Y
- STA L0910
+ STA xTileObject+16
  LDA L140B,Y
- STA L0990
+ STA zTileObject+16
  LDA L140D,Y
  STA L09D0
  LDA L1409,Y
@@ -4924,11 +4942,10 @@ L1145 = C1144+1
                         \ (so the Sentinel is always in slot #0, as it is the
                         \ first object to be spawned)
 
- LDA #6                 \ Spawn an object of type 6 in slot #0 (we know the slot
- JSR SpawnObject        \ number in X is zero as we passed through a BNE above)
-                        \ (what is object 6 ???)
+ LDA #6                 \ Spawn an object of type 6, returning the slot number
+ JSR SpawnObject        \ of the new object in X
 
- JSR sub_C1EFF
+ JSR sub_C1EFF          
 
  LDA #0
  STA L09C0,X
@@ -6024,9 +6041,9 @@ L1145 = C1144+1
  BNE C1986
  LDA L0CA8,X
  TAX
- LDA L0900,X
+ LDA xTileObject,X
  SEC
- SBC L0900,Y
+ SBC xTileObject,Y
  BPL C19BA
  EOR #&FF
  CLC
@@ -6036,9 +6053,9 @@ L1145 = C1144+1
 
  CMP #&0A
  BCS C1986
- LDA L0980,X
+ LDA zTileObject,X
  SEC
- SBC L0980,Y
+ SBC zTileObject,Y
  BPL C19CC
  EOR #&FF
  CLC
@@ -6256,9 +6273,9 @@ L1145 = C1144+1
 
 .C1AB9
 
- LDA L0900,X
+ LDA xTileObject,X
  STA xTile
- LDA L0980,X
+ LDA zTileObject,X
  STA zTile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
@@ -6819,10 +6836,10 @@ L1145 = C1144+1
 
  LDX L006E
  LDA xTile
- CMP L0900,X
+ CMP xTileObject,X
  BNE C1D31
  LDA zTile
- CMP L0980,X
+ CMP zTileObject,X
  BEQ C1CD7
 
 .C1D31
@@ -7034,7 +7051,7 @@ L1145 = C1144+1
  CLC
  ADC #&20
  STA L0079
- LDA L0940,Y
+ LDA yTileObject,Y
  ADC #&00
  CLC
  RTS
@@ -7061,7 +7078,7 @@ L1145 = C1144+1
  SEC
  SBC #&60
  STA L0079
- LDA L0940,Y
+ LDA yTileObject,Y
  SBC #&00
  CLC
  RTS
@@ -7072,7 +7089,7 @@ L1145 = C1144+1
  SEC
  SBC L0038
  STA U
- LDA L0940,Y
+ LDA yTileObject,Y
  SBC L003B
  PHA
  LDA U
@@ -7108,7 +7125,7 @@ L1145 = C1144+1
  LDA objectFlags,Y
  CMP #&40
  BCS C1E28
- LDA L0940,Y
+ LDA yTileObject,Y
  RTS
 
 \ ******************************************************************************
@@ -7168,11 +7185,11 @@ L1145 = C1144+1
  STA L0039
  LDA L0A00,X
  STA L0038
- LDA L0900,X
+ LDA xTileObject,X
  STA L003A
- LDA L0940,X
+ LDA yTileObject,X
  STA L003B
- LDA L0980,X
+ LDA zTileObject,X
  STA L003C
  RTS
 
@@ -7187,9 +7204,9 @@ L1145 = C1144+1
 
 .sub_C1ED8
 
- LDA L0900,X
+ LDA xTileObject,X
  STA xTile
- LDA L0980,X
+ LDA zTileObject,X
  STA zTile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
@@ -7206,7 +7223,7 @@ L1145 = C1144+1
 
 .C1EF0
 
- LDA L0940,X
+ LDA yTileObject,X
  ASL A
  ASL A
  ASL A
@@ -7226,14 +7243,22 @@ L1145 = C1144+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The slot number of the object
+\
+\   (xTile, zTile)      The tile coordinate to place the object
+\
 \ ******************************************************************************
 
 .sub_C1EFF
 
- LDA xTile
- STA L0900,X
- LDA zTile
- STA L0980,X
+ LDA xTile              \ Set the tile coordinate for the object in slot X to
+ STA xTileObject,X      \ (xTile, zTile) by updating the X-th entries in the
+ LDA zTile              \ xTileObject and zTileObject tables
+ STA zTileObject,X
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if bits 6 and 7 of
@@ -7273,7 +7298,7 @@ L1145 = C1144+1
 
 .C1F42
 
- ADC L0940,Y
+ ADC yTileObject,Y
  LDY L1F77
  JMP C1F5B
 
@@ -7292,7 +7317,7 @@ L1145 = C1144+1
 
 .C1F5B
 
- STA L0940,X
+ STA yTileObject,X
  TXA
  ORA #&C0
  STA (tileDataPage),Y
@@ -7827,7 +7852,7 @@ L1145 = C1144+1
  JSR SpawnObject
 
  LDX L000B
- LDA L0940,X
+ LDA yTileObject,X
  CLC
  ADC #&01
  LDX objectSlot
@@ -7848,10 +7873,10 @@ L1145 = C1144+1
  LDA #0
  JSR sub_C5FF6
  LDX L000B
- LDA L0900,X
+ LDA xTileObject,X
  CMP xTileSentinel
  BNE C2191
- LDA L0980,X
+ LDA zTileObject,X
  CMP zTileSentinel
  BNE C2191
  LDA #&C0
@@ -7910,8 +7935,8 @@ L1145 = C1144+1
  SEC
  SBC L0A00,Y
  STA T
- LDA L0940,X
- SBC L0940,Y
+ LDA yTileObject,X
+ SBC yTileObject,Y
  BMI C21F0
  ORA T
  BNE C21D5
@@ -8523,7 +8548,7 @@ L23E3 = C23E2+1
  STA L0005
  JSR sub_C24EA
  LDX L000B
- LDA L0940,X
+ LDA yTileObject,X
  STA V
  LDX #&1E
 
@@ -8895,9 +8920,9 @@ L23E3 = C23E2+1
  BIT processAction
  BMI C267F
  BVS C266F
- LDA L0900,X
+ LDA xTileObject,X
  STA L0003
- LDA L0980,X
+ LDA zTileObject,X
  STA L001D
  JMP C26A1
 
@@ -8905,9 +8930,9 @@ L23E3 = C23E2+1
 
  CLC
  LDA #&1F
- SBC L0980,X
+ SBC zTileObject,X
  STA L0003
- LDA L0900,X
+ LDA xTileObject,X
  STA L001D
  JMP C26A1
 
@@ -8916,21 +8941,21 @@ L23E3 = C23E2+1
  BVS C2694
  CLC
  LDA #&1F
- SBC L0900,X
+ SBC xTileObject,X
  STA L0003
  CLC
  LDA #&1F
- SBC L0980,X
+ SBC zTileObject,X
  STA L001D
  JMP C26A1
 
 .C2694
 
- LDA L0980,X
+ LDA zTileObject,X
  STA L0003
  CLC
  LDA #&1F
- SBC L0900,X
+ SBC xTileObject,X
  STA L001D
 
 .C26A1
@@ -9375,7 +9400,7 @@ L23E3 = C23E2+1
  LDA objectFlags,Y
  CMP #&40
  BCS P28C4
- LDA L0940,Y
+ LDA yTileObject,Y
  STA U
  JMP C28EE
 
@@ -9404,7 +9429,7 @@ L23E3 = C23E2+1
  SBC L0A00,X
  STA L0080
  LDA U
- SBC L0940,X
+ SBC yTileObject,X
  JSR sub_C561D
  LDY L0021
  LDA L008D
@@ -9633,9 +9658,9 @@ L23E3 = C23E2+1
  STA objectTypes+63
  BEQ CRE17
  LDA yTile
- STA L093F
+ STA xTileObject+63
  LDA zTile
- STA L09BF
+ STA zTileObject+63
  LDY #&3F
  JMP sub_C5D33
 
@@ -12549,8 +12574,8 @@ L314A = C3148+2
  LDA #&E0               \ Set L0A00+63 = &E0 ???
  STA L0A00+63
 
- LDA #2                 \ Set L097F = 2 ???
- STA L097F
+ LDA #2                 \ Set yTileObject+63 = 2 ???
+ STA yTileObject+63
 
  SEC                    \ Set bit 7 of L0C4B ???
  ROR L0C4B
@@ -18130,8 +18155,8 @@ L49C1                = &49C1
  LDA #0
  STA L0080
  SEC
- LDA L0900,Y
- SBC L0900,X
+ LDA xTileObject,Y
+ SBC xTileObject,X
  SEC
  SBC L0C78
  STA L0086
@@ -18146,8 +18171,8 @@ L49C1                = &49C1
  LDA #0
  STA L0082
  SEC
- LDA L0980,Y
- SBC L0980,X
+ LDA zTileObject,Y
+ SBC zTileObject,X
  STA L0088
  BPL C5DF2
  SEC
@@ -18174,8 +18199,8 @@ L49C1                = &49C1
  SEC
  SBC L0A00,X
  STA L0081
- LDA L0940,Y
- SBC L0940,X
+ LDA yTileObject,Y
+ SBC yTileObject,X
  STA L0084
  RTS
 
@@ -18663,14 +18688,14 @@ L49C1                = &49C1
  STA objectTypes+1
  LDA L5FBC,Y
  CLC
- ADC L0982
- STA L0981
- LDA L0942
+ ADC zTileObject+2
+ STA zTileObject+1
+ LDA yTileObject+2
  CLC
  ADC L5FDC,Y
- STA L0941
- LDA L0902
- STA L0901
+ STA yTileObject+1
+ LDA xTileObject+2
+ STA xTileObject+1
  LDA L5FD9,Y
  STA L0142
  LDA L5FE2,Y
