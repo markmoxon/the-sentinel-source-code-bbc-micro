@@ -674,10 +674,26 @@
 
 .objectFlags
 
- SKIP 64                \ Object flags for up to 64 3D objects
+ SKIP 64                \ Object flags for up to 64 object slots:
                         \
-                        \   * Bit 7 set   = slot is free
-                        \           clear = slot is occupied
+                        \   * Bits 0-5 = the slot number of the object beneath
+                        \                this one, if bit 6 is set (0 to 63)
+                        \
+                        \   * Bit 6 = is the object in this slot stacked on top
+                        \             of another object?
+                        \
+                        \       * Clear = no
+                        \
+                        \       * Set = this object is on top of another object
+                        \               and the slot number of the object
+                        \               beneath this one is in bits 0-5
+                        \
+                        \   * Bit 7 = is this object slot occupied?
+                        \
+                        \       * Clear = this slot is occupied and contains an
+                        \                 object
+                        \
+                        \       * Set = this slot is empty
 
 .L0140
 
@@ -927,14 +943,14 @@
 
 \ ******************************************************************************
 \
-\       Name: xTileObject
+\       Name: xObject
 \       Type: Variable
 \   Category: 3D objects
-\    Summary: ???
+\    Summary: The x-coordinates in 3D space for the 3D objects
 \
 \ ******************************************************************************
 
-.xTileObject
+.xObject
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -947,14 +963,14 @@
 
 \ ******************************************************************************
 \
-\       Name: zTileObject
+\       Name: yObject
 \       Type: Variable
 \   Category: 3D objects
-\    Summary: ???
+\    Summary: The y-coordinates in 3D space for the 3D objects
 \
 \ ******************************************************************************
 
-.yTileObject
+.yObject
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -967,14 +983,14 @@
 
 \ ******************************************************************************
 \
-\       Name: zTileObject
+\       Name: zObject
 \       Type: Variable
 \   Category: 3D objects
-\    Summary: ???
+\    Summary: The z-coordinates in 3D space for the 3D objects
 \
 \ ******************************************************************************
 
-.zTileObject
+.zObject
 
  EQUB &00, &07, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -996,10 +1012,10 @@
 
 .L09C0
 
-L09C1 = xTileObject+193
-L09C2 = xTileObject+194
-L09D0 = xTileObject+208
-L09FF = xTileObject+255
+L09C1 = xObject+193
+L09C2 = xObject+194
+L09D0 = xObject+208
+L09FF = xObject+255
 
  EQUB &00, &CE, &F8, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -3761,7 +3777,7 @@ L1145 = C1144+1
 
  LDA #0                 \ Set A = 0 so we can zero the following variable blocks
 
- STA xTileObject,X            \ Zero the X-th byte of xTileObject
+ STA xObject,X          \ Zero the X-th byte of xObject
 
  STA L0A00,X            \ Zero the X-th byte of L0A00
 
@@ -4412,13 +4428,13 @@ L1145 = C1144+1
  STY L140F              \ Store the Y argument in L140F (0, 1)
 
  LDA L1403,Y
- STA yTileObject+16
+ STA yObject+16
  LDA L1405,Y
  STA L0150
  LDA L1407,Y
- STA xTileObject+16
+ STA xObject+16
  LDA L140B,Y
- STA zTileObject+16
+ STA zObject+16
  LDA L140D,Y
  STA L09D0
  LDA L1409,Y
@@ -6064,9 +6080,9 @@ L1145 = C1144+1
  BNE C1986
  LDA L0CA8,X
  TAX
- LDA xTileObject,X
+ LDA xObject,X
  SEC
- SBC xTileObject,Y
+ SBC xObject,Y
  BPL C19BA
  EOR #&FF
  CLC
@@ -6076,9 +6092,9 @@ L1145 = C1144+1
 
  CMP #&0A
  BCS C1986
- LDA zTileObject,X
+ LDA zObject,X
  SEC
- SBC zTileObject,Y
+ SBC zObject,Y
  BPL C19CC
  EOR #&FF
  CLC
@@ -6296,9 +6312,9 @@ L1145 = C1144+1
 
 .C1AB9
 
- LDA xTileObject,X
+ LDA xObject,X
  STA xTile
- LDA zTileObject,X
+ LDA zObject,X
  STA zTile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
@@ -6859,10 +6875,10 @@ L1145 = C1144+1
 
  LDX L006E
  LDA xTile
- CMP xTileObject,X
+ CMP xObject,X
  BNE C1D31
  LDA zTile
- CMP zTileObject,X
+ CMP zObject,X
  BEQ C1CD7
 
 .C1D31
@@ -7074,7 +7090,7 @@ L1145 = C1144+1
  CLC
  ADC #&20
  STA L0079
- LDA yTileObject,Y
+ LDA yObject,Y
  ADC #&00
  CLC
  RTS
@@ -7101,7 +7117,7 @@ L1145 = C1144+1
  SEC
  SBC #&60
  STA L0079
- LDA yTileObject,Y
+ LDA yObject,Y
  SBC #&00
  CLC
  RTS
@@ -7112,7 +7128,7 @@ L1145 = C1144+1
  SEC
  SBC L0038
  STA U
- LDA yTileObject,Y
+ LDA yObject,Y
  SBC L003B
  PHA
  LDA U
@@ -7148,7 +7164,7 @@ L1145 = C1144+1
  LDA objectFlags,Y
  CMP #&40
  BCS C1E28
- LDA yTileObject,Y
+ LDA yObject,Y
  RTS
 
 \ ******************************************************************************
@@ -7208,11 +7224,11 @@ L1145 = C1144+1
  STA L0039
  LDA L0A00,X
  STA L0038
- LDA xTileObject,X
+ LDA xObject,X
  STA L003A
- LDA yTileObject,X
+ LDA yObject,X
  STA L003B
- LDA zTileObject,X
+ LDA zObject,X
  STA L003C
  RTS
 
@@ -7227,9 +7243,9 @@ L1145 = C1144+1
 
 .sub_C1ED8
 
- LDA xTileObject,X
+ LDA xObject,X
  STA xTile
- LDA zTileObject,X
+ LDA zObject,X
  STA zTile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
@@ -7246,7 +7262,7 @@ L1145 = C1144+1
 
 .C1EF0
 
- LDA yTileObject,X
+ LDA yObject,X
  ASL A
  ASL A
  ASL A
@@ -7264,15 +7280,38 @@ L1145 = C1144+1
 \       Name: PlaceObjectOnTile
 \       Type: Subroutine
 \   Category: 3D objects
-\    Summary: ???
+\    Summary: Place an object on a tile, putting it on top of any existing
+\             boulders or towers
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine sets the following (if successful):
+\
+\   * X-th entry in (xObject, yObject, zObject) is set to the 3D coordinate of
+\     the newly added object
+\
+\   * X-th entry in objectFlags, bit 7 is clear to indicate that slot X contains
+\     an object
+\
+\   * X-th entry in objectFlags, bit 6 is set if we add the object on top of a
+\     boulder or tower (whose slot number is put in bits 0-5)
+\
+\   * X-th entry in L0A00 = &E0 ???
+\
+\   * X-th entry in L0140 = &F5 ???
+\
+\   * X-th entry in L09C0 = random number, multiple of 8
+\
+\   * tileData for the tile is set to the slot number in X in bits 0 to 5, and
+\     bits 6 and 7 are set to indicate that the tile contains an object
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   X                   The slot number of the object
+\   X                   The slot number of the object to add to the tile
 \
-\   (xTile, zTile)      The tile coordinate to place the object
+\   (xTile, zTile)      The tile coordinate where we place the object
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7289,58 +7328,106 @@ L1145 = C1144+1
 
 .PlaceObjectOnTile
 
- LDA xTile              \ Set the tile coordinate for the object in slot X to
- STA xTileObject,X      \ (xTile, zTile) by updating the X-th entries in the
- LDA zTile              \ xTileObject and zTileObject tables
- STA zTileObject,X      \
-                        \ This also sets the tile page in tileDataPage and the
-                        \ index in Y, so tileDataPage+Y now points to the tile
-                        \ data entry in the tileData table
+ LDA xTile              \ Set the 3D coordinate for the object in slot X to
+ STA xObject,X          \ (xTile, zTile) by updating the X-th entries in the
+ LDA zTile              \ xObject and zObject tables
+ STA zObject,X          \
+                        \ So this sets the x- and z-coordinates of the 3D
+                        \ coordinate for our object; we set the y-coordinate
+                        \ later
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
+                        \
+                        \ This also sets the tile page in tileDataPage and the
+                        \ index in Y, so tileDataPage+Y now points to the tile
+                        \ data entry in the tileData table
 
  BCC objt4              \ If C flag is clear then this tile does not already
                         \ have an object placed on it, so jump to objt4 to place
                         \ the object in slot X on the tile
 
- STY yStorePlaceObject
- AND #&3F
- TAY
- LDA objectTypes,Y
- CMP #&03
- BEQ objt1
- CMP #&06
- BNE objt6
+ STY yStorePlaceObject  \ Store Y in yStorePlaceObject so it can be preserved
+                        \ across calls to the routine
+
+ AND #%00111111         \ Because the tile already has an object on it, the tile
+ TAY                    \ data contains the existing object's slot number in
+                        \ bits 0 to 5, so extract the slot number into Y
+
+ LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
+                        \ (i.e. the type of the object in slot Y)
+
+ CMP #3                 \ If the tile contains an object of type 3, jump to
+ BEQ objt1              \ objt1 ???
+
+ CMP #6                 \ If the tile doesn't contain an object of type 6, jump
+ BNE objt6              \ to objt6 to return from the subroutine without
+                        \ adding the object
 
 .objt1
 
- TYA
- ORA #&40
- STA objectFlags,X
- LDA objectTypes,Y
- CMP #&06
+                        \ If we get here then the object already on the tile is
+                        \ of type 3 or 6 ??? boulder and Sentinel's tower?
+                        \
+                        \ In either case, we want to place our object on top of
+                        \ the object that is already there, which we can do by
+                        \ setting bit 6 of the object flags for the new object
+                        \ and putting the slot number of the existing object
+                        \ into bits 0 to 5
+
+ TYA                    \ Set the object flags for the object that we are adding
+ ORA #%01000000         \ (i.e. the object in slot X) so that bit 6 is set, and
+ STA objectFlags,X      \ bits 0 to 5 contain the slot number of the object that
+                        \ is already on the tile
+                        \
+                        \ This denotes that our new object in slot X is on top
+                        \ of the object in slot Y
+
+ LDA objectTypes,Y      \ If the object that's already on the tile is not of
+ CMP #6                 \ type 6, jump to objt2
  BNE objt2
- LDA L0A00,Y
+
+                        \ If we get here then we are placing our new object in
+                        \ slot X on top of an object of type 6 in slot Y
+
+ LDA L0A00,Y            \ Set the X-th entry in L0A00 to the Y-th entry ???
  STA L0A00,X
- CLC
- LDA #&01
- BNE objt3
+
+ CLC                    \ Clear the C flag and set A = 1 so the addition at
+ LDA #1                 \ objt3 will set A to the height in yObject plus 1
+
+ BNE objt3              \ Jump to objt3 to skip the following (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .objt2
 
- LDA L0A00,Y
- CLC
+                        \ If we get here then we are placing our new object in
+                        \ slot X on top of an object of type 3 in slot Y
+
+ LDA L0A00,Y            \ Set the X-th entry in L0A00 to the Y-th entry plus
+ CLC                    \ &80 ???
  ADC #&80
  STA L0A00,X
- LDA #0
+
+ LDA #0                 \ Set A = 0 so the following addition just adds the
+                        \ carry from the previous addition (is L0A00 a low
+                        \ byte of the height in some way ???)
 
 .objt3
 
- ADC yTileObject,Y
- LDY yStorePlaceObject
- JMP objt5
+ ADC yObject,Y          \ Add A to the height of the object beneath the one we
+                        \ are adding and store the result in A to set as the
+                        \ height of the new object on the tile when we jump to
+                        \ objt5
+
+ LDY yStorePlaceObject  \ Restore the value of Y from yStorePlaceObject that we
+                        \ stored at the start of the routine, so that it's
+                        \ preserved
+
+ JMP objt5              \ Jump to objt5 to store A as the height of the new
+                        \ object on the tile, and update the various other
+                        \ object and tile tables for the new object
 
 .objt4
 
@@ -7362,12 +7449,16 @@ L1145 = C1144+1
  LSR A
  LSR A
 
+                        \ We now fall through into objt5 to set the tile
+                        \ y-coordinate for the object in slot X to the tile
+                        \ height in A
+
 .objt5
 
- STA yTileObject,X      \ Set the tile y-coordinate for the object in slot X to
-                        \ yTile by updating the X-th entry in the yTileObject
-                        \ table, so we now have a 3D coordinate for the tile in
-                        \ (xTileObject, yTileObject, zTileObject)
+ STA yObject,X          \ Set the 3D y-coordinate for the object in slot X to
+                        \ the value of A by updating the X-th entry in the
+                        \ we now have a full 3D coordinate for the object in
+                        \ (xObject, yObject, zObject)
 
  TXA                    \ Set the tile data for this tile to the object slot
  ORA #%11000000         \ number in X, with bits 6 and 6 set to indicate that
@@ -7392,6 +7483,10 @@ L1145 = C1144+1
  RTS                    \ Return from the subroutine
 
 .objt6
+
+                        \ If we get here then the tile already contains an
+                        \ object and that object is not of type 3 or 6, so we
+                        \ can't add the new object to the tile
 
  SEC                    \ Set the C flag to indicate that we have failed to add
                         \ the object to the tile
@@ -7913,7 +8008,7 @@ L1145 = C1144+1
  JSR SpawnObject
 
  LDX L000B
- LDA yTileObject,X
+ LDA yObject,X
  CLC
  ADC #&01
  LDX objectSlot
@@ -7934,10 +8029,10 @@ L1145 = C1144+1
  LDA #0
  JSR sub_C5FF6
  LDX L000B
- LDA xTileObject,X
+ LDA xObject,X
  CMP xTileSentinel
  BNE C2191
- LDA zTileObject,X
+ LDA zObject,X
  CMP zTileSentinel
  BNE C2191
  LDA #&C0
@@ -7996,8 +8091,8 @@ L1145 = C1144+1
  SEC
  SBC L0A00,Y
  STA T
- LDA yTileObject,X
- SBC yTileObject,Y
+ LDA yObject,X
+ SBC yObject,Y
  BMI C21F0
  ORA T
  BNE C21D5
@@ -8609,7 +8704,7 @@ L23E3 = C23E2+1
  STA L0005
  JSR sub_C24EA
  LDX L000B
- LDA yTileObject,X
+ LDA yObject,X
  STA V
  LDX #&1E
 
@@ -8981,9 +9076,9 @@ L23E3 = C23E2+1
  BIT processAction
  BMI C267F
  BVS C266F
- LDA xTileObject,X
+ LDA xObject,X
  STA L0003
- LDA zTileObject,X
+ LDA zObject,X
  STA L001D
  JMP C26A1
 
@@ -8991,9 +9086,9 @@ L23E3 = C23E2+1
 
  CLC
  LDA #&1F
- SBC zTileObject,X
+ SBC zObject,X
  STA L0003
- LDA xTileObject,X
+ LDA xObject,X
  STA L001D
  JMP C26A1
 
@@ -9002,21 +9097,21 @@ L23E3 = C23E2+1
  BVS C2694
  CLC
  LDA #&1F
- SBC xTileObject,X
+ SBC xObject,X
  STA L0003
  CLC
  LDA #&1F
- SBC zTileObject,X
+ SBC zObject,X
  STA L001D
  JMP C26A1
 
 .C2694
 
- LDA zTileObject,X
+ LDA zObject,X
  STA L0003
  CLC
  LDA #&1F
- SBC xTileObject,X
+ SBC xObject,X
  STA L001D
 
 .C26A1
@@ -9461,7 +9556,7 @@ L23E3 = C23E2+1
  LDA objectFlags,Y
  CMP #&40
  BCS P28C4
- LDA yTileObject,Y
+ LDA yObject,Y
  STA U
  JMP C28EE
 
@@ -9490,7 +9585,7 @@ L23E3 = C23E2+1
  SBC L0A00,X
  STA L0080
  LDA U
- SBC yTileObject,X
+ SBC yObject,X
  JSR sub_C561D
  LDY L0021
  LDA L008D
@@ -9719,9 +9814,9 @@ L23E3 = C23E2+1
  STA objectTypes+63
  BEQ CRE17
  LDA yTile
- STA xTileObject+63
+ STA xObject+63
  LDA zTile
- STA zTileObject+63
+ STA zObject+63
  LDY #&3F
  JMP sub_C5D33
 
@@ -12650,8 +12745,8 @@ L314A = C3148+2
  LDA #&E0               \ Set L0A00+63 = &E0 ???
  STA L0A00+63
 
- LDA #2                 \ Set yTileObject+63 = 2 ???
- STA yTileObject+63
+ LDA #2                 \ Set yObject+63 = 2 ???
+ STA yObject+63
 
  SEC                    \ Set bit 7 of L0C4B ???
  ROR L0C4B
@@ -18231,8 +18326,8 @@ L49C1                = &49C1
  LDA #0
  STA L0080
  SEC
- LDA xTileObject,Y
- SBC xTileObject,X
+ LDA xObject,Y
+ SBC xObject,X
  SEC
  SBC L0C78
  STA L0086
@@ -18247,8 +18342,8 @@ L49C1                = &49C1
  LDA #0
  STA L0082
  SEC
- LDA zTileObject,Y
- SBC zTileObject,X
+ LDA zObject,Y
+ SBC zObject,X
  STA L0088
  BPL C5DF2
  SEC
@@ -18275,8 +18370,8 @@ L49C1                = &49C1
  SEC
  SBC L0A00,X
  STA L0081
- LDA yTileObject,Y
- SBC yTileObject,X
+ LDA yObject,Y
+ SBC yObject,X
  STA L0084
  RTS
 
@@ -18764,14 +18859,14 @@ L49C1                = &49C1
  STA objectTypes+1
  LDA L5FBC,Y
  CLC
- ADC zTileObject+2
- STA zTileObject+1
- LDA yTileObject+2
+ ADC zObject+2
+ STA zObject+1
+ LDA yObject+2
  CLC
  ADC L5FDC,Y
- STA yTileObject+1
- LDA xTileObject+2
- STA xTileObject+1
+ STA yObject+1
+ LDA xObject+2
+ STA xObject+1
  LDA L5FD9,Y
  STA L0142
  LDA L5FE2,Y
