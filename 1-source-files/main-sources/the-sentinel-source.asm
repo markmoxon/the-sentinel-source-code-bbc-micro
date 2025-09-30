@@ -729,14 +729,28 @@
 \ into the screen from front to back, away from us.
 \
 \ This table contains one byte of data for each tile corner in the landscape.
-\ The data contained in each byte is as follows:
+\
+\ If there is no object placed on the tile, then the data contained in each byte
+\ is as follows:
 \
 \   * The low nibble of each byte contains the tile slope, which describes the
-\     shape of the tile.
+\     shape of the tile (0 to 15).
 \
 \   * The high nibble of each byte contains the height of the tile corner in the
 \     front-left corner of the tile (i.e. the corner closest to the landscape
-\     origin). We call this tile corner the "anchor".
+\     origin). We call this tile corner the "anchor". The height is in the range
+\     1 to 11, so the top nibble never has both bit 6 and 7 set.
+\
+\ If there is an object placed on the tile, then the data contained in each byte
+\ is as follows:
+\
+\   * Bits 0 to 5 contain the slot number of the object on the tile (0 to 63).
+\
+\   * Bits 6 and 7 of the byte are set.
+\
+\ We can therefore test for the presence of an object on a tile by checking
+\ whether both bit 6 and 7 are set (as empty tiles have the tile height in the
+\ top nibble, and this is in the range 1 to 11).
 \
 \ As each tile is defined by a tile corner and a slope, we tend to use the terms
 \ "tile" and "tile corner" interchangeably, depending on the context. That said,
@@ -4015,8 +4029,8 @@ L1145 = C1144+1
  STA zTile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
-                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
-                        \ the data are set
+                        \ (xTile, zTile), setting the C flag if the tile
+                        \ contains an object
 
  BCS C122A
  AND #&0F
@@ -4028,7 +4042,7 @@ L1145 = C1144+1
  LSR A
  CMP L0006
  BCS C122A
- JSR sub_C1EFF
+ JSR PlaceObjectOnTile
  CLC
  RTS
 
@@ -4596,14 +4610,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: SpawnPlayerTrees (Part 1 of 2)
+\       Name: SpawnPlayer
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.SpawnPlayerTrees
+.SpawnPlayer
 
  LDA #0                 \ Spawn an object of type 0
  JSR SpawnObject
@@ -4618,7 +4632,7 @@ L1145 = C1144+1
  STA xTile
  LDA #&11
  STA zTile
- JSR sub_C1EFF
+ JSR PlaceObjectOnTile
  JMP SpawnTrees
 
 .C145F
@@ -4632,6 +4646,15 @@ L1145 = C1144+1
 
  JSR sub_C1224
  BCS C145F
+
+\ ******************************************************************************
+\
+\       Name: SpawnTrees
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .SpawnTrees
 
@@ -4691,7 +4714,7 @@ L1145 = C1144+1
  DEX
  BMI C14A6
  ASL showCodeError
- BCC C14CC
+ BCC CheckSecretCode
 
 .CRE06
 
@@ -4727,14 +4750,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: SpawnPlayerTrees (Part 2 of 2)
+\       Name: CheckSecretCode
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.C14CC
+.CheckSecretCode
 
  LDA L0C65
  AND #&1E
@@ -4945,7 +4968,7 @@ L1145 = C1144+1
  LDA #6                 \ Spawn an object of type 6, returning the slot number
  JSR SpawnObject        \ of the new object in X
 
- JSR sub_C1EFF          
+ JSR PlaceObjectOnTile          
 
  LDA #0
  STA L09C0,X
@@ -4954,7 +4977,7 @@ L1145 = C1144+1
 
 .aden4
 
- JSR sub_C1EFF
+ JSR PlaceObjectOnTile
 
  JSR sub_C196A
 
@@ -4978,7 +5001,7 @@ L1145 = C1144+1
  CPX enemyCount         \ If we have added a total of enemyCount enemies, jump
  BCS aden6              \ to aden6 to finish off
 
- JMP aden1              \ Otherewise loop back to add another enemy
+ JMP aden1              \ Otherwise loop back to add another enemy
 
 .aden6
 
@@ -5017,11 +5040,11 @@ L1145 = C1144+1
 \
 \   C flag              Success flag:
 \
-\                         * Set if no tile blocks are at height tileAltitude, in
-\                           which case X is set to &FF
-\
 \                         * Clear if at least one tile block is at height
 \                           tileAltitude
+\
+\                         * Set if no tile blocks are at height tileAltitude, in
+\                           which case X is set to &FF
 \
 \   tilesAtHeight       A list of tile block numbers whose highest tiles match
 \                       the height in tileAltitude
@@ -6236,7 +6259,7 @@ L1145 = C1144+1
                         \ add them to the landscape and set the palette
                         \ accordingly
 
- JSR SpawnPlayerTrees   \ This changes the stack ???
+ JSR SpawnPlayer        \ This changes the stack ???
 
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape's secret code
@@ -6279,8 +6302,8 @@ L1145 = C1144+1
  STA zTile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
-                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
-                        \ the data are set (and clearing it otherwise)
+                        \ (xTile, zTile), setting the C flag if the tile
+                        \ contains an object
 
  BCC C1AE2
  AND #&3F
@@ -6414,8 +6437,8 @@ L1145 = C1144+1
  BEQ C1BA9
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
-                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
-                        \ the data are set (and clearing it otherwise)
+                        \ (xTile, zTile), setting the C flag if the tile
+                        \ contains an object
 
  BCC C1B98
  AND #&3F
@@ -6495,7 +6518,7 @@ L1145 = C1144+1
  STA xTile
  LDA L003C
  STA zTile
- JSR sub_C1EFF
+ JSR PlaceObjectOnTile
  BCC C1BCA
  CLC
  JSR sub_C2127
@@ -7012,8 +7035,8 @@ L1145 = C1144+1
 .sub_C1DE6
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
-                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
-                        \ the data are set
+                        \ (xTile, zTile), setting the C flag if the tile
+                        \ contains an object
 
  BCS C1E28
  PHA
@@ -7238,9 +7261,9 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1EFF
+\       Name: PlaceObjectOnTile
 \       Type: Subroutine
-\   Category: ???
+\   Category: 3D objects
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -7251,44 +7274,61 @@ L1145 = C1144+1
 \
 \   (xTile, zTile)      The tile coordinate to place the object
 \
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Success flag:
+\
+\                         * Clear if we successfully added the object to the
+\                           tile
+\
+\                         * Set if we failed to add the object to the tile
+\
 \ ******************************************************************************
 
-.sub_C1EFF
+.PlaceObjectOnTile
 
  LDA xTile              \ Set the tile coordinate for the object in slot X to
  STA xTileObject,X      \ (xTile, zTile) by updating the X-th entries in the
  LDA zTile              \ xTileObject and zTileObject tables
- STA zTileObject,X
+ STA zTileObject,X      \
+                        \ This also sets the tile page in tileDataPage and the
+                        \ index in Y, so tileDataPage+Y now points to the tile
+                        \ data entry in the tileData table
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
-                        \ (xTile, zTile), setting the C flag if bits 6 and 7 of
-                        \ the data are set (and clearing it otherwise)
+                        \ (xTile, zTile), setting the C flag if the tile
+                        \ contains an object
 
- BCC C1F4B
- STY L1F77
+ BCC objt4              \ If C flag is clear then this tile does not already
+                        \ have an object placed on it, so jump to objt4 to place
+                        \ the object in slot X on the tile
+
+ STY yStorePlaceObject
  AND #&3F
  TAY
  LDA objectTypes,Y
  CMP #&03
- BEQ C1F1F
+ BEQ objt1
  CMP #&06
- BNE C1F75
+ BNE objt6
 
-.C1F1F
+.objt1
 
  TYA
  ORA #&40
  STA objectFlags,X
  LDA objectTypes,Y
  CMP #&06
- BNE C1F37
+ BNE objt2
  LDA L0A00,Y
  STA L0A00,X
  CLC
  LDA #&01
- BNE C1F42
+ BNE objt3
 
-.C1F37
+.objt2
 
  LDA L0A00,Y
  CLC
@@ -7296,60 +7336,81 @@ L1145 = C1144+1
  STA L0A00,X
  LDA #0
 
-.C1F42
+.objt3
 
  ADC yTileObject,Y
- LDY L1F77
- JMP C1F5B
+ LDY yStorePlaceObject
+ JMP objt5
 
-.C1F4B
+.objt4
 
- PHA
- LDA #0
- STA objectFlags,X
- LDA #&E0
+ PHA                    \ Store the tile data for the tile on the stack so we
+                        \ can retrieve it below
+
+ LDA #0                 \ Clear bit 7 of the object's flags to indicate that
+ STA objectFlags,X      \ object slot X contains an object (so this populates
+                        \ the slot with the object)
+
+ LDA #&E0               \ Set the object's entry in L0A00 to &E0 ???
  STA L0A00,X
- PLA
- LSR A
- LSR A
+
+ PLA                    \ Set A to the tile data for the tile, which we stored
+                        \ on the stack above
+
+ LSR A                  \ The top nibble of the tile data contains the tile
+ LSR A                  \ height, so this sets A to the tile height
  LSR A
  LSR A
 
-.C1F5B
+.objt5
 
- STA yTileObject,X
- TXA
- ORA #&C0
- STA (tileDataPage),Y
- LDA #&F5
+ STA yTileObject,X      \ Set the tile y-coordinate for the object in slot X to
+                        \ yTile by updating the X-th entry in the yTileObject
+                        \ table, so we now have a 3D coordinate for the tile in
+                        \ (xTileObject, yTileObject, zTileObject)
+
+ TXA                    \ Set the tile data for this tile to the object slot
+ ORA #%11000000         \ number in X, with bits 6 and 6 set to indicate that
+ STA (tileDataPage),Y   \ the tile now contains an object
+
+ LDA #&F5               \ Set the object's entry in L0140 to &F5 ???
  STA L0140,X
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to a random number that's a multiple of 8 and
+ AND #%11111000         \ in the range 0 to 248 (i.e. 0 to 31 * 8)
 
- AND #&F8
- CLC
- ADC #&60
- STA L09C0,X
- CLC
- RTS
+ CLC                    \ Set A = A + 96
+ ADC #96                \
+                        \ This doesn't change the fact that A is a random number
+                        \ that's a multiple of 8 and in the range 0 to 248 ???
 
-.C1F75
+ STA L09C0,X            \ Set the object's entry in L09C0 to A ???
 
- SEC
- RTS
+ CLC                    \ Clear the C flag to indicate that we have successfully
+                        \ added the object to the tile
+
+ RTS                    \ Return from the subroutine
+
+.objt6
+
+ SEC                    \ Set the C flag to indicate that we have failed to add
+                        \ the object to the tile
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L1F77
+\       Name: yStorePlaceObject
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: Temporary storage for y so it can be preserved through calls to
+\             PlaceObjectOnTile
 \
 \ ******************************************************************************
 
-.L1F77
+.yStorePlaceObject
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -9920,6 +9981,12 @@ L23E3 = C23E2+1
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
                         \ before capping each bit of data to between 1 and 11
+                        \
+                        \ This capping process ensures that when we place the
+                        \ tile height in the top nibble of the tile data, we
+                        \ never have both bits 6 and 7 set (these bits can
+                        \ therefore be used to identify whether or not a tile
+                        \ contains an object)
 
  LDA #%01000000         \ Call SmoothTileData with bit 6 of A set, to smooth
  JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
@@ -10472,19 +10539,28 @@ L23E3 = C23E2+1
 \
 \   A                   The tile data for the tile anchored at (xTile, zTile):
 \
-\                         * The tile slope is in the low nibble
+\                         * If the tile does not contain an object, then:
 \
-\                         * The tile height is in the high nibble
+\                           * The tile slope is in the low nibble (0 to 15)
+\
+\                           * The tile height is in the high nibble (0 to 12)
+\
+\                         * If the tile contains an object, then:
+\
+\                           * Bits 0 to 5 contain the slot number of the object
+\                             on the tile (0 to 63)
+\
+\                           * Bits 6 and 7 are both set
 \
 \   tileDataPage(1 0)   The address of the page containing the tile data
 \
 \   Y                   The offset from tileDataPage(1 0) of the tile data
 \
-\   C flag              Depends on bits 6 and 7 of the tile data:
+\   C flag              Determines whether the tile contains an object:
 \
-\                         * Set if both bit 6 and bit 7 of the tile data are set
+\                         * Set if this tile contains an object
 \
-\                         * Clear otherwise
+\                         * Clear if this tile does not contain an object
 \
 \ ******************************************************************************
 
@@ -18749,7 +18825,7 @@ L49C1                = &49C1
 
  JSR PrintLandscapeNum  \ Print the four-digit landscape number (0000 to 9999)
 
- JSR SpawnPlayerTrees   \ This changes the stack ???
+ JSR SpawnPlayer        \ This changes the stack ???
 
  JMP SecretCodeError
 

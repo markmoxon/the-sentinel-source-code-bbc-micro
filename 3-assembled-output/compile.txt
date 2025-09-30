@@ -3751,7 +3751,7 @@
      1439   BD E3 14   LDA &14E3,X
      143C   8D 59 5E   STA &5E59
      143F   60         RTS
-.SpawnPlayerTrees
+.SpawnPlayer
      1440   A9 00      LDA #&00
      1442   20 0E 21   JSR &210E
      1445   86 0B      STX &0B
@@ -3829,7 +3829,7 @@
      14C9   06
      14CA   01
      14CB   03
-.C14CC
+.CheckSecretCode
      14CC   AD 65 0C   LDA &0C65
      14CF   29 1E      AND #&1E
      14D1   C9 1E      CMP #&1E
@@ -5251,7 +5251,7 @@
      1EF9   A9 80      LDA #&80
      1EFB   9D 00 01   STA &0100,X
      1EFE   60         RTS
-.sub_C1EFF
+.PlaceObjectOnTile
      1EFF   A5 24      LDA &24
      1F01   9D 00 09   STA &0900,X
      1F04   A5 26      LDA &26
@@ -5266,7 +5266,7 @@
      1F19   F0 04      BEQ &1F1F
      1F1B   C9 06      CMP #&06
      1F1D   D0 56      BNE &1F75
-.C1F1F
+.objt1
      1F1F   98         TYA
      1F20   09 40      ORA #&40
      1F22   9D 00 01   STA &0100,X
@@ -5278,17 +5278,17 @@
      1F32   18         CLC
      1F33   A9 01      LDA #&01
      1F35   D0 0B      BNE &1F42
-.C1F37
+.objt2
      1F37   B9 00 0A   LDA &0A00,Y
      1F3A   18         CLC
      1F3B   69 80      ADC #&80
      1F3D   9D 00 0A   STA &0A00,X
      1F40   A9 00      LDA #&00
-.C1F42
+.objt3
      1F42   79 40 09   ADC &0940,Y
      1F45   AC 77 1F   LDY &1F77
      1F48   4C 5B 1F   JMP &1F5B
-.C1F4B
+.objt4
      1F4B   48         PHA
      1F4C   A9 00      LDA #&00
      1F4E   9D 00 01   STA &0100,X
@@ -5299,7 +5299,7 @@
      1F58   4A         LSR A
      1F59   4A         LSR A
      1F5A   4A         LSR A
-.C1F5B
+.objt5
      1F5B   9D 40 09   STA &0940,X
      1F5E   8A         TXA
      1F5F   09 C0      ORA #&C0
@@ -5313,10 +5313,10 @@
      1F70   9D C0 09   STA &09C0,X
      1F73   18         CLC
      1F74   60         RTS
-.C1F75
+.objt6
      1F75   38         SEC
      1F76   60         RTS
-.L1F77
+.yStorePlaceObject
      1F77   00
 .C1F78
      1F78   A9 00      LDA #&00
