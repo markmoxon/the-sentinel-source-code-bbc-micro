@@ -1053,6 +1053,24 @@ L09FF = xObject+255
 \   Category: 3D objects
 \    Summary: The object types table for up to 64 objects
 \
+\ ------------------------------------------------------------------------------
+\
+\ The different object types are as follows:
+\
+\   * 0 = ???
+\
+\   * 1 = ???
+\
+\   * 2 = ???
+\
+\   * 3 = Boulder
+\
+\   * 4 = ???
+\
+\   * 5 = The Sentinel
+\
+\   * 6 = The Sentinel's tower
+\
 \ ******************************************************************************
 
 .objectTypes
@@ -4058,7 +4076,10 @@ L1145 = C1144+1
  LSR A
  CMP L0006
  BCS C122A
- JSR PlaceObjectOnTile
+
+ JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
+                        \ (xTile, zTile)
+
  CLC
  RTS
 
@@ -4648,7 +4669,10 @@ L1145 = C1144+1
  STA xTile
  LDA #&11
  STA zTile
- JSR PlaceObjectOnTile
+
+ JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
+                        \ (xTile, zTile)
+
  JMP SpawnTrees
 
 .C145F
@@ -4969,22 +4993,23 @@ L1145 = C1144+1
                         \ sentry, so jump to aden4
 
                         \ If we get here then the enemy number is zero, so we
-                        \ are adding the Sentinel
+                        \ are adding the Sentinel and the Sentinel's tower
 
  STA zTileSentinel      \ Set (xTileSentinel, zTileSentinel) to the tile
  LDA xTile              \ coordinates of the highest tile in the tile block,
  STA xTileSentinel      \ which we put in (xTile, zTile) above, so this is the
                         \ tile coordinate where we now spawn the Sentinel
 
- LDA #5                 \ Set the object type for object in slot #0 in the
- STA objectTypes        \ objectTypes table to 5, which denotes the Sentinel
-                        \ (so the Sentinel is always in slot #0, as it is the
-                        \ first object to be spawned)
+ LDA #5                 \ Set the object type for the object in slot #0 to
+ STA objectTypes        \ type 5, which denotes the Sentinel (so the Sentinel
+                        \ is always in object slot #0, as it is the first object
+                        \ to be spawned)
 
- LDA #6                 \ Spawn an object of type 6, returning the slot number
- JSR SpawnObject        \ of the new object in X
+ LDA #6                 \ Spawn the Sentinel's tower (an object of type 6),
+ JSR SpawnObject        \ returning the slot number of the new object in X
 
- JSR PlaceObjectOnTile          
+ JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
+                        \ (xTile, zTile)
 
  LDA #0
  STA L09C0,X
@@ -4993,9 +5018,10 @@ L1145 = C1144+1
 
 .aden4
 
- JSR PlaceObjectOnTile
+ JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
+                        \ (xTile, zTile)
 
- JSR sub_C196A
+ JSR sub_C196A          \ ???
 
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
@@ -6534,7 +6560,10 @@ L1145 = C1144+1
  STA xTile
  LDA L003C
  STA zTile
- JSR PlaceObjectOnTile
+
+ JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
+                        \ (xTile, zTile)
+
  BCC C1BCA
  CLC
  JSR sub_C2127
@@ -7294,7 +7323,7 @@ L1145 = C1144+1
 \     an object
 \
 \   * X-th entry in objectFlags, bit 6 is set if we add the object on top of a
-\     boulder or tower (whose slot number is put in bits 0-5)
+\     boulder or tower (and the slot number of the boulder/tower is in bits 0-5)
 \
 \   * X-th entry in L0A00 = &E0 ???
 \
@@ -7358,17 +7387,20 @@ L1145 = C1144+1
  LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
                         \ (i.e. the type of the object in slot Y)
 
- CMP #3                 \ If the tile contains an object of type 3, jump to
- BEQ objt1              \ objt1 ???
+ CMP #3                 \ If the tile contains an object of type 3 (a boulder),
+ BEQ objt1              \ jump to objt1 to put the new object on top of the
+                        \ boulder
 
- CMP #6                 \ If the tile doesn't contain an object of type 6, jump
- BNE objt6              \ to objt6 to return from the subroutine without
-                        \ adding the object
+ CMP #6                 \ If the tile doesn't contain the Sentinel's tower (type
+ BNE objt6              \ 6) then it must contain an object on which we can't
+                        \ place our new object, so jump to objt6 to return from
+                        \ the subroutine without adding the object to the tile
 
 .objt1
 
                         \ If we get here then the object already on the tile is
-                        \ of type 3 or 6 ??? boulder and Sentinel's tower?
+                        \ either a boulder (type 3) or the Sentinel's tower
+                        \ (type 6)
                         \
                         \ In either case, we want to place our object on top of
                         \ the object that is already there, which we can do by
@@ -7384,12 +7416,13 @@ L1145 = C1144+1
                         \ This denotes that our new object in slot X is on top
                         \ of the object in slot Y
 
- LDA objectTypes,Y      \ If the object that's already on the tile is not of
- CMP #6                 \ type 6, jump to objt2
+ LDA objectTypes,Y      \ If the object that's already on the tile is not the
+ CMP #6                 \ Sentinel's tower (type 6), jump to objt2
  BNE objt2
 
                         \ If we get here then we are placing our new object in
-                        \ slot X on top of an object of type 6 in slot Y
+                        \ slot X on top of the Sentinel's tower (type 6) in
+                        \ slot Y
 
  LDA L0A00,Y            \ Set the X-th entry in L0A00 to the Y-th entry ???
  STA L0A00,X
@@ -7403,7 +7436,7 @@ L1145 = C1144+1
 .objt2
 
                         \ If we get here then we are placing our new object in
-                        \ slot X on top of an object of type 3 in slot Y
+                        \ slot X on top of the boulder (type 3) in slot Y
 
  LDA L0A00,Y            \ Set the X-th entry in L0A00 to the Y-th entry plus
  CLC                    \ &80 ???
@@ -7877,11 +7910,17 @@ L1145 = C1144+1
 \
 \                         * 0 = ???
 \
+\                         * 1 = ???
+\
 \                         * 2 = ???
 \
-\                         * 6 = ???
+\                         * 3 = Boulder
 \
-\                         * There may be others
+\                         * 4 = ???
+\
+\                         * 5 = The Sentinel
+\
+\                         * 6 = The Sentinel's tower
 \
 \ ------------------------------------------------------------------------------
 \
