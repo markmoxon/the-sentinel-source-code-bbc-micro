@@ -22,6 +22,7 @@
 .L000A
      000A
 .L000B
+.playerObject
      000B
 .L000C
 .zCounter
@@ -3447,18 +3448,18 @@
 .L1222
      1222   00
      1223   00
-.sub_C1224
+.PlaceObjectBelow
      1224   85 06      STA &06
      1226   A9 00      LDA #&00
      1228   85 15      STA &15
-.C122A
+.objb1
      122A   C6 15      DEC &15
      122C   D0 08      BNE &1236
      122E   E6 06      INC &06
      1230   A5 06      LDA &06
      1232   C9 0C      CMP #&0C
      1234   B0 22      BCS &1258
-.C1236
+.objb2
      1236   20 5A 12   JSR &125A
      1239   85 24      STA &24
      123B   20 5A 12   JSR &125A
@@ -3477,10 +3478,10 @@
      1253   20 FF 1E   JSR &1EFF
      1256   18         CLC
      1257   60         RTS
-.C1258
+.objb3
      1258   38         SEC
      1259   60         RTS
-.sub_C125A
+.GetRandomNumber30
      125A   20 94 31   JSR &3194
      125D   29 1F      AND #&1F
      125F   C9 1F      CMP #&1F
@@ -3766,12 +3767,12 @@
      1457   85 26      STA &26
      1459   20 FF 1E   JSR &1EFF
      145C   4C 6D 14   JMP &146D
-.C145F
+.sply1
      145F   AD 06 0C   LDA &0C06
      1462   C9 06      CMP #&06
      1464   90 02      BCC &1468
      1466   A9 06      LDA #&06
-.C1468
+.sply2
      1468   20 24 12   JSR &1224
      146B   B0 F2      BCS &145F
 .SpawnTrees

@@ -103,7 +103,7 @@
 .L0006
 .tileAltitude
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to store a tile altitude
 
 .L0007
 
@@ -122,6 +122,7 @@
  SKIP 1                 \ ???
 
 .L000B
+.playerObject
 
  SKIP 1                 \ ???
 
@@ -1074,11 +1075,11 @@
 \
 \ The different object types are as follows:
 \
-\   * 0 = ???
+\   * 0 = Robot (one of which is the player)
 \
 \   * 1 = ???
 \
-\   * 2 = ???
+\   * 2 = Tree
 \
 \   * 3 = Boulder
 \
@@ -3521,7 +3522,7 @@
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
- LDA landscapeZero      \ If the landscape numnber is not 0000, jump to main3
+ LDA landscapeZero      \ If the landscape number is not 0000, jump to main3
  BNE main3              \ to ask for the landscape's secret entry code
 
                         \ This is landscape 0000, so we don't ask for a secret
@@ -4072,78 +4073,147 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1224
+\       Name: PlaceObjectBelow
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: Attempt to place the player's object on a tile that is below the
+\             maximum altitude specified in A
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The maximum desired altitude of the object (though we
+\                       may end up placing the object higher than this)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Success flag:
+\
+\                         * Clear if the object was successfully placed on a
+\                           tile
+\
+\                         * Set if the object was not placed on a suitable tile
 \
 \ ******************************************************************************
 
-.sub_C1224
+.PlaceObjectBelow
 
- STA L0006
- LDA #0
- STA loopCounter
+ STA tileAltitude       \ Store the maximum altitude in tileAltitude
 
-.C122A
+ LDA #0                 \ We now loop through the landscape tiles, trying to
+ STA loopCounter        \ find a suitable location for the object, so set a
+                        \ loop counter to count 255 iterations for each loop
 
- DEC loopCounter
- BNE C1236
- INC L0006
- LDA L0006
- CMP #&0C
- BCS C1258
+.objb1
 
-.C1236
+ DEC loopCounter        \ Decrement the loop counter
 
- JSR sub_C125A
- STA xTile
- JSR sub_C125A
- STA zTile
+ BNE objb2              \ If we have not counted all 255 iterations yet, jump to
+                        \ objb2 to skip the following
+
+                        \ If we get here then we have tried 255 tiles at the
+                        \ altitude in tileAltitude, but without success, so we
+                        \ move to a higher altitude and try again
+
+ INC tileAltitude       \ Increment the altitude in tileAltitude to move up by
+                        \ one coordinate (where a tile-sized cube is one
+                        \ coordinate across)
+
+ LDA tileAltitude       \ If we just incremented tileAltitude to 12 then we have
+ CMP #12                \ gone past the highest altitude possible, so jump to
+ BCS objb3              \ objb3 to return from the subroutine with the C flag
+                        \ set to indicate failure
+
+                        \ Otherwise keep going to look for a suitable tile at
+                        \ the new, higher altitude
+
+.objb2
+
+                        \ We now pick a random tile in the landscape that might
+                        \ be suitable for placing our object
+
+ JSR GetRandomNumber30  \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, converted to the range 0 to 30
+
+ STA xTile              \ Set xTile to this random number, so it points to a
+                        \ tile corner that anchors a tile (so the tile corner
+                        \ isn't along the right edge of the landscape)
+
+ JSR GetRandomNumber30  \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, converted to the range 0 to 30
+
+ STA zTile              \ Set zTile to this random number, so it points to a
+                        \ tile corner that anchors a tile (so the tile corner
+                        \ isn't along the far edge of the landscape)
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCS C122A
- AND #&0F
- BNE C122A
- LDA (tileDataPage),Y
+ BCS objb1              \ If the tile already contains an object, jump to objb1
+                        \ to try another tile from the landscape's sequence of
+                        \ random numbers
+
+ AND #%00001111         \ If the tile slope in the low nibble of the tile data
+ BNE objb1              \ is non-zero, then the tile is not flat, so jump to
+                        \ objb1 to try another tile from the landscape's
+                        \ sequence of random numbers
+
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
+
+ LSR A                  \ Set A to the tile altitude, which is in the top nibble
+ LSR A                  \ of the tile data
  LSR A
  LSR A
- LSR A
- LSR A
- CMP L0006
- BCS C122A
+
+ CMP tileAltitude       \ If the altitude of the chosen tile is equal to or
+ BCS objb1              \ higher than the minimum altitude in tileAltitude, then
+                        \ this tile is too high, so jump to objb1 to try another
+                        \ tile from the landscape's sequence of random numbers
+
+                        \ If we get here then we have found a tile that is below
+                        \ the altitude in tileAltitude and which doesn't already
+                        \ contain an object, so we can use this for placing our
+                        \ object
 
  JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
                         \ (xTile, zTile)
 
- CLC
- RTS
+ CLC                    \ Clear the C flag to indicate that we have successfully
+                        \ placed the object on a tile
 
-.C1258
+ RTS                    \ Return from the subroutine
 
- SEC
- RTS
+.objb3
+
+ SEC                    \ Set the C flag to indicate that we have failed to
+                        \ place the object on a suitable tile
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C125A
+\       Name: GetRandomNumber30
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Set A to a random number in the range 0 to 30
 \
 \ ******************************************************************************
 
-.sub_C125A
+.GetRandomNumber30
 
  JSR GetRandomNumber    \ Set A to a random number
 
- AND #&1F
- CMP #&1F
- BCS sub_C125A
- RTS
+ AND #31                \ Convert A into a random number into the range 0 to 31
+
+ CMP #31                \ If A >= 31 or greater, repeat the process until we
+ BCS GetRandomNumber30  \ get a random number in the range 0 to 30
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4695,36 +4765,59 @@ L1145 = C1144+1
 
 .SpawnPlayer
 
- LDA #0                 \ Spawn an object of type 0
- JSR SpawnObject
+ LDA #0                 \ Spawn the player's robot (an object of type 0),
+ JSR SpawnObject        \ returning the slot number of the new object in X
 
- STX L000B              \ Set L000B to the slot of the newly spawned object
+ STX playerObject       \ Set playerObject to the slot number of the newly
+                        \ spawned object
 
- LDA #&0A
+ LDA #10                \ Set L0C0A = 10 ???
  STA L0C0A
- LDA landscapeZero
- BNE C145F
- LDA #&08
- STA xTile
- LDA #&11
- STA zTile
+
+ LDA landscapeZero      \ If the landscape number is not 0000, jump to sply1
+ BNE sply1
+
+ LDA #8                 \ Set (xTile, zTile) = (8, 17)
+ STA xTile              \
+ LDA #17                \ So the player always starts on this tile in the first
+ STA zTile              \ landscape
 
  JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
                         \ (xTile, zTile)
 
- JMP SpawnTrees
+ JMP SpawnTrees         \ Jump to SpawnTrees to add trees to the landscape and
+                        \ move towards playing the game
 
-.C145F
+.sply1
 
- LDA minEnemyAltitude
- CMP #&06
- BCC C1468
- LDA #&06
+                        \ If we get here then this is not landscape 0000
 
-.C1468
+ LDA minEnemyAltitude   \ Set A to the altitude of the lowest enemy on the
+                        \ landscape
 
- JSR sub_C1224
- BCS C145F
+ CMP #6                 \ If A >= 6 then set A = 6
+ BCC sply2              \
+ LDA #6                 \ So A = min(6, minEnemyAltitude)
+
+.sply2
+
+                        \ By this point A contains an altitude that is no higher
+                        \ than any enemies and is no greater than 6
+                        \
+                        \ We can use this as a cap on the player's starting
+                        \ altitude to ensure that the player starts below all
+                        \ the enemies, and in the bottom half of the landscape
+                        \ (which ranges from altitude 1 to 11)
+
+ JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+                        \ below the maximum altitude specified in A (though we
+                        \ may end up placing the object higher than this)
+
+ BCS sply1              \ If the call to PlaceObjectBelow sets the C flag then
+                        \ the object has not been placed, so loop back to sply1
+                        \ to keep trying, working through the landscape's
+                        \ sequence of random numbers until we do manage to place
+                        \ the player on a tile
 
 \ ******************************************************************************
 \
@@ -4758,12 +4851,18 @@ L1145 = C1144+1
 
 .P1489
 
- LDA #2                 \ Spawn an object of type 2
- JSR SpawnObject
+ LDA #2                 \ Spawn a tree (an object of type 2), returning the
+ JSR SpawnObject        \ slot number of the new object in X
 
  LDA minEnemyAltitude
- JSR sub_C1224
- BCS C149A
+
+ JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+                        \ below the maximum altitude specified in A (though we
+                        \ may end up placing the object higher than this)
+
+ BCS C149A              \ If the call to PlaceObjectBelow sets the C flag then
+                        \ the object has not been placed, so jump to C149A
+
  DEC L001E
  BNE P1489
 
@@ -6311,8 +6410,15 @@ L1145 = C1144+1
  JSR SpawnObject
 
  LDA minEnemyAltitude
- JSR sub_C1224
- BCS CRE09
+
+ JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+                        \ below the maximum altitude specified in A (though we
+                        \ may end up placing the object higher than this)
+
+ BCS CRE09              \ If the call to PlaceObjectBelow sets the C flag then
+                        \ the object has not been placed, so jump to CRE09 to
+                        \ return from the subroutine with the C flag set
+
  TXA
  JSR sub_C1AF3
  BCC C1A78
@@ -7493,9 +7599,8 @@ L1145 = C1144+1
                         \ y-coordinate of the object, as the y-axis goes up and
                         \ down in our 3D world)
                         \
-                        \ The tower is defined with a height of 1 coordinate
-                        \ (where each tile is 1 coordinate wide and 1 coordinate
-                        \ deep)
+                        \ The tower is defined with a height of one coordinate
+                        \ (where a tile-sized cube is one coordinate across)
                         \
                         \ Object y-coordinates are stored as 16-bit numbers in
                         \ the form (yObjectHi yObjectLo), with the low byte
@@ -7543,8 +7648,7 @@ L1145 = C1144+1
                         \ and down in our 3D world)
                         \
                         \ Boulder are defined with a height of 0.5 coordinates
-                        \ (where each tile is 1 coordinate wide and 1 coordinate
-                        \ deep)
+                        \ (where a tile-sized cube is one coordinate across)
                         \
                         \ Object y-coordinates are stored as 16-bit numbers in
                         \ the form (yObjectHi yObjectLo), with the low byte
@@ -8039,11 +8143,11 @@ L1145 = C1144+1
 \
 \   A                   The type of object to spawn:
 \
-\                         * 0 = ???
+\                         * 0 = Robot (one of which is the player)
 \
 \                         * 1 = ???
 \
-\                         * 2 = ???
+\                         * 2 = Tree
 \
 \                         * 3 = Boulder
 \
@@ -8182,8 +8286,15 @@ L1145 = C1144+1
  CLC
  ADC #&01
  LDX objectSlot
- JSR sub_C1224
- BCS CRE11
+
+ JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+                        \ below the maximum altitude specified in A (though we
+                        \ may end up placing the object higher than this)
+
+ BCS CRE11              \ If the call to PlaceObjectBelow sets the C flag then
+                        \ the object has not been placed, so jump to CRE11 to
+                        \ return from the subroutine 
+
  SEC
  JSR sub_C2127
  BCC C2170
