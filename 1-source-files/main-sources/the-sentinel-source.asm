@@ -1023,11 +1023,6 @@
 
 .L09C0
 
-L09C1 = xObject+193
-L09C2 = xObject+194
-L09D0 = xObject+208
-L09FF = xObject+255
-
  EQUB &00, &CE, &F8, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &12, &00, &00, &00, &00, &00, &00, &00
@@ -1166,11 +1161,16 @@ L09FF = xObject+255
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &10, &10
 
-.L0B40
+\ ******************************************************************************
+\
+\       Name: L0B40
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
 
-L0B56 = L0B00+86
-L0BA0 = L0B00+160
-L0BAB = L0B00+171
+.L0B40
 
  EQUB &10, &10, &10, &10, &10, &10, &10, &10        \ These values are workspace
  EQUB &10, &10, &10, &10, &10, &10, &10, &10        \ noise and have no meaning
@@ -1184,6 +1184,18 @@ L0BAB = L0B00+171
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
+
+\ ******************************************************************************
+\
+\       Name: L0BA0
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L0BA0
+
  EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB
  EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7
  EQUB &5E, &D3, &50, &C3, &35, &AE, &1D, &8A
@@ -1363,9 +1375,14 @@ L0BAB = L0B00+171
 
  EQUB 7
 
-.L0C4B
+.drawingTitleScreen
 
- EQUB &80
+ EQUB %10000000         \ A flag to indicate whether we are currently drawing
+                        \ the title screen in the DrawTitleScreen routine:
+                        \
+                        \   * Bit 7 clear = we are not drawing the title screen
+                        \
+                        \   * Bit 7 set = we are drawing the title screen
 
 .L0C4C
 
@@ -4479,7 +4496,7 @@ L1145 = C1144+1
  LDA L140B,Y
  STA zObject+16
  LDA L140D,Y
- STA L09D0
+ STA L09C0+16
  LDA L1409,Y
  PHA
  JSR sub_C1090
@@ -4647,7 +4664,7 @@ L1145 = C1144+1
 
  JSR AddEnemiesToTiles  \ Add the required number of enemies to the landscape,
                         \ starting from the highest altitude and working down,
-                        \ with one enemy per contour
+                        \ with no more than one enemy on each contour
 
                         \ We now update colours 2 and 3 in the first palette in
                         \ colourPalettes according to the number of enemies
@@ -4753,7 +4770,7 @@ L1145 = C1144+1
 .C149A
 
  LDX #&AA
- LDY L0BAB,X
+ LDY L0BA0+11,X
  BIT showCodeError
  BPL C14A6
  LDX #&A5
@@ -9010,7 +9027,7 @@ L23E3 = C23E2+1
  STA L003C
  LDA L0CCE
  BMI C257E
- LDA L0B56,X
+ LDA L0B40+22,X
  CLC
  ADC #&29
  STA L000C
@@ -9991,7 +10008,7 @@ L23E3 = C23E2+1
  ADC L001B
  AND #&3F
  TAX
- BIT L0C4B
+ BIT drawingTitleScreen
  BMI C29C9
  LDA L0180,X
  BEQ CRE17
@@ -12895,17 +12912,16 @@ L314A = C3148+2
  STA screenType         \ Store the screen type in A in screenType, so we can
                         \ refer to it below
 
- LDA #&80               \ Set L09FF = &80 ???
- STA L09FF
+ LDA #&80               \ Set L09C0+63 = &80 ???
+ STA L09C0+63
 
- LDA #&E0               \ Set yObjectLo+63 = &E0 ???
- STA yObjectLo+63
-
- LDA #2                 \ Set yObjectHi+63 = 2 ???
+ LDA #224               \ Set (yObjectHi yObjectLo) for object slot 63 to 736,
+ STA yObjectLo+63       \ i.e. to (2 224)
+ LDA #2
  STA yObjectHi+63
 
- SEC                    \ Set bit 7 of L0C4B ???
- ROR L0C4B
+ SEC                    \ Set bit 7 of drawingTitleScreen to indicate that we
+ ROR drawingTitleScreen \ are drawing the title screen
 
  LDA #0                 \ Call ProcessTileData with A = 0 to zero the tile data
  JSR ProcessTileData    \ for the whole landscape
@@ -12918,9 +12934,9 @@ L314A = C3148+2
 
  JSR DrawSecretCode     \ Draw the secret code in 3D ???
 
- LDX #3
+ LDX #3                 \ Set X = 3 to pass to DrawTitleObject ???
 
- LDA #0                 \ Set A = 0 so the call to DrawTitleObject draws a robot
+ LDA #0                 \ Set A = 0 so the call to t draws a robot
                         \ on the right of the screen
 
  BEQ titl3              \ Jump to titl3 to ??? (this BEQ is effectively a JMP as
@@ -12943,19 +12959,20 @@ L314A = C3148+2
  CPX #15                \ Loop back until we have drawn all 15 characters in the
  BCC titl2              \ title text
 
- LDX #1
+ LDX #1                 \ Set X = 1 to pass to DrawTitleObject ???
 
  LDA #5                 \ Set A = 5 so the call to DrawTitleObject draws the
                         \ Sentinel on the right of the screen
 
 .titl3
 
- LDY #1
+ LDY #1                 \ Set Y = 1 to pass to DrawTitleObject ???
 
  JSR DrawTitleObject    \ Draw the Sentinel on the title screen or the robot on
                         \ the secret code screen ???
 
- LSR L0C4B              \ Clear bit 7 of L0C4B ???
+ LSR drawingTitleScreen \ Clear bit 7 of drawingTitleScreen to indicate we are
+                        \ no longer drawing the title screen
 
  RTS                    \ Return from the subroutine
 
@@ -16053,26 +16070,69 @@ L314A = C3148+2
  EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
  EQUB &53, &54, &58, &20, &58, &54
 
-
- ORG &4A00              \ Set the assembly address to &4A00
-
-L49A0                = &49A0
-L49A1                = &49A1
-L49AB                = &49AB
-L49AC                = &49AC
-L49B6                = &49B6
-L49C1                = &49C1
+ SKIP &08A0             \ &4100 to &499F
 
 \ ******************************************************************************
 \
-\       Name: L4A00
+\       Name: L49A0
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L4A00
+.L49A0
+
+ EQUB 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0, 0
+
+\ ******************************************************************************
+\
+\       Name: L49AB
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L49AB
+
+ EQUB 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0, 0
+
+\ ******************************************************************************
+\
+\       Name: L49B6
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L49B6
+
+ EQUB 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0, 0
+
+\ ******************************************************************************
+\
+\       Name: L49C1
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L49C1
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00
 
  EQUB &4B, &4A, &46, &4B, &47, &4D, &4C, &47
  EQUB &4B, &4E, &4A, &4B, &4C, &4D, &4F, &4C
@@ -16081,6 +16141,15 @@ L49C1                = &49C1
  EQUB &4A, &48, &51, &4D, &48, &4A, &4E, &50
  EQUB &4A, &4D, &51, &4F, &4D, &49, &50, &51
  EQUB &48, &49, &4F, &51, &50, &4E, &4F
+
+\ ******************************************************************************
+\
+\       Name: L4A37
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .L4A37
 
@@ -18261,7 +18330,7 @@ L49C1                = &49C1
  LDX L004C
  LDA #&40
  STA L0021
- LDA L49A1,X
+ LDA L49A0+1,X
  STA L004F
  LDY L49A0,X
  STY L004E
@@ -18417,7 +18486,7 @@ L49C1                = &49C1
 .C5D6F
 
  LDX L004C
- LDA L49AC,X
+ LDA L49AB+1,X
  STA L004F
  LDY L49AB,X
 
@@ -19026,12 +19095,12 @@ L49C1                = &49C1
  LDA L5FD9,Y
  STA L0142
  LDA L5FE2,Y
- STA L09C2
+ STA L09C0+2
  LDA #0
  STA yObjectLo+2
  STA yObjectLo+1
  LDA L5FDF,Y
- STA L09C1
+ STA L09C0+1
  LDX #&02
  STX L006E
  RTS
@@ -19064,9 +19133,12 @@ L49C1                = &49C1
                         \ add them to the landscape and set the palette
                         \ accordingly
 
- LDX #3
- LDY #0
- LDA #&80
+ LDX #3                 \ Set X = 3 to pass to DrawTitleObject ???
+
+ LDY #0                 \ Set Y = 0 to pass to DrawTitleObject ???
+
+ LDA #&80               \ Set A = &80 so the call to DrawTitleObject draws the
+                        \ landscape preview
 
  JSR DrawTitleObject    \ Draw the landscape preview
 
