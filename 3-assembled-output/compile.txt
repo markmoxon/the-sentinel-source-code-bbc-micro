@@ -2354,7 +2354,7 @@
      0C04   00
 .L0C05
      0C05   28
-.lowestEnemyHeight
+.minEnemyAltitude
      0C06   00
 .maxEnemyCount
      0C07   00
@@ -3930,24 +3930,24 @@
      1588   8D 06 0C   STA &0C06
      158B   18         CLC
      158C   60         RTS
-.GetTilesAtHeight
+.GetTilesAtAltitude
      158D   A2 3F      LDX #&3F
      158F   A0 00      LDY #&00
-.peak1
+.galt1
      1591   BD 10 5B   LDA &5B10,X
      1594   C5 06      CMP &06
      1596   D0 05      BNE &159D
      1598   8A         TXA
      1599   99 40 5A   STA &5A40,Y
      159C   C8         INY
-.peak2
+.galt2
      159D   CA         DEX
      159E   10 F1      BPL &1591
      15A0   98         TYA
      15A1   F0 0F      BEQ &15B2
      15A3   85 74      STA &74
      15A5   A0 FF      LDY #&FF
-.peak3
+.galt3
      15A7   0A         ASL A
      15A8   C8         INY
      15A9   90 FC      BCC &15A7
@@ -3955,7 +3955,7 @@
      15AE   85 27      STA &27
      15B0   18         CLC
      15B1   60         RTS
-.peak4
+.galt4
      15B2   38         SEC
      15B3   60         RTS
 .bitMasks
@@ -14711,7 +14711,7 @@
      5A3D   20
      5A3E   54
      5A3F   59
-.tilesAtHeight
+.tilesAtAltitude
      5A40   41
      5A41   3A
      5A42   53
@@ -14921,7 +14921,7 @@
      5B0D   45
      5B0E   52
      5B0F   53
-.maxTileHeight
+.maxAltitude
      5B10   4F
      5B11   4E
      5B12   0D
@@ -15002,7 +15002,7 @@
      5B5D   43
      5B5E   3A
      5B5F   53
-.xMaxTileHeight
+.xTileMaxAltitude
      5B60   42
      5B61   43
      5B62   23
@@ -15067,7 +15067,7 @@
      5B9D   20
      5B9E   20
      5B9F   20
-.zMaxTileHeight
+.zTileMaxAltitude
      5BA0   20
      5BA1   20
      5BA2   20

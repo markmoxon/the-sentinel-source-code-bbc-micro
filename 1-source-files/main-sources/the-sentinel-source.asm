@@ -730,7 +730,7 @@
 \       Name: tileData
 \       Type: Variable
 \   Category: Landscape
-\    Summary: Height and slope data for landscape tiles
+\    Summary: Altitude and slope data for landscape tiles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -738,8 +738,8 @@
 \ undulating chess board that's sitting on a table in front of us, going into
 \ the screen.
 \
-\ The shape of the landscape is defined by the heights of the corners of each
-\ tile, so that's a 32x32 grid of heights, one for each tile corner.
+\ The shape of the landscape is defined by the altitude of the corners of each
+\ tile, so that's a 32x32 grid of altitudes, one for each tile corner.
 \
 \ The x-axis is along the front edge, from left to right, while the z-axis goes
 \ into the screen from front to back, away from us.
@@ -752,10 +752,10 @@
 \   * The low nibble of each byte contains the tile slope, which describes the
 \     shape of the tile (0 to 15).
 \
-\   * The high nibble of each byte contains the height of the tile corner in the
-\     front-left corner of the tile (i.e. the corner closest to the landscape
-\     origin). We call this tile corner the "anchor". The height is in the range
-\     1 to 11, so the top nibble never has both bit 6 and 7 set.
+\   * The high nibble of each byte contains the altitude of the tile corner in
+\     the front-left corner of the tile (i.e. the corner closest to the landscape
+\     origin). We call this tile corner the "anchor". The altitude is in the
+\     range 1 to 11, so the top nibble never has both bit 6 and 7 set.
 \
 \ If there is an object placed on the tile, then the data contained in each byte
 \ is as follows:
@@ -765,7 +765,7 @@
 \   * Bits 6 and 7 of the byte are set.
 \
 \ We can therefore test for the presence of an object on a tile by checking
-\ whether both bit 6 and 7 are set (as empty tiles have the tile height in the
+\ whether both bit 6 and 7 are set (as empty tiles have the tile altitude in the
 \ top nibble, and this is in the range 1 to 11).
 \
 \ As each tile is defined by a tile corner and a slope, we tend to use the terms
@@ -970,10 +970,10 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ The y-coordinate (i.e. the height) of each object is stored as a 16-bit number
-\ of the form (yObjectHi yObjectLo). The low byte is effectively a fractional
-\ part, as a y-coordinate of (1 0) is the same magnitude as an x-coordinate or
-\ z-coordinate of 1.
+\ The y-coordinate (i.e. the altitude) of each object is stored as a 16-bit
+\ number of the form (yObjectHi yObjectLo). The low byte is effectively a
+\ fractional part, as a y-coordinate of (1 0) is the same magnitude as an
+\ x-coordinate or z-coordinate of 1.
 \
 \ A full coordinate in the 3D space is therefore in the form:
 \
@@ -1046,10 +1046,10 @@ L09FF = xObject+255
 \
 \ ------------------------------------------------------------------------------
 \
-\ The y-coordinate (i.e. the height) of each object is stored as a 16-bit number
-\ of the form (yObjectHi yObjectLo). The low byte is effectively a fractional
-\ part, as a y-coordinate of (1 0) is the same magnitude as an x-coordinate or
-\ z-coordinate of 1.
+\ The y-coordinate (i.e. the altitude) of each object is stored as a 16-bit
+\ number of the form (yObjectHi yObjectLo). The low byte is effectively a
+\ fractional part, as a y-coordinate of (1 0) is the same magnitude as an
+\ x-coordinate or z-coordinate of 1.
 \
 \ A full coordinate in the 3D space is therefore in the form:
 \
@@ -1231,7 +1231,7 @@ L0BAB = L0B00+171
 
  EQUB &28
 
-.lowestEnemyHeight
+.minEnemyAltitude
 
  EQUB 0
 
@@ -4699,7 +4699,7 @@ L1145 = C1144+1
 
 .C145F
 
- LDA lowestEnemyHeight
+ LDA minEnemyAltitude
  CMP #&06
  BCC C1468
  LDA #&06
@@ -4744,7 +4744,7 @@ L1145 = C1144+1
  LDA #2                 \ Spawn an object of type 2
  JSR SpawnObject
 
- LDA lowestEnemyHeight
+ LDA minEnemyAltitude
  JSR sub_C1224
  BCS C149A
  DEC L001E
@@ -4882,19 +4882,19 @@ L1145 = C1144+1
                         \ tiles in the landscape and the altitude of the highest
                         \ tile, putting the results in the following variables:
                         \
-                        \   * maxTileHeight contains the height of the highest
+                        \   * maxAltitude contains the altitude of the highest
                         \     tile in each 4x4 block in the landscape
                         \
-                        \   * xMaxTileHeight contains the tile x-coordinate of
+                        \   * xTileMaxAltitude contains the tile x-coordinate of
                         \     the highest tile in each 4x4 block in the
                         \     landscape
                         \
-                        \   * zMaxTileHeight contains the tile z-coordinate of
+                        \   * zTileMaxAltitude contains the tile z-coordinate of
                         \     the highest tile in each 4x4 block in the
                         \     landscape
                         \
-                        \   * tileAltitude contains the height of the highest
-                        \     tile in the landscape
+                        \   * tileAltitude contains the altitude of the highest
+                        \     tile in the entire landscape
 
  LDX #0                 \ We now loop through the number of enemies, adding one
                         \ enemy for each loop and iterating enemyCount tiles, so
@@ -4916,56 +4916,56 @@ L1145 = C1144+1
                         \ down to lower altitudes, looking for suitable tile
                         \ blocks to place an enemy
                         \
-                        \ To do this we start with tile blocks that are at a
-                        \ height of tileAltitude (which we set above to the
-                        \ height of the highest tile in the landscape), and we
+                        \ To do this we start with tile blocks that are at an
+                        \ altitude of tileAltitude (which we set above to the
+                        \ altitude of the highest tile in the landscape), and we
                         \ work down in steps of 16
 
 .aden2
 
- JSR GetTilesAtHeight   \ Set tilesAtHeight to a list of tile block numbers
-                        \ whose highest tiles are at height tileAltitude,
-                        \ returning the length of the list in T and a bit mask
-                        \ in bitMask that has a matching number of leading
-                        \ zeroes as T
+ JSR GetTilesAtAltitude \ Set tilesAtAltitude to a list of tile block numbers
+                        \ whose highest tiles in the 4x4 block are at an
+                        \ altitude of tileAltitude, returning the length of the
+                        \ list in T and a bit mask in bitMask that has a
+                        \ matching number of leading zeroes as T
 
- BCC aden3              \ If the call to GetTilesAtHeight returns at least one
-                        \ tile block at this height then the C flag will be
+ BCC aden3              \ If the call to GetTilesAtAltitude returns at least one
+                        \ tile block at this altitude then the C flag will be
                         \ clear, so jump to aden3 to add an enemy to one of the
                         \ matched tile blocks
 
  LDA tileAltitude       \ Otherwise we didn't find any tile blocks at this
- SEC                    \ height, so subtract 1 from the high nibble of
+ SEC                    \ altitude, so subtract 1 from the high nibble of
  SBC #%00010000         \ tileAltitude to move down one level (we subtract from
  STA tileAltitude       \ the high nibble because tileAltitude contains tile
-                        \ data, which has the tile height in the high nibble and
-                        \ the tile slope in the low nibble)
+                        \ data, which has the tile altitude in the high nibble
+                        \ and the tile slope in the low nibble)
 
- BNE aden2              \ Loop back to check for tile blocks at the lower height
-                        \ until we have reached a height of zero
+ BNE aden2              \ Loop back to check for tile blocks at the lower
+                        \ altitude until we have reached an altitude of zero
 
- STX enemyCount         \ When the GetTilesAtHeight routine returns with no
+ STX enemyCount         \ When the GetTilesAtAltitude routine returns with no
                         \ matching tile blocks, it also returns a value of &FF
                         \ in X, so this sets enemyCount to -1
 
- JMP aden6              \ Jump to aden6 to set the value of lowestEnemyHeight
+ JMP aden6              \ Jump to aden6 to set the value of minEnemyAltitude
                         \ and return from the subroutine
 
 .aden3
 
                         \ If we get here then we have found at least one tile
-                        \ block at the current height, so we now pick one of
+                        \ block at the current altitude, so we now pick one of
                         \ them and add an enemy
                         \
-                        \ We only pick one tile at this height so that the
-                        \ enemies are spread out over various heights
+                        \ We only pick one tile at this altitude so that the
+                        \ enemies are spread out over various altitudes
 
  JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
                         \ of random numbers
 
- AND bitMask            \ The call to GetTilesAtHeight above sets bitMask to a
+ AND bitMask            \ The call to GetTilesAtAltitude above sets bitMask to a
                         \ bit mask that has a matching number of leading zeroes
-                        \ as the number of tile blocks at this height, so this
+                        \ as the number of tile blocks at this altitude, so this
                         \ instruction converts A into a random number with the
                         \ same range of non-zero bits as T
 
@@ -4974,38 +4974,39 @@ L1145 = C1144+1
 
                         \ When we get here, A is a random number and A < T, so
                         \ A can be used as an offset into the list of tile
-                        \ blocks in tilesAtHeight (which contains T entries)
+                        \ blocks in tilesAtAltitude (which contains T entries)
 
  TAY                    \ Set Y to the random index in A so we can use it as an
                         \ offset
 
- LDX tilesAtHeight,Y    \ Set X to the Y-th tile block number in the list of
-                        \ tile blocks at height tilesAtHeight
+ LDX tilesAtAltitude,Y  \ Set X to the Y-th tile block number in the list of
+                        \ tile blocks at an altitude of tilesAtAltitude
 
-                        \ We now zero the maximum tile heights for tile block X
-                        \ and the eight surrounding tile blocks, so the 
-                        \ won't be able to put any enemies on those blocks (this
-                        \ ensures we don't create enemies too close to each
-                        \ other)
+                        \ We now zero the maximum tile altitudes for tile block
+                        \ X and the eight surrounding tile blocks, so that
+                        \ further calls to GetTilesAtAltitude won't match these
+                        \ tiles, so we therefore won't put any enemies on those
+                        \ blocks (this ensures we don't create enemies too close
+                        \ to each other)
 
- LDA #0                 \ Set A = 0 so we can zero the maximum tile heights for
-                        \ tile block X and the eight surrounding blocks
+ LDA #0                 \ Set A = 0 so we can zero the maximum tile altitudes
+                        \ for tile block X and the eight surrounding blocks
 
- STA maxTileHeight-9,X  \ Zero the heights of the three tile blocks in the row
- STA maxTileHeight-8,X  \ in front of tile block X
- STA maxTileHeight-7,X
+ STA maxAltitude-9,X    \ Zero the altitudes of the three tile blocks in the row
+ STA maxAltitude-8,X    \ in front of tile block X
+ STA maxAltitude-7,X
 
- STA maxTileHeight-1,X  \ Zero the heights of tile block X and the two blocks
- STA maxTileHeight,X    \ to the left and right
- STA maxTileHeight+1,X
+ STA maxAltitude-1,X    \ Zero the altitudes of tile block X and the two blocks
+ STA maxAltitude,X      \ to the left and right
+ STA maxAltitude+1,X
 
- STA maxTileHeight+7,X  \ Zero the heights of the three tile blocks in the row
- STA maxTileHeight+8,X  \ behind tile block X
- STA maxTileHeight+9,X
+ STA maxAltitude+7,X    \ Zero the altitudes of the three tile blocks in the row
+ STA maxAltitude+8,X    \ behind tile block X
+ STA maxAltitude+9,X
 
- LDA xMaxTileHeight,X   \ Set (xTile, zTile) to the tile coordinates of the
+ LDA xTileMaxAltitude,X \ Set (xTile, zTile) to the tile coordinates of the
  STA xTile              \ highest tile in the tile block, which is where we can
- LDA zMaxTileHeight,X   \ place an enemy
+ LDA zTileMaxAltitude,X \ place an enemy
  STA zTile
 
  LDX enemyNumber        \ Set X to the enemy number that we stored in
@@ -5080,15 +5081,15 @@ L1145 = C1144+1
 
 .aden6
 
- LDA tileAltitude       \ Extract the height from tileAltitude, which is in the
- LSR A                  \ high nibble (as tileAltitude contains tile data, which
- LSR A                  \ has the tile height in the high nibble and the tile
- LSR A                  \ slope in the low nibble)
+ LDA tileAltitude       \ Extract the altitude from tileAltitude, which is in
+ LSR A                  \ the high nibble (as tileAltitude contains tile data,
+ LSR A                  \ which has the tile altitude in the high nibble and
+ LSR A                  \ the tile slope in the low nibble)
  LSR A
 
- STA lowestEnemyHeight  \ Store the result in lowestEnemyHeight, which contains
-                        \ the lowest height of the enemies we just added to the
-                        \ landscape)
+ STA minEnemyAltitude   \ Store the result in minEnemyAltitude, so it contains
+                        \ the lowest altitude of the enemies we just added to
+                        \ the landscape
 
  CLC                    \ Clear the C flag (though this has no effect as the C
                         \ flag is set as soon as we return to the SpawnEnemies
@@ -5098,16 +5099,16 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: GetTilesAtHeight
+\       Name: GetTilesAtAltitude
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Return a list of tile blocks at a specified height
+\    Summary: Return a list of tile blocks at a specified altitude
 \
 \ ------------------------------------------------------------------------------
 \
 \ Argument:
 \
-\   tileAltitude        The tile height to match
+\   tileAltitude        The altitude to search for
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5115,63 +5116,64 @@ L1145 = C1144+1
 \
 \   C flag              Success flag:
 \
-\                         * Clear if at least one tile block is at height
-\                           tileAltitude
+\                         * Clear if at least one tile block is at an altitude
+\                           of tileAltitude
 \
-\                         * Set if no tile blocks are at height tileAltitude, in
-\                           which case X is set to &FF
+\                         * Set if no tile blocks are at an altitude of
+\                           tileAltitude, in which case X is set to &FF
 \
-\   tilesAtHeight       A list of tile block numbers whose highest tiles match
-\                       the height in tileAltitude
+\   tilesAtAltitude     A list of tile block numbers whose highest tiles match
+\                       the altitude in tileAltitude
 \
-\   T                   The number of entries in the list at tilesAtHeight
+\   T                   The number of entries in the list at tilesAtAltitude
 \
 \   bitMask             A bit mask with a matching number of leading zeroes as T
 \
 \ ******************************************************************************
 
-.GetTilesAtHeight
+.GetTilesAtAltitude
 
                         \ We start by fetching all the 4x4 tile blocks from the
-                        \ landscape whose height matches tileAltitude (so that's
-                        \ all the 4x4 blocks whose highest tile is at a height
-                        \ of tileAltitude)
+                        \ landscape whose altitude matches tileAltitude (so
+                        \ that's all the 4x4 blocks whose highest tile is at an
+                        \ altitude of tileAltitude)
 
  LDX #63                \ Set an index in X to work through all 4x4 tile blocks,
                         \ of which there are 64
 
  LDY #0                 \ Set Y = 0 to count the number of tile blocks whose
-                        \ height matches tileAltitude
+                        \ altitude matches tileAltitude
 
-.peak1
+.galt1
 
- LDA maxTileHeight,X    \ If the highest tile in the X-th tile block does not
- CMP tileAltitude       \ have a height of tileAltitude, jump to peak2 to move
- BNE peak2              \ on to the next tile block
+ LDA maxAltitude,X      \ If the highest tile in the X-th tile block does not
+ CMP tileAltitude       \ have an altitude of tileAltitude, jump to galt2 to
+ BNE galt2              \ move on to the next tile block
 
  TXA                    \ Store the number of the tile block in the Y-th byte of,
- STA tilesAtHeight,Y    \ tilesAtHeight, so we end up compiling a list of all
-                        \ the tile blocks that have a height of tileAltitude
+ STA tilesAtAltitude,Y  \ tilesAtAltitude, so we end up compiling a list of all
+                        \ the tile blocks that have an altitude of tileAltitude
 
  INY                    \ Increment the counter in Y as we have just added a
-                        \ block number to tilesAtHeight
+                        \ block number to tilesAtAltitude
 
-.peak2
+.galt2
 
  DEX                    \ Decrement the block counter in X
 
- BPL peak1              \ Loop back until we have checked the heights of all the
-                        \ tile blocks
+ BPL galt1              \ Loop back until we have checked the altitudes of all
+                        \ the tile blocks
 
-                        \ By this point we have all the tile blocks of height
-                        \ tileAltitude in a list of length Y at tilesAtHeight
+                        \ By this point we have all the tile blocks with an
+                        \ altitude of tileAltitude in a list of length Y at
+                        \ tilesAtAltitude
 
- TYA                    \ Set A to the length of the list at tilesAtHeight
+ TYA                    \ Set A to the length of the list at tilesAtAltitude
 
- BEQ peak4              \ If the list is empty then jump to peak4 return from
+ BEQ galt4              \ If the list is empty then jump to galt4 return from
                         \ the subroutine with the C flag clear
 
- STA T                  \ Set T to the length of the list at tilesAtHeight
+ STA T                  \ Set T to the length of the list at tilesAtAltitude
 
                         \ We now set bitMask to a bit mask that covers all the
                         \ non-zero bits in the list length in A, so if A is of
@@ -5189,34 +5191,34 @@ L1145 = C1144+1
  LDY #&FF               \ Set Y = -1 so the following loop counts the number of
                         \ zeroes correctly
 
-.peak3
+.galt3
 
  ASL A                  \ Shift A to the left, moving the top bit into the C
                         \ flag
 
  INY                    \ Increment the zero counter in Y
 
- BCC peak3              \ Loop back to keep shifting and counting zeroes until
+ BCC galt3              \ Loop back to keep shifting and counting zeroes until
                         \ we shift a 1 out of bit 7, at which point Y contains
                         \ the length of the run of zeroes in bits 7 to 0 of the
-                        \ length of the list at tilesAtHeight
+                        \ length of the list at tilesAtAltitude
 
  LDA bitMasks,Y         \ Set bitMask to the Y-th entry from the bitMasks table,
  STA bitMask            \ which will give us a bit mask with a matching number
                         \ of leading zeroes as A
 
  CLC                    \ Clear the C flag to indicate that we have successfully
-                        \ found at least one tile block that matches the height
-                        \ of the highest peak
+                        \ found at least one tile block that matches the
+                        \ altitude in tileAltitude
 
  RTS                    \ Return from the subroutine
 
-.peak4
+.galt4
 
  SEC                    \ If we get here then we have checked all 64 tile blocks
-                        \ and none of them are at a height of tileAltitude, so
-                        \ set the C flag to indicate that the returned list is
-                        \ empty
+                        \ and none of them are at aan altitude of tileAltitude,
+                        \ so set the C flag to indicate that the returned list
+                        \ is empty
 
  RTS                    \ Return from the subroutine
 
@@ -5247,19 +5249,19 @@ L1145 = C1144+1
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Calculate both the highest tiles in each 4x4 block of tiles in the
-\             landscape and the height of the landscape peak
+\             landscape and the altitude of the highest tile in the landscape
 \
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
-\   maxTileHeight       The height of the highest tile in each 4x4 block in the
-\                       landscape
+\   maxAltitude         The altitude (i.e. y-coordinate) of the highest tile in
+\                       each 4x4 block in the landscape
 \
-\   xMaxTileHeight      The tile x-coordinate of the highest tile in each 4x4
+\   xTileMaxAltitude    The tile x-coordinate of the highest tile in each 4x4
 \                       block in the landscape
 \
-\   zMaxTileHeight      The tile z-coordinate of the highest tile in each 4x4
+\   zTileMaxAltitude    The tile z-coordinate of the highest tile in each 4x4
 \                       block in the landscape
 \
 \   tileAltitude        The altitude of the highest tile in the landscape
@@ -5280,7 +5282,7 @@ L1145 = C1144+1
                         \ behind
                         \
                         \ Because the tile corners along the right and back
-                        \ edges of the landscape don't have tile heights
+                        \ edges of the landscape don't have tile altitudes
                         \ associated with them, we ignore those corners
 
  LDX #0                 \ Set X to loop from 0 to 63, to use as a block counter
@@ -5288,8 +5290,9 @@ L1145 = C1144+1
                         \ tiles, of which there are 64 in total
 
  STX tileAltitude       \ Set tileAltitude = 0 so we can use it to store the
-                        \ maximum tile height as we work through the landscape
-                        \ (so that's the height of the landscape's peak)
+                        \ maximum tile altitude as we work through the landscape
+                        \ (so that's the altitude of the landscape's highest
+                        \ tile)
 
 .high1
 
@@ -5330,12 +5333,12 @@ L1145 = C1144+1
                         \ variables counting 0, 4, 8 ... 24, 28
                         \
                         \ We can now use (xBlock, zBlock) as a tile coordinate
-                        \ and we can store the highest tile height within each
+                        \ and we can store the highest tile altitude within each
                         \ 4x4 block using the index in X
 
- LDA #0                 \ Zero the X-th entry in the maxTileHeight table, which
- STA maxTileHeight,X    \ is where we will store the highest tile height within
-                        \ block X
+ LDA #0                 \ Zero the X-th entry in the maxAltitude table, which
+ STA maxAltitude,X      \ is where we will store the highest tile altitude
+                        \ within block X
 
  LDA #4                 \ Set zCounter = 4 to iterate along the z-axis through
  STA zCounter           \ each tile in the 4x4 block we are analysing, so
@@ -5394,36 +5397,37 @@ L1145 = C1144+1
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #%11110000         \ Set A to the tile height, which is in the top nibble
+ AND #%11110000         \ Set A to the tile altitude, which is in the top nibble
                         \ of the tile data
 
- CMP maxTileHeight,X    \ If the height of the tile we are analysing is lower
- BCC high5              \ than the height we have currently stored in the
-                        \ maxTileHeight table for this 4x4 tile block, jump to
+ CMP maxAltitude,X      \ If the altitude of the tile we are analysing is lower
+ BCC high5              \ than the altitude we have currently stored in the
+                        \ maxAltitude table for this 4x4 tile block, jump to
                         \ high5 to move on to the next tile, as this one isn't
                         \ the highest in either this block or the landscape
 
- STA maxTileHeight,X    \ If we get here then ths tile we are analysing is the
-                        \ highest in the 4x4 block so far, so store the height
-                        \ in the maxTileHeight table forthis 4x4 tile block so
-                        \ the table ends up recording the highest tile height
+ STA maxAltitude,X      \ If we get here then ths tile we are analysing is the
+                        \ highest in the 4x4 block so far, so store the altitude
+                        \ in the maxAltitude table forthis 4x4 tile block so
+                        \ the table ends up recording the highest tile altitude
                         \ in each 4x4 block
 
  CMP tileAltitude       \ Set tileAltitude = max(tileAltitude, A)
  BCC high4              \
- STA tileAltitude       \ So tileAltitude contains the height of the highest
+ STA tileAltitude       \ So tileAltitude contains the altitude of the highest
                         \ tile that we've analysed so far, which means that
                         \ tileAltitude ends up being set to the highest value
-                        \ in the entire landscape, or the height of the peak
+                        \ in the entire landscape, which is the altitude of the
+                        \ highest tile of all
 
 .high4
 
  LDA xTile              \ Store the x-coordinate of the highest tile corner 
- STA xMaxTileHeight,X   \ in this block (so far) in the xMaxTileHeight table
+ STA xTileMaxAltitude,X \ in this block (so far) in the xTileMaxAltitude table
                         \ entry for this 4x4 block
 
  LDA zTile              \ Store the z-coordinate of the highest tile corner 
- STA zMaxTileHeight,X   \ in this block (so far) in the zMaxTileHeight table
+ STA zTileMaxAltitude,X \ in this block (so far) in the zTileMaxAltitude table
                         \ entry for this 4x4 block
 
 .high5
@@ -6289,7 +6293,7 @@ L1145 = C1144+1
  LDA #2                 \ Spawn an object of type 2
  JSR SpawnObject
 
- LDA lowestEnemyHeight
+ LDA minEnemyAltitude
  JSR sub_C1224
  BCS CRE09
  TXA
@@ -7566,8 +7570,8 @@ L1145 = C1144+1
  LDY tileNumber         \ Set Y to the tile number where we are adding the
                         \ object, which we stored above
 
- JMP objt5              \ Jump to objt5 to store A as the height of the new
-                        \ object on the tile, and update the various other
+ JMP objt5              \ Jump to objt5 to store A as the y-coordinate of the
+                        \ new object on the tile, and update the various other
                         \ object and tile tables for the new object
 
 .objt4
@@ -7586,13 +7590,13 @@ L1145 = C1144+1
                         \ on the stack above
 
  LSR A                  \ The top nibble of the tile data contains the tile
- LSR A                  \ height, so this sets A to the tile height
+ LSR A                  \ altitude, so this sets A to the tile altitude
  LSR A
  LSR A
 
                         \ We now fall through into objt5 to set the tile
                         \ y-coordinate for the object in slot X to the tile
-                        \ height in A
+                        \ altitude in A
 
 .objt5
 
@@ -10140,9 +10144,9 @@ L23E3 = C23E2+1
 \   * The low nibble of each byte contains the tile slope, which describes the
 \     shape of the tile.
 \
-\   * The high nibble of each byte contains the height of the tile corner in the
-\     front-left corner of the tile (i.e. the corner closest to the landscape
-\     origin). We call this tile corner the "anchor".
+\   * The high nibble of each byte contains the altitude of the tile corner in
+\     the front-left corner of the tile (i.e. the corner closest to the
+\     landscape origin). We call this tile corner the "anchor".
 \
 \ As each tile is defined by a tile corner and a slope, we tend to use the terms
 \ "tile" and "tile corner" interchangeably, depending on the context. That said,
@@ -10177,8 +10181,8 @@ L23E3 = C23E2+1
 
                         \ We now set the value of tileDataMultiplier for this
                         \ landscape, which is a multiplier that we apply to the
-                        \ tile corner heights to alter the steepness of the
-                        \ landscape
+                        \ altitudes of the tile corners to alter the steepness
+                        \ of the landscape
 
  LDA landscapeZero      \ If this is not landscape 0000, jump to land2
  BNE land2
@@ -10206,8 +10210,8 @@ L23E3 = C23E2+1
                         \ to 36 for all other landscapes
 
                         \ We now populate the tileData table with tile corner
-                        \ heights, which we store in the low nibble of the tile
-                        \ data (for now)
+                        \ altitudes, which we store in the low nibble of the
+                        \ tile data (for now)
 
  LDA #&80               \ Call ProcessTileData with A = &80 to set the tile data
  JSR ProcessTileData    \ for the whole landscape to the next set of numbers
@@ -10217,17 +10221,17 @@ L23E3 = C23E2+1
  JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
                         \ row to the front row and then from the right column to
                         \ the left column, smoothing each tile by setting each
-                        \ tile corner's height to the average of its height with
-                        \ the three following tile corners, working along rows
-                        \ from left to right and along columns from front to
-                        \ back
+                        \ tile corner's altitude to the average of its altitude
+                        \ with the three following tile corners, working along
+                        \ rows from left to right and along columns from front
+                        \ to back
 
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
                         \ before capping each bit of data to between 1 and 11
                         \
                         \ This capping process ensures that when we place the
-                        \ tile height in the top nibble of the tile data, we
+                        \ tile altitude in the top nibble of the tile data, we
                         \ never have both bits 6 and 7 set (these bits can
                         \ therefore be used to identify whether or not a tile
                         \ contains an object)
@@ -10236,13 +10240,13 @@ L23E3 = C23E2+1
  JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
                         \ row to the front row and then from the right column to
                         \ the left column, smoothing each outlier tile corner by
-                        \ setting its height to that of its closest immediate
-                        \ neighbour (in terms of height)
+                        \ setting its altitude to that of its closest immediate
+                        \ neighbour (where "closest" is in terms of altitude)
 
-                        \ The tileData table now contains the height of each
-                        \ tile corner, with each height in the range 1 to 11, so
-                        \ the height data is in the low nibble of each byte of
-                        \ tile data
+                        \ The tileData table now contains the altitude of each
+                        \ tile corner, with each altitude in the range 1 to 11,
+                        \ so the altitude data is in the low nibble of each byte
+                        \ of tile data
                         \
                         \ We now calculate the tile slope for the tiles anchored
                         \ at each tile corner in turn, where the anchor is in
@@ -10285,15 +10289,15 @@ L23E3 = C23E2+1
 
                         \ We now put the tile slope into the high nibble of the
                         \ tile data, so the low nibble of the tile data contains
-                        \ the tile height and the high nibble contains the tile
-                        \ slope (for now)
+                        \ the tile altitude and the high nibble contains the
+                        \ tile slope (for now)
 
  TXA                    \ Put the tile slope in X into the high nibble of A by
  ASL A                  \ shifting X to the left by three spaces and OR'ing the
  ASL A                  \ result into the tile data at tileData + Y
  ASL A                  \
- ASL A                  \ This works because both the tile height and tile slope
- ORA (tileDataPage),Y   \ fit into the range 0 to 15, or four bits
+ ASL A                  \ This works because both the tile altitude and tile
+ ORA (tileDataPage),Y   \ slope fit into the range 0 to 15, or four bits
  STA (tileDataPage),Y
 
  DEC xTile              \ Decrement the tile x-coordinate in the inner loop
@@ -10310,7 +10314,8 @@ L23E3 = C23E2+1
 
                         \ By this point the high nibble of each byte of tile
                         \ data contains the tile slope and the low nibble
-                        \ contains the tile height, so now we swap these around
+                        \ contains the tile altitude, so now we swap these
+                        \ around
 
  LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
  JSR ProcessTileData    \ low nibbles of all the tile data for the whole
@@ -10318,7 +10323,7 @@ L23E3 = C23E2+1
                         \
                         \ So now the low nibble of each byte of tile data
                         \ contains the tile slope and the high nibble contains
-                        \ the tile height, as required
+                        \ the tile altitude, as required
                         \
                         \ This also sets the N flag, so a BMI branch would be
                         \ taken at this point (see the following instruction)
@@ -10382,8 +10387,9 @@ L23E3 = C23E2+1
                         \ chess board that's sitting on a table in front of us,
                         \ going into the screen
                         \
-                        \ The landscape is defined by the heights of the corners
-                        \ of each of the tile, so that's a 32x32 grid of heights
+                        \ The landscape is defined by the altitudes of the
+                        \ corners of each of the tile, so that's a 32x32 grid of
+                        \ altitudes
                         \
                         \ The x-axis is along the front edge, from left to
                         \ right, while the z-axis goes into the screen, away
@@ -10481,7 +10487,7 @@ L23E3 = C23E2+1
                         \
                         \ At this point the tile data contains a random number,
                         \ so this processs converts it into a value that we can
-                        \ use as the height of the tile corner
+                        \ use as the altitude of the tile corner
 
  SEC                    \ Set A = tile data - 128
  SBC #128
@@ -10518,7 +10524,7 @@ L23E3 = C23E2+1
                         \   (A T) = tileDataMultiplier * (tile data - 128)
 
                         \ So if the original tile data represents a landscape
-                        \ height, with "sea level" at altitude 128, then the
+                        \ altitude, with "sea level" at altitude 128, then the
                         \ high byte of this calculation in A represents a
                         \ scaling of the altitude by tileDataMultiplier / 256,
                         \ with the scaling centred around sea level
@@ -10593,10 +10599,10 @@ L23E3 = C23E2+1
                         \ around one-third at the top end and one-third at the
                         \ bottom end
                         \
-                        \ We can now use this as the height of the tile corner,
-                        \ which we can feed into the smoothing routines to
-                        \ generate a gently rolling landscape that is suitable
-                        \ for the game
+                        \ We can now use this as the altitude of the tile
+                        \ corner, which we can feed into the smoothing routines
+                        \ to generate a gently rolling landscape that is
+                        \ suitable for the game
 
  JMP proc8              \ Jump to proc8 to store A as the tile data for the tile
                         \ we are processing
@@ -10650,17 +10656,17 @@ L23E3 = C23E2+1
 \
 \                         * Bit 6 clear = smooth each row/column of tile corners
 \                                         by working along the row/column and
-\                                         setting each tile corner's height to
-\                                         the average of its height with the
+\                                         setting each tile corner's altitude to
+\                                         the average of its altitude with the
 \                                         three following tile corners, working
 \                                         along rows from left to right and
 \                                         along columns from front to back
 \
 \                         * Bit 6 set = smooth each row/column of tile corners
 \                                       by working along the row/column and
-\                                       setting the height of each outlier tile
-\                                       corner to that of its closest immediate
-\                                       neighbour in terms of height
+\                                       setting the altitude of each outlier
+\                                       tile corner to that of its closest
+\                                       immediate neighbour in terms of altitude
 \
 \ ******************************************************************************
 
@@ -10787,7 +10793,7 @@ L23E3 = C23E2+1
 \
 \                           * The tile slope is in the low nibble (0 to 15)
 \
-\                           * The tile height is in the high nibble (0 to 12)
+\                           * The tile altitude is in the high nibble (1 to 11)
 \
 \                         * If the tile contains an object, then:
 \
@@ -10951,7 +10957,7 @@ L23E3 = C23E2+1
                         \ tiles in the strip, plus three more tiles on the end
 
  BIT processAction      \ If bit 6 of processAction is clear then we need to
- BVC stri11             \ smooth the strip by averaging tile heights, so jump
+ BVC stri11             \ smooth the strip by averaging tile altitudes, so jump
                         \ to part 3 to implement this
 
                         \ Otherwise fall through into part 2 to smooth the strip
@@ -10962,8 +10968,8 @@ L23E3 = C23E2+1
 \       Name: SmoothTileCorners (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip by moving each outlier tile corner to the height of
-\             its closest immediate neighbour (in terms of height)
+\    Summary: Smooth a strip by moving each outlier tile corner to the altitude
+\             of its closest immediate neighbour (in terms of altitude)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10975,17 +10981,17 @@ L23E3 = C23E2+1
 \   * If this tile corner is lower then both its neighbours, move it up
 \
 \ In each case, we move the tile corner until it is level with the closest one
-\ to its original height.
+\ to its original altitude.
 \
 \ ******************************************************************************
 
                         \ If we get here then bit 6 of processAction is set, so
                         \ we smooth the tile strip by moving each outlier tile
-                        \ to the height of its closest immediate neighbour (in
-                        \ terms of height)
+                        \ to the altitude of its closest immediate neighbour (in
+                        \ terms of altitude)
 
  LDX #31                \ We now work our way along the strip, smoothing the
-                        \ heights of tiles 1 to 32, so set a tile counter in X
+                        \ altitudes of tiles 1 to 32, so set a tile counter in X
                         \
                         \ Note that we smooth tiles 1 to 32 rather than tiles
                         \ 0 to 31 (tile 0 remains unchanged by the smoothing
@@ -10996,7 +11002,7 @@ L23E3 = C23E2+1
                         \ In the following, we are processing the tile at
                         \ position X + 1, i.e. stripData+1,X
                         \
-                        \ We smooth a tile by looking at the heights of the
+                        \ We smooth a tile by looking at the altitudes of the
                         \ two tiles either side of that tile, i.e. stripData,X
                         \ and stripData+2,X
                         \
@@ -11016,8 +11022,8 @@ L23E3 = C23E2+1
                         \                      we will be smoothing next)
                         \
                         \ The smoothing algorithm is implemented as follows,
-                        \ where we are comparing the height of each tile (as at
-                        \ this stage tileData only contains tile heights):
+                        \ where we are comparing the altitude of each tile (as
+                        \ at this stage tileData only contains tile altitudes):
                         \
                         \   * If this = previous, do nothing
                         \
@@ -11043,10 +11049,10 @@ L23E3 = C23E2+1
                         \ the landscape into a flatter shape, moving outlier
                         \ tiles closer to the landscape's overall shape
 
- LDA stripData+1,X      \ If this tile is the same height as the previous tile,
- CMP stripData+2,X      \ jump to stri9 to move on to smoothing the next tile,
- BEQ stri9              \ as the transition from the previous tile to this tile
-                        \ is already flat
+ LDA stripData+1,X      \ If this tile is at the same altitude as the previous
+ CMP stripData+2,X      \ tile, jump to stri9 to move on to smoothing the next
+ BEQ stri9              \ tile, as the transition from the previous tile to this
+                        \ tile is already flat
 
  BCS stri5              \ If this tile is higher than the previous tile, jump to
                         \ stri5
@@ -11054,9 +11060,9 @@ L23E3 = C23E2+1
                         \ If we get here then this tile is lower than the
                         \ previous tile
 
- CMP stripData,X        \ If this tile is at the same height or higher than the
- BEQ stri9              \ next tile, jump to stri9 to move on to smoothing the
- BCS stri9              \ next tile
+ CMP stripData,X        \ If this tile is at the same altitude or higher than
+ BEQ stri9              \ the next tile, jump to stri9 to move on to smoothing
+ BCS stri9              \ the next tile
 
                         \ If we get here then this tile is lower than the
                         \ previous tile and lower than the next tile
@@ -11082,7 +11088,7 @@ L23E3 = C23E2+1
                         \ If we get here then this tile is higher than the
                         \ previous tile
 
- CMP stripData,X        \ If this tile is at the same height or lower than the
+ CMP stripData,X        \ If this tile is at the same altitude or lower than the
  BEQ stri9              \ next tile jump to stri9 to move on to smoothing the
  BCC stri9              \ next tile
 
@@ -11111,20 +11117,20 @@ L23E3 = C23E2+1
                         \ tile A and tile B
 
  BCC stri7              \ If tile A is lower than tile B, jump to stri7 to set
-                        \ the height of this tile to the height of the previous
-                        \ tile
+                        \ the altitude of this tile to the altitude of the
+                        \ previous tile
 
- LDA stripData,X        \ Set A to the height of the next tile and jump to stri8
- JMP stri8              \ to set the height of this tile to the height of the
-                        \ next tile
+ LDA stripData,X        \ Set A to the altitude of the next tile and jump to
+ JMP stri8              \ stri8 to set the altitude of this tile to the altitude
+                        \ of the next tile
 
 .stri7
 
- LDA stripData+2,X      \ Set A to the height of the previous tile
+ LDA stripData+2,X      \ Set A to the altitude of the previous tile
 
 .stri8
 
- STA stripData+1,X      \ Set the height of this tile to the value in A
+ STA stripData+1,X      \ Set the altitude of this tile to the value in A
 
 .stri9
 
@@ -11170,15 +11176,15 @@ L23E3 = C23E2+1
 \       Name: SmoothTileCorners (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Smooth a strip by setting the tile corner heights to the average
-\             of the current tile corner height and the three following corners
+\    Summary: Smooth a strip by setting the tile corner altitudes to the average
+\             of the current tile corner altitude and three following corners
 \
 \ ------------------------------------------------------------------------------
 \
 \ This part smoothes the strip by working along the strip and replacing the
-\ height of each tile corner with the average of that corner's height plus the
-\ next three corners, working along rows from left to right and columns from
-\ near to far.
+\ altitude of each tile corner with the average of that corner's altitude plus
+\ the next three corners, working along rows from left to right and columns
+\ from near to far.
 \
 \ ******************************************************************************
 
@@ -11186,11 +11192,11 @@ L23E3 = C23E2+1
 
                         \ If we get here then bit 6 of processAction is clear,
                         \ so we smooth the tile strip by working our way along
-                        \ the strip and setting each tile's height to the
-                        \ average of its height with the three following tiles
+                        \ the strip and setting each tile's altitude to the
+                        \ average of its altitude with the three following tiles
 
  LDX #0                 \ We now work our way along the strip, smoothing the
-                        \ heights of tiles 0 to 31, so set a tile counter in X
+                        \ altitudes of tiles 0 to 31, so set a tile counter in X
                         \
                         \ We work along rows from left to right and columns from
                         \ near to far
@@ -11199,12 +11205,12 @@ L23E3 = C23E2+1
 
  LDA #0                 \ Set U = 0 to use as the high byte of (U A), which we
  STA U                  \ will use to calculate the sum of the neighbouring tile
-                        \ heights
+                        \ altitudes
 
- LDA stripData,X        \ Set A to the height of the tile we are smoothing (the
-                        \ one at index X)
+ LDA stripData,X        \ Set A to the altitude of the tile we are smoothing
+                        \ (the one at index X)
 
- CLC                    \ Add the height of the next tile along
+ CLC                    \ Add the altitude of the next tile along
  ADC stripData+1,X
 
  BCC stri13             \ If the addition overflowed then increment the high
@@ -11213,7 +11219,7 @@ L23E3 = C23E2+1
 
 .stri13
 
- ADC stripData+2,X      \ Add the height of the next tile along
+ ADC stripData+2,X      \ Add the altitude of the next tile along
 
  BCC stri14             \ If the addition overflowed then increment the high
  CLC                    \ byte in U, so we have the correct result of the sum
@@ -11221,7 +11227,7 @@ L23E3 = C23E2+1
 
 .stri14
 
- ADC stripData+3,X      \ Add the height of the next tile along
+ ADC stripData+3,X      \ Add the altitude of the next tile along
 
  BCC stri15             \ If the addition overflowed then increment the high
  CLC                    \ byte in U, so we have the correct result of the sum
@@ -11229,17 +11235,18 @@ L23E3 = C23E2+1
 
 .stri15
 
-                        \ So by this point (U A) contains the sum of the heights
-                        \ of the tile we are smoothing, and the next three tiles
-                        \ along the strip
+                        \ So by this point (U A) contains the sum of the
+                        \ altitudes of the tile we are smoothing, and the next
+                        \ three tiles along the strip
 
  LSR U                  \ Set (U A) = (U A) / 4
  ROR A                  \
- LSR U                  \ So (U A) contains the average of the four heights, and
- ROR A                  \ we know that the high byte in U will be zero as each
-                        \ of the four elements of the sum fits into one byte
+ LSR U                  \ So (U A) contains the average of the four altitudes,
+ ROR A                  \ and we know that the high byte in U will be zero as
+                        \ each of the four elements of the sum fits into one
+                        \ byte
 
- STA stripData,X        \ Set the height of the tile we are smoothing to the
+ STA stripData,X        \ Set the altitude of the tile we are smoothing to the
                         \ average that we just calculated
 
  INX                    \ Increment the tile counter to move along the strip
@@ -11321,7 +11328,7 @@ L23E3 = C23E2+1
 \
 \ ------------------------------------------------------------------------------
 \
-\ Given a tile of height S, with neighbouring heights T, U and V:
+\ Given a tile at altitude S, with neighbouring altitudes T, U and V:
 \
 \      ^           [T]  [U]
 \      |
@@ -11332,12 +11339,12 @@ L23E3 = C23E2+1
 \
 \ The slope is calculated as follows, where:
 \
-\   * 0, 1, 2 represent arbitrary heights that are in that order, with 2 being
+\   * 0, 1, 2 represent arbitrary altitudes that are in that order, with 2 being
 \     higher than 1 being higher than 0
 \
-\   * a, b represent arbitrary heights where a <> b <> 1
+\   * a, b represent arbitrary altitudes where a <> b <> 1
 \
-\   * c represents an arbitrary height where b <> c (so c can equal 1)
+\   * c represents an arbitrary altitude where b <> c (so c can equal 1)
 \
 \ These are all the different types of slope (note there is no slope 8, and
 \ slopes 4 and 12 can have multiple shapes):
@@ -11409,7 +11416,7 @@ L23E3 = C23E2+1
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #%00001111         \ Extract the tile height from the low nibble and
+ AND #%00001111         \ Extract the tile altitude from the low nibble and
  STA S                  \ store it in S
 
  INC xTile              \ Move along the x-axis to fetch the next tile to the
@@ -11418,7 +11425,7 @@ L23E3 = C23E2+1
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #%00001111         \ Extract the tile height from the low nibble and
+ AND #%00001111         \ Extract the tile altitude from the low nibble and
  STA V                  \ store it in V
 
  INC zTile              \ Move along the x-axis to fetch the next tile into the
@@ -11427,7 +11434,7 @@ L23E3 = C23E2+1
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #%00001111         \ Extract the tile height from the low nibble and
+ AND #%00001111         \ Extract the tile altitude from the low nibble and
  STA U                  \ store it in U
 
  DEC xTile              \ Move back along the x-axis to fetch the next tile to
@@ -11436,13 +11443,13 @@ L23E3 = C23E2+1
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #%00001111         \ Extract the tile height from the low nibble and
+ AND #%00001111         \ Extract the tile altitude from the low nibble and
  STA T                  \ store it in T
 
  DEC zTile              \ Move out of the screen, back along the z-axis to take
                         \ us back to the tile we are processing
 
-                        \ So at this point we have the heights of four tile
+                        \ So at this point we have the altitudes of four tile
                         \ corners, as follows, with the view from above:
                         \
                         \      ^           [T]  [U]
@@ -11452,9 +11459,9 @@ L23E3 = C23E2+1
                         \    into
                         \   screen      x-axis from left to right --->
                         \
-                        \ S is the height of the tile corner that anchors the
+                        \ S is the altitude of the tile corner that anchors the
                         \ tile for which we are calculating the slope, and T, U
-                        \ and V are the heights of the tile's other three
+                        \ and V are the altitudes of the tile's other three
                         \ corners, so now we can analyse the slope of the tile
 
  LDA S                  \ If S = V then jump to slop10
@@ -12139,7 +12146,7 @@ L23E3 = C23E2+1
 L2F2A = C2F29+1
 L2F2B = C2F29+2
 
- STX xMaxTileHeight+63
+ STX xTileMaxAltitude+63
  DEC L2F2A
  BEQ C2F37
 
@@ -12215,7 +12222,7 @@ L2F6F = C2F6E+1
 L2F78 = C2F77+1
 L2F79 = C2F77+2
 
- STX xMaxTileHeight+62
+ STX xTileMaxAltitude+62
 
 .C2F7A
 
@@ -17982,7 +17989,7 @@ L49C1                = &49C1
  EQUB &14, &50, &05, &20, &0D, &14, &5A, &1A
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
 
-.tilesAtHeight
+.tilesAtAltitude
 
  EQUB &41, &3A, &53, &54, &41, &20, &4D, &45
  EQUB &41, &4E, &59, &2C, &58, &20, &0D, &14
@@ -18030,15 +18037,15 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: maxTileHeight
+\       Name: maxAltitude
 \       Type: Variable
 \   Category: Landscape
-\    Summary: The maximum tile height for each 4x4 block of tiles
+\    Summary: The maximum tile altitude for each 4x4 block of tiles
 \
 \ ------------------------------------------------------------------------------
 \
-\ This table stores the maximum tile height for each 4x4 block of tiles in the
-\ landscape.
+\ This table stores the altitude of the highest tile in each 4x4 block of tiles
+\ in the landscape.
 \
 \ The table is laid out with one byte for each 4x4 block, starting in the
 \ front-left corner of the landscape at tile coordinate (0, 0), and moving along
@@ -18057,7 +18064,7 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.maxTileHeight
+.maxAltitude
 
  EQUB &4F, &4E, &0D, &14, &B4, &22, &20, &20
  EQUB &20, &20, &20, &20, &43, &50, &58, &20
@@ -18072,7 +18079,7 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: xMaxTileHeight
+\       Name: xTileMaxAltitude
 \       Type: Variable
 \   Category: Landscape
 \    Summary: The tile x-coordinate of the highest tile within each 4x4 block of
@@ -18100,7 +18107,7 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.xMaxTileHeight
+.xTileMaxAltitude
 
  EQUB &42, &43, &23, &31, &3A, &53, &54, &41
  EQUB &20, &45, &4E, &45, &52, &47, &59, &0D
@@ -18113,7 +18120,7 @@ L49C1                = &49C1
 
 \ ******************************************************************************
 \
-\       Name: zMaxTileHeight
+\       Name: zTileMaxAltitude
 \       Type: Variable
 \   Category: Landscape
 \    Summary: The tile z-coordinate of the highest tile within each 4x4 block of
@@ -18141,7 +18148,7 @@ L49C1                = &49C1
 \
 \ ******************************************************************************
 
-.zMaxTileHeight
+.zTileMaxAltitude
 
  EQUB &20, &20, &20, &53, &45, &43, &3A, &4A
  EQUB &4D, &50, &20, &74, &61, &6B, &33, &0D
