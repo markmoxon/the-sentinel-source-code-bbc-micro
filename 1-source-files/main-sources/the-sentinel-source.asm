@@ -4759,7 +4759,8 @@ L1145 = C1144+1
 \       Name: SpawnPlayer
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Add the player object to the landscape, ideally placing it below
+\             all the enemies and in the bottom half of the landscape
 \
 \ ******************************************************************************
 
