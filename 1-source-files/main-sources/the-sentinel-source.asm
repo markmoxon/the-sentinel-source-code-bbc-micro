@@ -212,6 +212,7 @@
  SKIP 1                 \ ???
 
 .L001E
+.treeCounter
 
  SKIP 1                 \ ???
 
@@ -1246,7 +1247,7 @@
 
 .minEnemyAltitude
 
- EQUB 0
+ EQUB 0                 \ The altitude of the lowest enemy on the landscape
 
 .maxEnemyCount
 
@@ -4200,13 +4201,15 @@ L1145 = C1144+1
 \       Name: GetRandomNumber30
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to a random number in the range 0 to 30
+\    Summary: Set A to the next number from the landscape's sequence of random
+\             numbers, converted to the range 0 to 30
 \
 \ ******************************************************************************
 
 .GetRandomNumber30
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
 
  AND #31                \ Convert A into a random number into the range 0 to 31
 
@@ -4815,75 +4818,119 @@ L1145 = C1144+1
                         \ may end up placing the object higher than this)
 
  BCS sply1              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been placed, so loop back to sply1
-                        \ to keep trying, working through the landscape's
-                        \ sequence of random numbers until we do manage to place
-                        \ the player on a tile
+                        \ the object has not been successfully placed, so loop
+                        \ back to sply1 to keep trying, working through the
+                        \ landscape's sequence of random numbers until we do
+                        \ manage to place the player on a tile
+
+                        \ Otherwise we have placed the player object on a tile,
+                        \ so now we fall through into SpawnTrees to add trees to
+                        \ the landscape
 
 \ ******************************************************************************
 \
 \       Name: SpawnTrees
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Add trees to the landscape, ideally placing them below all the
+\             enemies in the landscape
 \
 \ ******************************************************************************
 
 .SpawnTrees
 
- LDA #&30
- SEC
- SBC enemyCount
- SBC enemyCount
+ LDA #48                \ Set U = 48 - 3 * enemyCount
+ SEC                    \
+ SBC enemyCount         \ We use this to cap the number of trees we add to the
+ SBC enemyCount         \ landscape (though it only affects higher levels)
  SBC enemyCount
  STA U
 
- JSR GetRandomNumber22  \ Set A to a random number in the range 0 to 22
+ JSR GetRandomNumber22  \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, converted to the range 0 to 22
 
- CLC
- ADC #&0A
- CMP U
- BCC C1487
- LDA U
+ CLC                    \ Set A to this random number, converted to the range 10
+ ADC #10                \ to 32
 
-.C1487
+ CMP U                  \ If A >= U then set A = U
+ BCC tree1              \
+ LDA U                  \ So A = min(U, A)
 
- STA L001E
+.tree1
 
-.P1489
+ STA treeCounter        \ By this point A contains a value in the range 10 to 32
+                        \ that's no greater than 48 - 3 * enemyCount
+                        \
+                        \ So when enemyCount is six or more, this reduces the
+                        \ value of A as follows:
+                        \
+                        \   * When enemyCount = 6, range is 10 to 30
+                        \   * When enemyCount = 7, range is 10 to 27
+                        \   * When enemyCount = 8, range is 10 to 24
+                        \
+                        \ As the number of trees determines the total amount of
+                        \ energy in the landscape, this makes the levels get
+                        \ even more difficult when there are higher enemy counts
+                        \
+                        \ We now try to add this number of trees to the
+                        \ landscape, so store the result in treeCounter to use
+                        \ as a counter in the following loop
+
+.tree2
 
  LDA #2                 \ Spawn a tree (an object of type 2), returning the
  JSR SpawnObject        \ slot number of the new object in X
 
- LDA minEnemyAltitude
+ LDA minEnemyAltitude   \ Set A to the altitude of the lowest enemy on the
+                        \ landscape, so we try to spawn all the trees at a lower
+                        \ altitude to the enemies
 
  JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
- BCS C149A              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been placed, so jump to C149A
+ BCS tree3              \ If the call to PlaceObjectBelow sets the C flag then
+                        \ the object has not been successfully placed, so jump
+                        \ to tree3 to stop adding trees to the landscape
 
- DEC L001E
- BNE P1489
+ DEC treeCounter        \ Decrement the tree counter
 
-.C149A
+ BNE tree2              \ Loop back until we have spawned the number of trees
+                        \ in treeCounter
+
+.tree3
+
+                        \ We have now placed all the objects on the landscape,
+                        \ so now we fall through into CheckSecretCode to check
+                        \ that the player entered the correct secret code for
+                        \ this landscape
+
+\ ******************************************************************************
+\
+\       Name: CheckSecretCode (Part 1 of 2)
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.CheckSecretCode
 
  LDX #&AA
  LDY L0BA0+11,X
  BIT showCodeError
- BPL C14A6
+ BPL srct1
  LDX #&A5
 
-.C14A6
+.srct1
 
  JSR sub_C3364
  SEC
  SBC enemyCount,X
- BEQ C14B0
+ BEQ srct2
  CLC
 
-.C14B0
+.srct2
 
  ROL L0C65
  CLC
@@ -4891,11 +4938,11 @@ L1145 = C1144+1
  STA sub_C3F00,Y
  INY
  DEX
- BMI C14A6
+ BMI srct1
  ASL showCodeError
- BCC CheckSecretCode
+ BCC srct4
 
-.CRE06
+.srct3
 
  RTS
 
@@ -4929,19 +4976,19 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: CheckSecretCode
+\       Name: CheckSecretCode (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.CheckSecretCode
+.srct4
 
  LDA L0C65
  AND #&1E
  CMP #&1E
- BNE CRE06
+ BNE srct3
 
  PLA
  PLA
@@ -6417,8 +6464,9 @@ L1145 = C1144+1
                         \ may end up placing the object higher than this)
 
  BCS CRE09              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been placed, so jump to CRE09 to
-                        \ return from the subroutine with the C flag set
+                        \ the object has not been successfully placed, so jump
+                        \ to CRE09 to return from the subroutine with the C flag
+                        \ set
 
  TXA
  JSR sub_C1AF3
@@ -8293,8 +8341,9 @@ L1145 = C1144+1
                         \ may end up placing the object higher than this)
 
  BCS CRE11              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been placed, so jump to CRE11 to
-                        \ return from the subroutine 
+                        \ the object has not been successfully placed, so jump
+                        \ to CRE11 to return from the subroutine with the C flag
+                        \ set
 
  SEC
  JSR sub_C2127
@@ -13865,7 +13914,8 @@ L314A = C3148+2
 \       Name: GetRandomNumber22
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to a random number in the range 0 to 22
+\    Summary: Set A to the next number from the landscape's sequence of random
+\             numbers, converted to the range 0 to 22
 \
 \ ******************************************************************************
 

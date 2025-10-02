@@ -65,6 +65,7 @@
 .L001D
      001D
 .L001E
+.treeCounter
      001E
 .L001F
      001F
@@ -3788,9 +3789,9 @@
      1481   C5 75      CMP &75
      1483   90 02      BCC &1487
      1485   A5 75      LDA &75
-.C1487
+.tree1
      1487   85 1E      STA &1E
-.P1489
+.tree2
      1489   A9 02      LDA #&02
      148B   20 0E 21   JSR &210E
      148E   AD 06 0C   LDA &0C06
@@ -3798,19 +3799,20 @@
      1494   B0 04      BCS &149A
      1496   C6 1E      DEC &1E
      1498   D0 EF      BNE &1489
-.C149A
+.tree3
+.CheckSecretCode
      149A   A2 AA      LDX #&AA
      149C   BC AB 0B   LDY &0BAB,X
      149F   2C 71 0C   BIT &0C71
      14A2   10 02      BPL &14A6
      14A4   A2 A5      LDX #&A5
-.C14A6
+.srct1
      14A6   20 64 33   JSR &3364
      14A9   38         SEC
      14AA   FD 6F 0C   SBC &0C6F,X
      14AD   F0 01      BEQ &14B0
      14AF   18         CLC
-.C14B0
+.srct2
      14B0   2E 65 0C   ROL &0C65
      14B3   18         CLC
      14B4   6D 00 01   ADC &0100
@@ -3820,7 +3822,7 @@
      14BC   30 E8      BMI &14A6
      14BE   0E 71 0C   ASL &0C71
      14C1   90 09      BCC &14CC
-.CRE06
+.srct3
      14C3   60         RTS
 .landscapeColour3
      14C4   02
@@ -3831,7 +3833,7 @@
      14C9   06
      14CA   01
      14CB   03
-.CheckSecretCode
+.srct4
      14CC   AD 65 0C   LDA &0C65
      14CF   29 1E      AND #&1E
      14D1   C9 1E      CMP #&1E
