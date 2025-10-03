@@ -128,6 +128,7 @@
 
 .L000C
 .zCounter
+.stashAddr
 
  SKIP 1                 \ ???
 
@@ -179,7 +180,8 @@
 .L0018
 .xBlock
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to store the tile x-coordinate of the tile we are
+                        \ analysing when calculating the highest tile in a block
 
 .L0019
 
@@ -188,7 +190,8 @@
 .L001A
 .zBlock
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to store the tile z-coordinate of the tile we are
+                        \ analysing when calculating the highest tile in a block
 
 .L001B
 
@@ -214,7 +217,8 @@
 .L001E
 .treeCounter
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used as a loop counter when adding trees to the
+                        \ landscape
 
 .L001F
 
@@ -280,7 +284,9 @@
 
 .bitMask
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to return a bit mask from the GetTilesAtAltitude
+                        \ routine that has a matching number of leading zeroes
+                        \ as the number of tile blocks at a specific altitude
 
 .L0028
 
@@ -536,9 +542,10 @@
  SKIP 1                 \ ???
 
 .L006E
-.enemyNumber
+.enemyCounter
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used as a loop counter when adding enemies to the
+                        \ landscape
 
 .L006F
 
@@ -1425,7 +1432,22 @@
 
 .H2
 
- EQUB 0, 0
+ EQUB 0
+
+.stashOffset
+
+ EQUB 0                 \ The offset into the secretCodeStash where we store a
+                        \ set of generated values for later checking in the
+                        \ sub_C24EA routine ???
+                        \
+                        \ sub_C2A1B writes a value to this location
+                        \
+                        \ e.g. &8D for landscape 0, &BF for landscape 1
+                        \
+                        \ using the STA instruction at &2A2A
+                        \
+                        \ So this value seems to be set by the landscape drawing
+                        \ process in some way ???
 
 .L0C56
 
@@ -1488,9 +1510,16 @@
 
  EQUB 0
 
-.L0C65
+.secretCodeChecks
 
- EQUB 0, 0
+ EQUB 0                 \ Bits 1 to 4 store the results of checking each of the
+                        \ four two-digit numbers in a landscape's secret entry
+                        \ code
+                        \
+                        \ A set bit indicates a match while a clear bit
+                        \ indicates a failure
+
+ EQUB 0
 
 .L0C67
 
@@ -1533,33 +1562,32 @@
 
  EQUB 0
 
-.showCodeError
+.doNotPlayLandscape
 
- EQUB 0                 \ A flag that controls whether the SmoothTileData
-                        \ routine modifies the return address at the top of the
-                        \ stack, and therefore whether the RTS at the end of the
-                        \ GenerateLandscape routine jumps to SecretCodeError or
-                        \ PreviewLandscape:
+ EQUB 0                 \ A flag that controls whether we preview and play the
+                        \ landscape after generating it
                         \
-                        \   * Bit 7 clear = modify the address, so when we
-                        \                   return from the GenerateLandscape
-                        \                   routine, we jump to PreviewLandscape
-                        \                   via JumpToPreview to draw the
-                        \                   landscape preview
+                        \   * Bit 7 clear = preview and play the landscape
                         \
-                        \   * Bit 7 set = do not modify address, so when we
-                        \                 return from the GenerateLandscape
-                        \                 routine, we return to SecretCodeError
-                        \                 to display the "WRONG SECRET CODE"
-                        \                 error message
+                        \   * Bit 7 set = do not preview or play the landscape
+                        \
+                        \ This allows us to generate a landscape and its secret
+                        \ code without actually playing it, which we need to do
+                        \ in two cases:
+                        \
+                        \   * When the player enters an incorrect secret code
+                        \
+                        \   * When displaying a landscape's secet code after the
+                        \     level is completed
+                        \
+                        \ In both cases we need to generate the landscape before
+                        \ we can check or display the secret code, but we don't
+                        \ want to go on to preview or play the landscape
                         \
                         \ This variable is reset to zero by the ResetVariables
                         \ routine, so when a new game starts the default
-                        \ behaviour is set to jump to PreviewLandscape when we
-                        \ reach the end of GenerateLandscape
-                        \
-                        \ Bit 7 is set if the secret code entered is not valid
-                        \ ???
+                        \ behaviour is to preview and play the landscape after
+                        \ generating it in the GenerateLandscape routine
 
 .L0C72
 
@@ -4910,41 +4938,310 @@ L1145 = C1144+1
 \       Name: CheckSecretCode (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Generate the secret code for this landscape and optionally check
+\             it against the entered code in the keyboard input buffer
+\
+\ ------------------------------------------------------------------------------
+\
+\ At this point we have generated the landscape and populated it with enemies,
+\ the player and trees, all using the landscape's sequence of random numbers.
+\ This sequence will be different for each individual level, but will be exactly
+\ the same sequence every time we generate a specific level.
+\
+\ We now keep generating the landscape's sequence of random numbers to get the
+\ landscape's secret code, as follows:
+\
+\   * Generate another 38 numbers from the sequence
+\
+\   * The next four numbers in the sequence form the secret code
+\
+\ To get a secret code of the form 12345678, we take the last four numbers and
+\ convert them into binary coded decimal (BCD) by using the GetRandomNumberBCD
+\ routine. These four two-digit pairs then form the secret code, with each of
+\ the four numbers producing a pair of digits, building up the secret code from
+\ left to right (so in the order that they are written down).
+\
+\ If we are displaying the landscape number on-screen at the end of a level,
+\ then the last four numbers are generated in the DrawSecretCode routine, but if
+\ we are checking the secret code entered by the player, then we generate the
+\ last four numbers in this routine (plus one extra number that is ignored).
+\ This behaviour is controlled by the doNotPlayLandscape variable.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   doNotPlayLandscape  Controls how we generate the secret code and how we
+\                       return from the subroutine:
+\
+\                         * If bit 7 is set, return from part 1 of the routine
+\                           after generating the secret code sequence up to, but
+\                           not including, the last four BCD numbers (i.e. the
+\                           secret code itself), so these can be generated and
+\                           drawn by the DrawSecretCode routine
+\
+\                         * If bit 7 is clear, jump to part 2 after generating
+\                           the whole secret code sequence, plus one more code,
+\                           checking the generated code against the code entered
+\                           into the input buffer as we go
+\
+\                       The first one is used when displaying a landscape number
+\                       for a completed level, while the second is used to check
+\                       an entered secret code before playing the landscape
 \
 \ ******************************************************************************
 
 .CheckSecretCode
 
- LDX #&AA
- LDY L0BA0+11,X
- BIT showCodeError
- BPL srct1
- LDX #&A5
+ LDX #170               \ Set X = 170 to use as a loop counter for when we
+                        \ calculate the secret code, so the following loop
+                        \ counts down from 170 to 128 (inclusive, so that's a
+                        \ total of 38 + 4 + 1 iterations)
+                        \
+                        \ This is the value for when bit 7 of doNotPlayLandscape
+                        \ is clear, so that's when we are about to play the game
+                        \ and we need to generate the secret code in the
+                        \ following loop so we can check it against the code
+                        \ entered by the player (which is still in the keyboard
+                        \ inputBuffer from when they typed it in)
+
+ LDY stashOffset-170,X  \ Set Y = stashOffset ???
+
+ BIT doNotPlayLandscape \ If bit 7 of doNotPlayLandscape is clear then the next
+ BPL srct1              \ step is to play the landscape, so skip the following
+                        \ to leave X set to 170
+
+ LDX #165               \ Set X = 165 to use as a loop counter for when we
+                        \ calculate the secret code, so the following loop
+                        \ counts down from 165 to 128 (inclusive, so that's a
+                        \ total of 38 iterations)
+                        \
+                        \ This is the value for when bit 7 of doNotPlayLandscape
+                        \ is set, so that's when we are not going to play the
+                        \ game but are just generating the secret code, in which
+                        \ case we stop iterating just before the secret code is
+                        \ generated so the DrawSecretCode can finish the job
+
+                        \ We now loop through a number of iterations, counting
+                        \ X down towards 128
+                        \
+                        \ On each iteration we do three things:
+                        \
+                        \   * We generate the next number from the landscape's
+                        \     sequence of random numbers, converted to BCD
+                        \
+                        \   * We test this against the contents of memory from
+                        \     either &0D19 or &0D14 down to &0CEF and rotate the
+                        \     result into bit 0 of secretCodeChecks (the result
+                        \     is only relevant if we are checking the secret
+                        \     code against an entered code)
+                        \
+                        \   * We add the objectFlags for the Sentinel (which is
+                        \     simply a way of incorporating a known value, in
+                        \     this case %01111111) and store the results in the
+                        \     table at secretCodeStash, from the offset in Y
+                        \     onwards, i.e. from offest stashOffset onwards
+                        \
+                        \ If we are checking the code against an entered code,
+                        \ then the second step is the important part, and this
+                        \ is how it works
+                        \
+                        \ The inputBuffer is at &0CF0, and it still holds the
+                        \ code that the player entered in &0CF0 to &0CF3, with
+                        \ the first two digits of the code in &0CF3 and the last
+                        \ two digits in &0CF0
+                        \
+                        \ This means that when X = 170, the last five checks in
+                        \ each iteration test against the four BCD numbers in
+                        \ the entered code, in the correct order, with one extra
+                        \ generation and check that is ignored (presumably to
+                        \ make this whole process harder to follow)
+                        \
+                        \ So if bits 1 to 4 of secretCodeChecks are set by the
+                        \ end of the process, the secret code in the keyboard
+                        \ inputBuffer matches the secret code that we just
+                        \ generated for this level
+                        \
+                        \ The third step is only relevant if we are going on to
+                        \ play the game, as this feeds into a second secret code
+                        \ check that is performed in the sub_C24EA routine,
+                        \ which looks like it is only run during gameplay ???
 
 .srct1
 
- JSR sub_C3364
- SEC
- SBC enemyCount,X
- BEQ srct2
- CLC
+ JSR GetRandomNumberBCD \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, converted to a binary coded decimal
+                        \ (BCD) number
+
+                        \ We now compare this generated number with the contents
+                        \ of memory, working our way down towards the keyboard
+                        \ inputBuffer (towards the end of the iterations)
+                        \
+                        \ X counts down to 128, and for each iteration we check
+                        \ the generated number against a location in memory
+                        \
+                        \ For the checks to work, we need the last five bytes
+                        \ to be the four secret code numbers in inputBuffer,
+                        \ plus one more, so:
+                        \
+                        \   * When X > 132, we are checking against memory that
+                        \     comes after the inputBuffer, and we can safely
+                        \     ignore the results
+                        \
+                        \   * When X = 132, 131, 130 and 129 we need to be
+                        \     checking against the four numbers in inputBuffer
+                        \
+                        \   * When X = 128, we are doing the very last check,
+                        \     which we can also ignore
+                        \
+                        \ The comparison is done by subtracting the contents of
+                        \ the memory location we are checking from the BCD
+                        \ number we just generated
+                        \
+                        \ This is done with a SBC byteToCheck,X instruction
+                        \
+                        \ To work out what byteToCheck should be, consider that:
+                        \
+                        \   * When X = 129, we check the byte at inputBuffer
+                        \                   (the last 2 digits of the code as it
+                        \                   is written down and typed in)
+                        \
+                        \   * When X = 130, we check the byte at inputBuffer+1
+                        \
+                        \   * When X = 131, we check the byte at inputBuffer+2
+                        \
+                        \   * When X = 132, we check the byte at inputBuffer+3
+                        \                   (the first 2 digits of the code as it
+                        \                   is written down and typed in)
+                        \
+                        \ To make this work, then, we need this instruction:
+                        \
+                        \   SBC inputBuffer-129,X
+                        \
+                        \ BeebAsm can't parse this instruction, however, so we
+                        \ have to set up a variable instead to get around this
+
+ byteToCheck = inputBuffer - 129
+
+ SEC                    \ Subtract the byte from memory that we are checking
+ SBC byteToCheck,X      \ from the generated number
+
+ BEQ srct2              \ If A = 0 then we have a match between the number in
+                        \ memory and the generated number, so jump to srct2 to
+                        \ keep the C flag set, so we can rotate this into
+                        \ secretCodeChecks to indicate a success
+
+ CLC                    \ Otherwise we do not have a match, so clear the C flag
+                        \ and rotate this into secretCodeChecks to indicate a
+                        \ failure
 
 .srct2
 
- ROL L0C65
- CLC
+ ROL secretCodeChecks   \ Rotate the C flag into bit 0 of secretCodeChecks, so
+                        \ secretCodeChecks contains a record of the last eight
+                        \ matches between memory and the generated sequence of
+                        \ numbers
+                        \
+                        \ We only care about the last five comparisons, of which
+                        \ we ignore the very last, as the preceding four results
+                        \ are for the four BCD numbers in the keyboard
+                        \ inputBuffer (i.e. the entered number)
+
+                        \ We now move on to poulate the secret code stash, which
+                        \ contains the result of each of the comparisons with
+                        \ %01111111 added to them
+                        \
+                        \ The stash is checked in the sub_C24EA routine and will
+                        \ abort the game if the values aren't correct, so this
+                        \ enables a second secret code check once the game has
+                        \ started
+                        \
+                        \ The secret stash adds a known value into the mix, by
+                        \ fetching the value of objectFlags, which contains the
+                        \ object flags for the object in slot 0
+                        \
+                        \ Slot 0 always contains the Sentinel, and the Sentinel
+                        \ is always placed on top of the Sentinel's tower, so
+                        \ the object flags for the Sentinel are constructed as
+                        \ follows:
+                        \
+                        \   * Bits 0-5 = the slot number of the object beneath
+                        \                this one
+                        \
+                        \   * Bit 6 = set to indicate that this object is on top
+                        \             of another object
+                        \
+                        \   * Bit 7 = clear to indicate that this object slot is
+                        \             occupied
+                        \
+                        \ The Sentinel's tower is always the first object to be
+                        \ spawned, and objects are added to slot 63 and down, so
+                        \ this means the tower is in slot 63, or %111111
+                        \
+                        \ The Sentinel's object flags are therefore %01111111
+                        \
+                        \ See the PlaceObjectOnTile routine for details of how
+                        \ the Sentinel's object flags are constructed
+
+ CLC                    \ Set A = A + %01111111
  ADC objectFlags
- STA sub_C3F00,Y
- INY
- DEX
- BMI srct1
- ASL showCodeError
- BCC srct4
+
+ STA secretCodeStash,Y  \ Store A in the Y-th entry in the secretCodeStash list
+                        \
+                        \ The addition above means that an entry of %01111111 in
+                        \ that stash indicates that A was zero before the
+                        \ addition, which also indicates a match
+                        \
+                        \ If the entered code matches the generated sequence of
+                        \ numbers (i.e. it matches the landscape's secret code)
+                        \ then the four corresponding entries in secretCodeStash
+                        \ will be %01111111
+                        \
+                        \ See the sub_C24EA routine to see this in action
+
+ INY                    \ Increment the index in Y so we build the stash upwards
+                        \ in memory
+
+ DEX                    \ Decrement the loop counter so the comparisons move
+                        \ down in memory, towards inputBuffer
+
+ BMI srct1              \ Look back to compare the next byte until we have
+                        \ compared the bytes all the way down to X = 128
+
+ ASL doNotPlayLandscape \ Set the C flag to bit 7 of doNotPlayLandscape and
+                        \ clear bit 7 of doNotPlayLandscape, so from this point
+                        \ on any calls to GenerateLandscape will preview and
+                        \ play the game
+
+ BCC srct4              \ If bit 7 of doNotPlayLandscape was clear then jump to
+                        \ part 2 to check the secret code and play the game
+
+                        \ Otherwise bit 7 of doNotPlayLandscape was set, so we
+                        \ return from the subroutine normally without playing
+                        \ the game
 
 .srct3
 
- RTS
+ RTS                    \ Return from the subroutine
+                        \
+                        \ We get to this point by calling the SpawnPlayer
+                        \ routine from one of two places:
+                        \
+                        \   * PreviewLandscape
+                        \
+                        \   * FinishLandscape
+                        \
+                        \ and then either failing the secret code checks or
+                        \ finishing the current landscape
+                        \
+                        \ If we got here from PreviewLandscape, then the next
+                        \ instruction jumps to SecretCodeError to display the
+                        \ "WRONG SECRET CODE" error, wait for a key press and
+                        \ rejoin the main loop
+                        \
+                        \ If we got here from FinishLandscape, then the next
+                        \ instructions display the landscape's secret code on
+                        \ completion of the level
 
 \ ******************************************************************************
 \
@@ -4985,10 +5282,15 @@ L1145 = C1144+1
 
 .srct4
 
- LDA L0C65
- AND #&1E
- CMP #&1E
- BNE srct3
+ LDA secretCodeChecks   \ If bits 1 to 4 of secretCodeChecks are not all set,
+ AND #%00011110         \ jump to srct3 to return from the subroutine normally,
+ CMP #%00011110         \ which will either display the "WRONG SECRET CODE" error or print
+ BNE srct3              \ the completed landscape's secret code, depending on
+                        \ how we got here
+
+                        \ If get here then bits 1 to 4 of secretCodeChecks are
+                        \ all set, so the secret entry code is valid and we can
+                        \ proceed to playing the landscape
 
  PLA
  PLA
@@ -5070,10 +5372,10 @@ L1145 = C1144+1
 
 .aden1
 
- STX enemyNumber        \ Set enemyNumber to the enemy counter in X, so this is
-                        \ the number of the enemy we are looking to create
+ STX enemyCounter       \ Set enemyCounter to the enemy counter in X, so we can
+                        \ retrieve it later in the loop
 
- LDA #1                 \ Set the object type for object X to 1 ???
+ LDA #1                 \ Set the object type for the object in slot X to 1 ???
  STA objectTypes,X
 
                         \ We now work down the landscape, from the highest peaks
@@ -5173,13 +5475,12 @@ L1145 = C1144+1
  LDA zTileMaxAltitude,X \ place an enemy
  STA zTile
 
- LDX enemyNumber        \ Set X to the enemy number that we stored in
-                        \ enemyNumber above
+ LDX enemyCounter       \ Set X to the loop counter that we stored above
 
- BNE aden4              \ If the enemy number is non-zero then we are adding a
+ BNE aden4              \ If the loop number is non-zero then we are adding a
                         \ sentry, so jump to aden4
 
-                        \ If we get here then the enemy number is zero, so we
+                        \ If we get here then the enemy counter is zero, so we
                         \ are adding the Sentinel and the Sentinel's tower
 
  STA zTileSentinel      \ Set (xTileSentinel, zTileSentinel) to the tile
@@ -5189,8 +5490,8 @@ L1145 = C1144+1
 
  LDA #5                 \ Set the object type for the object in slot #0 to
  STA objectTypes        \ type 5, which denotes the Sentinel (so the Sentinel
-                        \ is always in object slot #0, as it is the first object
-                        \ to be spawned)
+                        \ is always in object slot #0, while other objects that
+                        \ are spawned start from slot #63 and work down)
 
  LDA #6                 \ Spawn the Sentinel's tower (an object of type 6),
  JSR SpawnObject        \ returning the slot number of the new object in X
@@ -5202,10 +5503,13 @@ L1145 = C1144+1
  LDA #0                 \ Set the object's entry in L09C0 to 0 ???
  STA L09C0,X
 
- LDX enemyNumber        \ Set X to the enemy number that we stored in
-                        \ enemyNumber above, so X now contains the slot number
-                        \ for the Sentinel object, which we now place on the
-                        \ tile top (and therefore on top of the tower)
+ LDX enemyCounter       \ Set X to the enemy counter, so X now contains the slot
+                        \ number for the Sentinel object (which is always zero
+                        \ as we only add the Sentinel on the first iteration of
+                        \ the loop)
+                        \
+                        \ We now place the Sentinel object on the tile, which
+                        \ therefore places the Sentinel on top of the tower
 
 .aden4
 
@@ -6459,7 +6763,7 @@ L1145 = C1144+1
 
  LDA minEnemyAltitude
 
- JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+ JSR PlaceObjectBelow   \ Attempt to place the object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
@@ -6487,14 +6791,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1A7E
+\       Name: FinishLandscape
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C1A7E
+.FinishLandscape
 
  SED
  JSR sub_C342C
@@ -6510,17 +6814,19 @@ L1145 = C1144+1
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
- JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape and
-                        \ play the game
-                        \
-                        \ This subroutine alters the return stack somehow, need
-                        \ to document this here ???
+                        \ We set bit 7 of doNotPlayLandscape in the sub_C2147
+                        \ routine, so the following calls to GenerateLandscape
+                        \ and SpawnPlayer return normally, without previewing
+                        \ the landscape (GenerateLandscape) or starting the
+                        \ game (SpawnPlayer)
+
+ JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape
 
  JSR SpawnEnemies       \ Calculate the number of enemies for this landscape,
                         \ add them to the landscape and set the palette
                         \ accordingly
 
- JSR SpawnPlayer        \ This changes the stack ???
+ JSR SpawnPlayer        \ Add the player and trees to the landscape
 
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape's secret code
@@ -7753,8 +8059,11 @@ L1145 = C1144+1
  STA objectFlags,X      \ object slot X contains an object (so this populates
                         \ the slot with the object)
 
- LDA #&E0               \ Set the object's entry in yObjectLo to &E0 ???
- STA yObjectLo,X
+ LDA #224               \ Set the object's entry in yObjectLo to 224
+ STA yObjectLo,X        \
+                        \ This appears to place objects well above the tile, at
+                        \ a height of 224/256 = 0.875 coordinates above the tile
+                        \ itself ???
 
  PLA                    \ Set A to the tile data for the tile, which we stored
                         \ on the stack above
@@ -7784,8 +8093,11 @@ L1145 = C1144+1
  LDA #&F5               \ Set the object's entry in L0140 to &F5 ???
  STA L0140,X
 
- JSR GetRandomNumber    \ Set A to a random number that's a multiple of 8 and
- AND #%11111000         \ in the range 0 to 248 (i.e. 0 to 31 * 8)
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
+
+ AND #%11111000         \ Convert a to be a multiple of 8 and in the range 0 to
+                        \ 248 (i.e. 0 to 31 * 8)
 
  CLC                    \ Set A = A + 96
  ADC #96                \
@@ -8370,7 +8682,7 @@ L1145 = C1144+1
  STA L0CDE
 
  LDA #%10000000
- STA showCodeError
+ STA doNotPlayLandscape
 
 .C2191
 
@@ -9164,7 +9476,8 @@ L23E3 = C23E2+1
 .C252F
 
  DEX
- BPL C250D
+ BPL C250D              \ This leaves X = &FF
+
  LDA T
  ASL A
  ASL A
@@ -9188,28 +9501,60 @@ L23E3 = C23E2+1
  STA L003C
  LDA L0CCE
  BMI C257E
- LDA L0B40+22,X
+
+                        \ The following code checks the secretCodeStash for a
+                        \ specific run of four bytes, using stashOffset, so this
+                        \ looks like another secret code check?
+
+ LDA L0B40+22,X         \ X = &FF from above so this sets A = stashOffset ???
+                        \
+                        \ Does this value get changed somewhere?
+
+ CLC                    \ Set low byte of stashAddr(1 0) = A + 41
+ ADC #41
+ STA stashAddr
+
+ LDX #3                 \ Set X = 3 for the loop below
+
+ TXA                    \ Set high byte of stashAddr(1 0) = HI(secretCodeStash) - 3 + 3
  CLC
- ADC #&29
- STA L000C
- LDX #&03
- TXA
- CLC
- ADC #&3C
- STA L000D
+ ADC #HI(secretCodeStash) - 3
+ STA stashAddr+1
+
+                        \ So stashAddr = &3F00 + stashOffset + &29
+                        \              = secretCodeStash + stashOffset + 41
+
+                        \ Following loop checks whether there are four &7F bytes
+                        \ ending at (L000D L000C), and if not game is aborted
+
  LDY #0
 
 .P2569
 
- LDA (L000C),Y
- CMP #&7F
- BNE C25D7
- DEC L000C
+                        \ The LDAs here are similar to STA secretCodeStash,Y in
+                        \ CheckSecretCode, so they are reading from the
+                        \ secretCodeStash ???
+                        \
+                        \ The check against %01111111 is a check against the
+                        \ Sentinel's objectFlags, which indicates a match from
+                        \ the CheckSecretCode routine, so the following checks
+                        \ that the secret code is correct and jumps to MainLoop
+                        \ if it isn't
+
+ LDA (stashAddr),Y
+ CMP #%01111111
+ BNE C25D7              \ Jump to MainLoop
+
+ DEC stashAddr
+
  DEX
- BPL P2569
- LDA (L000C),Y
- CMP #&7F
- BEQ C25D7
+
+ BPL P2569              \ Do 4 times
+
+ LDA (stashAddr),Y
+ CMP #%01111111
+ BEQ C25D7              \ Jump to MainLoop
+
  SEC
  ROR L0CCE
 
@@ -9295,7 +9640,7 @@ L23E3 = C23E2+1
 
 .C25D7
 
- JMP C3663
+ JMP C3663              \ Jump to MainLoop
 
 .C25DA
 
@@ -10334,6 +10679,17 @@ L23E3 = C23E2+1
 \ See the SetTileSlope routine for information on the different types of tile
 \ slope.
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   doNotPlayLandscape  Controls how we return from the subroutine:
+\
+\                         * If bit 7 is set, return from the subroutine normally
+\
+\                         * If bit 7 is clear, jump to PreviewLandscape once the
+\                           landscape is generated
+\
 \ ******************************************************************************
 
 .GenerateLandscape
@@ -10519,7 +10875,10 @@ L23E3 = C23E2+1
                         \ return address, then the RTS will take us to the
                         \ SecretCodeError routine, just after the original
                         \ caller, i.e. just after the JSR GenerateLandscape
-                        \ instruction at the end of the main loop
+                        \ instruction (which will either be at the end of the
+                        \ main loop if the player enters an incorrect secret
+                        \ code, or when displaying a landscape's secet code
+                        \ after the level is completed)
 
 \ ******************************************************************************
 \
@@ -11317,14 +11676,35 @@ L23E3 = C23E2+1
  BPL stri4              \ Loop back until we have worked our way through the
                         \ whole strip
 
- BIT showCodeError      \ If bit 7 of showCodeError is set, jump to stri10 to
- BMI stri10             \ skip the following, so the stack is unmodified and the
-                        \ RTS at the end of the GenerateLandscape routine will
-                        \ return to SecretCodeError to display the "WRONG SECRET
-                        \ CODE" error message
+ BIT doNotPlayLandscape \ If bit 7 of doNotPlayLandscape is set then we do not
+ BMI stri10             \ want to play the landscape after generating it, so
+                        \ jump to stri10 to skip the following, leaving the
+                        \ stack unmodified
+                        \
+                        \ This means that the JSR GenerateLandscape instruction
+                        \ that got us here will return normally, so the RTS at
+                        \ the end of the GenerateLandscape routine will behave
+                        \ as expected, like this:
+                        \
+                        \   * If we called GenerateLandscape from the MainLoop
+                        \     routine, then we return there to fall through into
+                        \     SecretCodeError, which displays the "WRONG SECRET
+                        \     CODE" error message for when the player enters an
+                        \     incorrect secret code
+                        \   
+                        \   * If we called GenerateLandscape from the
+                        \     FinishLandscape routine, then we return there to
+                        \     display the landscape's secret entry code
+                        \     on-screen, for when the player completes a level
+                        \
+                        \ If bit 7 of doNotPlayLandscape is clear then we keep
+                        \ going to modify the return address on the stack, so
+                        \ that the RTS at the end of the GenerateLandscape takes
+                        \ us to the PreviewLandscape routine
 
                         \ The above loop ended with X set to &FF, so &0100 + X
-                        \ points to the top of the stack at &01FF
+                        \ in the following points to the top of the stack at
+                        \ &01FF
 
  LDA #HI(JumpToPreview) \ Set the return address on the bottom of the stack at
  STA &0100,X            \ (&01FE &01FF) to JumpToPreview
@@ -11432,8 +11812,9 @@ L23E3 = C23E2+1
  CPX #32                \ Loop back until we have worked our way through the
  BCC stri12             \ strip and have smoothed tiles 0 to 31
 
- LDA stripData+&2E,X    \ Modify the LDA #1 instruction in part 5 of
- STA rotm6+4,X          \ GetRotationMatrix ???
+ LDA &5A2E,X            \ X = 32, so this loads from &5A4E (tilesAtAltitude+14)
+ STA &0F1D,X            \ and stores in &0F3D (the operand in the unused LDA #0
+                        \ instruction just before GetAngleInRadians) ???
 
 \ ******************************************************************************
 \
@@ -13584,49 +13965,78 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3364
+\       Name: GetRandomNumberBCD
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Set A to the next number from the landscape's sequence of random
+\             numbers, converted to a binary coded decimal (BCD) number
 \
 \ ******************************************************************************
 
-.sub_C3364
+.GetRandomNumberBCD
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
+                        \ of random numbers
 
- PHA
- AND #&0F
- CMP #&0A
- BCC C3370
- SBC #&06
+                        \ We now convert this into a binary coded decimal (BCD)
+                        \ number by ensuring that both the low nibble and high
+                        \ nibble are in the range 0 to 9
 
-.C3370
+ PHA                    \ Store A on the stack so we can retrieve it below
 
- STA L3380
- PLA
- AND #&F0
- CMP #&A0
- BCC C337C
- SBC #&60
+ AND #%00001111         \ Extract the low nibble of A, so it's in the range 0 to
+                        \ 15
 
-.C337C
+ CMP #10                \ If A >= 10 then set A = A - 6
+ BCC rbcd1              \
+ SBC #6                 \ This reduces the number in A to the range 0 to 9, so
+                        \ it's suitable for the second digit in a BCD number
+                        \
+                        \ The subtraction will work because the C flag is set by
+                        \ the time we reach the SBC instruction
 
- ORA L3380
- RTS
+.rbcd1
+
+ STA lowNibbleBCD       \ Store the low nibble of the result in lowNibbleBCD
+
+ PLA                    \ Retrieve the original value of A that we stored on the
+                        \ stack above
+
+ AND #%11110000         \ Extract the high nibble of A, so it's in the range 0
+                        \ to 15
+
+ CMP #10<<4             \ If the high nibble in A >= 10 then subtract 6 from the
+ BCC rbcd2              \ high nibble
+ SBC #6<<4              \
+                        \ This reduces the high nibble of the number in A to the
+                        \ range 0 to 9, so it's suitable for the first digit in a
+                        \ BCD number
+                        \
+                        \ The subtraction will work because the C flag is set by
+                        \ the time we reach the SBC instruction
+
+.rbcd2
+
+ ORA lowNibbleBCD       \ By this point A contains a BCD digit in the high
+                        \ nibble and lowNibbleBCD contains a BCD digit in the
+                        \ low nibble, so we can OR them together to produce a
+                        \ BCD number in A, which we can return as our result
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L3380
+\       Name: lowNibbleBCD
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Storage for the low nibble when constructing a BCD random number
+\             in the GetRandomNumberBCD routine
 \
 \ ******************************************************************************
 
-.L3380
+.lowNibbleBCD
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -13641,29 +14051,42 @@ L314A = C3148+2
 
  LDA #&80
  STA printTextIn3D
+
  JSR DrawLetter3D
+
  LDA #&C7
  JSR DrawLetter3D
+
  LSR L0CE6
  LDX L0CE6
 
-.P3394
+                        \ This picks up where CheckSecretCode ends (when bit 7
+                        \ of doNotPlayLandscape is set and CheckSecretCode
+                        \ iterates up to the point where the secret code is
+                        \ generated)
 
- JSR sub_C3364
- CPX #&04
- BCS C339E
+.dsec1
+
+ JSR GetRandomNumberBCD \ Set A to the next number from the landscape's sequence
+                        \ of random numbers, converted to a binary coded decimal
+                        \ (BCD) number
+
+ CPX #4
+ BCS dsec2
 
  JSR Print2DigitBCD     \ Print the binary coded decimal (BCD) number in A
 
-.C339E
+.dsec2
 
  DEX
- BPL P3394
+ BPL dsec1
+
  STX L0CE6
 
  JSR GetRandomNumber    \ Set A to a random number
 
  LSR printTextIn3D
+
  RTS
 
 \ ******************************************************************************
@@ -14489,7 +14912,7 @@ L314A = C3148+2
 
  JSR ResetVariables2    \ ???
 
- JSR sub_C1A7E
+ JSR FinishLandscape
 
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
@@ -15840,6 +16263,21 @@ L314A = C3148+2
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+
+\ ******************************************************************************
+\
+\       Name: secretCodeStash
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: A stash for calculated values for each iteration in the
+\             CheckSecretCode routine
+\
+\ ******************************************************************************
+
+.secretCodeStash
+
+ SKIP 0                 \ This variable overwrites the startup routines as they
+                        \ aren't needed again
 
 \ ******************************************************************************
 \

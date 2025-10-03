@@ -26,6 +26,7 @@
      000B
 .L000C
 .zCounter
+.stashAddr
      000C
 .L000D
 .xCounter
@@ -210,7 +211,7 @@
 .L006D
      006D
 .L006E
-.enemyNumber
+.enemyCounter
      006E
 .L006F
      006F
@@ -2475,6 +2476,7 @@
      0C53   00
 .H2
      0C54   00
+.stashOffset
      0C55   00
 .L0C56
      0C56   00
@@ -2505,7 +2507,7 @@
      0C63   00
 .L0C64
      0C64   00
-.L0C65
+.secretCodeChecks
      0C65   00
      0C66   00
 .L0C67
@@ -2528,7 +2530,7 @@
      0C6F   00
 .L0C70
      0C70   00
-.showCodeError
+.doNotPlayLandscape
      0C71   00
 .L0C72
      0C72   00
@@ -4608,7 +4610,7 @@
 .C1A78
      1A78   20 D8 1E   JSR &1ED8
      1A7B   4C EC 1A   JMP &1AEC
-.sub_C1A7E
+.FinishLandscape
      1A7E   F8         SED
      1A7F   20 2C 34   JSR &342C
      1A82   18         CLC
@@ -8272,24 +8274,24 @@
      335E   68         PLA
      335F   29 0F      AND #&0F
      3361   4C BD 31   JMP &31BD
-.sub_C3364
+.GetRandomNumberBCD
      3364   20 94 31   JSR &3194
      3367   48         PHA
      3368   29 0F      AND #&0F
      336A   C9 0A      CMP #&0A
      336C   90 02      BCC &3370
      336E   E9 06      SBC #&06
-.C3370
+.rbcd1
      3370   8D 80 33   STA &3380
      3373   68         PLA
      3374   29 F0      AND #&F0
      3376   C9 A0      CMP #&A0
      3378   90 02      BCC &337C
      337A   E9 60      SBC #&60
-.C337C
+.rbcd2
      337C   0D 80 33   ORA &3380
      337F   60         RTS
-.L3380
+.lowNibbleBCD
      3380   00
 .DrawSecretCode
      3381   A9 80      LDA #&80
@@ -8299,12 +8301,12 @@
      338B   20 CE 31   JSR &31CE
      338E   4E E6 0C   LSR &0CE6
      3391   AE E6 0C   LDX &0CE6
-.P3394
+.dsec1
      3394   20 64 33   JSR &3364
      3397   E0 04      CPX #&04
      3399   B0 03      BCS &339E
      339B   20 56 33   JSR &3356
-.C339E
+.dsec2
      339E   CA         DEX
      339F   10 F3      BPL &3394
      33A1   8E E6 0C   STX &0CE6
@@ -10428,6 +10430,8 @@
      3EFD   FF
      3EFE   FF
      3EFF   FF
+.secretCodeStash
+     3F00
 .sub_C3F00
      3F00   38         SEC
      3F01   6E FC 0C   ROR &0CFC
