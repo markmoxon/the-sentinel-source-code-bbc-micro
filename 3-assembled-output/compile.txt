@@ -8621,7 +8621,7 @@
      359F   20 40 34   JSR &3440
      35A2   60         RTS
      35A3   B9
-.sub_C35A4
+.PlayGame
      35A4   A9 83      LDA #&83
      35A6   20 2C 5E   JSR &5E2C
      35A9   20 07 5E   JSR &5E07

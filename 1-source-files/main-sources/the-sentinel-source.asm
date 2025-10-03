@@ -5225,7 +5225,8 @@ L1145 = C1144+1
                         \ play the game
 
  BCC srct4              \ If bit 7 of doNotPlayLandscape was clear then jump to
-                        \ part 2 to check the secret code and play the game
+                        \ part 2 to check the secret code and either show the
+                        \ "WRONG SECRET CODE" error or play the game
 
                         \ Otherwise bit 7 of doNotPlayLandscape was set, so we
                         \ return from the subroutine normally without playing
@@ -5287,33 +5288,98 @@ L1145 = C1144+1
 \       Name: CheckSecretCode (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Check the results of the secret code matching process, and if the
+\             secret codes match, jump to PlayGame to play the game
 \
 \ ******************************************************************************
 
 .srct4
 
  LDA secretCodeChecks   \ If bits 1 to 4 of secretCodeChecks are not all set,
- AND #%00011110         \ jump to srct3 to return from the subroutine normally,
- CMP #%00011110         \ which will either display the "WRONG SECRET CODE" error or print
- BNE srct3              \ the completed landscape's secret code, depending on
-                        \ how we got here
+ AND #%00011110         \ then one or more of the four BCD bytes in the secret
+ CMP #%00011110         \ code do not match, so jump to srct3 to return from the
+ BNE srct3              \ subroutine normally, to display the "WRONG SECRET
+                        \ CODE" error page
 
                         \ If get here then bits 1 to 4 of secretCodeChecks are
-                        \ all set, so the secret entry code is valid and we can
-                        \ proceed to playing the landscape
+                        \ all set, so the entered secret entry code matches the
+                        \ generated code, so we can now proceed to playing the
+                        \ landscape
+                        \
+                        \ The following code simply jumps to the PlayGame
+                        \ routine, but in an obfuscated way that changes the
+                        \ return address on the stack to PlayGame-1, so the RTS
+                        \ instruction will jump to PlayGame (as that's how the
+                        \ RTS instruction works)
 
- PLA
- PLA
- CLC
+ PLA                    \ Remove the return address from the stack and discard
+ PLA                    \ it
+
+                        \ In the following we use the value in objectFlags,
+                        \ which contains the object flags for the object in
+                        \ slot 0
+                        \
+                        \ Slot 0 always contains the Sentinel, and the Sentinel
+                        \ is always placed on top of the Sentinel's tower, so
+                        \ the object flags for the Sentinel are constructed as
+                        \ follows:
+                        \
+                        \   * Bits 0-5 = the slot number of the object beneath
+                        \                this one
+                        \
+                        \   * Bit 6 = set to indicate that this object is on top
+                        \             of another object
+                        \
+                        \   * Bit 7 = clear to indicate that this object slot is
+                        \             occupied
+                        \
+                        \ The Sentinel's tower is always the first object to be
+                        \ spawned, and objects are added to slot 63 and down, so
+                        \ this means the tower is in slot 63, or %111111
+                        \
+                        \ The Sentinel's object flags are therefore %01111111
+                        \
+                        \ The following code uses this fact to push the address
+                        \ of PlayGame-1 onto the stack, but in a totally
+                        \ obfuscated manner
+                        \
+                        \ It calculates the high byte as follows:
+                        \
+                        \     objectFlags + HI(PlayGame-1) - %01111111
+                        \   = %01111111 + HI(PlayGame-1) - %01111111
+                        \   = HI(PlayGame-1)
+                        \
+                        \ and the low byte as follows:
+                        \
+                        \     high byte + LO(PlayGame-1) - HI(PlayGame-1)
+                        \   = HI(PlayGame-1) + LO(PlayGame-1) - HI(PlayGame-1)
+                        \   = LO(PlayGame-1)
+                        \
+                        \ For the first calculation, we need to apply a little
+                        \ hack to the code to get around a limitation in BeebAsm
+                        \ that rejects negative constants
+                        \
+                        \ HI(PlayGame-1) - %01111111 in the first calculation is
+                        \ negative, so to persuade BeebAsm to accept it as a
+                        \ constant, we can wrap it in LO() to convert it into
+                        \ a two's complement value that BeebAsm will accept
+                        \
+                        \ The LO() part is effectively applying MOD 256 in a way
+                        \ that works with negative arguments
+
+ CLC                    \ Push PlayGame-1 onto the stack, high byte first
  LDA objectFlags
- ADC #&B6
+ ADC #LO(HI(PlayGame-1) - %01111111)
  PHA
  CLC
- ADC #&6E
+ ADC #LO(PlayGame-1) - HI(PlayGame-1)
  PHA
 
- RTS                    \ Return from the subroutine
+ RTS                    \ Return from the subroutine, which will take the
+                        \ address off the stack, increment it and jump to that
+                        \ address
+                        \
+                        \ So this jumps to PlayGame to play the actual game
 
 \ ******************************************************************************
 \
@@ -14903,7 +14969,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C35A4
+\       Name: PlayGame
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
@@ -14916,7 +14982,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.sub_C35A4
+.PlayGame
 
  LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
