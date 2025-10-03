@@ -19936,9 +19936,21 @@ L314A = C3148+2
 
  JSR PrintLandscapeNum  \ Print the four-digit landscape number (0000 to 9999)
 
- JSR SpawnPlayer        \ This changes the stack ???
+ JSR SpawnPlayer        \ Add the player and trees to the landscape
+                        \
+                        \ If the entered secret entry code in the keyboard input
+                        \ buffer does not match the generated secret code for
+                        \ this landscape then the call will return here so we
+                        \ can display an error
+                        \
+                        \ If the codes match then the CheckSecretCode will jump
+                        \ to the PlayGame routine instead to play the game
 
- JMP SecretCodeError
+ JMP SecretCodeError    \ The entered secret entry in the keyboard input buffer
+                        \ does not match the generated secret code for this
+                        \ landscape, so jump to SecretCodeError to display the
+                        \ "WRONG SECRET CODE" error, wait for a key press and
+                        \ rejoin the main loop
 
 \ ******************************************************************************
 \
