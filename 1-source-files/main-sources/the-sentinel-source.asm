@@ -1788,7 +1788,9 @@
 
 .L0CEB
 
- EQUB &80, &80, &80, &80, &80
+ EQUB &80
+
+ EQUB &80, &80, &80, &80
 
 .inputBuffer
 
@@ -5003,9 +5005,18 @@ L1145 = C1144+1
                         \ and we need to generate the secret code in the
                         \ following loop so we can check it against the code
                         \ entered by the player (which is still in the keyboard
-                        \ inputBuffer from when they typed it in)
+                        \ input buffer from when they typed it in)
 
- LDY stashOffset-170,X  \ Set Y = stashOffset ???
+ LDY stashOffset-170,X  \ Set Y = stashOffset
+                        \
+                        \ The stashOffset variable is set by the landscape
+                        \ drawing process to  value that depends on the
+                        \ landscape generation process
+                        \
+                        \ We use it as an offset into the secretCodeStash list
+                        \ below, so the stash moves around in memory depending
+                        \ on the landscape number, making this whole process
+                        \ harder to follow (and therefore harder to crack)
 
  BIT doNotPlayLandscape \ If bit 7 of doNotPlayLandscape is clear then the next
  BPL srct1              \ step is to play the landscape, so skip the following
@@ -5059,7 +5070,7 @@ L1145 = C1144+1
                         \
                         \ So if bits 1 to 4 of secretCodeChecks are set by the
                         \ end of the process, the secret code in the keyboard
-                        \ inputBuffer matches the secret code that we just
+                        \ input buffer matches the secret code that we just
                         \ generated for this level
                         \
                         \ The third step is only relevant if we are going on to
@@ -5075,7 +5086,7 @@ L1145 = C1144+1
 
                         \ We now compare this generated number with the contents
                         \ of memory, working our way down towards the keyboard
-                        \ inputBuffer (towards the end of the iterations)
+                        \ input buffer (towards the end of the iterations)
                         \
                         \ X counts down to 128, and for each iteration we check
                         \ the generated number against a location in memory
@@ -5103,16 +5114,16 @@ L1145 = C1144+1
                         \ To work out what byteToCheck should be, consider that:
                         \
                         \   * When X = 129, we check the byte at inputBuffer
-                        \                   (the last 2 digits of the code as it
-                        \                   is written down and typed in)
+                        \                   (i.e. the last 2 digits of the code
+                        \                   when written down or typed in)
                         \
                         \   * When X = 130, we check the byte at inputBuffer+1
                         \
                         \   * When X = 131, we check the byte at inputBuffer+2
                         \
                         \   * When X = 132, we check the byte at inputBuffer+3
-                        \                   (the first 2 digits of the code as it
-                        \                   is written down and typed in)
+                        \                   (i.e. the first 2 digits of the code
+                        \                   when written down or typed in)
                         \
                         \ To make this work, then, we need this instruction:
                         \
@@ -5144,8 +5155,8 @@ L1145 = C1144+1
                         \
                         \ We only care about the last five comparisons, of which
                         \ we ignore the very last, as the preceding four results
-                        \ are for the four BCD numbers in the keyboard
-                        \ inputBuffer (i.e. the entered number)
+                        \ are for the four BCD numbers in the keyboard input
+                        \ buffer (i.e. the entered number)
 
                         \ We now move on to poulate the secret code stash, which
                         \ contains the result of each of the comparisons with
@@ -9476,7 +9487,11 @@ L23E3 = C23E2+1
 .C252F
 
  DEX
- BPL C250D              \ This leaves X = &FF
+
+ BPL C250D
+
+                        \ At this point X is set to 255, which we use below when
+                        \ checking the secret entry code
 
  LDA T
  ASL A
@@ -9502,32 +9517,84 @@ L23E3 = C23E2+1
  LDA L0CCE
  BMI C257E
 
-                        \ The following code checks the secretCodeStash for a
-                        \ specific run of four bytes, using stashOffset, so this
-                        \ looks like another secret code check?
-
- LDA L0B40+22,X         \ X = &FF from above so this sets A = stashOffset ???
+                        \ The following code does a check on the secret entry
+                        \ code for the current landscape to ensure that it
+                        \ matches the entered code in the keyboard input buffer
                         \
-                        \ Does this value get changed somewhere?
+                        \ If the check fails, then the game restarts by jumping
+                        \ to the MainLoop
+                        \
+                        \ Specifically, the following code checks for four bytes
+                        \ in the secretCodeStash that correspond to the results
+                        \ of the comparisons made in the CheckSecretCode routine
+                        \
+                        \ This ensures that crackers who manage to bypass the
+                        \ CheckSecretCode routine will find that the game
+                        \ restarts, unless they also disable this rather well
+                        \ hiddden check
 
- CLC                    \ Set low byte of stashAddr(1 0) = A + 41
- ADC #41
- STA stashAddr
+ LDA stashOffset-255,X  \ We know that X is 255 from the loop above, so this
+                        \ sets A = stashOffset
 
- LDX #3                 \ Set X = 3 for the loop below
+                        \ We now set stashAddr(1 0) to point to the four bytes
+                        \ in the secretCodeStash that correspond to the four
+                        \ comparisons we made for the secret entry code in the
+                        \ CheckSecretCode routine
 
- TXA                    \ Set high byte of stashAddr(1 0) = HI(secretCodeStash) - 3 + 3
- CLC
+ CLC                    \ Set stashAddr = A + 41
+ ADC #41                \
+ STA stashAddr          \ So that's the low byte
+
+ LDX #3                 \ Set X = 3 so we can use it to count four bytes in the
+                        \ loop below (as well as in the following calculation)
+
+ TXA                    \ Set stashAddr+1 = HI(secretCodeStash) - 3 + 3
+ CLC                    \                 = HI(secretCodeStash)
  ADC #HI(secretCodeStash) - 3
  STA stashAddr+1
 
-                        \ So stashAddr = &3F00 + stashOffset + &29
-                        \              = secretCodeStash + stashOffset + 41
+                        \ So we now have the following:
+                        \
+                        \   stashAddr(1 0) = secretCodeStash + stashOffset + 41
+                        \
+                        \ When the secretCodeStash gets populated in the
+                        \ CheckSecretCode routine, we add one byte for each
+                        \ iteration and comparison in the secret code generation
+                        \ process
+                        \
+                        \ That process starts by performing 38 iterations and
+                        \ storing the results in the secretCodeStash from offset
+                        \ stashOffset to stashOffset + 37
+                        \
+                        \ It then generates the four BCD numbers that make up
+                        \ the secret code, storing the results in the stash from
+                        \ offset stashOffset + 38 to stashOffset + 41
+                        \
+                        \ (And it then generates one more result, but we ignore
+                        \ that)
+                        \
+                        \ So stashAddr(1 0) points to the last of those bytes in
+                        \ the secretCodeStash, i.e. the byte at stashOffset + 41
+                        \
+                        \ The value that is stashed in the secretCodeStash is
+                        \ the result of subtracting the entered code from the
+                        \ generated code, which will be zero if they match, and
+                        \ then %01111111 is added to the result (%01111111 being
+                        \ the object flags for the Sentinel, which is all part
+                        \ of the obfuscation of this process)
+                        \
+                        \ So if the secretCodeStash contains %01111111, this
+                        \ means that particular byte matched, so if all four
+                        \ bytes at offset stashOffset + 38 to stashOffset + 41
+                        \ equal %01111111, this means the secret code was deemed
+                        \ correct by CheckSecretCode
 
-                        \ Following loop checks whether there are four &7F bytes
-                        \ ending at (L000D L000C), and if not game is aborted
+ LDY #0                 \ Set Y = 0 so we can fetch a value from the address in
+                        \ stashAddr(1 0) in the following (we don't change its
+                        \ value)
 
- LDY #0
+                        \ We use X as the loop counter to work through all four
+                        \ bytes, as we set it to 3 above
 
 .P2569
 
@@ -9541,19 +9608,50 @@ L23E3 = C23E2+1
                         \ that the secret code is correct and jumps to MainLoop
                         \ if it isn't
 
- LDA (stashAddr),Y
- CMP #%01111111
- BNE C25D7              \ Jump to MainLoop
+ LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
 
- DEC stashAddr
+ CMP #%01111111         \ If it does not match %01111111 then this byte from the
+ BNE C25D7              \ secret code was not matched by the CheckSecretCode
+                        \ routine (so it must have been bypassed by crackers),
+                        \ so jump to Mainloop via C25D7 to restart the game
 
- DEX
+ DEC stashAddr          \ Decrement stashAddr(1 0) to point to the previous byte
+                        \ in memory (we decrement as we initialised stashAddr
+                        \ above to point to the last result byte in memory, so
+                        \ this moves on to the next of the four bytes)
 
- BPL P2569              \ Do 4 times
+ DEX                    \ Decrement the loop counter
 
- LDA (stashAddr),Y
- CMP #%01111111
- BEQ C25D7              \ Jump to MainLoop
+ BPL P2569              \ Loop back until we have checked all four secret code
+                        \ bytes
+
+                        \ The four code bytes have now been checked, but we have
+                        \ one more check to do, that of the comparison just
+                        \ before the four bytes
+                        \
+                        \ This comparison would have been between inputBuffer+4
+                        \ and a BCD number from the landscape's sequence of
+                        \ random numbers
+                        \
+                        \ When the landscape code is entered, it is converted
+                        \ into four BCD numbers in inputBuffer, and the rest of
+                        \ the buffer is padded out with &FF, so inputBuffer+4
+                        \ contains &FF at the point of comparison
+                        \
+                        \ &FF is not a valud BCD number, so it can never match a
+                        \ BCD number from the landscape's sequence of random
+                        \ numbers, so we know that this comparison can never
+                        \ have matched
+                        \
+                        \ So if stashAddr(1 0) contains %01111111 to indicate a
+                        \ match, then we know that the stash has been modified
+                        \ by a cracker, so we restart the game
+
+ LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
+
+ CMP #%01111111         \ If it matches %01111111 then we know the stash has
+ BEQ C25D7              \ been compromised, so jump to Mainloop via C25D7 to
+                        \ restart the game
 
  SEC
  ROR L0CCE
@@ -9619,6 +9717,12 @@ L23E3 = C23E2+1
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   C25D7               Jump to MainLoop via C3663
 \
 \ ******************************************************************************
 
@@ -14803,6 +14907,12 @@ L314A = C3148+2
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   C3663               Jump to MainLoop
 \
 \ ******************************************************************************
 
