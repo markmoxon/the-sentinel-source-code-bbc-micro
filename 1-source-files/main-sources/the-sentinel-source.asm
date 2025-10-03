@@ -1230,27 +1230,27 @@
 
 .sinYawAngleLo
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .cosYawAngleLo
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .sinYawAngleHi
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .cosYawAngleHi
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C04
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C05
 
- EQUB &28
+ EQUB &28               \ ???
 
 .minEnemyAltitude
 
@@ -1270,27 +1270,29 @@
 
 .tileDataMultiplier
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C09
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C0A
 
- EQUB 0, 0
+ EQUB 0                 \ ???
+
+ EQUB 0                 \ ???
 
 .J
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C0D
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C0E
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .textDropShadow
 
@@ -1303,7 +1305,8 @@
 
 .L0C10
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
  EQUB 0
 
 .xTileSentinel
@@ -1316,7 +1319,7 @@
 
 .L0C1B
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .titleObjectToDraw
 
@@ -1325,44 +1328,48 @@
 
 .L0C1D
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C1E
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C1F
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C20
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0C28
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0C30
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0
 
 .L0C40
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C41
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C42
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C43
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C44
 
@@ -1370,19 +1377,19 @@
 
 .L0C47
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C48
 
- EQUB 2
+ EQUB 2                 \ ???
 
 .L0C49
 
- EQUB 32
+ EQUB 32                \ ???
 
 .L0C4A
 
- EQUB 7
+ EQUB 7                 \ ???
 
 .drawingTitleScreen
 
@@ -1395,27 +1402,27 @@
 
 .L0C4C
 
- EQUB 1
+ EQUB 1                 \ ???
 
 .L0C4D
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C4E
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C4F
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C50
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C51
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .landscapeZero
 
@@ -1428,11 +1435,11 @@
 
 .G2
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .H2
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .stashOffset
 
@@ -1451,39 +1458,39 @@
 
 .L0C56
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C57
 
- EQUB 13
+ EQUB 13                \ ???
 
 .L0C58
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C59
 
- EQUB &16, 0
+ EQUB &16, 0            \ ???
 
 .L0C5B
 
- EQUB &E0
+ EQUB &E0               \ ???
 
 .L0C5C
 
- EQUB &B7
+ EQUB &B7               \ ???
 
 .L0C5D
 
- EQUB &E4
+ EQUB &E4               \ ???
 
 .L0C5E
 
- EQUB &52
+ EQUB &52               \ ???
 
 .L0C5F
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .printTextIn3D
 
@@ -1500,15 +1507,15 @@
 
 .L0C62
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C63
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C64
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .secretCodeChecks
 
@@ -1519,39 +1526,39 @@
                         \ A set bit indicates a match while a clear bit
                         \ indicates a failure
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C67
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C68
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C69
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C6A
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C6B
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C6C
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C6D
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C6E
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .enemyCount
 
@@ -1560,7 +1567,7 @@
 
 .L0C70
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .doNotPlayLandscape
 
@@ -1591,35 +1598,35 @@
 
 .L0C72
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C73
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C74
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C75
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0C76
 
- EQUB 0, 0
+ EQUB 0, 0              \ ???
 
 .L0C78
 
- EQUB &EF, 0
+ EQUB &EF, 0            \ ???
 
 .L0C7A
 
- EQUB &AA
+ EQUB &AA               \ ???
 
 .randomLFSR
 
- EQUB 0
+ EQUB 0                 \ ???
  EQUB 0
  EQUB 1
  EQUB 0
@@ -1627,170 +1634,178 @@
 
 .L0C80
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0C88
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0C90
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0C98
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0CA0
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0CA8
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0CB0
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
 
 .L0CB8
 
- EQUB 0, 0, 0, 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0
  EQUB 0
 
 .L0CC1
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CC2
 
- EQUB &C0
+ EQUB &C0               \ ???
 
 .L0CC3
 
- EQUB &60
+ EQUB &60               \ ???
 
 .L0CC4
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CC5
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CC6
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CC7
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CC8
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CC9
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CCA
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CCB
 
- EQUB &7F
+ EQUB &7F               \ ???
 
 .L0CCC
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CCD
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CCE
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CCF
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CD0
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CD1
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CD2
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CD3
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CD4
 
- EQUB 0, 0, 0
+ EQUB 0, 0, 0           \ ???
 
 .L0CD7
 
- EQUB 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0, 0     \ ???
 
 .L0CDC
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CDD
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CDE
 
- EQUB 0
+ EQUB 0                 \ ???
 
 .L0CDF
 
- EQUB 0, 0, 0, 0, 0
+ EQUB 0, 0, 0, 0, 0     \ ???
 
 .L0CE4
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CE5
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CE6
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CE7
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CE8
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CE9
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CEA
 
- EQUB &80
+ EQUB &80               \ ???
 
 .L0CEB
 
- EQUB &80
-
- EQUB &80, &80, &80, &80
+ EQUB &80               \ ???
+ EQUB &80, &80
+ EQUB &80, &80
 
 .inputBuffer
 
@@ -1805,7 +1820,7 @@
 
 .L0CFC
 
- EQUB &C0
+ EQUB &C0               \ ???
 
 .landscapeNumberLo
 
@@ -2316,7 +2331,7 @@
 \       Name: GetAngleFromCoords (Part 3 of 3)
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate arctan ???
+\    Summary: Calculate the arctangent to get the angle
 \
 \ ******************************************************************************
 
@@ -7333,7 +7348,7 @@ L1145 = C1144+1
 \
 \ Arguments:
 \
-\   (L0033 L0032)       The 16-bit signed number to multiply
+\   (L0033 L0032)       The 16-bit signed number to multiply ???
 \
 \   Y                   Offset of the 16-bit sign-magnitude value to multiply:
 \
@@ -7355,7 +7370,7 @@ L1145 = C1144+1
  STA H                  \ (in bit 7), so setting H  0 ensures that that the
                         \ result is positive
 
- LDA L0032              \ Set (QQ PP) = (L0033 L0032)
+ LDA L0032              \ Set (QQ PP) = (L0033 L0032) ???
  STA PP                 \
  LDA L0033              \ where (QQ PP) is a 16-bit signed number
  STA QQ
@@ -7370,7 +7385,7 @@ L1145 = C1144+1
                         \ And apply the sign from bit 7 of H to ensure the
                         \ result is positive
 
- STA L002F,X            \ Store the result in (L002C+X L002F+X)
+ STA L002F,X            \ Store the result in (L002C+X L002F+X) ???
  LDA T
  STA L002C,X
 
@@ -9664,16 +9679,6 @@ L23E3 = C23E2+1
 
 .P2569
 
-                        \ The LDAs here are similar to STA secretCodeStash,Y in
-                        \ CheckSecretCode, so they are reading from the
-                        \ secretCodeStash ???
-                        \
-                        \ The check against %01111111 is a check against the
-                        \ Sentinel's objectFlags, which indicates a match from
-                        \ the CheckSecretCode routine, so the following checks
-                        \ that the secret code is correct and jumps to MainLoop
-                        \ if it isn't
-
  LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
 
  CMP #%01111111         \ If it does not match %01111111 then this byte from the
@@ -10865,7 +10870,14 @@ L23E3 = C23E2+1
 .GenerateLandscape
 
                         \ We start by filling the landscapeRandom table with 81
-                        \ random values, though these are discarded ???
+                        \ random values, though these are ignored
+                        \
+                        \ The purpose of this step is to get the random number
+                        \ generator to a point where the output is predictable
+                        \ and stable, so that every time we generate a sequence
+                        \ of random numbers for a landscape, they are exactly
+                        \ the same each time while being unique to that
+                        \ landscape number
 
  LDX #80                \ Set a counter in X so we can generate 81 random
                         \ numbers
@@ -13524,8 +13536,8 @@ L314A = C3148+2
  PHA
  TYA
  PHA
- LDY #>(L0C10)
- LDX #<(L0C10)
+ LDY #HI(L0C10)
+ LDX #LO(L0C10)
  LDA #10                \ osword_read_char
  JSR OSWORD
  LDA L0C4A
@@ -13648,11 +13660,11 @@ L314A = C3148+2
 
  LDX #3                 \ Set X = 3 to pass to DrawTitleObject ???
 
- LDA #0                 \ Set A = 0 so the call to t draws a robot
+ LDA #0                 \ Set A = 0 so the call to DrawTitleObject draws a robot
                         \ on the right of the screen
 
- BEQ titl3              \ Jump to titl3 to ??? (this BEQ is effectively a JMP as
-                        \ A is always zero)
+ BEQ titl3              \ Jump to titl3 to skip the folloiwng and draw the robot
+                        \ (this BEQ is effectively a JMP as A is always zero)
 
 .titl1
 
