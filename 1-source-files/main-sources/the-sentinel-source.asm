@@ -13398,8 +13398,9 @@ L314A = C3148+2
  EOR seedNumberLFSR+4   \ register and rotating bit 0 of the result into the C
  ROR A                  \ flag
                         \
-                        \ This is the same as taking bit 3 of seedNumberLFSR+2 and
-                        \ EOR'ing it with bit 0 of seedNumberLFSR+4 into the C flag
+                        \ This is the same as taking bit 3 of seedNumberLFSR+2
+                        \ and EOR'ing it with bit 0 of seedNumberLFSR+4 into the
+                        \ C flag
                         \
                         \ We now use the C flag as the next input bit into the
                         \ shift register
@@ -13409,8 +13410,8 @@ L314A = C3148+2
                         \ the register
 
  ROL seedNumberLFSR     \ Shift seedNumberLFSR(4 3 2 1 0) to the left by one
- ROL seedNumberLFSR+1   \ place, inserting the C flag into bit 0 of the input end
- ROL seedNumberLFSR+2   \ of the shift register in seedNumberLFSR
+ ROL seedNumberLFSR+1   \ place, inserting the C flag into bit 0 of the input
+ ROL seedNumberLFSR+2   \ end of the shift register in seedNumberLFSR
  ROL seedNumberLFSR+3
  ROL seedNumberLFSR+4
 
