@@ -706,11 +706,7 @@
 
 .L0140
 
- SKIP 2                 \ ???
-
-.L0142
-
- SKIP 14                \ ???
+ SKIP 16                \ ???
 
 .L0150
 
@@ -762,9 +758,9 @@
 \     shape of the tile (0 to 15).
 \
 \   * The high nibble of each byte contains the altitude of the tile corner in
-\     the front-left corner of the tile (i.e. the corner closest to the landscape
-\     origin). We call this tile corner the "anchor". The altitude is in the
-\     range 1 to 11, so the top nibble never has both bit 6 and 7 set.
+\     the front-left corner of the tile (i.e. the corner closest to the origin
+\     of the landscape). We call this tile corner the "anchor". The altitude is
+\     in the range 1 to 11, so the top nibble never has both bit 6 and 7 set.
 \
 \ If there is an object placed on the tile, then the data contained in each byte
 \ is as follows:
@@ -1624,11 +1620,11 @@
 
  EQUB &AA               \ ???
 
-.randomLFSR
+.seedNumberLFSR
 
- EQUB 0                 \ ???
- EQUB 0
- EQUB 1
+ EQUB 0                 \ A five-byte linear feedback shift register for
+ EQUB 0                 \ generating a sequence of seed numbers for each
+ EQUB 1                 \ landscape
  EQUB 0
  EQUB 0
 
@@ -3564,7 +3560,7 @@
  LDX inputBuffer        \
                         \ So (Y X) is the entered landscape number in BCD
 
- JSR SeedLandscape      \ Seed the random number generator with the landscape
+ JSR SeedLandscape      \ Seed the seed number generator with the landscape
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
@@ -3953,14 +3949,12 @@ L1145 = C1144+1
 
  BPL resv1              \ Loop back until we have processed X from &3F to 0
 
- INC randomLFSR+2       \ Set bit 16 of the five-byte linear feedback shift
-                        \ register in randomLFSR(4 3 2 1 0), so if we zeroed
-                        \ the whole register in ResetVariables, it now has an
-                        \ initial value of &0000010000
-                        \
-                        \ If we jumped straight to ResetVariables2 instead then
-                        \ this just adds a further random element to the
-                        \ generator
+ INC seedNumberLFSR+2   \ Set bit 16 of the five-byte linear feedback shift
+                        \ register in seedNumberLFSR(4 3 2 1 0), as we need a
+                        \ non-zero element for the seed number generator to
+                        \ work (as otherwise the EOR feedback will not affect
+                        \ the contents of the shift register and it won't start
+                        \ generating non-zero numbers)
 
  JSR sub_C3923          \ Sets L0051, L0052 ???
 
@@ -4178,20 +4172,20 @@ L1145 = C1144+1
 
 .objb2
 
-                        \ We now pick a random tile in the landscape that might
+                        \ We now try to pick a tile in the landscape that might
                         \ be suitable for placing our object
 
- JSR GetRandomNumber30  \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted to the range 0 to 30
+ JSR GetNextSeed0To30   \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, converted to the range 0 to 30
 
- STA xTile              \ Set xTile to this random number, so it points to a
+ STA xTile              \ Set xTile to this seed number, so it points to a
                         \ tile corner that anchors a tile (so the tile corner
                         \ isn't along the right edge of the landscape)
 
- JSR GetRandomNumber30  \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted to the range 0 to 30
+ JSR GetNextSeed0To30   \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, converted to the range 0 to 30
 
- STA zTile              \ Set zTile to this random number, so it points to a
+ STA zTile              \ Set zTile to this seed number, so it points to a
                         \ tile corner that anchors a tile (so the tile corner
                         \ isn't along the far edge of the landscape)
 
@@ -4201,12 +4195,12 @@ L1145 = C1144+1
 
  BCS objb1              \ If the tile already contains an object, jump to objb1
                         \ to try another tile from the landscape's sequence of
-                        \ random numbers
+                        \ seed numbers
 
  AND #%00001111         \ If the tile slope in the low nibble of the tile data
  BNE objb1              \ is non-zero, then the tile is not flat, so jump to
                         \ objb1 to try another tile from the landscape's
-                        \ sequence of random numbers
+                        \ sequence of seed numbers
 
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
@@ -4219,7 +4213,7 @@ L1145 = C1144+1
  CMP tileAltitude       \ If the altitude of the chosen tile is equal to or
  BCS objb1              \ higher than the minimum altitude in tileAltitude, then
                         \ this tile is too high, so jump to objb1 to try another
-                        \ tile from the landscape's sequence of random numbers
+                        \ tile from the landscape's sequence of seed numbers
 
                         \ If we get here then we have found a tile that is below
                         \ the altitude in tileAltitude and which doesn't already
@@ -4243,23 +4237,23 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: GetRandomNumber30
+\       Name: GetNextSeed0To30
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to the next number from the landscape's sequence of random
+\    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to the range 0 to 30
 \
 \ ******************************************************************************
 
-.GetRandomNumber30
+.GetNextSeed0To30
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
- AND #31                \ Convert A into a random number into the range 0 to 31
+ AND #31                \ Convert A into a number into the range 0 to 31
 
  CMP #31                \ If A >= 31 or greater, repeat the process until we
- BCS GetRandomNumber30  \ get a random number in the range 0 to 30
+ BCS GetNextSeed0To30   \ get a number in the range 0 to 30
 
  RTS                    \ Return from the subroutine
 
@@ -4762,7 +4756,7 @@ L1145 = C1144+1
 
  JSR GetEnemyCount      \ Set A to the enemy count for this landscape, which is
                         \ derived from the top digit of the landscape number and
-                        \ the next number in the landscape's sequence of random
+                        \ the next number in the landscape's sequence of seed
                         \ numbers, so it is always the same value for the same
                         \ landscape number
                         \
@@ -4865,7 +4859,7 @@ L1145 = C1144+1
  BCS sply1              \ If the call to PlaceObjectBelow sets the C flag then
                         \ the object has not been successfully placed, so loop
                         \ back to sply1 to keep trying, working through the
-                        \ landscape's sequence of random numbers until we do
+                        \ landscape's sequence of seed numbers until we do
                         \ manage to place the player on a tile
 
                         \ Otherwise we have placed the player object on a tile,
@@ -4891,11 +4885,11 @@ L1145 = C1144+1
  SBC enemyCount
  STA U
 
- JSR GetRandomNumber22  \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted to the range 0 to 22
+ JSR GetNextSeed0To22   \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, converted to the range 0 to 22
 
- CLC                    \ Set A to this random number, converted to the range 10
- ADC #10                \ to 32
+ CLC                    \ Set A to this number, converted to the range 10 to 32
+ ADC #10
 
  CMP U                  \ If A >= U then set A = U
  BCC tree1              \
@@ -4961,11 +4955,11 @@ L1145 = C1144+1
 \ ------------------------------------------------------------------------------
 \
 \ At this point we have generated the landscape and populated it with enemies,
-\ the player and trees, all using the landscape's sequence of random numbers.
-\ This sequence will be different for each individual level, but will be exactly
-\ the same sequence every time we generate a specific level.
+\ the player and trees, all using the landscape's sequence of seed numbers. This
+\ sequence will be different for each individual level, but will be exactly the
+\ same sequence every time we generate a specific level.
 \
-\ We now keep generating the landscape's sequence of random numbers to get the
+\ We now keep generating the landscape's sequence of seed numbers to get the
 \ landscape's secret code, as follows:
 \
 \   * Generate another 38 numbers from the sequence
@@ -4973,7 +4967,7 @@ L1145 = C1144+1
 \   * The next four numbers in the sequence form the secret code
 \
 \ To get a secret code of the form 12345678, we take the last four numbers and
-\ convert them into binary coded decimal (BCD) by using the GetRandomNumberBCD
+\ convert them into binary coded decimal (BCD) by using the GetNextSeedAsBCD
 \ routine. These four two-digit pairs then form the secret code, with each of
 \ the four numbers producing a pair of digits, building up the secret code from
 \ left to right (so in the order that they are written down).
@@ -5054,7 +5048,7 @@ L1145 = C1144+1
                         \ On each iteration we do three things:
                         \
                         \   * We generate the next number from the landscape's
-                        \     sequence of random numbers, converted to BCD
+                        \     sequence of seed numbers, converted to BCD
                         \
                         \   * We test this against the contents of memory from
                         \     either &0D19 or &0D14 down to &0CEF and rotate the
@@ -5095,8 +5089,8 @@ L1145 = C1144+1
 
 .srct1
 
- JSR GetRandomNumberBCD \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted to a binary coded decimal
+ JSR GetNextSeedAsBCD   \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, converted to a binary coded decimal
                         \ (BCD) number
 
                         \ We now compare this generated number with the contents
@@ -5518,24 +5512,24 @@ L1145 = C1144+1
                         \ We only pick one tile at this altitude so that the
                         \ enemies are spread out over various altitudes
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  AND bitMask            \ The call to GetTilesAtAltitude above sets bitMask to a
                         \ bit mask that has a matching number of leading zeroes
                         \ as the number of tile blocks at this altitude, so this
-                        \ instruction converts A into a random number with the
-                        \ same range of non-zero bits as T
+                        \ instruction converts A into a number with the same
+                        \ range of non-zero bits as T
 
- CMP T                  \ If A >= T then jump back to fetch another random
- BCS aden3              \ number
+ CMP T                  \ If A >= T then jump back to fetch another seed number
+ BCS aden3
 
-                        \ When we get here, A is a random number and A < T, so
+                        \ When we get here, A is a seed number and A < T, so
                         \ A can be used as an offset into the list of tile
                         \ blocks in tilesAtAltitude (which contains T entries)
 
- TAY                    \ Set Y to the random index in A so we can use it as an
-                        \ offset
+ TAY                    \ Set Y to the seed number in A so we can use it as an
+                        \ index in the following instruction
 
  LDX tilesAtAltitude,Y  \ Set X to the Y-th tile block number in the list of
                         \ tile blocks at an altitude of tilesAtAltitude
@@ -5610,18 +5604,17 @@ L1145 = C1144+1
 
  JSR sub_C196A          \ Sets a number of table variables for this object ???
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  LSR A                  \ Set the C flag to bit 7 of A (this also clears bit 7
                         \ of A but that doesn't matter as we are about to clear
                         \ it in the next instruction anyway)
 
- AND #%00111111         \ Set A to a random number in the range 5 to 63
+ AND #%00111111         \ Set A to a number in the range 5 to 63
  ORA #5
 
- STA L0C30,X            \ Set the object's entry in L0C30 to the random number
-                        \ in A ???
+ STA L0C30,X            \ Set the object's entry in L0C30 to the number in A ???
 
  LDA #20                \ Set A to either 20 or 236, depending on the value that
  BCC aden5              \ we gave to the C flag above
@@ -5710,7 +5703,7 @@ L1145 = C1144+1
  CMP tileAltitude       \ have an altitude of tileAltitude, jump to galt2 to
  BNE galt2              \ move on to the next tile block
 
- TXA                    \ Store the number of the tile block in the Y-th byte of,
+ TXA                    \ Store the number of the tile block in the Y-th byte of
  STA tilesAtAltitude,Y  \ tilesAtAltitude, so we end up compiling a list of all
                         \ the tile blocks that have an altitude of tileAltitude
 
@@ -6195,7 +6188,8 @@ L1145 = C1144+1
 
 .C16C9
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  DEC L0000
  BPL C16D4
@@ -6902,7 +6896,7 @@ L1145 = C1144+1
  TAY
  CLD
 
- JSR SeedLandscape      \ Seed the random number generator with the landscape
+ JSR SeedLandscape      \ Seed the seed number generator with the landscape
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
@@ -7946,7 +7940,7 @@ L1145 = C1144+1
 \
 \   * X-th entry in L0140 = &F5 ???
 \
-\   * X-th entry in L09C0 = random number, multiple of 8
+\   * X-th entry in L09C0 = seed number, multiple of 8
 \
 \   * tileData for the tile is set to the slot number in X in bits 0 to 5, and
 \     bits 6 and 7 are set to indicate that the tile contains an object
@@ -8185,16 +8179,16 @@ L1145 = C1144+1
  LDA #&F5               \ Set the object's entry in L0140 to &F5 ???
  STA L0140,X
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  AND #%11111000         \ Convert a to be a multiple of 8 and in the range 0 to
                         \ 248 (i.e. 0 to 31 * 8)
 
  CLC                    \ Set A = A + 96
  ADC #96                \
-                        \ This doesn't change the fact that A is a random number
-                        \ that's a multiple of 8 and in the range 0 to 248 ???
+                        \ This doesn't change the fact that A is a multiple of 8
+                        \ and in the range 0 to 248 ???
 
  STA L09C0,X            \ Set the object's entry in L09C0 to A ???
 
@@ -9101,7 +9095,7 @@ L1145 = C1144+1
  ROR A
  TAX
  LDA L5B00,X
- CMP landscapeRandom,X
+ CMP landscapeData,X
  BCC CRE13
  LDA #&F0
  CLC
@@ -9261,7 +9255,7 @@ L2367 = C2366+1
 .C237F
 
  LDA L5B00,Y
- CMP landscapeRandom,Y
+ CMP landscapeData,Y
  BCC CRE13
  TAX
  SBC L0035
@@ -9289,7 +9283,7 @@ L23A2 = C23A1+1
 .C23A6
 
  LDY L001A
- LDA landscapeRandom,Y
+ LDA landscapeData,Y
  TAX
  CMP L0036
  BCS C2339
@@ -9701,8 +9695,8 @@ L23E3 = C23E2+1
                         \ before the four bytes
                         \
                         \ This comparison would have been between inputBuffer+4
-                        \ and a BCD number from the landscape's sequence of
-                        \ random numbers
+                        \ and a BCD number from the landscape's sequence of seed
+                        \ numbers
                         \
                         \ When the landscape code is entered, it is converted
                         \ into four BCD numbers in inputBuffer, and the rest of
@@ -9710,7 +9704,7 @@ L23E3 = C23E2+1
                         \ contains &FF at the point of comparison
                         \
                         \ &FF is not a valud BCD number, so it can never match a
-                        \ BCD number from the landscape's sequence of random
+                        \ BCD number from the landscape's sequence of seed
                         \ numbers, so we know that this comparison can never
                         \ have matched
                         \
@@ -10869,31 +10863,29 @@ L23E3 = C23E2+1
 
 .GenerateLandscape
 
-                        \ We start by filling the landscapeRandom table with 81
-                        \ random values, though these are ignored
+                        \ We start by filling the stripData table with 81 seed
+                        \ numbers, though these are ignored
                         \
-                        \ The purpose of this step is to get the random number
+                        \ The purpose of this step is to get the seed number
                         \ generator to a point where the output is predictable
                         \ and stable, so that every time we generate a sequence
-                        \ of random numbers for a landscape, they are exactly
-                        \ the same each time while being unique to that
-                        \ landscape number
+                        \ of seed numbers for a landscape, they are exactly the
+                        \ same each time while being unique to that landscape
+                        \ number
 
- LDX #80                \ Set a counter in X so we can generate 81 random
-                        \ numbers
+ LDX #80                \ Set a counter in X so we can generate 81 seed numbers
 
 .land1
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
- STA landscapeRandom,X  \ Set the X-th entry in the landscapeRandom table to
-                        \ the random number in A
+ STA stripData,X        \ Set the X-th entry in the stripData table to the seed
+                        \ number in A
 
  DEX                    \ Decrement the counter
 
- BPL land1              \ Loop back until we have generated all 81 random
-                        \ numbers
+ BPL land1              \ Loop back until we have generated all 81 seed numbers
 
                         \ We now set the value of tileDataMultiplier for this
                         \ landscape, which is a multiplier that we apply to the
@@ -10911,8 +10903,8 @@ L23E3 = C23E2+1
 
 .land2
 
- JSR GetRandomNumber22  \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted to the range 0 to 22
+ JSR GetNextSeed0To22   \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, converted to the range 0 to 22
 
  CLC                    \ Set A = A + 14
  ADC #14                \
@@ -10931,7 +10923,7 @@ L23E3 = C23E2+1
 
  LDA #&80               \ Call ProcessTileData with A = &80 to set the tile data
  JSR ProcessTileData    \ for the whole landscape to the next set of numbers
-                        \ from the landscape's sequence of random numbers
+                        \ from the landscape's sequence of seed numbers
 
  LDA #%00000000         \ Call SmoothTileData with bit 6 of A clear, to smooth
  JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
@@ -11085,8 +11077,7 @@ L23E3 = C23E2+1
 \                               data
 \
 \                         * &80 = set the tile data to the next set of numbers
-\                                 from the landscape's sequence of random
-\                                 numbers
+\                                 from the landscape's sequence of seed numbers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11153,8 +11144,8 @@ L23E3 = C23E2+1
 
  BMI proc7              \ If processAction = &80 then jump to proc7 to set the
                         \ tile data for the tile anchored at (xTile, zTile) to
-                        \ the next number from the landscape's sequence of
-                        \ random numbers
+                        \ the next number from the landscape's sequence of seed
+                        \ numbers
 
                         \ If we get here then processAction must be 1 or 2 (as
                         \ the routine is only ever called with A = 0, 1, 2 or
@@ -11204,7 +11195,7 @@ L23E3 = C23E2+1
                         \ and capping the result to a positive number between
                         \ 1 and 11
                         \
-                        \ At this point the tile data contains a random number,
+                        \ At this point the tile data contains a seed number,
                         \ so this processs converts it into a value that we can
                         \ use as the altitude of the tile corner
 
@@ -11262,7 +11253,7 @@ L23E3 = C23E2+1
                         \   * Multiplying by 36/256 (the maximum multiplier)
                         \     changes the range into -18 to +18
                         \
-                        \ So the above takes the random numbers in the original
+                        \ So the above takes the seed numbers in the original
                         \ tile data and transforms then into value of A with a
                         \ maximum range of -18 to +18
 
@@ -11329,10 +11320,10 @@ L23E3 = C23E2+1
 .proc7
 
                         \ If we get here then the argument in A is &80, so we
-                        \ fill the tile data table with random numbers
+                        \ fill the tile data table with seed numbers
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
 .proc8
 
@@ -12730,7 +12721,7 @@ L23E3 = C23E2+1
  STY L0004
  STY L0006
  LDA L0030
- STA landscapeRandom,Y
+ STA landscapeData,Y
  LDA L0031
  STA L5B00,Y
  LDA #0
@@ -13210,7 +13201,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX landscapeRandom
+ STX landscapeData
  DEC L30EA
  BEQ C30F8
 
@@ -13283,7 +13274,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX landscapeRandom
+ STX landscapeData
  DEC U
  BNE C3137
  JMP CRE26
@@ -13318,7 +13309,7 @@ L314A = C3148+2
 
 .sub_C316C
 
- BCC GetRandomNumber
+ BCC GetNextSeedNumber
 
 \ ******************************************************************************
 \
@@ -13368,44 +13359,45 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: GetRandomNumber
+\       Name: GetNextSeedNumber
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to a random number
+\    Summary: Set A to a seed number
 \
 \ ------------------------------------------------------------------------------
 \
-\ Random numbers in The Sentinel are produced using a five-byte (40-bit) linear
+\ Seed numbers in The Sentinel are produced using a five-byte (40-bit) linear
 \ feedback shift register (LFSR) with EOR feedback.
 \
-\ Specifically, to generate a new random number, we shift the LFSR left by eight
+\ Specifically, to generate a new seed number, we shift the LFSR left by eight
 \ places, and on each shift we insert the EOR of bits 19 and 32 into bit 0 of
-\ the register. After eight shifts, the top byte is our next random number.
+\ the register. After eight shifts, the top byte is our next seed number.
 \
 \ ******************************************************************************
 
-.GetRandomNumber
+.GetNextSeedNumber
 
- STY yStoreRandom       \ Store Y in yStoreRandom so it can be preserved across
-                        \ calls to the routine
+ STY yStoreNextSeed     \ Store Y in yStoreNextSeed so it can be preserved
+                        \ across calls to the routine
 
-                        \ We generate a new random number by shifting the
+                        \ We generate a new seed number by shifting the
                         \ five-byte linear feedback shift register in
-                        \ randomLFSR(4 3 2 1 0) by eight places, inserting EOR
-                        \ feedback as we do so
+                        \ seedNumberLFSR(4 3 2 1 0) by eight places, inserting
+                        \ EOR feedback as we do so
 
  LDY #8                 \ Set a shift counter in Y
 
 .rand1
 
- LDA randomLFSR+2       \ Apply EOR feedback to the linear feedback shift
- LSR A                  \ register by taking the middle byte in randomLFSR+2,
+ LDA seedNumberLFSR+2   \ Apply EOR feedback to the linear feedback shift
+ LSR A                  \ register by taking the middle byte seedNumberLFSR+2,
  LSR A                  \ shifting it right by three places, EOR'ing it with
- LSR A                  \ the output end of the shift register in randomLFSR+4
- EOR randomLFSR+4       \ and rotating bit 0 of the result into the C flag
- ROR A                  \
-                        \ This is the same as taking bit 3 of randomLFSR+2 and
-                        \ EOR'ing it with bit 0 of randomLFSR+4 into the C flag
+ LSR A                  \ seedNumberLFSR+4 in the output end of the shift
+ EOR seedNumberLFSR+4   \ register and rotating bit 0 of the result into the C
+ ROR A                  \ flag
+                        \
+                        \ This is the same as taking bit 3 of seedNumberLFSR+2 and
+                        \ EOR'ing it with bit 0 of seedNumberLFSR+4 into the C flag
                         \
                         \ We now use the C flag as the next input bit into the
                         \ shift register
@@ -13414,36 +13406,36 @@ L314A = C3148+2
                         \ 40-bit register and shifting the result into bit 0 of
                         \ the register
 
- ROL randomLFSR         \ Shift randomLFSR(4 3 2 1 0) to the left by one place,
- ROL randomLFSR+1       \ inserting the C flag into bit 0 of the input end of
- ROL randomLFSR+2       \ the shift register in randomLFSR
- ROL randomLFSR+3
- ROL randomLFSR+4
+ ROL seedNumberLFSR     \ Shift seedNumberLFSR(4 3 2 1 0) to the left by one
+ ROL seedNumberLFSR+1   \ place, inserting the C flag into bit 0 of the input end
+ ROL seedNumberLFSR+2   \ of the shift register in seedNumberLFSR
+ ROL seedNumberLFSR+3
+ ROL seedNumberLFSR+4
 
  DEY                    \ Decrement the shift counter
 
  BNE rand1              \ Loop back until we have shifted eight times
 
- LDY yStoreRandom       \ Restore the value of Y from yStoreRandom that we
+ LDY yStoreNextSeed     \ Restore the value of Y from yStoreNextSeed that we
                         \ stored at the start of the routine, so that it's
                         \ preserved
 
- LDA randomLFSR+4       \ Set A to the output end of the shift register in
-                        \ randomLFSR+4 to give our random number
+ LDA seedNumberLFSR+4   \ Set A to the output end of the shift register in
+                        \ seedNumberLFSR+4 to give us our next seed number
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: yStoreRandom
+\       Name: yStoreNextSeed
 \       Type: Variable
 \   Category: Maths (Arithmetic)
 \    Summary: Temporary storage for Y so it can be preserved through calls to
-\             GetRandomNumber
+\             GetNextSeedNumber
 \
 \ ******************************************************************************
 
-.yStoreRandom
+.yStoreNextSeed
 
  EQUB 0
 
@@ -14147,18 +14139,18 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: GetRandomNumberBCD
+\       Name: GetNextSeedAsBCD
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to the next number from the landscape's sequence of random
+\    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to a binary coded decimal (BCD) number
 \
 \ ******************************************************************************
 
-.GetRandomNumberBCD
+.GetNextSeedAsBCD
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
                         \ We now convert this into a binary coded decimal (BCD)
                         \ number by ensuring that both the low nibble and high
@@ -14191,8 +14183,8 @@ L314A = C3148+2
  BCC rbcd2              \ high nibble
  SBC #6<<4              \
                         \ This reduces the high nibble of the number in A to the
-                        \ range 0 to 9, so it's suitable for the first digit in a
-                        \ BCD number
+                        \ range 0 to 9, so it's suitable for the first digit in
+                        \ a BCD number
                         \
                         \ The subtraction will work because the C flag is set by
                         \ the time we reach the SBC instruction
@@ -14211,8 +14203,8 @@ L314A = C3148+2
 \       Name: lowNibbleBCD
 \       Type: Variable
 \   Category: Maths (Arithmetic)
-\    Summary: Storage for the low nibble when constructing a BCD random number
-\             in the GetRandomNumberBCD routine
+\    Summary: Storage for the low nibble when constructing a BCD seed number in
+\             the GetNextSeedAsBCD routine
 \
 \ ******************************************************************************
 
@@ -14249,8 +14241,8 @@ L314A = C3148+2
 
 .dsec1
 
- JSR GetRandomNumberBCD \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, converted to a binary coded decimal
+ JSR GetNextSeedAsBCD   \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, converted to a binary coded decimal
                         \ (BCD) number
 
  CPX #4
@@ -14265,7 +14257,8 @@ L314A = C3148+2
 
  STX L0CE6
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  LSR printTextIn3D
 
@@ -14294,7 +14287,7 @@ L314A = C3148+2
 \       Name: SeedLandscape
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Seed the random number generator with a landscape number and set
+\    Summary: Seed the seed number generator with a landscape number and set
 \             the maximum enemy count and landscapeZero flag accordingly
 \
 \ ------------------------------------------------------------------------------
@@ -14307,9 +14300,9 @@ L314A = C3148+2
 
 .SeedLandscape
 
- STY randomLFSR+1       \ Seed the random number generator with the landscape
- STX randomLFSR         \ number by setting bits 0-15 of the five-byte linear
-                        \ feedback shift register in randomLFSR(4 3 2 1 0)
+ STY seedNumberLFSR+1   \ Seed the seed number generator with the landscape
+ STX seedNumberLFSR     \ number by setting bits 0-15 of the five-byte linear
+                        \ feedback shift register in seedNumberLFSR(4 3 2 1 0)
 
  STY landscapeNumberHi  \ Set (landscapeNumberHi landscapeNumberLo) = (Y X)
  STX landscapeNumberLo
@@ -14440,15 +14433,15 @@ L314A = C3148+2
 
 .enem1
 
- JSR GetRandomNumber    \ Set A to the next number from the landscape's sequence
-                        \ of random numbers, which we now use to calculate the
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers, which we now use to calculate the
                         \ enemy count for this landscape (so the same number is
                         \ calculated for the same landscape number each time)
 
  LDY #7                 \ Set Y = 7 to use as the count of clear bits in A when
                         \ A is zero
 
- ASL A                  \ Set the C flag from bit 7 of this landscape's random
+ ASL A                  \ Set the C flag from bit 7 of this landscape's seed
                         \ number and clear bit 0 of A, leaving bits 6 to 0 of
                         \ the original A in bits 7 to 1
 
@@ -14475,7 +14468,7 @@ L314A = C3148+2
  BCC enem2              \ Loop back to keep shifting and counting zeroes until
                         \ we shift a 1 out of bit 7, at which point Y contains
                         \ the length of the run of zeroes in bits 6 to 0 of the
-                        \ landscape's original random number
+                        \ landscape's original seed number
 
 .enem3
 
@@ -14484,8 +14477,8 @@ L314A = C3148+2
 
  PLP                    \ If the C flag we stored on the stack above was set,
  BCC enem4              \ invert A, so this flips the result into the range -1
- EOR #%11111111         \ to -8 if bit 7 of the landscape's original random
-                        \ number was set
+ EOR #%11111111         \ to -8 if bit 7 of the landscape's original seed number
+                        \ was set
 
 .enem4
 
@@ -14516,31 +14509,32 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: GetRandomNumber22
+\       Name: GetNextSeed0To22
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to the next number from the landscape's sequence of random
+\    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to the range 0 to 22
 \
 \ ******************************************************************************
 
-.GetRandomNumber22
+.GetNextSeed0To22
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  PHA                    \ Set T to bits 0-2 of A
  AND #%00000111         \
- STA T                  \ So T is a random number in the range 0 to 7
+ STA T                  \ So T is a number in the range 0 to 7
  PLA
 
  LSR A                  \ Set A to bits 3-6 of A and clear the C flag
  LSR A                  \
- AND #%00011110         \ So T is a random number in the range 0 to 15
+ AND #%00011110         \ So T is a number in the range 0 to 15
  LSR A
 
  ADC T                  \ Set A = A + T
                         \
-                        \ So A is a random number in the range 0 to 22
+                        \ So A is a number in the range 0 to 22
 
  RTS                    \ Return from the subroutine
 
@@ -14949,7 +14943,8 @@ L314A = C3148+2
  LDA #&06
  JSR sub_C343A
 
- JSR GetRandomNumber    \ Set A to a random number
+ JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
+                        \ of seed numbers
 
  AND #&03
  CLC
@@ -15077,7 +15072,7 @@ L314A = C3148+2
  LDY landscapeNumberHi  \ Set (Y X) = (landscapeNumberHi landscapeNumberLo)
  LDX landscapeNumberLo
 
- JSR SeedLandscape      \ Seed the random number generator with the landscape
+ JSR SeedLandscape      \ Seed the seed number generator with the landscape
                         \ number in (Y X) and set maxEnemyCount and the
                         \ landscapeZero flag accordingly
 
@@ -15094,7 +15089,7 @@ L314A = C3148+2
 
 .P3638
 
- STA randomLFSR+1,X
+ STA seedNumberLFSR+1,X
  DEX
  BPL P3638
 
@@ -18819,7 +18814,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: landscapeRandom
+\       Name: landscapeData
 \       Type: Variable
 \   Category: Landscape
 \    Summary: ???
@@ -18831,7 +18826,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.landscapeRandom
+.landscapeData
 
 .stripData
 
@@ -19881,7 +19876,7 @@ L314A = C3148+2
  LDA xObject+2
  STA xObject+1
  LDA L5FD9,Y
- STA L0142
+ STA L0140+2
  LDA L5FE2,Y
  STA L09C0+2
  LDA #0

@@ -278,8 +278,6 @@
      0100
 .L0140
      0140
-.L0142
-     0142
 .L0150
      0150
 .L0180
@@ -2548,7 +2546,7 @@
      0C79   00
 .L0C7A
      0C7A   AA
-.randomLFSR
+.seedNumberLFSR
      0C7B   00
      0C7C   00
      0C7D   01
@@ -3484,7 +3482,7 @@
 .objb3
      1258   38         SEC
      1259   60         RTS
-.GetRandomNumber30
+.GetNextSeed0To30
      125A   20 94 31   JSR &3194
      125D   29 1F      AND #&1F
      125F   C9 1F      CMP #&1F
@@ -8004,7 +8002,7 @@
      318F   8D 48 31   STA &3148
      3192   68         PLA
      3193   60         RTS
-.GetRandomNumber
+.GetNextSeedNumber
      3194   8C BC 31   STY &31BC
      3197   A0 08      LDY #&08
 .rand1
@@ -8024,7 +8022,7 @@
      31B5   AC BC 31   LDY &31BC
      31B8   AD 7F 0C   LDA &0C7F
      31BB   60         RTS
-.yStoreRandom
+.yStoreNextSeed
      31BC   00
 .PrintNumber
      31BD   18         CLC
@@ -8274,7 +8272,7 @@
      335E   68         PLA
      335F   29 0F      AND #&0F
      3361   4C BD 31   JMP &31BD
-.GetRandomNumberBCD
+.GetNextSeedAsBCD
      3364   20 94 31   JSR &3194
      3367   48         PHA
      3368   29 0F      AND #&0F
@@ -8386,7 +8384,7 @@
      3416   B0 E4      BCS &33FC
      3418   69 01      ADC #&01
      341A   60         RTS
-.GetRandomNumber22
+.GetNextSeed0To22
      341B   20 94 31   JSR &3194
      341E   48         PHA
      341F   29 07      AND #&07
@@ -14753,7 +14751,7 @@
      59FD   FF
      59FE   FF
      59FF   FF
-.landscapeRandom
+.landscapeData
 .stripData
      5A00   44
      5A01   58
