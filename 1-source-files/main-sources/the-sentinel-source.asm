@@ -3560,9 +3560,10 @@
  LDX inputBuffer        \
                         \ So (Y X) is the entered landscape number in BCD
 
- JSR SeedLandscape      \ Seed the seed number generator with the landscape
-                        \ number in (Y X) and set maxEnemyCount and the
-                        \ landscapeZero flag accordingly
+ JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
+                        \ sequence of seed numbers for the landscape number in
+                        \ (Y X) and set maxEnemyCount and the landscapeZero flag
+                        \ accordingly
 
  LDA landscapeZero      \ If the landscape number is not 0000, jump to main3
  BNE main3              \ to ask for the landscape's secret entry code
@@ -6896,9 +6897,10 @@ L1145 = C1144+1
  TAY
  CLD
 
- JSR SeedLandscape      \ Seed the seed number generator with the landscape
-                        \ number in (Y X) and set maxEnemyCount and the
-                        \ landscapeZero flag accordingly
+ JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
+                        \ sequence of seed numbers for the landscape number in
+                        \ (Y X) and set maxEnemyCount and the landscapeZero flag
+                        \ accordingly
 
                         \ We set bit 7 of doNotPlayLandscape in the sub_C2147
                         \ routine, so the following calls to GenerateLandscape
@@ -14284,11 +14286,11 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: SeedLandscape
+\       Name: InitialiseSeeds
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Seed the seed number generator with a landscape number and set
-\             the maximum enemy count and landscapeZero flag accordingly
+\    Summary: Initialise the seed number generator so it generates the sequence
+\             of seed numbers for a specific landscape number
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14298,11 +14300,17 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.SeedLandscape
+.InitialiseSeeds
 
- STY seedNumberLFSR+1   \ Seed the seed number generator with the landscape
- STX seedNumberLFSR     \ number by setting bits 0-15 of the five-byte linear
-                        \ feedback shift register in seedNumberLFSR(4 3 2 1 0)
+ STY seedNumberLFSR+1   \ Initialise the seed number generator by setting bits
+ STX seedNumberLFSR     \ 0-15 of the five-byte linear feedback shift register
+                        \ to the landscape number
+                        \
+                        \ This ensures that the GetNextSeedNumber routine (and
+                        \ related routines) will generate a unique sequence of
+                        \ pseudo-random numbers for this landscape, and which
+                        \ will be the exact same sequence every time we need to
+                        \ generate this landscape
 
  STY landscapeNumberHi  \ Set (landscapeNumberHi landscapeNumberLo) = (Y X)
  STX landscapeNumberLo
@@ -15072,9 +15080,10 @@ L314A = C3148+2
  LDY landscapeNumberHi  \ Set (Y X) = (landscapeNumberHi landscapeNumberLo)
  LDX landscapeNumberLo
 
- JSR SeedLandscape      \ Seed the seed number generator with the landscape
-                        \ number in (Y X) and set maxEnemyCount and the
-                        \ landscapeZero flag accordingly
+ JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
+                        \ sequence of seed numbers for the landscape number in
+                        \ (Y X) and set maxEnemyCount and the landscapeZero flag
+                        \ accordingly
 
  JMP main4
 

@@ -8316,7 +8316,7 @@
      33AE   20 56 33   JSR &3356
      33B1   AD FD 0C   LDA &0CFD
      33B4   4C 56 33   JMP &3356
-.SeedLandscape
+.InitialiseSeeds
      33B7   8C 7C 0C   STY &0C7C
      33BA   8E 7B 0C   STX &0C7B
      33BD   8C FE 0C   STY &0CFE
