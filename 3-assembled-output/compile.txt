@@ -2503,7 +2503,7 @@
      0C62   00
 .L0C63
      0C63   00
-.L0C64
+.quitGame
      0C64   00
 .secretCodeChecks
      0C65   00
@@ -2718,7 +2718,7 @@
      0CF9   00
      0CFA   00
      0CFB   00
-.L0CFC
+.gameInProgress
      0CFC   C0
 .landscapeNumberLo
      0CFD   00
@@ -3182,7 +3182,7 @@
      1012   A9 00      LDA #&00
      1014   E5 75      SBC &75
      1016   60         RTS
-.MainLoop
+.MainTitleLoop
      1017   A2 FF      LDX #&FF
      1019   9A         TXS
      101A   A9 04      LDA #&04
@@ -8624,12 +8624,12 @@
      35A6   20 2C 5E   JSR &5E2C
      35A9   20 07 5E   JSR &5E07
      35AC   4E FC 0C   LSR &0CFC
-.C35AF
+.MainGameLoop
      35AF   20 48 35   JSR &3548
      35B2   AD 64 0C   LDA &0C64
      35B5   10 03      BPL &35BA
      35B7   4C 17 10   JMP &1017
-.C35BA
+.game1
      35BA   AD 4E 0C   LDA &0C4E
      35BD   30 5E      BMI &361D
      35BF   A9 04      LDA #&04
@@ -8647,20 +8647,20 @@
      35DC   70 4E      BVS &362C
      35DE   20 90 10   JSR &1090
      35E1   4C F5 35   JMP &35F5
-.C35E4
+.game2
      35E4   AD 51 0C   LDA &0C51
      35E7   30 03      BMI &35EC
      35E9   20 63 24   JSR &2463
-.C35EC
+.game3
      35EC   20 90 10   JSR &1090
      35EF   20 24 26   JSR &2624
      35F2   20 C7 36   JSR &36C7
-.C35F5
+.game4
      35F5   A9 19      LDA #&19
      35F7   85 55      STA &55
      35F9   A9 02      LDA #&02
      35FB   20 63 29   JSR &2963
-.P35FE
+.game5
      35FE   20 5A 35   JSR &355A
      3601   AD E7 0C   LDA &0CE7
      3604   10 F8      BPL &35FE
@@ -8673,19 +8673,19 @@
      3615   8D 73 0C   STA &0C73
      3618   A9 05      LDA #&05
      361A   20 24 5F   JSR &5F24
-.C361D
+.game6
      361D   20 49 11   JSR &1149
      3620   AC FE 0C   LDY &0CFE
      3623   AE FD 0C   LDX &0CFD
      3626   20 B7 33   JSR &33B7
      3629   4C 6C 10   JMP &106C
-.C362C
+.game7
      362C   A9 04      LDA #&04
      362E   20 2C 5E   JSR &5E2C
      3631   A2 03      LDX #&03
      3633   A9 00      LDA #&00
      3635   8D 73 0C   STA &0C73
-.P3638
+.game8
      3638   9D 7C 0C   STA &0C7C,X
      363B   CA         DEX
      363C   10 FA      BPL &3638
@@ -8697,20 +8697,20 @@
      364B   8D DF 0C   STA &0CDF
      364E   A9 42      LDA #&42
      3650   20 F6 5F   JSR &5FF6
-.P3653
+.game9
      3653   20 5A 35   JSR &355A
      3656   AD E7 0C   LDA &0CE7
      3659   10 F8      BPL &3653
      365B   A2 06      LDX #&06
      365D   20 AD 36   JSR &36AD
      3660   20 07 5E   JSR &5E07
-.C3663
+.game10
      3663   4C 17 10   JMP &1017
-.C3666
+.game11
      3666   20 64 12   JSR &1264
      3669   90 03      BCC &366E
      366B   4C AF 35   JMP &35AF
-.C366E
+.game12
      366E   A5 09      LDA &09
      3670   85 08      STA &08
      3672   A9 00      LDA #&00
@@ -8720,13 +8720,13 @@
      367D   30 04      BMI &3683
      367F   38         SEC
      3680   6E 1B 0C   ROR &0C1B
-.C3683
+.game13
      3683   20 B7 10   JSR &10B7
      3686   4E 1B 0C   LSR &0C1B
      3689   20 C7 36   JSR &36C7
      368C   AD D1 0C   LDA &0CD1
      368F   8D C1 0C   STA &0CC1
-.P3692
+.game14
      3692   AD C1 0C   LDA &0CC1
      3695   D0 FB      BNE &3692
      3697   F0 CD      BEQ &3666

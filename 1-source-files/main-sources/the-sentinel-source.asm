@@ -1510,9 +1510,14 @@
 
  EQUB 0                 \ ???
 
-.L0C64
+.quitGame
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether the player has pressed
+                        \ function key f1 to quit the game
+                        \
+                        \   * Bit 7 clear = do not quit the game
+                        \
+                        \   * Bit 7 set = quit the game
 
 .secretCodeChecks
 
@@ -1815,9 +1820,18 @@
 
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
-.L0CFC
+.gameInProgress
 
- EQUB &C0               \ ???
+ EQUB %11000000         \ Flags whether or not a game is in progress (i.e. the
+                        \ player is playing a landscape rather than interacting
+                        \ with the title and preview screens)
+                        \
+                        \   * Bit 7 clear = game is in progress
+                        \
+                        \   * Bit 7 set = game is not in progress
+                        \
+                        \ This controls whether or not the interrupt handler
+                        \ updates the game
 
 .landscapeNumberLo
 
@@ -1852,7 +1866,7 @@
 \
 \       Name: irq1Address
 \       Type: Variable
-\   Category: Main loop
+\   Category: Main game loop
 \    Summary: Stores the previous value of IRQ1V before we install our custom
 \             IRQ handler
 \
@@ -3446,8 +3460,8 @@
 
 .Absolute16Bit
 
- BPL MainLoop-1         \ If the high byte in A is already positive, return from
-                        \ the subroutine (as MainLoop-1 contains an RTS)
+ BPL MainTitleLoop-1    \ If the high byte in A is already positive, return from
+                        \ the subroutine (as MainTitleLoop-1 contains an RTS)
 
                         \ Otherwise fall through into Negate16Bit to negate the
                         \ number in (A T), which will make it positive, so this
@@ -3490,26 +3504,26 @@
 
 \ ******************************************************************************
 \
-\       Name: MainLoop
+\       Name: MainTitleLoop
 \       Type: Subroutine
-\   Category: Main loop
-\    Summary: The main game loop, where we display the title screen, fetch the
-\             landscape number, play the game and repeat
+\   Category: Main title loop
+\    Summary: The main title loop: display the title screen, fetch the landscape
+\             number/code, preview the landscape and jump to the main game loop
 \
 \ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
-\   MainLoop-1          Contains an RTS
+\   MainTitleLoop-1     Contains an RTS
 \
-\   main1               The entry point for rejoining the main loop after the
-\                       player enters an incorrect secret code
+\   main1               The entry point for rejoining the main title loop after
+\                       the player enters an incorrect secret code
 \
 \   main4               ???
 \
 \ ******************************************************************************
 
-.MainLoop
+.MainTitleLoop
 
  LDX #&FF               \ Set the stack pointer to &01FF, which is the standard
  TXS                    \ location for the 6502 stack, so this instruction
@@ -3631,7 +3645,7 @@
                         \ to the PreviewLandscape routine
                         \
                         \ Because we reset the stack with a YSX instruction at
-                        \ the start of the MainLoop routine above, we know that
+                        \ the start of the MainTitleLoop routine, we know that
                         \ the JSR GenerateLandscape instruction will put its
                         \ return address onto the top of the stack, so we can
                         \ maniupulate the return address in the SmoothTileData
@@ -3643,9 +3657,9 @@
 \
 \       Name: SecretCodeError
 \       Type: Subroutine
-\   Category: Main loop
+\   Category: Main title loop
 \    Summary: Display the "WRONG SECRET CODE" error, wait for a key press and
-\             rejoin the main loop
+\             rejoin the main title loop
 \
 \ ******************************************************************************
 
@@ -3667,7 +3681,7 @@
                         \ read a character from it (so this waits for a key
                         \ press)
 
- JMP main1              \ Loop back to main1 to restart the main loop
+ JMP main1              \ Loop back to main1 to restart the main title loop
 
 \ ******************************************************************************
 \
@@ -3847,15 +3861,17 @@ L1145 = C1144+1
 \
 \       Name: ResetVariables
 \       Type: Subroutine
-\   Category: Main Loop
+\   Category: Main title Loop
 \    Summary: Reset all the game's main variables
 \
 \ ******************************************************************************
 
 .ResetVariables
 
- SEC                    \ Set bit 7 of L0CFC (so we skip a part of the interrupt
- ROR L0CFC              \ handler) ???
+ SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
+ ROR gameInProgress     \ not currently in progress and that we are in the title
+                        \ and preview screens (so the interrupt handler doesn't
+                        \ update the game)
 
                         \ We now zero the following variable blocks:
                         \
@@ -3918,7 +3934,7 @@ L1145 = C1144+1
 \
 \       Name: ResetVariables2
 \       Type: Subroutine
-\   Category: Main Loop
+\   Category: Main title Loop
 \    Summary: Reset the L3E80, L3EC0 and objectFlags variable blocks ???
 \
 \ ******************************************************************************
@@ -3979,9 +3995,13 @@ L1145 = C1144+1
  LDX #&8E               \ Scan the keyboard to see if function key f1 is being
  JSR ScanKeyboard       \ pressed
 
- BNE C119A
- SEC
- ROR L0C64
+ BNE C119A              \ If function key f1 is not being pressed, jump to C119A
+                        \ to skip the following
+
+ SEC                    \ Function key f1 is not being pressed, which quits the
+ ROR quitGame           \ game, so set bit 7 of quitGame so that when we return
+                        \ to the start of the main game loop it jumps to the
+                        \ main title loop to restart the game
 
 .C119A
 
@@ -4304,7 +4324,7 @@ L1145 = C1144+1
 
  ASL L0C63
  BCS C128F
- BIT L0C64
+ BIT quitGame
  BMI C128F
  JSR sub_C191A
  JSR sub_C34E1
@@ -5266,7 +5286,7 @@ L1145 = C1144+1
                         \ If we got here from PreviewLandscape, then the next
                         \ instruction jumps to SecretCodeError to display the
                         \ "WRONG SECRET CODE" error, wait for a key press and
-                        \ rejoin the main loop
+                        \ rejoin the main title loop
                         \
                         \ If we got here from FinishLandscape, then the next
                         \ instructions display the landscape's secret code on
@@ -9657,7 +9677,7 @@ L23E3 = C23E2+1
                         \ matches the entered code in the keyboard input buffer
                         \
                         \ If the check fails, then the game restarts by jumping
-                        \ to the MainLoop
+                        \ to MainTitleLoop to display the title screen
                         \
                         \ Specifically, the following code checks for four bytes
                         \ in the secretCodeStash that correspond to the results
@@ -9847,7 +9867,7 @@ L23E3 = C23E2+1
 \
 \ Other entry points:
 \
-\   C25D7               Jump to MainLoop via C3663
+\   C25D7               Jump to MainTitleLoop via game10
 \
 \ ******************************************************************************
 
@@ -9869,7 +9889,7 @@ L23E3 = C23E2+1
 
 .C25D7
 
- JMP C3663              \ Jump to MainLoop
+ JMP game10             \ Jump to MainTitleLoop
 
 .C25DA
 
@@ -11129,9 +11149,9 @@ L23E3 = C23E2+1
                         \ SecretCodeError routine, just after the original
                         \ caller, i.e. just after the JSR GenerateLandscape
                         \ instruction (which will either be at the end of the
-                        \ main loop if the player enters an incorrect secret
-                        \ code, or when displaying a landscape's secet code
-                        \ after the level is completed)
+                        \ main title loop if the player enters an incorrect
+                        \ secret code, or when displaying a landscape's secet
+                        \ code after the level is completed)
 
 \ ******************************************************************************
 \
@@ -11438,8 +11458,8 @@ L23E3 = C23E2+1
 
                         \ Note that by this point the N flag is set, which means
                         \ a BMI branch would be taken (this is important when
-                        \ analysing the intentionally confusing main loop flow
-                        \ structure created by the stack modifications in the
+                        \ analysing the intentionally confusing flow of the main
+                        \ title loop created by the stack modifications in the
                         \ GenerateLandscape, SmoothTileCorners and JumpToPreview
                         \ routines)
 
@@ -11958,11 +11978,11 @@ L23E3 = C23E2+1
                         \ the end of the GenerateLandscape routine will behave
                         \ as expected, like this:
                         \
-                        \   * If we called GenerateLandscape from the MainLoop
-                        \     routine, then we return there to fall through into
-                        \     SecretCodeError, which displays the "WRONG SECRET
-                        \     CODE" error message for when the player enters an
-                        \     incorrect secret code
+                        \   * If we called GenerateLandscape from the
+                        \     MainTitleLoop routine, then we return there to
+                        \     fall through into SecretCodeError, which displays
+                        \     the "WRONG SECRET CODE" error message for when the
+                        \     player enters an incorrect secret code
                         \   
                         \   * If we called GenerateLandscape from the
                         \     FinishLandscape routine, then we return there to
@@ -15101,14 +15121,8 @@ L314A = C3148+2
 \
 \       Name: PlayGame
 \       Type: Subroutine
-\   Category: ???
+\   Category: Main game loop
 \    Summary: ???
-\
-\ ------------------------------------------------------------------------------
-\
-\ Other entry points:
-\
-\   C3663               Jump to MainLoop
 \
 \ ******************************************************************************
 
@@ -15119,21 +15133,44 @@ L314A = C3148+2
 
  JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
                         \ read a character from it (so this waits for a key
-                        \ press)
+                        \ press before starting the game, following the "PRESS
+                        \ ANY KEY" message on the landscape preview screen)
 
- LSR L0CFC              \ Clear bit 7 of L0CFC ???
+ LSR gameInProgress     \ Clear bit 7 of gameInProgress to indicate that a game
+                        \ now in progress and we are no longer in the title and
+                        \ preview screens (so the interrupt handler can now
+                        \ update the game)
 
-.C35AF
+\ ******************************************************************************
+\
+\       Name: MainGameLoop
+\       Type: Subroutine
+\   Category: Main game loop
+\    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   game10              Jump to MainTitleLoop
+\
+\ ******************************************************************************
+
+.MainGameLoop
 
  JSR sub_C3548
- LDA L0C64
- BPL C35BA
- JMP MainLoop
 
-.C35BA
+ LDA quitGame           \ If bit 7 of quitGame is clear then the player has not
+ BPL game1              \ pressed function key f1 to quit the game, so jump to
+                        \ game 1 to keep playing the game
+
+ JMP MainTitleLoop      \ The player has pressed function key f1 to quit the
+                        \ game, so jump to MainTitleLoop to restart the game
+
+.game1
 
  LDA L0C4E
- BMI C361D
+ BMI game6
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -15147,48 +15184,48 @@ L314A = C3148+2
  LDA L000B
  STA L006E
  BIT L0CDE
- BPL C35E4
- BVS C362C
+ BPL game2
+ BVS game7
  JSR sub_C1090
- JMP C35F5
+ JMP game4
 
-.C35E4
+.game2
 
  LDA L0C51
- BMI C35EC
+ BMI game3
  JSR sub_C2463
 
-.C35EC
+.game3
 
  JSR sub_C1090
  JSR sub_C2624
  JSR sub_C36C7
 
-.C35F5
+.game4
 
  LDA #&19
  STA L0055
  LDA #&02
  JSR sub_C2963
 
-.P35FE
+.game5
 
  JSR sub_C355A
  LDA L0CE7
- BPL P35FE
+ BPL game5
 
  LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
 
  LDA L0CDE
- BPL C3666
+ BPL game11
  STA L0C4E
  LDA #&06
  STA L0C73
  LDA #&05
  JSR sub_C5F24
 
-.C361D
+.game6
 
  JSR ResetVariables     \ Reset all the game's main variables
 
@@ -15202,7 +15239,7 @@ L314A = C3148+2
 
  JMP main4
 
-.C362C
+.game7
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -15211,11 +15248,11 @@ L314A = C3148+2
  LDA #0
  STA L0C73
 
-.P3638
+.game8
 
  STA seedNumberLFSR+1,X
  DEX
- BPL P3638
+ BPL game8
 
  JSR ResetVariables2    \ ???
 
@@ -15229,11 +15266,11 @@ L314A = C3148+2
  LDA #&42
  JSR sub_C5FF6
 
-.P3653
+.game9
 
  JSR sub_C355A
  LDA L0CE7
- BPL P3653
+ BPL game9
 
  LDX #6                 \ Print text token 6: Print "PRESS ANY KEY" at (64, 100)
  JSR PrintTextToken
@@ -15242,17 +15279,19 @@ L314A = C3148+2
                         \ read a character from it (so this waits for a key
                         \ press)
 
-.C3663
+.game10
 
- JMP MainLoop
+ JMP MainTitleLoop
 
-.C3666
+.game11
 
  JSR sub_C1264
- BCC C366E
- JMP C35AF
 
-.C366E
+ BCC game12
+
+ JMP MainGameLoop
+
+.game12
 
  LDA L0009
  STA L0008
@@ -15260,11 +15299,11 @@ L314A = C3148+2
  STA L0CD1
  STA L0C1E
  BIT L0C5F
- BMI C3683
+ BMI game13
  SEC
  ROR L0C1B
 
-.C3683
+.game13
 
  JSR sub_C10B7
  LSR L0C1B
@@ -15272,11 +15311,12 @@ L314A = C3148+2
  LDA L0CD1
  STA L0CC1
 
-.P3692
+.game14
 
  LDA L0CC1
- BNE P3692
- BEQ C3666
+ BNE game14
+
+ BEQ game11
 
 \ ******************************************************************************
 \
@@ -15480,7 +15520,7 @@ L314A = C3148+2
 \
 \       Name: IRQHandler
 \       Type: Subroutine
-\   Category: Main loop
+\   Category: Main game loop
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15511,8 +15551,11 @@ L314A = C3148+2
 
 .C3781
 
- LDA L0CFC              \ If bit 7 of L0CFC is set, jump to C37CB to skip the
- BMI C37CB              \ following and return from the interrupt handler ???
+ LDA gameInProgress     \ If bit 7 of gameInProgress is set then a game is not
+ BMI C37CB              \ currently in progress and we are in the title and
+                        \ preview screens, so jump to C37CB to skip the
+                        \ following and return from the interrupt handler
+                        \ without updating the game)
 
  LDA L0C4E
  BMI C37C3
@@ -16597,8 +16640,10 @@ L314A = C3148+2
 
 .sub_C3F00
 
- SEC                    \ Set bit 7 of L0CFC ???
- ROR L0CFC
+ SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
+ ROR gameInProgress     \ not currently in progress and that we are in the title
+                        \ and preview screens (so the interrupt handler doesn't
+                        \ progress the game)
 
 \ ******************************************************************************
 \
@@ -16881,9 +16926,10 @@ L314A = C3148+2
 
  CLI                    \ Re-enable interrupts
 
- JMP MainLoop           \ Jump to MainLoop to start the main game loop, where
-                        \ we display the title screen, fetch the landscape
-                        \ number, play the game and repeat
+ JMP MainTitleLoop      \ Jump to MainTitleLoop to start the main title loop,
+                        \  wherewe display the title screen, fetch the landscape
+                        \ number and code, preview the landscape and then jump
+                        \ to the main game loop
 
 \ ******************************************************************************
 \
@@ -19952,9 +19998,9 @@ L314A = C3148+2
 \
 \       Name: JumpToPreview
 \       Type: Subroutine
-\   Category: Main loop
-\    Summary: An intentionally confusing jump point for controlling the flow of
-\             the main loop when returning from the GenerateLandscape routine
+\   Category: Main title loop
+\    Summary: An intentionally confusing jump point for controlling the main
+\             title loop flow when returning from the GenerateLandscape routine
 \
 \ ******************************************************************************
 
@@ -20082,7 +20128,7 @@ L314A = C3148+2
                         \ does not match the generated secret code for this
                         \ landscape, so jump to SecretCodeError to display the
                         \ "WRONG SECRET CODE" error, wait for a key press and
-                        \ rejoin the main loop
+                        \ rejoin the main title loop
 
 \ ******************************************************************************
 \
