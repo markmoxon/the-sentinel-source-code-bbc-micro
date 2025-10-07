@@ -1019,14 +1019,15 @@
 
 \ ******************************************************************************
 \
-\       Name: L09C0
+\       Name: objectYawAngle
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: The yaw angle for each object (i.e. the horizontal direction in
+\             which they are facing)
 \
 \ ******************************************************************************
 
-.L09C0
+.objectYawAngle
 
  EQUB &00, &CE, &F8, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1344,11 +1345,11 @@
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0C30
+.objRotationTimer
 
- EQUB 0, 0, 0, 0        \ ???
- EQUB 0, 0, 0, 0
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ A timer that counts down on each iteration of the main
+ EQUB 0, 0, 0, 0        \ game loop for each object, to control when that object
+ EQUB 0, 0, 0, 0        \ rotates
  EQUB 0, 0, 0, 0
 
 .L0C40
@@ -3731,10 +3732,10 @@
  LDX L006E
  CPY #&02
  BCS C10FD
- LDA L09C0,X
+ LDA objectYawAngle,X
  CLC
  ADC L38F4,Y
- STA L09C0,X
+ STA objectYawAngle,X
  LDA #&19
  LDY #&18
  LDX #&10
@@ -3746,10 +3747,10 @@
  LDY L0008
  BCS C10F2
  BNE C10EC
- LDA L09C0,X
+ LDA objectYawAngle,X
  SEC
  SBC #&0C
- STA L09C0,X
+ STA objectYawAngle,X
 
 .C10EC
 
@@ -3759,10 +3760,10 @@
 
 .C10F2
 
- LDA L09C0,X
+ LDA objectYawAngle,X
  SEC
  SBC L38F4,Y
- STA L09C0,X
+ STA objectYawAngle,X
  RTS
 
 .C10FD
@@ -4609,7 +4610,7 @@ L1145 = C1144+1
  LDA L140B,Y
  STA zObject+16
  LDA L140D,Y
- STA L09C0+16
+ STA objectYawAngle+16
  LDA L1409,Y
  PHA
  JSR sub_C1090
@@ -5595,8 +5596,8 @@ L1145 = C1144+1
                         \ (xTile, zTile), so this places the tower on the
                         \ landscape
 
- LDA #0                 \ Set the object's entry in L09C0 to 0 ???
- STA L09C0,X
+ LDA #0                 \ Set the tower object's objectYawAngle to 0, so it's
+ STA objectYawAngle,X   \ facing forwards and into the screen
 
  LDX enemyCounter       \ Set X to the enemy counter, so X now contains the slot
                         \ number for the Sentinel object (which is always zero
@@ -5623,7 +5624,9 @@ L1145 = C1144+1
  AND #%00111111         \ Set A to a number in the range 5 to 63
  ORA #5
 
- STA L0C30,X            \ Set the object's entry in L0C30 to the number in A ???
+ STA objRotationTimer,X \ Set the object's entry in objRotationTimer to the
+                        \ number in A, so this determines how often the object
+                        \ rotates in iterations of the main game loop
 
  LDA #20                \ Set A to either 20 or 236, depending on the value that
  BCC aden5              \ we gave to the C flag above
@@ -5631,8 +5634,27 @@ L1145 = C1144+1
 
 .aden5
 
- STA L4A37,X            \ Set the object's entry in L4A37 to the value of A,
-                        \ which is either 20 or 236
+ STA objRotationSpeed,X \ Set the object's entry in objRotationSpeed to the
+                        \ value of A, which is either 20 or 236
+                        \
+                        \ The degree system in the Sentinel looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of object
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ The rotation speed is the size of the angle through
+                        \ which the object yaws on each rotation, so this means
+                        \ we are setting the rotation speed to +20 degrees (a
+                        \ clockwise turn) or -20 degrees (an anticlockwise turn)
 
  INX                    \ Increment the enemy loop counter in X
 
@@ -6213,11 +6235,11 @@ L1145 = C1144+1
 
 .C16D9
 
- LDA L0C30,X
+ LDA objRotationTimer,X
  CMP #&02
  BCS C16C9
  LDA #&04
- STA L0C30,X
+ STA objRotationTimer,X
  LDA #&14
  STA L0C68
  LDA L0CA0,X
@@ -6258,12 +6280,12 @@ L1145 = C1144+1
  LDX L0CA0,Y
  TXA
  JSR sub_C1AE7
- LDA L09C0,X
+ LDA objectYawAngle,X
  CLC
  ADC L0C0E
- STA L09C0,X
+ STA objectYawAngle,X
  LDA #&0A
- STA L0C30,Y
+ STA objRotationTimer,Y
  TXA
  PHA
  LDX #&03
@@ -6376,7 +6398,7 @@ L1145 = C1144+1
  BCS C17F9
  LDY L0000
  LDA #&1E
- STA L0C30,Y
+ STA objRotationTimer,Y
  JMP C1871
 
 .C17F0
@@ -6394,10 +6416,10 @@ L1145 = C1144+1
 
  TXA
  JSR sub_C1AE7
- LDA L09C0,X
+ LDA objectYawAngle,X
  CLC
- ADC L4A37,X
- STA L09C0,X
+ ADC objRotationSpeed,X
+ STA objectYawAngle,X
  LDA #&C8
  STA L0C28,X
  JSR sub_C196A
@@ -6432,7 +6454,7 @@ L1145 = C1144+1
  JSR sub_C19FF
  LDY L0000
  LDA #&1E
- STA L0C30,Y
+ STA objRotationTimer,Y
  BCS C187F
  JMP C1871
 
@@ -6457,7 +6479,7 @@ L1145 = C1144+1
 .C1869
 
  LDA #&32
- STA L0C30,Y
+ STA objRotationTimer,Y
  LDX L0CA0,Y
 
 .C1871
@@ -7083,9 +7105,9 @@ L1145 = C1144+1
  BNE C1B33
  ASL L0C51
  BPL P1B1A
- LDA L09C0,X
+ LDA objectYawAngle,X
  EOR #&80
- STA L09C0,X
+ STA objectYawAngle,X
  LDA #&28
  BNE C1B73
 
@@ -7195,9 +7217,9 @@ L1145 = C1144+1
  LDA objectTypes,X
  BNE C1BD9
  LDY L000B
- LDA L09C0,Y
+ LDA objectYawAngle,Y
  EOR #&80
- STA L09C0,X
+ STA objectYawAngle,X
 
 .C1BD9
 
@@ -7256,7 +7278,7 @@ L1145 = C1144+1
  CLC
  STA playerYawAngleLo
  LDA U
- ADC L09C0,X
+ ADC objectYawAngle,X
  SEC
  SBC #&0A
  STA playerYawAngleHi
@@ -7950,7 +7972,8 @@ L1145 = C1144+1
 \
 \   * X-th entry in L0140 = &F5 ???
 \
-\   * X-th entry in L09C0 = seed number, multiple of 8
+\   * X-th entry in objectYawAngle is set to a multiple of 11.25 degrees, as
+\     determined by the next seed
 \
 \   * tileData for the tile is set to the slot number in X in bits 0 to 5, and
 \     bits 6 and 7 are set to indicate that the tile contains an object
@@ -8189,18 +8212,45 @@ L1145 = C1144+1
  LDA #&F5               \ Set the object's entry in L0140 to &F5 ???
  STA L0140,X
 
+                        \ We now calculate the object's yaw angle, which
+                        \ determines the direction in which it is facing
+                        \
+                        \ The degree system in the Sentinel looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of object
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ In this context, looking straight ahead means the
+                        \ object is looking into the screen, towards the back of
+                        \ the landscape
+
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
 
  AND #%11111000         \ Convert A to be a multiple of 8 and in the range 0 to
                         \ 248 (i.e. 0 to 31 * 8)
+                        \
+                        \ This rotates the object so it is looking along one of
+                        \ 32 fixed rotations, each of which is a multiple of
+                        \ 11.25 degrees
 
  CLC                    \ Set A = A + 96
  ADC #96                \
-                        \ This doesn't change the fact that A is a multiple of 8
-                        \ and in the range 0 to 248 ???
+                        \ This doesn't change the fact that A is a multiple of
+                        \ 11.25 degrees, so it's presumably intended to make the
+                        \ player's rotation work well on the starting level
 
- STA L09C0,X            \ Set the object's entry in L09C0 to A ???
+ STA objectYawAngle,X   \ Set the object's objectYawAngle to the angle we just
+                        \ calculated in A
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ added the object to the tile
@@ -8271,8 +8321,8 @@ L1145 = C1144+1
  ROR A
  STA L001F
  LDA L2095
- ADC L09C0,X
- STA L09C0,X
+ ADC objectYawAngle,X
+ STA objectYawAngle,X
  LDY #0
  STY L0008
  LDA L0C69
@@ -8299,9 +8349,9 @@ L1145 = C1144+1
  LDA #0
  STA L001F
  SEC
- LDA L09C0,X
+ LDA objectYawAngle,X
  SBC L2095
- STA L09C0,X
+ STA objectYawAngle,X
  LDA #0
  STA U
  LDA L0C62
@@ -9900,7 +9950,7 @@ L23E3 = C23E2+1
  STA L003C
  LDA #&0C
  STA playerYawAngleLo
- LDA L09C0,X
+ LDA objectYawAngle,X
  CLC
  ADC #&20
  STA processAction
@@ -13678,11 +13728,27 @@ L314A = C3148+2
  STA screenType         \ Store the screen type in A in screenType, so we can
                         \ refer to it below
 
- LDA #&80               \ Set L09C0+63 = &80 ???
- STA L09C0+63
+ LDA #128               \ Set objectYawAngle+63 = 128
+ STA objectYawAngle+63  \
+                        \ The degree system in the Sentinel looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of object
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ So this makes the object in slot 63 face directly out
+                        \ of the screen
 
- LDA #224               \ Set (yObjectHi yObjectLo) for object slot 63 to 736,
- STA yObjectLo+63       \ i.e. to (2 224)
+ LDA #224               \ Set (yObjectHi yObjectLo) for the object in slot 63 to
+ STA yObjectLo+63       \ (2 224), i.e. 736
  LDA #2
  STA yObjectHi+63
 
@@ -16985,24 +17051,37 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L4A37
+\       Name: objRotationSpeed
+\       Type: Variable
+\   Category: 3D objects
+\    Summary: The angle through which each object rotates on each scheduled
+\             rotation
+\
+\ ******************************************************************************
+
+.objRotationSpeed
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &FF, &FF, &FF, &FF, &FF, &7F, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: L4A77
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L4A37
+.L4A77
 
  EQUB &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &10
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
@@ -19112,7 +19191,7 @@ L314A = C3148+2
  SBC L001F
  STA L0C59
  LDA angleHi
- SBC L09C0,X
+ SBC objectYawAngle,X
  CLC
  ADC #&0A
  STA L0C57
@@ -19121,7 +19200,7 @@ L314A = C3148+2
  SEC
  SBC angleLo
  STA L0059
- LDA L09C0,Y
+ LDA objectYawAngle,Y
  SBC angleHi
  STA L005A
  JSR GetHypotenuse
@@ -19936,12 +20015,12 @@ L314A = C3148+2
  LDA L5FD9,Y
  STA L0140+2
  LDA L5FE2,Y
- STA L09C0+2
+ STA objectYawAngle+2
  LDA #0
  STA yObjectLo+2
  STA yObjectLo+1
  LDA L5FDF,Y
- STA L09C0+1
+ STA objectYawAngle+1
  LDX #&02
  STX L006E
  RTS
