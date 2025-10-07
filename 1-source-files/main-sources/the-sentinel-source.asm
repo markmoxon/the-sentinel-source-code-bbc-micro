@@ -1259,9 +1259,9 @@
                         \
                         \   min(8, 1 + (landscapeNumber div 10))
                         \
-                        \ So landscapes 0000 to 0099 have a maximum enemy count
-                        \ of 1, landscapes 0100 to 0199 have a maximum enemy
-                        \ count of 2, and so on up to landscapes 0700 and up,
+                        \ So landscapes 0000 to 0009 have a maximum enemy count
+                        \ of 1, landscapes 0010 to 0019 have a maximum enemy
+                        \ count of 2, and so on up to landscapes 0070 and up,
                         \ which have a maximum enemy count of 8
 
 .tileDataMultiplier
@@ -4745,8 +4745,8 @@ L1145 = C1144+1
 
 .SpawnEnemies
 
- LDA landscapeZero      \ If this is not landscape 0000, jump to popu1
- BNE popu1
+ LDA landscapeZero      \ If this is not landscape 0000, jump to popu1 to
+ BNE popu1              \ calculate the number of enemies to spawn
 
  LDA #1                 \ This is landscape 0000, so set A = 1 to use for the
                         \ total number of enemies
@@ -4768,7 +4768,13 @@ L1145 = C1144+1
  BCC popu2              \ instruction
 
  LDA maxEnemyCount      \ Set A = maxEnemyCount, so the number of enemies does
-                        \ not exceed the value of maxEnemyCount
+                        \ not exceed the value of maxEnemyCount that we set in
+                        \ the InitialiseSeeds routine
+                        \
+                        \ So landscapes 0000 to 0009 have a maximum enemy count
+                        \ of 1, landscapes 0010 to 0019 have a maximum enemy
+                        \ count of 2, and so on up to landscapes 0070 and up,
+                        \ which have a maximum enemy count of 8
 
 .popu2
 
@@ -5508,7 +5514,9 @@ L1145 = C1144+1
 
                         \ If we get here then we have found at least one tile
                         \ block at the current altitude, so we now pick one of
-                        \ them and add an enemy
+                        \ them, using the next seed number to choose which one,
+                        \ and we then add an enemy to the highest tile in the
+                        \ block
                         \
                         \ We only pick one tile at this altitude so that the
                         \ enemies are spread out over various altitudes
@@ -8184,7 +8192,7 @@ L1145 = C1144+1
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
 
- AND #%11111000         \ Convert a to be a multiple of 8 and in the range 0 to
+ AND #%11111000         \ Convert A to be a multiple of 8 and in the range 0 to
                         \ 248 (i.e. 0 to 31 * 8)
 
  CLC                    \ Set A = A + 96
@@ -10928,17 +10936,18 @@ L23E3 = C23E2+1
                         \ from the landscape's sequence of seed numbers
 
  LDA #%00000000         \ Call SmoothTileData with bit 6 of A clear, to smooth
- JSR SmoothTileData     \ the landscape in lines of tile corners, from the rear
-                        \ row to the front row and then from the right column to
-                        \ the left column, smoothing each tile by setting each
-                        \ tile corner's altitude to the average of its altitude
-                        \ with the three following tile corners, working along
+ JSR SmoothTileData     \ the landscape in lines of tile corners, working along
                         \ rows from left to right and along columns from front
-                        \ to back
+                        \ to back, and smoothing each tile by setting each tile
+                        \ corner's altitude to the average of its altitude with
+                        \ the three following tile corners
+                        \
+                        \ This process is repeated twice by the single call to
+                        \ SmoothTileData
 
  LDA #1                 \ Call ProcessTileData with A = 1 to scale the tile data
  JSR ProcessTileData    \ for the whole landscape by the tileDataMultiplier
-                        \ before capping each bit of data to between 1 and 11
+                        \ before capping each byte of data to between 1 and 11
                         \
                         \ This capping process ensures that when we place the
                         \ tile altitude in the top nibble of the tile data, we
@@ -10952,6 +10961,12 @@ L23E3 = C23E2+1
                         \ the left column, smoothing each outlier tile corner by
                         \ setting its altitude to that of its closest immediate
                         \ neighbour (where "closest" is in terms of altitude)
+                        \
+                        \ This smooths over any single-point spikes or troughs
+                        \ in each row and column
+                        \
+                        \ This process is repeated twice by the single call to
+                        \ SmoothTileData
 
                         \ The tileData table now contains the altitude of each
                         \ tile corner, with each altitude in the range 1 to 11,
@@ -11026,6 +11041,18 @@ L23E3 = C23E2+1
                         \ data contains the tile slope and the low nibble
                         \ contains the tile altitude, so now we swap these
                         \ around
+                        \
+                        \ We do this so that we can reuse bits 6 and 7 to in
+                        \ each byte of tile data to store the presence of an
+                        \ object on the tile, as moving the tile altitude into
+                        \ the high nibble means that bits 6 and 7 will never
+                        \ be set (as the altitude is in the range 0 to 11)
+                        \
+                        \ We can therefore set both bit 6 and 7 to indicate that
+                        \ a tile contains an object, and we can reuse the other
+                        \ bits to store the object information (as we only ever
+                        \ place objects on flat tiles, so we can discard the
+                        \ slope data)
 
  LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
  JSR ProcessTileData    \ low nibbles of all the tile data for the whole
@@ -11214,6 +11241,9 @@ L23E3 = C23E2+1
  CLC                    \ complement, so we have:
  ADC #1                 \
                         \   A = |tile data - 128|
+                        \
+                        \ This negation reflects negative altitudes from below
+                        \ sea level to the equivalent height above sea level
 
 .proc4
 
@@ -11221,7 +11251,7 @@ L23E3 = C23E2+1
                         \       = |tile data - 128|
 
  LDA tileDataMultiplier \ Set A to the multiplier that we need to apply to the
-                        \ tile data
+                        \ tile data, which is in the range 14 to 36
 
  JSR Multiply8x8        \ Set (A T) = A * U
                         \           = tileDataMultiplier * |tile data - 128|
@@ -11241,24 +11271,36 @@ L23E3 = C23E2+1
                         \ scaling of the altitude by tileDataMultiplier / 256,
                         \ with the scaling centred around sea level
                         \
+                        \ This means that mountain peaks get higher and marine
+                        \ trenches get deeper, stretching away from sea level
+                        \ at altitude 128 in the original data
+                        \
                         \ As tileDataMultiplier is in the range 14 to 36, this
                         \ transforms the tile data values as follows:
                         \
                         \   * Values start out in the range 0 to 255
                         \
-                        \   * Subtracting 128 translates then into values in the
-                        \     range -128 to +127
+                        \   * Converting to |tile data - 128| translates them
+                        \     into values in the range 0 to 127, representing
+                        \     magnitudes of altitude (0 = sea level, 127 = top
+                        \     of Everest or bottom of Mariana Trench, stack
+                        \     contains flags denoting high altitude or murky
+                        \     depths)
                         \
                         \   * Multiplying by 14/256 (the minimum multiplier)
-                        \     changes the range into -7 to +7
+                        \     changes the range into 0 to 6
                         \
                         \   * Multiplying by 36/256 (the maximum multiplier)
-                        \     changes the range into -18 to +18
+                        \     changes the range into 0 to 17
+                        \
+                        \   * Reapplying the sign converts the magnitudes back
+                        \     into depths or heights
                         \
                         \ So the above takes the seed numbers in the original
-                        \ tile data and transforms then into value of A with a
-                        \ maximum range of -18 to +18
-
+                        \ tile data and transforms then into values of A with a
+                        \ maximum range of -17 to +17 (for higher multipliers)
+                        \ or -6 to +6 (for lower multipliers)
+                        \
                         \ We now take this result and do various additions and
                         \ cappings to change the result into a positive number
                         \ between 1 and 11
@@ -11269,7 +11311,7 @@ L23E3 = C23E2+1
                         \
                         \   * Minimum multiplier range is -1 to +13
                         \
-                        \   * Maximum multiplier range is -12 to +24
+                        \   * Maximum multiplier range is -11 to +23
 
  BPL proc5              \ If A is positive then jump to proc5 to skip the
                         \ following
@@ -11278,22 +11320,22 @@ L23E3 = C23E2+1
 
 .proc5
 
-                        \ By this point A is a positive number between 0 and 24
-                        \ and the ranges for A are now:
+                        \ By this point A is a positive number and the ranges
+                        \ for A are now:
                         \
                         \   * Minimum multiplier range is 0 to 13
                         \
-                        \   * Maximum multiplier range is 0 to 24
+                        \   * Maximum multiplier range is 0 to 23
 
  CLC                    \ Set A = A + 1
  ADC #1
 
-                        \ By this point A is a positive number between 1 and 25
-                        \ and the ranges for A are now:
+                        \ By this point A is a positive number and the ranges
+                        \ for A are now:
                         \
                         \   * Minimum multiplier range is 1 to 14
                         \
-                        \   * Maximum multiplier range is 1 to 25
+                        \   * Maximum multiplier range is 1 to 24
 
  CMP #12                \ If A < 12 then jump to proc6 to skip the following
  BCC proc6
@@ -11379,6 +11421,8 @@ L23E3 = C23E2+1
 \                                       setting the altitude of each outlier
 \                                       tile corner to that of its closest
 \                                       immediate neighbour in terms of altitude
+\                                       (i.e. smooth out single-point spikes or
+\                                       troughs in the row/column)
 \
 \ ******************************************************************************
 
@@ -11693,7 +11737,8 @@ L23E3 = C23E2+1
 \   * If this tile corner is lower then both its neighbours, move it up
 \
 \ In each case, we move the tile corner until it is level with the closest one
-\ to its original altitude.
+\ to its original altitude. This has the effect of smoothing out single-point
+\ spikes or troughs in the strip.
 \
 \ ******************************************************************************
 
@@ -11701,6 +11746,8 @@ L23E3 = C23E2+1
                         \ we smooth the tile strip by moving each outlier tile
                         \ to the altitude of its closest immediate neighbour (in
                         \ terms of altitude)
+                        \
+                        \ This smoothes out single-point spikes or troughs
 
  LDX #31                \ We now work our way along the strip, smoothing the
                         \ altitudes of tiles 1 to 32, so set a tile counter in X
@@ -14333,8 +14380,9 @@ L314A = C3148+2
  LSR A                  \ plus 1, which is the same as saying:
  LSR A                  \
  LSR A                  \   A = 1 + (landscapeNumber div 10)
- CLC
- ADC #1
+ CLC                    \
+ ADC #1                 \ Or A is 1 plus the "tens" digit of the landscape
+                        \ number
 
  CMP #9                 \ If A < 9 then A is in the range 1 to 8, so jump to
  BCC seed2              \ seed2 to set maxEnemyCount to this value
@@ -14353,9 +14401,9 @@ L314A = C3148+2
                         \
                         \   A = min(8, 1 + (landscapeNumber div 10))
                         \
-                        \ So landscapes 0000 to 0099 have a maximum enemy count
-                        \ of 1, landscapes 0100 to 0199 have a maximum enemy
-                        \ count of 2, and so on up to landscapes 0700 and up,
+                        \ So landscapes 0000 to 0009 have a maximum enemy count
+                        \ of 1, landscapes 0010 to 0019 have a maximum enemy
+                        \ count of 2, and so on up to landscapes 0070 and up,
                         \ which have a maximum enemy count of 8
 
  RTS                    \ Return from the subroutine
