@@ -8569,15 +8569,15 @@
      3544   8D E7 0C   STA &0CE7
 .CRE31
      3547   60         RTS
-.sub_C3548
+.FlushSoundBuffers
      3548   A2 07      LDX #&07
-.P354A
+.fbuf1
      354A   20 55 35   JSR &3555
      354D   CA         DEX
      354E   E0 04      CPX #&04
      3550   B0 F8      BCS &354A
      3552   60         RTS
-.FlushSoundBuffer
+.FlushSoundBuffer0
      3553   A2 04      LDX #&04
 .FlushBuffer
      3555   A9 15      LDA #&15

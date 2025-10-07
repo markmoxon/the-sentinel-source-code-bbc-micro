@@ -4355,7 +4355,7 @@ L1145 = C1144+1
  JSR sub_C1B0B
  BCS C12E5
 
- JSR FlushSoundBuffer   \ Flush the sound channel 0 buffer
+ JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
  LDA #&02
  JSR sub_C3440
@@ -4364,7 +4364,7 @@ L1145 = C1144+1
  LSR L0C1E
  JSR sub_C1F84
 
- JSR FlushSoundBuffer   \ Flush the sound channel 0 buffer
+ JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
  JSR sub_C36C7
 
@@ -9758,7 +9758,7 @@ L23E3 = C23E2+1
  CMP #%01111111         \ If it does not match %01111111 then this byte from the
  BNE C25D7              \ secret code was not matched by the CheckSecretCode
                         \ routine (so it must have been bypassed by crackers),
-                        \ so jump to Mainloop via C25D7 to restart the game
+                        \ so jump to MainTitleLoop via C25D7 to restart the game
 
  DEC stashAddr          \ Decrement stashAddr(1 0) to point to the previous byte
                         \ in memory (we decrement as we initialised stashAddr
@@ -9889,7 +9889,7 @@ L23E3 = C23E2+1
 
 .C25D7
 
- JMP game10             \ Jump to MainTitleLoop
+ JMP game10             \ Jump to MainTitleLoop to restart the game
 
 .C25DA
 
@@ -14934,7 +14934,8 @@ L314A = C3148+2
  ROR L0C72
  LDA #&08
  JSR sub_C162D
- JSR sub_C3548
+
+ JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
 .P34F5
 
@@ -15004,35 +15005,40 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3548
+\       Name: FlushSoundBuffers
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Sound
+\    Summary: Flush all four sound channel buffers
 \
 \ ******************************************************************************
 
-.sub_C3548
+.FlushSoundBuffers
 
- LDX #&07
+ LDX #7                 \ To flush all four sound channel buffers we need to
+                        \ pass the values 4, 5, 6 and 7 to the FlushBuffer
+                        \ routine, so set X to loop through those values
 
-.P354A
+.fbuf1
 
- JSR FlushBuffer
- DEX
- CPX #&04
- BCS P354A
- RTS
+ JSR FlushBuffer        \ Call FlushBuffer to flush the buffer specified in X
+
+ DEX                    \ Decrement the loop counter
+
+ CPX #4                 \ Loop back until we have flushed the buffers for all
+ BCS fbuf1              \ four sound channels
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: FlushSoundBuffer
+\       Name: FlushSoundBuffer0
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Flush the sound channel 0 buffer
 \
 \ ******************************************************************************
 
-.FlushSoundBuffer
+.FlushSoundBuffer0
 
  LDX #4                 \ Set X = 4 to denote the sound channel 0 buffer
 
@@ -15050,7 +15056,15 @@ L314A = C3148+2
 \
 \ Arguments:
 \
-\   X                   The number of the buffer to flush
+\   X                   The number of the buffer to flush:
+\
+\                         * 4 = sound channel 0 buffer
+\
+\                         * 5 = sound channel 1 buffer
+\
+\                         * 6 = sound channel 2 buffer
+\
+\                         * 7 = sound channel 3 buffer
 \
 \ ******************************************************************************
 
@@ -15152,13 +15166,13 @@ L314A = C3148+2
 \
 \ Other entry points:
 \
-\   game10              Jump to MainTitleLoop
+\   game10              Jump to MainTitleLoop to restart the game
 \
 \ ******************************************************************************
 
 .MainGameLoop
 
- JSR sub_C3548
+ JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
  LDA quitGame           \ If bit 7 of quitGame is clear then the player has not
  BPL game1              \ pressed function key f1 to quit the game, so jump to
@@ -19939,7 +19953,9 @@ L314A = C3148+2
 .sub_C5F24
 
  PHA
- JSR sub_C3548
+
+ JSR FlushSoundBuffers  \ Flush all four sound channel buffers
+
  JSR sub_C3699
  LDA #&06
  STA L0C73
