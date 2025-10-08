@@ -9175,7 +9175,7 @@ L1145 = C1144+1
  ROR A
  TAX
  LDA L5B00,X
- CMP landscapeData,X
+ CMP L5A00,X
  BCC CRE13
  LDA #&F0
  CLC
@@ -9335,7 +9335,7 @@ L2367 = C2366+1
 .C237F
 
  LDA L5B00,Y
- CMP landscapeData,Y
+ CMP L5A00,Y
  BCC CRE13
  TAX
  SBC L0035
@@ -9363,7 +9363,7 @@ L23A2 = C23A1+1
 .C23A6
 
  LDY L001A
- LDA landscapeData,Y
+ LDA L5A00,Y
  TAX
  CMP L0036
  BCS C2339
@@ -10943,8 +10943,10 @@ L23E3 = C23E2+1
 
 .GenerateLandscape
 
-                        \ We start by filling the stripData table with 81 seed
-                        \ numbers, though these are ignored
+                        \ We start by generating 81 seed numbers, though these
+                        \ are ignored (they get stored in the stripData table
+                        \ but there's no reason for this - they could just as
+                        \ easily be discarded)
                         \
                         \ The purpose of this step is to get the seed number
                         \ generator to a point where the output is predictable
@@ -12840,7 +12842,7 @@ L23E3 = C23E2+1
  STY L0004
  STY L0006
  LDA L0030
- STA landscapeData,Y
+ STA L5A00,Y
  LDA L0031
  STA L5B00,Y
  LDA #0
@@ -13320,7 +13322,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX landscapeData
+ STX L5A00
  DEC L30EA
  BEQ C30F8
 
@@ -13393,7 +13395,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX landscapeData
+ STX L5A00
  DEC U
  BNE C3137
  JMP CRE26
@@ -19011,10 +19013,37 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: landscapeData
+\       Name: L5A00
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L5A00
+
+ SKIP 256
+
+\ ******************************************************************************
+\
+\       Name: L5B00
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L5B00
+
+ SKIP 256
+
+\ ******************************************************************************
+\
+\       Name: stripData
 \       Type: Variable
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Storage for tile data when smoothing strips of tiles during the
+\             landscape generation process
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19023,7 +19052,26 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.landscapeData
+ CLEAR &5A00, &5C00     \ Memory from &5A00 to &5BFF has two separate uses
+ ORG &5A00              \ 
+                        \ During the landscape generation process, it is used
+                        \ for storing tile data that can be discarded once the
+                        \ landscape is generated
+                        \
+                        \ During gameplay it is used to store the L5A00 and
+                        \ L5B00 variables
+                        \
+                        \ These lines rewind BeebAsm's assembly back to L5A00
+                        \ (which is at address &5A00), and clear the block
+                        \ from that point to stripData (which is at address
+                        \ &5C00), so we can assemble the landscape generation
+                        \ variables
+                        \
+                        \ The initial contents of the game binary in this
+                        \ address actually contains snippets of the original
+                        \ source code, left over from the BBC Micro assembly
+                        \ process, so we include this workspace noise to ensure
+                        \ that we generate an exact match for the game binary
 
 .stripData
 
@@ -19031,12 +19079,29 @@ L314A = C3148+2
  EQUB &14, &3C, &05, &20, &0D, &14, &46, &23
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
  EQUB &41, &3A, &4A, &53, &52, &20, &45, &4D
- EQUB &49, &52
-
- EQUB &54, &45, &53, &54, &3A, &42
+ EQUB &49, &52, &54, &45, &53, &54, &3A, &42
  EQUB &43, &43, &20, &6D, &65, &61, &32, &0D
  EQUB &14, &50, &05, &20, &0D, &14, &5A, &1A
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
+
+\ ******************************************************************************
+\
+\       Name: tilesAtAltitude
+\       Type: Variable
+\   Category: Landscape
+\    Summary: Storage for tile blocks at specific heights for placing enemies on
+\             the landscape
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table stores the altitude of 4x4 tile blocks at specific heights, for use
+\ when placing enemies on the landscape. It is only used while the landscape is
+\ being generated and the allocated memory is reused during gameplay.
+\
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
+\
+\ ******************************************************************************
 
 .tilesAtAltitude
 
@@ -19048,10 +19113,11 @@ L314A = C3148+2
  EQUB &42, &54, &59, &50, &45, &2C, &59, &0D
  EQUB &14, &78, &23, &20, &20, &20, &20, &20
  EQUB &20, &4C, &44, &41, &23, &31, &30, &34
- EQUB &3A, &53, &54, &41, &20, &4F, &42, &48
- EQUB &41, &4C, &46, &53, &49, &5A, &45, &4D
- EQUB &49, &4E, &0D, &14, &82, &11, &20, &20
- EQUB &20, &20, &20, &20, &43, &4C, &43, &3A
+
+ EQUB &3A, &53, &54, &41, &20, &4F, &42, &48    \ These bytes are unused until
+ EQUB &41, &4C, &46, &53, &49, &5A, &45, &4D    \ the game is in progress, at
+ EQUB &49, &4E, &0D, &14, &82, &11, &20, &20    \ which point this whole section
+ EQUB &20, &20, &20, &20, &43, &4C, &43, &3A    \ of memory is reused
  EQUB &72, &74, &73, &0D, &14, &83, &05, &20
  EQUB &0D, &14, &84, &21, &2E, &6D, &65, &61
  EQUB &32, &20, &49, &4E, &43, &20, &4D, &54
@@ -19067,25 +19133,6 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5B00
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ------------------------------------------------------------------------------
-\
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
-\ ******************************************************************************
-
-.L5B00
-
- EQUB &AA, &14, &2E, &54, &41, &4B, &45, &20
- EQUB &4C, &44, &58, &20, &50, &45, &52, &53
-
-\ ******************************************************************************
-\
 \       Name: maxAltitude
 \       Type: Variable
 \   Category: Landscape
@@ -19094,7 +19141,8 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ This table stores the altitude of the highest tile in each 4x4 block of tiles
-\ in the landscape.
+\ in the landscape. It is only used while the landscape is being generated and
+\ the allocated memory is reused during gameplay.
 \
 \ The table is laid out with one byte for each 4x4 block, starting in the
 \ front-left corner of the landscape at tile coordinate (0, 0), and moving along
@@ -19108,10 +19156,18 @@ L314A = C3148+2
 \ chess board, where each square on the chess board is made up of a 4x4 block of
 \ landscape tiles (and with smaller squares along the right and rear edges).
 \
+\ The blocks of memory either side of maxAltitude are included as they are
+\ zeroed when adding enemies to the landscape, and including them means we don't
+\ have to worry about the zeroing process leaking into neighbouring variable
+\ when placing enemies near the edges of the landscape.
+\
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
+
+ EQUB &AA, &14, &2E, &54, &41, &4B, &45, &20
+ EQUB &4C, &44, &58, &20, &50, &45, &52, &53
 
 .maxAltitude
 
@@ -19123,6 +19179,7 @@ L314A = C3148+2
  EQUB &20, &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &45, &4E, &45, &52, &47, &59
  EQUB &3A, &42, &45, &51, &20, &74, &61, &6B
+
  EQUB &35, &0D, &14, &C8, &1E, &20, &20, &20
  EQUB &20, &20, &20, &53, &45, &43, &3A, &53
 
@@ -19137,7 +19194,8 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ This table stores the tile x-coordinate of the highest tile within each 4x4
-\ block of tiles in the landscape.
+\ block of tiles in the landscape. It is only used while the landscape is being
+\ generated and the allocated memory is reused during gameplay.
 \
 \ The table is laid out with one byte for each 4x4 block, starting in the
 \ front-left corner of the landscape at tile coordinate (0, 0), and moving along
@@ -19178,7 +19236,8 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ This table stores the tile z-coordinate of the highest tile within each 4x4
-\ block of tiles in the landscape.
+\ block of tiles in the landscape. It is only used while the landscape is being
+\ generated and the allocated memory is reused during gameplay.
 \
 \ The table is laid out with one byte for each 4x4 block, starting in the
 \ front-left corner of the landscape at tile coordinate (0, 0), and moving along
@@ -19208,22 +19267,10 @@ L314A = C3148+2
  EQUB &54, &0D, &15, &0E, &05, &20, &0D, &15
  EQUB &18, &1F, &20, &20, &20, &20, &20, &20
 
- EQUB &4C, &44          \ These bytes appear to be unused
- EQUB &41, &20
- EQUB &4F, &42
- EQUB &54, &59
- EQUB &50, &45
- EQUB &2C, &58
- EQUB &3A, &42
- EQUB &4E, &45
- EQUB &20, &74
- EQUB &61, &6B
- EQUB &34, &0D
- EQUB &15, &22
- EQUB &05, &20
- EQUB &0D, &15
- EQUB &2C, &1E
- EQUB &20, &5C
+ EQUB &4C, &44, &41, &20, &4F, &42, &54, &59    \ These bytes are unused until
+ EQUB &50, &45, &2C, &58, &3A, &42, &4E, &45    \ the game is in progress, at
+ EQUB &20, &74, &61, &6B, &34, &0D, &15, &22    \ which point this whole section
+ EQUB &05, &20, &0D, &15, &2C, &1E, &20, &5C    \ of memory is reused
 
 \ ******************************************************************************
 \

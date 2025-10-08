@@ -14752,7 +14752,10 @@
      59FD   FF
      59FE   FF
      59FF   FF
-.landscapeData
+.L5A00
+     5A00
+.L5B00
+     5B00
 .stripData
      5A00   44
      5A01   58
@@ -15011,7 +15014,6 @@
      5AFD   20
      5AFE   0D
      5AFF   14
-.L5B00
      5B00   AA
      5B01   14
      5B02   2E
