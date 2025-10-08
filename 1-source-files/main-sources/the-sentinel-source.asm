@@ -82,7 +82,7 @@
 
 .objectSlot
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to store an object slot number
 
 .L0002
 
@@ -100,7 +100,6 @@
 
  SKIP 1                 \ ???
 
-.L0006
 .tileAltitude
 
  SKIP 1                 \ Used to store a tile altitude
@@ -121,10 +120,9 @@
 
  SKIP 1                 \ ???
 
-.L000B
-.playerObject
+.playerObjectSlot
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The slot number of the player object
 
 .L000C
 .zCounter
@@ -167,7 +165,7 @@
 
 .loopCounter
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to store a loop counter
 
 .L0016
 
@@ -388,7 +386,6 @@
 
  SKIP 1                 \ ???
 
-
 .L0041
 
  SKIP 1                 \ ???
@@ -471,11 +468,11 @@
 
 .bLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The low byte of the opposite side of a triangle
 
 .bHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The high byte of the opposite side of a triangle
 
 .tileDataPage
 
@@ -484,7 +481,8 @@
 
 .secondAxis
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The number of the second axis to calculate in the
+                        \ GetRotationMatrix routine
 
 .L0061
 
@@ -515,23 +513,23 @@
 
 .H
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in the maths routines
 
 .RR
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in the maths routines
 
 .SS
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in the maths routines
 
 .PP
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in the maths routines
 
 .QQ
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in the maths routines
 
 .L006C
 
@@ -553,39 +551,39 @@
 
 .P
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .Q
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .R
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .S
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .T
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .U
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .V
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .W
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .G
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage, used in a number of places
 
 .L0079
 
@@ -593,23 +591,23 @@
 
 .aLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The low byte of the adjacent side of a triangle
 
 .aHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The high byte of the adjacent side of a triangle
 
 .hypotenuseLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The low byte of the hypotenuse of a triangle
 
 .hypotenuseHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The high byte of the hypotenuse of a triangle
 
 .angleTangent
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Used to store a tangent angle
 
 .L007F
 
@@ -649,13 +647,13 @@
 
 .angleLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The high byte of an angle
 
 .angleHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The low byte of an angle
 
- SKIP 1                 \ This byte appears to be unused ???
+ SKIP 1                 \ This byte appears to be unused
 
 .L008D
 
@@ -704,13 +702,10 @@
                         \
                         \       * Set = this slot is empty
 
-.L0140
+.objectPitchAngle
 
- SKIP 16                \ ???
-
-.L0150
-
- SKIP 48                \ ???
+ SKIP 64                \ The pitch angle for each object (i.e. the vertical
+                        \ direction in which they are facing)
 
 .L0180
 
@@ -3782,12 +3777,12 @@
 
 .C10FD
 
- LDA L0140,X
+ LDA objectPitchAngle,X
  CMP L1145,Y
  BEQ CRE05
  CLC
  ADC L38F4,Y
- STA L0140,X
+ STA objectPitchAngle,X
  LDA #&19
  LDY #&08
  LDX #&28
@@ -3795,15 +3790,15 @@
  JSR sub_C2202
  JSR sub_C3908
  JSR sub_C2624
- LDX L000B
+ LDX playerObjectSlot
  LDY L0008
  BCS C113A
  CPY #&03
  BNE C1131
- LDA L0140,X
+ LDA objectPitchAngle,X
  CLC
  ADC #&08
- STA L0140,X
+ STA objectPitchAngle,X
 
 .C1131
 
@@ -3820,10 +3815,10 @@
 
 .C113A
 
- LDA L0140,X
+ LDA objectPitchAngle,X
  SEC
  SBC L38F4,Y
- STA L0140,X
+ STA objectPitchAngle,X
 
 .C1144
 
@@ -4624,7 +4619,7 @@ L1145 = C1144+1
  LDA L1403,Y
  STA yObjectHi+16
  LDA L1405,Y
- STA L0150
+ STA objectPitchAngle+16
  LDA L1407,Y
  STA xObject+16
  LDA L140B,Y
@@ -4839,7 +4834,7 @@ L1145 = C1144+1
  LDA #0                 \ Spawn the player's robot (an object of type 0),
  JSR SpawnObject        \ returning the slot number of the new object in X
 
- STX playerObject       \ Set playerObject to the slot number of the newly
+ STX playerObjectSlot   \ Set playerObjectSlot to the slot number of the newly
                         \ spawned object
 
  LDA #10                \ Set L0C0A = 10 ???
@@ -6249,7 +6244,7 @@ L1145 = C1144+1
 
 .C16D4
 
- LDA L000B
+ LDA playerObjectSlot
  STA L006E
  RTS
 
@@ -6277,7 +6272,7 @@ L1145 = C1144+1
  LDA L0C57
  CMP #&14
  BCS C171B
- CPY L000B
+ CPY playerObjectSlot
  BNE C174F
  LDA L0014
  BEQ C1754
@@ -6387,7 +6382,7 @@ L1145 = C1144+1
  LDA L0014
  BEQ C17C1
  BMI C1820
- CPY L000B
+ CPY playerObjectSlot
  BNE C17C1
  STY L000F
 
@@ -6510,7 +6505,7 @@ L1145 = C1144+1
 .C1876
 
  STX objectSlot
- LDA L000B
+ LDA playerObjectSlot
  STA L006E
  JSR sub_C1F84
 
@@ -6656,7 +6651,7 @@ L1145 = C1144+1
 .C1930
 
  LDA L0CA8,X
- CMP L000B
+ CMP playerObjectSlot
  BNE C1945
  LDA L0C20,X
  BEQ C1945
@@ -6822,7 +6817,7 @@ L1145 = C1144+1
 .sub_C19FF
 
  LDX L0C58
- CPX L000B
+ CPX playerObjectSlot
  BNE C1A1D
  LDA L0C0A
  BEQ P19F7
@@ -7079,7 +7074,7 @@ L1145 = C1144+1
  BIT L0C1F
  BPL CRE10
  STA objectSlot
- LDA L000B
+ LDA playerObjectSlot
  STA L006E
  TXA
  PHA
@@ -7154,7 +7149,7 @@ L1145 = C1144+1
  LDY objectTypes,X
  BNE C1B98
  JSR sub_C1200
- STX L000B
+ STX playerObjectSlot
 
 .P1B5D
 
@@ -7236,7 +7231,7 @@ L1145 = C1144+1
 
  LDA objectTypes,X
  BNE C1BD9
- LDY L000B
+ LDY playerObjectSlot
  LDA objectYawAngle,Y
  EOR #&80
  STA objectYawAngle,X
@@ -7320,7 +7315,7 @@ L1145 = C1144+1
  STA playerPitchAngleLo
  STA T
  LDA U
- ADC L0140,X
+ ADC objectPitchAngle,X
  CLC
  ADC #&03
  STA playerPitchAngleHi
@@ -7990,7 +7985,7 @@ L1145 = C1144+1
 \
 \   * X-th entry in yObjectLo = &E0 ???
 \
-\   * X-th entry in L0140 = &F5 ???
+\   * X-th entry in objectPitchAngle = &F5 ???
 \
 \   * X-th entry in objectYawAngle is set to a multiple of 11.25 degrees, as
 \     determined by the next seed
@@ -8229,8 +8224,8 @@ L1145 = C1144+1
  ORA #%11000000         \ number in X, with bits 6 and 6 set to indicate that
  STA (tileDataPage),Y   \ the tile now contains an object
 
- LDA #&F5               \ Set the object's entry in L0140 to &F5 ???
- STA L0140,X
+ LDA #245               \ Set the object's pitch angle to 245, or -11 degrees
+ STA objectPitchAngle,X \ ???
 
                         \ We now calculate the object's yaw angle, which
                         \ determines the direction in which it is facing
@@ -8562,7 +8557,7 @@ L1145 = C1144+1
 .sub_C2096
 
  LDY objectSlot
- CPY L000B
+ CPY playerObjectSlot
  BEQ C2105
  JSR sub_C5C01
  LDY objectSlot
@@ -8808,7 +8803,7 @@ L1145 = C1144+1
  LDA #0                 \ Spawn an object of type 0
  JSR SpawnObject
 
- LDX L000B
+ LDX playerObjectSlot
  LDA yObjectHi,X
  CLC
  ADC #&01
@@ -8837,7 +8832,7 @@ L1145 = C1144+1
 
  LDA #0
  JSR sub_C5FF6
- LDX L000B
+ LDX playerObjectSlot
  LDA xObject,X
  CMP xTileSentinel
  BNE C2191
@@ -8854,7 +8849,7 @@ L1145 = C1144+1
 
  JSR sub_C1200
  LDX objectSlot
- STX L000B
+ STX playerObjectSlot
 
 .C2198
 
@@ -8895,7 +8890,7 @@ L1145 = C1144+1
 
 .C21B7
 
- LDX L000B
+ LDX playerObjectSlot
  LDA yObjectLo,X
  SEC
  SBC yObjectLo,Y
@@ -9169,7 +9164,7 @@ L1145 = C1144+1
  LDA #&01
  STA L002C
  STA L002D
- LDA L0006
+ LDA tileAltitude
  CLC
  ADC L0004
  ROR A
@@ -9179,7 +9174,7 @@ L1145 = C1144+1
  BCC CRE13
  LDA #&F0
  CLC
- SBC L0006
+ SBC tileAltitude
  STA T
  LSR A
  LSR A
@@ -9225,7 +9220,7 @@ L1145 = C1144+1
  TAY
  LDA L2283,Y
  STA L0058
- LDY L0006
+ LDY tileAltitude
  STY L001A
  CPY L0004
  BCS C237F
@@ -9512,7 +9507,7 @@ L23E3 = C23E2+1
  EOR #&20
  STA L0005
  JSR sub_C24EA
- LDX L000B
+ LDX playerObjectSlot
  LDA yObjectHi,X
  STA V
  LDX #&1E
@@ -9611,7 +9606,7 @@ L23E3 = C23E2+1
  LDA (P),Y
  LSR A
  STA L0019
- LDX L000B
+ LDX playerObjectSlot
  JSR sub_C1EB5
  LDX #&02
 
@@ -12733,7 +12728,7 @@ L23E3 = C23E2+1
 .C2DBC
 
  LDA #0
- STA L0006
+ STA tileAltitude
  STA L0031
  STA L001E
  LDA #&FF
@@ -12840,7 +12835,7 @@ L23E3 = C23E2+1
  CPY L0051
  BCS C2E88
  STY L0004
- STY L0006
+ STY tileAltitude
  LDA L0030
  STA L5A00,Y
  LDA L0031
@@ -12852,7 +12847,7 @@ L23E3 = C23E2+1
 
  LDA L007F
  BNE C2E94
- LDA L0006
+ LDA tileAltitude
  CMP L0004
  BCC C2E94
  CLC
@@ -12927,7 +12922,7 @@ L23E3 = C23E2+1
  LDA L001A
  CMP L0052
  BCC CRE25
- CMP L0006
+ CMP tileAltitude
  BCC C2EE1
  CMP L0051
  BCC C2EDF
@@ -12940,7 +12935,7 @@ L23E3 = C23E2+1
 
 .C2EDF
 
- STA L0006
+ STA tileAltitude
 
 .C2EE1
 
@@ -15197,7 +15192,7 @@ L314A = C3148+2
  STA L0CC9
  STA L0C5F
  JSR sub_C5734
- LDA L000B
+ LDA playerObjectSlot
  STA L006E
  BIT L0CDE
  BPL game2
@@ -16103,8 +16098,8 @@ L314A = C3148+2
 
 .sub_C396B
 
- LDX L000B
- LDY L0140,X
+ LDX playerObjectSlot
+ LDY objectPitchAngle,X
  LDX L0CEA
  BMI CRE36
  CPX #&02
@@ -17837,7 +17832,7 @@ L314A = C3148+2
  SBC #&20
  STA L0050
  LDA angleHi
- SBC L0140,X
+ SBC objectPitchAngle,X
  PHP
  LSR A
  ROR L0050
@@ -20122,7 +20117,7 @@ L314A = C3148+2
  LDA xObject+2
  STA xObject+1
  LDA L5FD9,Y
- STA L0140+2
+ STA objectPitchAngle+2
  LDA L5FE2,Y
  STA objectYawAngle+2
  LDA #0

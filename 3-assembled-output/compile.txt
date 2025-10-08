@@ -10,7 +10,6 @@
      0004
 .L0005
      0005
-.L0006
 .tileAltitude
      0006
 .L0007
@@ -21,8 +20,7 @@
      0009
 .L000A
      000A
-.L000B
-.playerObject
+.playerObjectSlot
      000B
 .L000C
 .zCounter
@@ -276,10 +274,8 @@
      008F
 .objectFlags
      0100
-.L0140
+.objectPitchAngle
      0140
-.L0150
-     0150
 .L0180
      0180
 .L01A0
