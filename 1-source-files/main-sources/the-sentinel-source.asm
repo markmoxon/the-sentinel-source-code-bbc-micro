@@ -1228,22 +1228,22 @@
 \
 \ ******************************************************************************
 
-.sinYawAngleLo
+.sinAngleLo
 
  EQUB 0                 \ The low byte of the sine of a pitch or yaw angle,
                         \ as calculated by the GetRotationMatrix routine
 
-.cosYawAngleLo
+.cosAngleLo
 
  EQUB 0                 \ The low byte of the cosine of a pitch or yaw angle,
                         \ as calculated by the GetRotationMatrix routine
 
-.sinYawAngleHi
+.sinAngleHi
 
  EQUB 0                 \ The high byte of the sine of a pitch or yaw angle,
                         \ as calculated by the GetRotationMatrix routine
 
-.cosYawAngleHi
+.cosAngleHi
 
  EQUB 0                 \ The high byte of the cosine of a pitch or yaw angle,
                         \ as calculated by the GetRotationMatrix routine
@@ -2480,13 +2480,13 @@
 \
 \ This routine is used to calculate the following:
 \
-\   sinPitchAngle = sin(sightsPitchAngle)
-\   cosPitchAngle = cos(sightsPitchAngle)
+\   sinAngle = sin(sightsPitchAngle)
+\   cosAngle = cos(sightsPitchAngle)
 \
 \ or:
 \
-\   sinYawAngle = sin(sightsYawAngle)
-\   cosYawAngle = cos(sightsYawAngle)
+\   sinAngle = sin(sightsYawAngle)
+\   cosAngle = cos(sightsYawAngle)
 \
 \ We can use these to create a rotation matrix that rotates the pitch or yaw
 \ angle from the player's frame of reference into the global 3D coordinate
@@ -2499,13 +2499,11 @@
 \ been renamed to G2 and H2, but the routine is otherwise the same.
 \
 \ Also, because this routine comes from Revs, where it is only used to rotate
-\ through the driver's yaw angle, it stores the results in sinYawAngle and
-\ cosYawAngle, even if the argument is a pitch angle. I considered renaming the
-\ variables to sinPitchYawAngle and cosPitchYawAngle, but I thought it better to
-\ leave the code as close to the Revs original as possible.
-\
-\ The comments in this routine only refer to yaw angles, for the same reason,
-\ but they apply equally to pitch angles.
+\ through the driver's yaw angle, I have renamed the result variables from
+\ sinYawAngle and cosYawAngle to sinAngle and cosAngle, as The Sentinel uses
+\ the routine to rotate through both yaw angles and pitch angles. To keep things
+\ simple the commentary still refers to yaw angles, but the calculations apply
+\ equally to pitch angles.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2555,7 +2553,7 @@
                         \ x- and z-axes of the world 3D coordinate system
 
  LDX #1                 \ Set X = 0 and secondAxis = 1, so we project sin(H G)
- STX secondAxis         \ into sinYawAngle and cos(H G) into cosYawAngle
+ STX secondAxis         \ into sinAngle and cos(H G) into cosAngle
  LDX #0
 
  BIT J                  \ If bit 6 of J is clear, then sightsYawAngle is in one
@@ -2582,8 +2580,8 @@
                         \ So sightsYawAngle is in the top-right or bottom-left
                         \ quarter in the above diagram
                         \
-                        \ In both cases we jump to rotm1 to set sinYawAngle and
-                        \ cosYawAngle
+                        \ In both cases we jump to rotm1 to set sinAngle and
+                        \ cosAngle
 
                         \ If we get here then bit 6 of J is set, so
                         \ sightsYawAngle is in one of these ranges:
@@ -2601,11 +2599,11 @@
                         \ x-axis or y-axis)
 
  INX                    \ Set X = 1 and secondAxis = 0, so we project sin(H G)
- DEC secondAxis         \ into cosYawAngle and cos(H G) into sinYawAngle
+ DEC secondAxis         \ into cosAngle and cos(H G) into sinAngle
 
-                        \ We now enter a loop that sets sinYawAngle + X to
+                        \ We now enter a loop that sets sinAngle + X to
                         \ sin(H G) on the first iteration, and sets
-                        \ sinYawAngle + secondAxis to cos(H G) on the second
+                        \ sinAngle + secondAxis to cos(H G) on the second
                         \ iteration
                         \
                         \ The commentary is for the sin(H G) iteration, see the
@@ -2619,13 +2617,13 @@
                         \
                         \   * If sightsYawAngle is top-right or bottom-left:
                         \
-                        \     sinYawAngle = sin(sightsYawAngle)
-                        \     cosYawAngle = cos(sightsYawAngle)
+                        \     sinAngle = sin(sightsYawAngle)
+                        \     cosAngle = cos(sightsYawAngle)
                         \
                         \   * If sightsYawAngle is bottom-right or top-left:
                         \
-                        \     sinYawAngle = cos(sightsYawAngle)
-                        \     cosYawAngle = sin(sightsYawAngle)
+                        \     sinAngle = cos(sightsYawAngle)
+                        \     cosAngle = sin(sightsYawAngle)
                         \
                         \ In each case, the calculation gives us the correct
                         \ coordinate, as the second set of results uses angles
@@ -2712,10 +2710,10 @@
                         \
                         \   (A T) = sin(yawRadians)
 
- STA sinYawAngleHi,X    \ Set (sinYawAngleHi sinYawAngleLo) = (A T)
+ STA sinAngleHi,X       \ Set (sinAngleHi sinAngleLo) = (A T)
  LDA T                  \
- AND #%11111110         \ with the sign bit cleared in bit 0 of sinYawAngleLo to
- STA sinYawAngleLo,X    \ denote a positive result
+ AND #%11111110         \ with the sign bit cleared in bit 0 of sinAngleLo to
+ STA sinAngleLo,X       \ denote a positive result
 
  JMP rotm5              \ Jump to rotm5 to move on to the next axis
 
@@ -2815,8 +2813,8 @@
  SEC                    \
  SBC T                  \ starting with the low bytes
 
- AND #%11111110         \ Which we store in sinYawAngleLo, with bit 0 cleared to
- STA sinYawAngleLo,X    \ denote a positive result (as it's a sign-magnitude
+ AND #%11111110         \ Which we store in sinAngleLo, with bit 0 cleared to
+ STA sinAngleLo,X       \ denote a positive result (as it's a sign-magnitude
                         \ number we want to store)
 
  LDA #0                 \ And then the high bytes
@@ -2835,28 +2833,28 @@
                         \ If the C flag is clear, then that means the top byte
                         \ is zero, so we already have a valid result from the
                         \ high and low bytes, so we jump to rotm4 to store the
-                        \ high byte of the result in sinYawAngleHi
+                        \ high byte of the result in sinAngleHi
                         \
                         \ If the C flag is set, then the result is (1 A T), but
                         \ the highest possible value for sin or cos is 1, so
                         \ that's what we return
                         \
-                        \ Because sinYawAngle is a sign-magnitude number with
+                        \ Because sinAngle is a sign-magnitude number with
                         \ the sign bit in bit 0, we return the following value
                         \ to represent the closest value to 1 that we can fit
                         \ into 16 bits:
                         \
                         \   (11111111 11111110)
 
- LDA #%11111110         \ Set sinYawAngleLo to the highest possible positive
- STA sinYawAngleLo,X    \ value (i.e. all ones except for the sign in bit 0)
+ LDA #%11111110         \ Set sinAngleLo to the highest possible positive
+ STA sinAngleLo,X       \ value (i.e. all ones except for the sign in bit 0)
 
- LDA #%11111111         \ Set A to the highest possible value of sinYawAngleHi,
+ LDA #%11111111         \ Set A to the highest possible value of sinAngleHi,
                         \ so we can store it in the next instruction
 
 .rotm4
 
- STA sinYawAngleHi,X    \ Store A in the high byte in sinYawAngleHi
+ STA sinAngleHi,X       \ Store A in the high byte in sinAngleHi
 
 \ ******************************************************************************
 \
@@ -2870,7 +2868,7 @@
 .rotm5
 
  CPX secondAxis         \ If we just processed the second axis, then we have
- BEQ rotm6              \ now set both sinYawAngle and cosYawAngle, so jump to
+ BEQ rotm6              \ now set both sinAngle and cosAngle, so jump to
                         \ rotm6 to set their signs
 
  LDX secondAxis         \ Otherwise set X = secondAxis so the next time we reach
@@ -2912,8 +2910,8 @@
                         \ so jumping back will, in fact, find the cosine of the
                         \ angle
 
- JMP rotm1              \ Loop back to set the other variable of sinYawAngle and
-                        \ cosYawAngle to the cosine of the angle
+ JMP rotm1              \ Loop back to set the other variable of sinAngle and
+                        \ cosAngle to the cosine of the angle
 
 \ ******************************************************************************
 \
@@ -2928,8 +2926,8 @@
 .rotm6
 
                         \ By this point, we have the yaw angle vector's
-                        \ x-coordinate in sinYawAngle and the y-coordinate in
-                        \ cosYawAngle
+                        \ x-coordinate in sinAngle and the y-coordinate in
+                        \ cosAngle
                         \
                         \ The above calculations were done on an angle that was
                         \ reduced to a quarter-circle, so now we need to add the
@@ -2960,15 +2958,15 @@
                         \ diagram, where the x-coordinates are negative, so we
                         \ need to negate the x-coordinate
 
- LDA #1                 \ Negate sinYawAngle by setting bit 0 of the low byte,
- ORA sinYawAngleLo      \ as sinYawAngle is a sign-magnitude number
- STA sinYawAngleLo
+ LDA #1                 \ Negate sinAngle by setting bit 0 of the low byte,
+ ORA sinAngleLo         \ as sinAngle is a sign-magnitude number
+ STA sinAngleLo
 
 .rotm7
 
  LDA J                  \ If bits 6 and 7 of J are the same (i.e. their EOR is
  ASL A                  \ zero), jump to rotm8 to return from the subroutine as
- EOR J                  \ the sign of cosYawAngle is correct
+ EOR J                  \ the sign of cosAngle is correct
  BPL rotm8
 
                         \ Bits 6 and 7 of J, i.e. of sightsYawAngleHi, are
@@ -2997,9 +2995,9 @@
                         \ need to negate the y-coordinate
 
 
- LDA #1                 \ Negate cosYawAngle by setting bit 0 of the low byte,
- ORA cosYawAngleLo      \ as cosYawAngle is a sign-magnitude number
- STA cosYawAngleLo
+ LDA #1                 \ Negate cosAngle by setting bit 0 of the low byte,
+ ORA cosAngleLo         \ as cosAngle is a sign-magnitude number
+ STA cosAngleLo
 
 .rotm8
 
@@ -7678,6 +7676,13 @@ L1145 = C1144+1
 
 .sub_C1C43
 
+                        \ We start by rotating the pitch angle of the vector
+                        \ from the player's eyes to the sights into the global
+                        \ 3D coordinate system, storing the result in the 16-bit
+                        \ ySightsVector variable (as pitch angles map to the
+                        \ position on the up-down axis, which is the y-axis in
+                        \ the 3D world)
+
  JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
                         \ pitch angle for the sights into the global 3D
                         \ coordinate system, as follows:
@@ -7703,6 +7708,14 @@ L1145 = C1144+1
 
  STA ySightsVectorHi    \ Set (ySightsVectorHi ySightsVectorLo)
  STX ySightsVectorLo    \                             = sinSightsPitchAngle / 16
+
+                        \ And now we rotate the yaw angle of the vector from the
+                        \ player's eyes to the sights into the global 3D
+                        \ coordinate system, storing the result in the 16-bit
+                        \ xSightsVector and zSightsVector variables (as yaw
+                        \ angles map to the position on the left-right and
+                        \ in-out axes, which are the x-axis and z-axis in the
+                        \ 3D world)
 
  LDA sightsYawAngleLo   \ Set (A T) = (sightsYawAngleHi sightsYawAngleLo)
  STA T
@@ -7744,15 +7757,15 @@ L1145 = C1144+1
 \
 \ When Y = 0, it calculates:
 \
-\   (cosSightsPitchHi cosSightsPitchLo) * (sinYawAngleHi sinYawAngleLo)
+\   (cosSightsPitchHi cosSightsPitchLo) * (sinAngleHi sinAngleLo)
 \
-\ i.e. cosSightsPitch * sinYawAngle
+\ i.e. cosSightsPitch * sinAngle
 \
 \ When Y = 1, it calculates:
 \
-\   (cosSightsPitchHi cosSightsPitchLo) * (cosYawAngleHi cosYawAngleLo)
+\   (cosSightsPitchHi cosSightsPitchLo) * (cosAngleHi cosAngleLo)
 \
-\ i.e. cosSightsPitch * cosYawAngle
+\ i.e. cosSightsPitch * cosAngle
 \
 \ When X = 0, store the result in (xSightsVectorHi xSightsVectorLo).
 \
@@ -7768,9 +7781,9 @@ L1145 = C1144+1
 \
 \   Y                   Offset of the 16-bit sign-magnitude value to multiply:
 \
-\                         * 0 = sinYawAngle
+\                         * 0 = sinAngle
 \
-\                         * 1 = cosYawAngle
+\                         * 1 = cosAngle
 \
 \   X                   Offset of the variable to store the result in:
 \
@@ -7791,9 +7804,9 @@ L1145 = C1144+1
  LDA cosSightsPitchHi   \ where (QQ PP) is a 16-bit signed number
  STA QQ
 
- LDA sinYawAngleLo,Y    \ Set (SS RR) to the 16-bit sign-magnitude number
+ LDA sinAngleLo,Y       \ Set (SS RR) to the 16-bit sign-magnitude number
  STA RR                 \ pointed to by Y
- LDA sinYawAngleHi,Y
+ LDA sinAngleHi,Y
  STA SS
 
  JSR Multiply16x16      \ Set (A T) = (QQ PP) * (SS RR)
@@ -7827,9 +7840,9 @@ L1145 = C1144+1
 \
 \   Y                   Offset of the 16-bit sign-magnitude number to divide:
 \
-\                         * 0 = sinYawAngle
+\                         * 0 = sinAngle
 \
-\                         * 1 = cosYawAngle
+\                         * 1 = cosAngle
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7841,9 +7854,9 @@ L1145 = C1144+1
 
 .DivideBy16
 
- LDA sinYawAngleLo,Y    \ Set (A T) to the 16-bit sign-magnitude number pointed
+ LDA sinAngleLo,Y       \ Set (A T) to the 16-bit sign-magnitude number pointed
  STA T                  \ to by Y
- LDA sinYawAngleHi,Y
+ LDA sinAngleHi,Y
 
  LSR A                  \ Set (A T) = (A T) / 16
  ROR T                  \

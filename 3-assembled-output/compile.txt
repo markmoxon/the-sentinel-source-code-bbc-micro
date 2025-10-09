@@ -2340,13 +2340,13 @@
      0BFD   65
      0BFE   10
      0BFF   10
-.sinYawAngleLo
+.sinAngleLo
      0C00   00
-.cosYawAngleLo
+.cosAngleLo
      0C01   00
-.sinYawAngleHi
+.sinAngleHi
      0C02   00
-.cosYawAngleHi
+.cosAngleHi
      0C03   00
 .L0C04
      0C04   00
