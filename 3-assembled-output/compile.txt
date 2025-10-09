@@ -2691,11 +2691,8 @@
      0CE7   80
 .keyLogger
      0CE8   80
-.L0CE9
      0CE9   80
-.L0CEA
      0CEA   80
-.L0CEB
      0CEB   80
      0CEC   80
      0CED   80

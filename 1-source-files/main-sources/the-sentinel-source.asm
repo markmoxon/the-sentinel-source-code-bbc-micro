@@ -1702,13 +1702,13 @@
 
  EQUB 0                 \ ???
 
-.L0CC6
+.xSights
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The screen x-coordinate of the sights
 
-.L0CC7
+.ySights
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The screen y-coordinate of the sights
 
 .L0CC8
 
@@ -1800,20 +1800,10 @@
 
 .keyLogger
 
- EQUB &80               \ ???
-
-.L0CE9
-
- EQUB &80               \ ???
-
-.L0CEA
-
- EQUB &80               \ ???
-
-.L0CEB
-
- EQUB &80               \ ???
+ EQUB &80, &80          \ The four-byte key logger for logging game key presses
  EQUB &80, &80
+
+ EQUB &80, &80          \ These bytes appear to be unused ???
  EQUB &80, &80
 
 .inputBuffer
@@ -4383,7 +4373,7 @@ L1145 = C1144+1
  BPL C11DD
  LDA #&6B
  STA L0CC8
- LDA L0CE9
+ LDA keyLogger+1
  BPL sub_C1200
  LDA #&40
  STA L0C51
@@ -4400,9 +4390,15 @@ L1145 = C1144+1
 
 .C11ED
 
- LDA keyLogger
+ LDA keyLogger          \ Set A to the key logger entry for "S" and "D", which
+                        \ move the sights left and right respectively
+
  BPL C11F7
- LDA L0CEA
+
+ LDA keyLogger+2        \ Set A to the key logger entry for "L" and ",", which
+                        \ move the sights up and down respectively
+
+
  BMI C1208
 
 .C11F7
@@ -4453,7 +4449,8 @@ L1145 = C1144+1
  LDA L0C1D
  CMP keyLogger
  BEQ C1220
- CMP L0CEA
+
+ CMP keyLogger+2        \ Compare with the key logger entry for "L" and ","
 
 .C1220
 
@@ -4681,7 +4678,7 @@ L1145 = C1144+1
 
 .C12B3
 
- LDA L0CE9
+ LDA keyLogger+1
  BMI C12EB
  CMP #&22
  BCS C12C1
@@ -4808,9 +4805,9 @@ L1145 = C1144+1
 
  STA L0CC5
  LDA #&50
- STA L0CC6
+ STA xSights
  LDA #&5F
- STA L0CC7
+ STA ySights
  RTS
 
 \ ******************************************************************************
@@ -4818,7 +4815,7 @@ L1145 = C1144+1
 \       Name: ScanForGameKeys
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: ???
+\    Summary: Scan for game key presses and update the key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4826,6 +4823,14 @@ L1145 = C1144+1
 \
 \   Y                   The offset within gameKeys where we start the scan, with
 \                       the scan working towards the start of gameKeys
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   Bit 0 of A will only be set if "S" and "," are both
+\                       pressed (pan left and down) and all other bits will be
+\                       clear
 \
 \ ******************************************************************************
 
@@ -4879,9 +4884,21 @@ L1145 = C1144+1
  BPL gkey2              \ Loop back until we have checked all the keys up to the
                         \ start of the gameKey table
 
- LDA keyLogger          \ Set A to the entry at the start of the key logger
-
- AND L0CEA              \ ???
+ LDA keyLogger          \ Combine the key logger entry for "S" and "D" with the
+ AND keyLogger+2        \ key logger entry for "L" and ","
+                        \
+                        \ The entries for logger positions 0 and 2 are as
+                        \ follows:
+                        \
+                        \   * Put %01 in logger position 0 for "S"
+                        \   * Put %00 in logger position 0 for "D"
+                        \
+                        \   * Put %10 in logger position 2 for "L"
+                        \   * Put %11 in logger position 2 for ","
+                        \
+                        \ So bit 0 of A will only be set if "S" and "," are both
+                        \ pressed (pan left and down) and all other bits will be
+                        \ clear
 
  RTS                    \ Return from the subroutine
 
@@ -4940,18 +4957,22 @@ L1145 = C1144+1
 
  EQUB 0 +  1 << 2       \ Put  1 in logger position 0 for "S"
  EQUB 0 +  0 << 2       \ Put  0 in logger position 0 for "D"
+
  EQUB 2 +  2 << 2       \ Put  2 in logger position 2 for "L"
  EQUB 2 +  3 << 2       \ Put  3 in logger position 2 for ","
+
  EQUB 1 + 32 << 2       \ Put 32 in logger position 1 for "A"
  EQUB 1 + 33 << 2       \ Put 33 in logger position 1 for "Q"
  EQUB 1 +  0 << 2       \ Put  0 in logger position 1 for "R"
  EQUB 1 +  2 << 2       \ Put  2 in logger position 1 for "T"
  EQUB 1 +  3 << 2       \ Put  3 in logger position 1 for "B"
  EQUB 1 + 34 << 2       \ Put 34 in logger position 1 for "H"
+
  EQUB 3 +  0 << 2       \ Put  0 in logger position 3 for "7"
  EQUB 3 +  1 << 2       \ Put  1 in logger position 3 for "8"
  EQUB 3 +  2 << 2       \ Put  2 in logger position 3 for "COPY"
  EQUB 3 +  3 << 2       \ Put  3 in logger position 3 for "DELETE"
+
  EQUB 1 + 35 << 2       \ Put 35 in logger position 1 for "U"
 
 \ ******************************************************************************
@@ -7678,8 +7699,9 @@ L1145 = C1144+1
 
 .sub_C1BFF
 
- LDA L0CC6
+ LDA xSights              \ Set U = xSights
  STA U
+
  LDA #0
  LSR U
  ROR A
@@ -7687,6 +7709,7 @@ L1145 = C1144+1
  ROR A
  LSR U
  ROR A
+
  CLC
  STA sightsYawAngleLo
  LDA U
@@ -7694,7 +7717,7 @@ L1145 = C1144+1
  SEC
  SBC #&0A
  STA sightsYawAngleHi
- LDA L0CC7
+ LDA ySights
  SEC
  SBC #&05
  STA U
@@ -15305,7 +15328,7 @@ L314A = C3148+2
  LDA L0CE4
  BMI CRE29
  LDA L34D4
- LDX L0CEB
+ LDX keyLogger+3
  BEQ C3498
  DEX
  BNE CRE29
@@ -15397,7 +15420,7 @@ L314A = C3148+2
 
 .sub_C34E1
 
- LDA L0CEB
+ LDA keyLogger+3
  BMI CRE30
  CMP #&02
  BNE CRE30
@@ -15409,7 +15432,7 @@ L314A = C3148+2
 
 .P34F5
 
- LDA L0CEB
+ LDA keyLogger+3
  CMP #&03
  BNE P34F5
  LDA #0
@@ -16552,12 +16575,19 @@ L314A = C3148+2
 
 .sub_C3934
 
- LDX keyLogger
+ LDX keyLogger          \ Set X to the key logger entry for "S" and "D", which
+                        \ move the sights left and right respectively
+
  BMI CRE35
  BNE C3953
- LDA L0CC6
+
+                        \ If we get here then X = 0, so "D" is being pressed,
+                        \ which is the key for moving the sights right
+
+ LDA xSights            \ Increment xSights to move the sights right
  CLC
- ADC #&01
+ ADC #1
+
  CMP #&90
  BCC C3949
  SBC #&40
@@ -16565,16 +16595,20 @@ L314A = C3148+2
 
 .C3949
 
- STA L0CC6
+ STA xSights
  AND #&03
  BEQ C39B6
  JMP CRE35
 
 .C3953
 
- LDA L0CC6
+                        \ If we get here then X = 1, so "S" is being pressed,
+                        \ which is the key for moving the sights left
+
+ LDA xSights            \ Increment xSights to move the sights left
  SEC
- SBC #&01
+ SBC #1
+
  CMP #&10
  BCS C3961
  ADC #&40
@@ -16582,7 +16616,7 @@ L314A = C3148+2
 
 .C3961
 
- STA L0CC6
+ STA xSights
  AND #&03
  CMP #&03
  BEQ C39B6
@@ -16604,13 +16638,21 @@ L314A = C3148+2
 
  LDX playerObjectSlot
  LDY objectPitchAngle,X
- LDX L0CEA
+
+ LDX keyLogger+2        \ Set X to the key logger entry for "L" and ",", which
+                        \ move the sights up and down respectively
+
  BMI CRE36
- CPX #&02
+ CPX #2
  BNE C3997
- LDA L0CC7
+
+                        \ If we get here then X = 2, so "L" is being pressed,
+                        \ which is the key for moving the sights up
+
+ LDA ySights            \ Increment ySights to move the sights up
  CLC
- ADC #&01
+ ADC #1
+
  CMP #&A0
  BCC C398D
  CPY L1147
@@ -16621,16 +16663,20 @@ L314A = C3148+2
 
 .C398D
 
- STA L0CC7
+ STA ySights
  AND #&07
  BNE C39B6
  JMP C39B4
 
 .C3997
 
- LDA L0CC7
+                        \ If we get here then X <> 2, so "," is being pressed,
+                        \ which is the key for moving the sights down
+
+ LDA ySights            \ Decrement ySights to move the sights down
  SEC
- SBC #&01
+ SBC #1
+
  CMP #&20
  BCS C39AB
  CPY L1148
@@ -16641,7 +16687,7 @@ L314A = C3148+2
 
 .C39AB
 
- STA L0CC7
+ STA ySights
  AND #&07
  CMP #&07
  BNE C39B6
@@ -16692,7 +16738,7 @@ L314A = C3148+2
  LDA L0CD7
  BMI C3A05
  JSR sub_C3AA7
- LDA L0CC6
+ LDA xSights
  AND #&03
  STA L0CCC
  LDA L0CC4
