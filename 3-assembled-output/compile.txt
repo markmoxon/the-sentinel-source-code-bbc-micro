@@ -100,13 +100,13 @@
      002E
 .L002F
      002F
-.L0030
+.sinSightsPitchHi
      0030
 .L0031
      0031
-.L0032
+.cosSightsPitchLo
      0032
-.L0033
+.cosSightsPitchHi
      0033
 .L0034
      0034
@@ -126,13 +126,13 @@
      003B
 .L003C
      003C
-.playerYawAngleLo
+.sightsYawAngleLo
      003D
-.playerYawAngleHi
+.sightsYawAngleHi
      003E
-.playerPitchAngleLo
+.sightsPitchAngleLo
      003F
-.playerPitchAngleHi
+.sightsPitchAngleHi
      0040
 .L0041
      0041
@@ -4903,7 +4903,7 @@
      1CA1   28         PLP
      1CA2   90 03      BCC &1CA7
      1CA4   20 09 10   JSR &1009
-.C1CA7
+.divi1
      1CA7   A6 74      LDX &74
      1CA9   60         RTS
 .sub_C1CAA

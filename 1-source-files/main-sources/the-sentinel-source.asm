@@ -306,7 +306,7 @@
 
  SKIP 1                 \ ???
 
-.L002D
+.sinSightsPitchLo
 
  SKIP 1                 \ ???
 
@@ -318,7 +318,7 @@
 
  SKIP 1                 \ ???
 
-.L0030
+.sinSightsPitchHi
 
  SKIP 1                 \ ???
 
@@ -326,11 +326,11 @@
 
  SKIP 1                 \ ???
 
-.L0032
+.cosSightsPitchLo
 
  SKIP 1                 \ ???
 
-.L0033
+.cosSightsPitchHi
 
  SKIP 1                 \ ???
 
@@ -370,19 +370,19 @@
 
  SKIP 1                 \ ???
 
-.playerYawAngleLo
+.sightsYawAngleLo
 
  SKIP 1                 \ ???
 
-.playerYawAngleHi
+.sightsYawAngleHi
 
  SKIP 1                 \ ???
 
-.playerPitchAngleLo
+.sightsPitchAngleLo
 
  SKIP 1                 \ ???
 
-.playerPitchAngleHi
+.sightsPitchAngleHi
 
  SKIP 1                 \ ???
 
@@ -661,7 +661,7 @@
 
 .sinA
 
- SKIP 1                 \ The result of the sincos(A) calculation in the
+ SKIP 1                 \ The result of the sin(A) calculation in the
                         \ GetSineAndCosine routine
 
 .cosA
@@ -1224,19 +1224,23 @@
 
 .sinYawAngleLo
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The low byte of the sine of a pitch or yaw angle,
+                        \ as calculated by the GetRotationMatrix routine
 
 .cosYawAngleLo
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The low byte of the cosine of a pitch or yaw angle,
+                        \ as calculated by the GetRotationMatrix routine
 
 .sinYawAngleHi
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The high byte of the sine of a pitch or yaw angle,
+                        \ as calculated by the GetRotationMatrix routine
 
 .cosYawAngleHi
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The high byte of the cosine of a pitch or yaw angle,
+                        \ as calculated by the GetRotationMatrix routine
 
 .L0C04
 
@@ -2463,29 +2467,46 @@
 \       Name: GetRotationMatrix (Part 1 of 5)
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate the rotation matrix for rotating the player's yaw angle
-\             into the global 3D coordinate system
+\    Summary: Calculate the rotation matrix for rotating the pitch or yaw angle
+\             for the sights into the global 3D coordinate system
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine calculates the following:
+\ This routine is used to calculate the following:
 \
-\   sinYawAngle = sin(playerYawAngle)
-\   cosYawAngle = cos(playerYawAngle)
+\   sinPitchAngle = sin(sightsPitchAngle)
+\   cosPitchAngle = cos(sightsPitchAngle)
 \
-\ We can use these to create a rotation matrix that rotates the yaw angle from
-\ the player's frame of reference into the global 3D coordinate system.
+\ or:
+\
+\   sinYawAngle = sin(sightsYawAngle)
+\   cosYawAngle = cos(sightsYawAngle)
+\
+\ We can use these to create a rotation matrix that rotates the pitch or yaw
+\ angle from the player's frame of reference into the global 3D coordinate
+\ system, so we can take the vector describing the direction of gaze from the
+\ player through the sights, and rotate it into a vector within the 3D world.
 \
 \ This routine is from Revs, Geoff Crammond's previous game. There are only
 \ minor differences: the argument is (A T) instead of (A X), and the value of X
 \ is preserved. Note that to avoid clashing names, the variables G and H have
 \ been renamed to G2 and H2, but the routine is otherwise the same.
 \
+\ Also, because this routine comes from Revs, where it is only used to rotate
+\ through the driver's yaw angle, it stores the results in sinYawAngle and
+\ cosYawAngle, even if the argument is a pitch angle. I considered renaming the
+\ variables to sinPitchYawAngle and cosPitchYawAngle, but I thought it better to
+\ leave the code as close to the Revs original as possible.
+\
+\ The comments in this routine only refer to yaw angles, for the same reason,
+\ but they apply equally to pitch angles.
+\
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   (A T)               Player yaw angle in (playerYawAngleHi playerYawAngleLo)
+\   (A T)               The pitch or yaw angle to encapsulate in the rotation
+\                       matrix
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2498,12 +2519,17 @@
 .GetRotationMatrix
 
  STA J                  \ Set (J T) = (A T)
-                        \           = playerYawAngle
+                        \           = sightsYawAngle or sightsPitchAngle
+                        \
+                        \ Note that because this routine is copied almost
+                        \ verbatim from Revs, the commentary only refers to yaw
+                        \ angles, but this routine can work just as well with
+                        \ pitch angles as arguments
 
  STX xStoreMatrix       \ Store X in xStoreMatrix so it can be preserved across
                         \ calls to the routine
 
- JSR GetAngleInRadians  \ Set (U A) to the playerYawAngle, reduced to a quarter
+ JSR GetAngleInRadians  \ Set (U A) to the sightsYawAngle, reduced to a quarter
                         \ circle, converted to radians, and halved
                         \
                         \ Let's call this yawRadians / 2, where yawRadians is
@@ -2526,7 +2552,7 @@
  STX secondAxis         \ into sinYawAngle and cos(H G) into cosYawAngle
  LDX #0
 
- BIT J                  \ If bit 6 of J is clear, then playerYawAngle is in one
+ BIT J                  \ If bit 6 of J is clear, then sightsYawAngle is in one
  BVC rotm1              \ of these ranges:
                         \
                         \   * 0 to 63 (%00000000 to %00111111)
@@ -2547,20 +2573,20 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So playerYawAngle is in the top-right or bottom-left
+                        \ So sightsYawAngle is in the top-right or bottom-left
                         \ quarter in the above diagram
                         \
                         \ In both cases we jump to rotm1 to set sinYawAngle and
                         \ cosYawAngle
 
                         \ If we get here then bit 6 of J is set, so
-                        \ playerYawAngle is in one of these ranges:
+                        \ sightsYawAngle is in one of these ranges:
                         \
                         \   * 64 to 127 (%01000000 to %01111111)
                         \
                         \   * -64 to -1 (%11000000 to %11111111)
                         \
-                        \ So playerYawAngle is in the bottom-right or top-left
+                        \ So sightsYawAngle is in the bottom-right or top-left
                         \ quarter in the above diagram
                         \
                         \ In both cases we set the variables the other way
@@ -2585,15 +2611,15 @@
                         \ If we get here, then we are set up to calculate the
                         \ following:
                         \
-                        \   * If playerYawAngle is top-right or bottom-left:
+                        \   * If sightsYawAngle is top-right or bottom-left:
                         \
-                        \     sinYawAngle = sin(playerYawAngle)
-                        \     cosYawAngle = cos(playerYawAngle)
+                        \     sinYawAngle = sin(sightsYawAngle)
+                        \     cosYawAngle = cos(sightsYawAngle)
                         \
-                        \   * If playerYawAngle is bottom-right or top-left:
+                        \   * If sightsYawAngle is bottom-right or top-left:
                         \
-                        \     sinYawAngle = cos(playerYawAngle)
-                        \     cosYawAngle = sin(playerYawAngle)
+                        \     sinYawAngle = cos(sightsYawAngle)
+                        \     cosYawAngle = sin(sightsYawAngle)
                         \
                         \ In each case, the calculation gives us the correct
                         \ coordinate, as the second set of results uses angles
@@ -2902,13 +2928,13 @@
                         \ The above calculations were done on an angle that was
                         \ reduced to a quarter-circle, so now we need to add the
                         \ correct signs according to which quarter-circle the
-                        \ original playerYawAngle in (J T) was in
+                        \ original sightsYawAngle in (J T) was in
 
- LDA J                  \ If J is positive then playerYawAngle is positive (as
- BPL rotm7              \ J contains playerYawAngleHi), so jump to rotm7 to skip
+ LDA J                  \ If J is positive then sightsYawAngle is positive (as
+ BPL rotm7              \ J contains sightsYawAngleHi), so jump to rotm7 to skip
                         \ the following
 
-                        \ If we get here then playerYawAngle is negative
+                        \ If we get here then sightsYawAngle is negative
                         \
                         \ The degree system in the Sentinel looks like this:
                         \
@@ -2924,7 +2950,7 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So playerYawAngle is in the left half of the above
+                        \ So sightsYawAngle is in the left half of the above
                         \ diagram, where the x-coordinates are negative, so we
                         \ need to negate the x-coordinate
 
@@ -2939,7 +2965,7 @@
  EOR J                  \ the sign of cosYawAngle is correct
  BPL rotm8
 
-                        \ Bits 6 and 7 of J, i.e. of playerYawAngleHi, are
+                        \ Bits 6 and 7 of J, i.e. of sightsYawAngleHi, are
                         \ different, so the angle is in one of these ranges:
                         \
                         \   * 64 to 127 (%01000000 to %01111111)
@@ -2960,7 +2986,7 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So playerYawAngle is in the bottom half of the above
+                        \ So sightsYawAngle is in the bottom half of the above
                         \ diagram, where the y-coordinates are negative, so we
                         \ need to negate the y-coordinate
 
@@ -6875,9 +6901,9 @@ L1145 = C1144+1
  CMP L0C68
  BCS C1912
  LDA angleLo
- STA playerYawAngleLo
+ STA sightsYawAngleLo
  LDA angleHi
- STA playerYawAngleHi
+ STA sightsYawAngleHi
  LDA #&02
  STA L001E
  LDA L004C
@@ -6892,10 +6918,10 @@ L1145 = C1144+1
 
  JSR sub_C561D
  LDA angleLo
- STA playerPitchAngleLo
+ STA sightsPitchAngleLo
  STA T
  LDA angleHi
- STA playerPitchAngleHi
+ STA sightsPitchAngleHi
  JSR sub_C1C43
  JSR sub_C1CCC
  ROL L0C56
@@ -7606,12 +7632,12 @@ L1145 = C1144+1
  LSR U
  ROR A
  CLC
- STA playerYawAngleLo
+ STA sightsYawAngleLo
  LDA U
  ADC objectYawAngle,X
  SEC
  SBC #&0A
- STA playerYawAngleHi
+ STA sightsYawAngleHi
  LDA L0CC7
  SEC
  SBC #&05
@@ -7627,13 +7653,13 @@ L1145 = C1144+1
  ROR A
  CLC
  ADC #&20
- STA playerPitchAngleLo
+ STA sightsPitchAngleLo
  STA T
  LDA U
  ADC objectPitchAngle,X
  CLC
  ADC #&03
- STA playerPitchAngleHi
+ STA sightsPitchAngleHi
 
 \ ******************************************************************************
 \
@@ -7647,44 +7673,55 @@ L1145 = C1144+1
 .sub_C1C43
 
  JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
-                        \ player's pitch angle into the global 3D coordinate
-                        \ system, as follows:
+                        \ pitch angle for the sights into the global 3D
+                        \ coordinate system, as follows:
                         \
-                        \   [ cosPitchAngle   0   -sinPitchAngle ]
-                        \   [       0         1          0       ]
-                        \   [ sinPitchAngle   0    cosPitchAngle ]
+                        \   [ cosSightsPitchAngle   0   -sinSightsPitchAngle ]
+                        \   [          0            1             0          ]
+                        \   [ sinSightsPitchAngle   0    cosSightsPitchAngle ]
+                        \
+                        \ Note that because GetRotationMatrix is copied from
+                        \ Revs, where we only rotate through the yaw angle,
+                        \ the matrix values are actually returned in the various
+                        \ yawAngle variables, but let's pretend they are
+                        \ returned as above
 
- LDY #1
+ LDY #1                 \ Set (A X) = cosSightsPitchAngle / 16
  JSR DivideBy16
- STA L0033
- STX L0032
 
- LDY #0
+ STA cosSightsPitchHi   \ Set (cosSightsPitchHi cosSightsPitchLo)
+ STX cosSightsPitchLo   \                             = cosSightsPitchAngle / 16
+
+ LDY #0                 \ Set (A X) = sinSightsPitchAngle / 16
  JSR DivideBy16
- STA L0030
- STX L002D
 
- LDA playerYawAngleLo   \ Set (A T) = (playerYawAngleHi playerYawAngleLo)
+ STA sinSightsPitchHi   \ Set (sinSightsPitchHi sinSightsPitchLo)
+ STX sinSightsPitchLo   \                             = sinSightsPitchAngle / 16
+
+ LDA sightsYawAngleLo   \ Set (A T) = (sightsYawAngleHi sightsYawAngleLo)
  STA T
- LDA playerYawAngleHi
+ LDA sightsYawAngleHi
 
  JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
                         \ player's yaw angle into the global 3D coordinate
                         \ system, as follows:
                         \
-                        \   [ cosYawAngle   0   -sinYawAngle ]
-                        \   [      0        1         0      ]
-                        \   [ sinYawAngle   0    cosYawAngle ]
+                        \   [ cosSightsYawAngle   0   -sinSightsYawAngle ]
+                        \   [         0           1            0         ]
+                        \   [ sinSightsYawAngle   0    cosSightsYawAngle ]
 
  LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
  LDX #2                 \ the following:
  JSR MultiplyCoords     \
-                        \    (L002E L0031) = (L0033 L0032) * cosYawAngle
+                        \   (L002E L0031)
+                        \       = cosSightsPitchAngle * cosSightsYawAngle / 16
+
 
  LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
  LDX #0                 \ calculate the following:
                         \
-                        \    (L002C L002F) = (L0033 L0032) * sinYawAngle
+                        \   (L002C L002F)
+                        \        = cosSightsPitchAngle * sinSightsYawAngle / 16
                         \
                         \ and return from the subroutine using a tail call
 
@@ -7698,13 +7735,31 @@ L1145 = C1144+1
 \ ------------------------------------------------------------------------------
 \
 \ This routine multiplies two 16-bit values and stores the result according to
-\ the arguments.
+\ the arguments, as follows.
+\
+\ When Y = 0, calculate:
+\
+\   (cosSightsPitchHi cosSightsPitchLo) * (sinYawAngleHi sinYawAngleLo)
+\
+\ i.e. cosSightsPitch * sinYawAngle
+\
+\ When Y = 1, calculate:
+\
+\   (cosSightsPitchHi cosSightsPitchLo) * (cosYawAngleHi cosYawAngleLo)
+\
+\ i.e. cosSightsPitch * cosYawAngle
+\
+\ When X = 0, store the result in (L002C L002F).
+\
+\ When X = 2, store the result in (L002E L0031).
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   (L0033 L0032)       The 16-bit signed number to multiply ???
+\   cosSightsPitchHi    The 16-bit signed number to multiply (high byte)
+\
+\   cosSightsPitchLo    The 16-bit signed number to multiply (low byte)
 \
 \   Y                   Offset of the 16-bit sign-magnitude value to multiply:
 \
@@ -7726,9 +7781,9 @@ L1145 = C1144+1
  STA H                  \ (in bit 7), so setting H  0 ensures that that the
                         \ result is positive
 
- LDA L0032              \ Set (QQ PP) = (L0033 L0032) ???
+ LDA cosSightsPitchLo   \ Set (QQ PP) = (cosSightsPitchHi cosSightsPitchLo)
  STA PP                 \
- LDA L0033              \ where (QQ PP) is a 16-bit signed number
+ LDA cosSightsPitchHi   \ where (QQ PP) is a 16-bit signed number
  STA QQ
 
  LDA sinYawAngleLo,Y    \ Set (SS RR) to the 16-bit sign-magnitude number
@@ -7752,33 +7807,64 @@ L1145 = C1144+1
 \       Name: DivideBy16
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: ???
+\    Summary: Divide a 16-bit sign-magnitude number by 16
 \
+\ ------------------------------------------------------------------------------
+\
+\ This routine divides a 16-bit sign-magnitude number by 16 and returns the
+\ result as a signed 16-bit number.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   Offset of the 16-bit sign-magnitude number to divide:
+\
+\                         * 0 = sinYawAngle
+\
+\                         * 1 = cosYawAngle
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   (A X)               The 16-bit signed number containing the result
+
 \ ******************************************************************************
 
 .DivideBy16
 
- LDA sinYawAngleLo,Y
- STA T
+ LDA sinYawAngleLo,Y    \ Set (A T) to the 16-bit sign-magnitude number pointed
+ STA T                  \ to by Y
  LDA sinYawAngleHi,Y
- LSR A
- ROR T
- PHP
- LSR A
- ROR T
- LSR A
- ROR T
- LSR A
- ROR T
- PLP
- BCC C1CA7
 
- JSR Negate16Bit        \ Set (A T) = -(A T)
+ LSR A                  \ Set (A T) = (A T) / 16
+ ROR T                  \
+ PHP                    \ We store bit 0 of the original 16-bit sign-magnitude
+ LSR A                  \ number on the stack in the C flag (as it gets rotated
+ ROR T                  \ out from bit 0 on the first ROR T)
+ LSR A
+ ROR T
+ LSR A
+ ROR T
 
-.C1CA7
+ PLP                    \ We stored the sign bit from the original 16-bit
+                        \ sign-magnitude number on the stack, so fetch it into
+                        \ the C flag
 
- LDX T
- RTS
+ BCC divi1              \ If the sign bit was 0 then the original number was
+                        \ positivem so skip the following
+
+ JSR Negate16Bit        \ The original 16-bit sign-magnitude number was negative,
+                        \ so call Negate16Bit to negate the result as follows:
+                        \
+                        \   (A T) = -(A T)
+
+.divi1
+
+ LDX T                  \ Set (A X) = (A T)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7870,7 +7956,7 @@ L1145 = C1144+1
  LDA L0C6E
  ORA L0C67
  BMI C1D21
- LDA L0030
+ LDA sinSightsPitchHi
  BPL C1D33
 
 .C1D21
@@ -9478,7 +9564,7 @@ L1145 = C1144+1
 
  LDA #&01
  STA L002C
- STA L002D
+ STA sinSightsPitchLo
  LDA tileAltitude
  CLC
  ADC L0004
@@ -9581,7 +9667,7 @@ L1145 = C1144+1
 .C2333
 
  LDA #0
- STA L002D
+ STA sinSightsPitchLo
  BEQ sub_C230D
 
 .C2339
@@ -9608,7 +9694,7 @@ L1145 = C1144+1
  SBC #&00
  STA Q
  LDA #0
- STA L002D
+ STA sinSightsPitchLo
  LDA #&F8
  BNE C23D8
 
@@ -9968,8 +10054,8 @@ L23E3 = C23E2+1
 
  ASL L002C
  ROL L002F
- ASL L002D
- ROL L0030
+ ASL sinSightsPitchLo
+ ROL sinSightsPitchHi
  ASL L002E
  ROL L0031
  LSR L0017
@@ -10279,7 +10365,7 @@ L23E3 = C23E2+1
  LDA #&40
  STA L003C
  LDA #&0C
- STA playerYawAngleLo
+ STA sightsYawAngleLo
  LDA objectYawAngle,X
  CLC
  ADC #&20
@@ -10354,11 +10440,11 @@ L23E3 = C23E2+1
  LDA #&1F
  STA zTile
  LDA L0C48
- STA L0032
+ STA cosSightsPitchLo
  LDA #0
  STA L0005
  JSR sub_C27AF
- LDA L0032
+ LDA cosSightsPitchLo
  STA L0C48
 
 .C26B6
@@ -10366,9 +10452,9 @@ L23E3 = C23E2+1
  LDA L0005
  EOR #&20
  STA L0005
- LDA L0032
+ LDA cosSightsPitchLo
  STA L0037
- LDA L0033
+ LDA cosSightsPitchHi
  STA L0038
  JSR sub_C355A
  DEC zTile
@@ -10386,7 +10472,7 @@ L23E3 = C23E2+1
 .C26D6
 
  JSR sub_C27AF
- LDY L0032
+ LDY cosSightsPitchLo
  CPY L0037
  BEQ C2707
  BCC C26EB
@@ -10411,7 +10497,7 @@ L23E3 = C23E2+1
 
  DEY
  JSR sub_C2815
- CPY L0032
+ CPY cosSightsPitchLo
  BNE P26F5
  STY L0037
  DEC zTile
@@ -10421,7 +10507,7 @@ L23E3 = C23E2+1
 
 .C2707
 
- LDY L0033
+ LDY cosSightsPitchHi
  CPY L0038
  BEQ C2735
  BCS C2719
@@ -10446,7 +10532,7 @@ L23E3 = C23E2+1
 
  INY
  JSR sub_C2815
- CPY L0033
+ CPY cosSightsPitchHi
  BNE P2723
  STY L0038
  DEC zTile
@@ -10555,7 +10641,7 @@ L23E3 = C23E2+1
 
 .sub_C27AF
 
- LDY L0032
+ LDY cosSightsPitchLo
  JSR sub_C2815
  BEQ C27E9
  CMP #&80
@@ -10564,7 +10650,7 @@ L23E3 = C23E2+1
 .P27BA
 
  LDA xTile
- STA L0032
+ STA cosSightsPitchLo
  JSR sub_C280E
  BCS C27D2
  CMP #&81
@@ -10581,13 +10667,13 @@ L23E3 = C23E2+1
 .C27D2
 
  LDA xTile
- STA L0033
+ STA cosSightsPitchHi
  RTS
 
 .C27D7
 
  LDA xTile
- STA L0033
+ STA cosSightsPitchHi
  JSR sub_C2806
  BCS C27FF
  CMP #&80
@@ -10604,8 +10690,8 @@ L23E3 = C23E2+1
 .C27F0
 
  LDA xTile
- STA L0033
- LDA L0032
+ STA cosSightsPitchHi
+ LDA cosSightsPitchLo
  STA xTile
 
 .P27F8
@@ -10620,7 +10706,7 @@ L23E3 = C23E2+1
 .C27FF
 
  LDA xTile
- STA L0032
+ STA cosSightsPitchLo
  RTS
 
 .C2804
@@ -13048,7 +13134,7 @@ L23E3 = C23E2+1
  STA L001E
  LDA #&FF
  STA L0004
- STA L0030
+ STA sinSightsPitchHi
  STA L007F
  LDY #0
 
@@ -13113,11 +13199,11 @@ L23E3 = C23E2+1
  LDA L000C
  BEQ C2E96
  LDA L0AE0,Y
- STA playerYawAngleHi
+ STA sightsYawAngleHi
  LDA L0A80,Y
  STA L001A
  LDA L0AE0,X
- STA playerPitchAngleLo
+ STA sightsPitchAngleLo
  LDA L0A80,X
  STA L0016
  LDA L54A0,Y
@@ -13151,7 +13237,7 @@ L23E3 = C23E2+1
  BCS C2E88
  STY L0004
  STY tileAltitude
- LDA L0030
+ LDA sinSightsPitchHi
  STA L5A00,Y
  LDA L0031
  STA L5B00,Y
@@ -13182,9 +13268,9 @@ L23E3 = C23E2+1
 
 .C2E9F
 
- CMP L0030
+ CMP sinSightsPitchHi
  BCS C2EA5
- STA L0030
+ STA sinSightsPitchHi
 
 .C2EA5
 
@@ -13210,7 +13296,7 @@ L23E3 = C23E2+1
 
 .sub_C2EAE
 
- LDA playerPitchAngleLo
+ LDA sightsPitchAngleLo
  BMI C2EC2
  BNE CRE25
  LDA L0016
@@ -13231,7 +13317,7 @@ L23E3 = C23E2+1
 
 .C2EC6
 
- LDA playerYawAngleHi
+ LDA sightsYawAngleHi
  BMI CRE25
  BNE C2EDA
  LDA L001A
@@ -13289,7 +13375,7 @@ L23E3 = C23E2+1
  LSR A
  EOR #&FF
  CLC
- LDX playerYawAngleHi
+ LDX sightsYawAngleHi
  BNE C2F80
  LDX L0018
  JMP C2F29
@@ -13361,7 +13447,7 @@ L2F2B = C2F29+2
  LSR A
  EOR #&FF
  CLC
- LDX playerYawAngleHi
+ LDX sightsYawAngleHi
  BNE C2FA6
  LDX L0018
  JMP C2F77
@@ -13456,7 +13542,7 @@ L2F79 = C2F77+2
 
  STX L000E
  LDA #0
- STA playerPitchAngleHi
+ STA sightsPitchAngleHi
  LDA L54A0,Y
  SEC
  SBC L54A0,X
@@ -13478,7 +13564,7 @@ L2F79 = C2F77+2
  LSR U
  ROR T
  SEC
- ROL playerPitchAngleHi
+ ROL sightsPitchAngleHi
  LSR A
  BNE C2FEC
 
@@ -13503,10 +13589,10 @@ L2F79 = C2F77+2
  LDA L0B40,Y
  STA L0042
  LDA L0AE0,Y
- STA playerPitchAngleLo
+ STA sightsPitchAngleLo
  LDA L0A80,Y
  STA L0016
- LDA playerPitchAngleHi
+ LDA sightsPitchAngleHi
  BEQ C3054
 
 .C302B
@@ -13516,10 +13602,10 @@ L2F79 = C2F77+2
  SEC
  SBC L000C
  STA L0016
- LDA playerPitchAngleLo
- STA playerYawAngleHi
+ LDA sightsPitchAngleLo
+ STA sightsYawAngleHi
  SBC #&00
- STA playerPitchAngleLo
+ STA sightsPitchAngleLo
  LDA L0039
  STA L0018
  SEC
@@ -13530,15 +13616,15 @@ L2F79 = C2F77+2
  SBC L0043
  STA L0042
  JSR sub_C2EAE
- DEC playerPitchAngleHi
+ DEC sightsPitchAngleHi
  BNE C302B
 
 .C3054
 
  LDA L0016
  STA L001A
- LDA playerPitchAngleLo
- STA playerYawAngleHi
+ LDA sightsPitchAngleLo
+ STA sightsYawAngleHi
  LDA L0039
  STA L0018
  LDA L0042
@@ -13547,7 +13633,7 @@ L2F79 = C2F77+2
  LDA L0A80,X
  STA L0016
  LDA L0AE0,X
- STA playerPitchAngleLo
+ STA sightsPitchAngleLo
  LDA L54A0,X
  STA L0039
  LDA L0B40,X
@@ -13594,7 +13680,7 @@ L2F79 = C2F77+2
  BCS C3112
  STA L30EB
  STX C30E3
- LDA playerYawAngleHi
+ LDA sightsYawAngleHi
  BEQ C30C3
  INY
 
@@ -13644,7 +13730,7 @@ L30EB = C30E9+2
 
 .C30F8
 
- DEC playerYawAngleHi
+ DEC sightsYawAngleHi
  BPL C30FF
  JMP CRE26
 
@@ -13665,7 +13751,7 @@ L30EB = C30E9+2
 
  STA L314A
  STX C3137
- LDA playerYawAngleHi
+ LDA sightsYawAngleHi
  BEQ C311D
  INY
 
@@ -13712,7 +13798,7 @@ L314A = C3148+2
 
 .C3152
 
- DEC playerYawAngleHi
+ DEC sightsYawAngleHi
  BPL C3159
  JMP CRE26
 
@@ -13754,7 +13840,7 @@ L314A = C3148+2
 .sub_C316E
 
  PHA
- LDA playerYawAngleHi
+ LDA sightsYawAngleHi
  BEQ C3177
  LDA #&2C
  BNE C318C
@@ -19728,7 +19814,13 @@ L314A = C3148+2
  LDA L005A
  CLC
  ADC L4AE0,Y
- JSR GetSineAndCosine
+
+ JSR GetSineAndCosine   \ Calculate the following:
+                        \
+                        \   sinA = |sin(A)|
+                        \
+                        \   cosA = |cos(A)|
+
  LDY L004E
  LDA L4D60,Y
  STA U
@@ -19897,7 +19989,7 @@ L314A = C3148+2
  LDA L4FE0,Y
  STA L003C
  LDA L5120,Y
- STA playerYawAngleLo
+ STA sightsYawAngleLo
  JSR sub_C2A79
  LDY L004E
 
@@ -19918,7 +20010,7 @@ L314A = C3148+2
  LDA #&40
  STA L003C
  LDA #&0C
- STA playerYawAngleLo
+ STA sightsYawAngleLo
  LSR L0C7A
  LDY L006F
  RTS
