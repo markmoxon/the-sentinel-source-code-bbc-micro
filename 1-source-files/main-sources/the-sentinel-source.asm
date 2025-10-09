@@ -1798,7 +1798,7 @@
 
  EQUB &80               \ ???
 
-.L0CE8
+.keyLogger
 
  EQUB &80               \ ???
 
@@ -4379,7 +4379,7 @@ L1145 = C1144+1
 .C11C5
 
  LDY #&0E
- JSR sub_C1353
+ JSR ScanForGameKeys
  BPL C11DD
  LDA #&6B
  STA L0CC8
@@ -4400,7 +4400,7 @@ L1145 = C1144+1
 
 .C11ED
 
- LDA L0CE8
+ LDA keyLogger
  BPL C11F7
  LDA L0CEA
  BMI C1208
@@ -4449,9 +4449,9 @@ L1145 = C1144+1
 
  SEI
  LDY #&03
- JSR sub_C1353
+ JSR ScanForGameKeys
  LDA L0C1D
- CMP L0CE8
+ CMP keyLogger
  BEQ C1220
  CMP L0CEA
 
@@ -4815,46 +4815,75 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1353
+\       Name: ScanForGameKeys
 \       Type: Subroutine
-\   Category: ???
+\   Category: Keyboard
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   The offset within gameKeys where we start the scan, with
+\                       the scan working towards the start of gameKeys
 \
 \ ******************************************************************************
 
-.sub_C1353
+.ScanForGameKeys
 
- LDX #&03
- LDA #&80
+ LDX #3                 \ We start by resetting the key logger, so set a loop
+                        \ counter in X for resetting all four entries
 
-.P1357
+ LDA #%10000000         \ Set A = %10000000 to reset all four entries, as the
+                        \ set bit 7 indicates an empty entry in the logger
 
- STA L0CE8,X
- DEX
- BPL P1357
+.gkey1
 
-.P135D
+ STA keyLogger,X        \ Reset the X-th entry in the key logger
 
- LDX gameKeys,Y         \ Fetch the internal key number for game key Y
+ DEX                    \ Decrement the loop counter
+
+ BPL gkey1              \ Loop back until we have reset all four entries
+
+                        \ We now work our way backwards through the gameKey
+                        \ table, starting at offset Y, and checking to see if
+                        \ each key is being pressed and logging the results in
+                        \ the key logger
+
+.gkey2
+
+ LDX gameKeys,Y         \ Set X to the internal key number for the Y-th key in
+                        \ the gameKey table
 
  JSR ScanKeyboard       \ Scan the keyboard to see if this key is being pressed
 
- BNE C1373
- LDA L138C,Y
- AND #&03
- TAX
- LDA L138C,Y
- LSR A
- LSR A
- STA L0CE8,X
+ BNE gkey3              \ If the key in X is not being pressed, jump to gkey3 to
+                        \ move on to the next key in the table
 
-.C1373
+ LDA keyLoggerConfig,Y  \ Set X to the key logger position where we should store
+ AND #3                 \ this key press, which is in bits 0 and 1 of the
+ TAX                    \ corresponding entry in the keyLoggerConfig table
 
- DEY
- BPL P135D
- LDA L0CE8
- AND L0CEA
- RTS
+ LDA keyLoggerConfig,Y  \ Set A to the value to store in the key logger for this
+ LSR A                  \ key, which is in bits 2 to 7 of the corresponding
+ LSR A                  \ entry in the keyLoggerConfig table
+
+ STA keyLogger,X        \ Store the configured value in the configured position
+                        \ for this key press
+
+.gkey3
+
+ DEY                    \ Decrement the index in Y to move on to the next key
+                        \ in the gameKey table
+
+ BPL gkey2              \ Loop back until we have checked all the keys up to the
+                        \ start of the gameKey table
+
+ LDA keyLogger          \ Set A to the entry at the start of the key logger
+
+ AND L0CEA              \ ???
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4890,17 +4919,40 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L138C
+\       Name: keyLoggerConfig
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: The configuration table for storing keys the key logger
+\
+\ ------------------------------------------------------------------------------
+\
+\ Each game key has an entry in the keyLoggerConfig table that corresponds with
+\ the internal key number in the gameKeys table.
+\
+\ Bits 0 and 1 determine the position in the four-byte key logger where we
+\ should record each key press (position numbers are 0 to 3).
+\
+\ Bits 2 to 7 contain the value to store in the key logger at that position.
 \
 \ ******************************************************************************
 
-.L138C
+.keyLoggerConfig
 
- EQUB &04, &00, &0A, &0E, &81, &85, &01, &09
- EQUB &0D, &89, &03, &07, &0B, &0F, &8D
+ EQUB 0 +  1 << 2       \ Put  1 in logger position 0 for "S"
+ EQUB 0 +  0 << 2       \ Put  0 in logger position 0 for "D"
+ EQUB 2 +  2 << 2       \ Put  2 in logger position 2 for "L"
+ EQUB 2 +  3 << 2       \ Put  3 in logger position 2 for ","
+ EQUB 1 + 32 << 2       \ Put 32 in logger position 1 for "A"
+ EQUB 1 + 33 << 2       \ Put 33 in logger position 1 for "Q"
+ EQUB 1 +  0 << 2       \ Put  0 in logger position 1 for "R"
+ EQUB 1 +  2 << 2       \ Put  2 in logger position 1 for "T"
+ EQUB 1 +  3 << 2       \ Put  3 in logger position 1 for "B"
+ EQUB 1 + 34 << 2       \ Put 34 in logger position 1 for "H"
+ EQUB 3 +  0 << 2       \ Put  0 in logger position 3 for "7"
+ EQUB 3 +  1 << 2       \ Put  1 in logger position 3 for "8"
+ EQUB 3 +  2 << 2       \ Put  2 in logger position 3 for "COPY"
+ EQUB 3 +  3 << 2       \ Put  3 in logger position 3 for "DELETE"
+ EQUB 1 + 35 << 2       \ Put 35 in logger position 1 for "U"
 
 \ ******************************************************************************
 \
@@ -16046,13 +16098,13 @@ L314A = C3148+2
 .C37B1
 
  LDY #&0D
- JSR sub_C1353
+ JSR ScanForGameKeys
  LDX #&02
  LDA #&80
 
 .P37BA
 
- STA L0CE8,X
+ STA keyLogger,X
  DEX
  BPL P37BA
  JMP C37CB
@@ -16500,7 +16552,7 @@ L314A = C3148+2
 
 .sub_C3934
 
- LDX L0CE8
+ LDX keyLogger
  BMI CRE35
  BNE C3953
  LDA L0CC6

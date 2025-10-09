@@ -2631,9 +2631,9 @@
      0CC4   00
 .L0CC5
      0CC5   00
-.L0CC6
+.xSights
      0CC6   00
-.L0CC7
+.ySights
      0CC7   00
 .L0CC8
      0CC8   00
@@ -2689,7 +2689,7 @@
      0CE6   80
 .L0CE7
      0CE7   80
-.L0CE8
+.keyLogger
      0CE8   80
 .L0CE9
      0CE9   80
@@ -3604,14 +3604,14 @@
      134D   A9 5F      LDA #&5F
      134F   8D C7 0C   STA &0CC7
      1352   60         RTS
-.sub_C1353
+.ScanForGameKeys
      1353   A2 03      LDX #&03
      1355   A9 80      LDA #&80
-.P1357
+.gkey1
      1357   9D E8 0C   STA &0CE8,X
      135A   CA         DEX
      135B   10 FA      BPL &1357
-.P135D
+.gkey2
      135D   BE 7D 13   LDX &137D,Y
      1360   20 62 0F   JSR &0F62
      1363   D0 0E      BNE &1373
@@ -3622,7 +3622,7 @@
      136E   4A         LSR A
      136F   4A         LSR A
      1370   9D E8 0C   STA &0CE8,X
-.C1373
+.gkey3
      1373   88         DEY
      1374   10 E7      BPL &135D
      1376   AD E8 0C   LDA &0CE8
@@ -3644,7 +3644,7 @@
      1389   96
      138A   A6
      138B   CA
-.L138C
+.keyLoggerConfig
      138C   04
      138D   00
      138E   0A
