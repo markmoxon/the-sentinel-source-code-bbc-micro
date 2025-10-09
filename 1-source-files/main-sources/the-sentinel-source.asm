@@ -1704,11 +1704,11 @@
 
 .xSights
 
- EQUB 0                 \ The screen x-coordinate of the sights
+ EQUB 0                 \ The x-coordinate of the sights
 
 .ySights
 
- EQUB 0                 \ The screen y-coordinate of the sights
+ EQUB 0                 \ The y-coordinate of the sights
 
 .L0CC8
 
@@ -7533,7 +7533,9 @@ L1145 = C1144+1
 
 .C1B1C
 
- LDX L006E
+ LDX L006E              \ ??? This is value passed to sub_C1BFF, is it the
+                        \ player slot ???
+
  CMP #&23
  BNE C1B33
  ASL L0C51
@@ -7695,50 +7697,92 @@ L1145 = C1144+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The slot number of an object ??? Is this the player?
+\
 \ ******************************************************************************
 
 .sub_C1BFF
 
- LDA xSights              \ Set U = xSights
- STA U
-
- LDA #0
- LSR U
- ROR A
- LSR U
- ROR A
- LSR U
- ROR A
-
- CLC
- STA sightsYawAngleLo
- LDA U
- ADC objectYawAngle,X
- SEC
- SBC #&0A
- STA sightsYawAngleHi
- LDA ySights
- SEC
- SBC #&05
+ LDA xSights            \ Set (U A) = xSights * 256
  STA U
  LDA #0
+
+ LSR U                  \ Set (U A) = (U A) / 8
+ ROR A                  \           = xSights * 32
+ LSR U
+ ROR A
+ LSR U
+ ROR A
+                        \ We now calculate the following:
+                        \
+                        \   (U A) + (objectYawAngle,X 0) - (10 0)
+                        \
+                        \ and store it in (sightsYawAngleHi sightsYawAngleLo)
+
+ CLC                    \ Clear the C flag for the following 
+
+ STA sightsYawAngleLo   \ Store the low byte of the calculation (which we know
+                        \ will be A) in sightsYawAngleLo
+
+ LDA U                  \ Calculate the high byte of the calculation as
+ ADC objectYawAngle,X   \ follows:
+ SEC                    \
+ SBC #10                \   U + objectYawAngle,X - 10
+ STA sightsYawAngleHi   \
+                        \ and store it in sightsYawAngleHi
+
+                        \ So (sightsYawAngleHi sightsYawAngleLo) is now equal to
+                        \ the following:
+                        \
+                        \   (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+
+ LDA ySights            \ Set (U A) = (ySights - 5) * 256
+ SEC
+ SBC #5
+ STA U
+ LDA #0
+
+ LSR U                  \ Set (U A) = (U A) / 16
+ ROR A                  \           = (ySights - 5) * 16
  LSR U
  ROR A
  LSR U
  ROR A
  LSR U
  ROR A
- LSR U
- ROR A
- CLC
- ADC #&20
+
+                        \ We now calculate the following:
+                        \
+                        \   (U A) + (objectPitchAngle,X 0) + (3 32)
+                        \
+                        \ and store it in both (A T) and in
+                        \ (sightsPitchAngleHi sightsPitchAngleLo)
+
+ CLC                    \ Calculate the low byte and store it in both T and
+ ADC #32                \ sightsPitchAngleLo
  STA sightsPitchAngleLo
  STA T
- LDA U
- ADC objectPitchAngle,X
+
+ LDA U                  \ Calculate the high byte, keep it in A and store it in
+ ADC objectPitchAngle,X \ sightsPitchAngleHi
  CLC
- ADC #&03
+ ADC #3
  STA sightsPitchAngleHi
+
+                        \ So by this point we have the following:
+                        \
+                        \ (sightsYawAngleHi sightsYawAngleLo)
+                        \   = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+                        \
+                        \ (sightsPitchAngleHi sightsPitchAngleLo)
+                        \   = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
+                        \
+                        \ We now fall through into sub_C1C43 to convert these
+                        \ angles into an (x, y, z) vector in the 3D world ???
 
 \ ******************************************************************************
 \
