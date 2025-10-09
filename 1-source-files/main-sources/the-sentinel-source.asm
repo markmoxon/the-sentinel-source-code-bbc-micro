@@ -659,13 +659,15 @@
 
  SKIP 1                 \ ???
 
-.L008E
+.sinA
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The result of the sincos(A) calculation in the
+                        \ GetSineAndCosine routine
 
-.L008F
+.cosA
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The result of the cos(A) calculation in the
+                        \ GetSineAndCosine routine
 
 \ ******************************************************************************
 \
@@ -1024,8 +1026,8 @@
 
 .objectYawAngle
 
- EQUB &00, &CE, &F8, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &CE, &F8, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &12, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1197,8 +1199,8 @@
 
 .L0BA0
 
- EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB
- EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7
+ EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB        \ These values are workspace
+ EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7        \ noise and have no meaning
  EQUB &5E, &D3, &50, &C3, &35, &AE, &1D, &8A
  EQUB &FF, &6A, &D5, &44, &AC, &12, &77, &E2
  EQUB &1D, &A4, &2B, &B0, &35, &B8, &3B, &BC
@@ -3189,55 +3191,368 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C0F70
+\       Name: GetSineAndCosine
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: ???
+\    Summary: Calculate the absolute sine and the cosine of an angle
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A T)               The angle, representing a full circle with the range
+\                       A = 0 to 255, and T representing the fractional part
+\                       (though only bit 7 of T is used)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   sinA                The value of |sin(A)|
+\
+\   cosA                The value of |cos(A)|
 \
 \ ******************************************************************************
 
-.sub_C0F70
+.GetSineAndCosine
 
- BPL C0F74
- EOR #&40
+ BPL scos1              \ If A is in the range 128 to 255, flip bit 6
+ EOR #%01000000         \
+                        \ The degree system in the Sentinel looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of player
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ Bit 7 is set in the left half, so this operation only
+                        \ affects angles in that half
+                        \
+                        \ In the left half, bit 6 is as follows:
+                        \
+                        \   * -1 to -64 (%11111111 to %11000000)
+                        \
+                        \   * -65 to -128 (%10111111 to %10000000)
+                        \
+                        \ so flipping bit 6 effectively swaps the two quarters
+                        \ from this:
+                        \
+                        \            0
+                        \      -32   |
+                        \         \  |
+                        \          \ |
+                        \           \|
+                        \   -64 -----+
+                        \           /|
+                        \          / |
+                        \         /  |
+                        \      -96   |
+                        \           128
+                        \
+                        \ into this:
+                        \
+                        \           -64
+                        \      -96   |
+                        \         \  |
+                        \          \ |
+                        \           \|
+                        \   128 -----+
+                        \
+                        \ and this:
+                        \
+                        \     0 -----+
+                        \           /|
+                        \          / |
+                        \         /  |
+                        \      -32   |
+                        \           -64
+                        \
+                        \ by doing these conversions:
+                        \
+                        \   * -1 to -64 (%11111111 to %11000000)
+                        \     -> -65 to -128 (%10111111 to %10000000)
+                        \
+                        \   * -65 to -128 (%10111111 to %10000000)
+                        \   * -1 to -64 (%11111111 to %11000000)
+                        \
+                        \ This is the same as rotating the angle through 90
+                        \ degrees, which is the same as adding PI/2 to the angle
+                        \
+                        \ It's a trigonometric identity that:
+                        \
+                        \   cos(x) = sin(x + PI/2)
+                        \
+                        \ so this shifts the angle so that when we fetch from
+                        \ sine lookup table, we are actually getting the cosine
+                        \
+                        \ We use this fact below to determine which result to
+                        \ return in sinA and cosA after we have done the lookups
+                        \ from the sine table
 
-.C0F74
+.scos1
 
- STA H
- ASL T
- ROL A
- AND #&7F
- TAX
- EOR #&7F
- CLC
- ADC #&01
- BPL C0F85
- LDA #&7F
+ STA H                  \ Store the updated angle argument in H so we can fetch
+                        \ bits 6 and 7 from the angle below
 
-.C0F85
+ ASL T                  \ Set (A T) = (A T) << 1
+ ROL A                  \
+                        \ The original argument represents a full circle in the
+                        \ range A = 0 to 255, so this reduces that range to a
+                        \ half circle with A = 0 to 255, as bit 7 is shifted out
+                        \ of the top
+                        \
+                        \ This effectively drops the left half of the angle
+                        \ circle, to leave us with an angle in this range:
+                        \
+                        \            0
+                        \            |   +64
+                        \            |  /
+                        \            | /
+                        \            |/
+                        \            +----- +128
+                        \            |\
+                        \            | \
+                        \            |  \
+                        \            |   +192
+                        \           256
 
- TAY
- LDA sin,X
- LDX sin,Y
- BIT H
- BMI C0F97
- BVS C0F99
+ AND #%01111111         \ Clear bit 6 of the result, so A represents a quarter
+                        \ circle in the range 0 to 127
+                        \
+                        \ This effectively drops the bottom-right quarter of the
+                        \ angle circle, to leave us with an angle in this range:
+                        \
+                        \            0
+                        \            |   +64
+                        \            |  /
+                        \            | /
+                        \            |/
+                        \            +----- +127
+                        \
+                        \ So by this point we have discarded bits 6 and 7 of the
+                        \ original angle and scaled the angle to be in the range
+                        \ 0 to 127, so we can use the result as an index into
+                        \ the sine table (which contains 128 values)
+                        \
+                        \ The sine table only covers angles in the first quarter
+                        \ of the circle, which means the result of looking up a
+                        \ value from the sine table will always be positive, so
+                        \ this will return the absolute value, i.e. |sin(x)|
 
-.P0F92
+ TAX                    \ Copy A into X so we can use it as an index to fetch
+                        \ the sine of our angle
 
- STA L008E
- STX L008F
- RTS
+ EOR #%01111111         \ Negate A using two's complement, leaving bit 7 clear
+ CLC                    \
+ ADC #1                 \ Because A was in the range 0 to 127 before being
+                        \ negated, this is effectively the same as subtracting
+                        \ A from 127, like this:
+                        \
+                        \   A = 127 - X
 
-.C0F97
+ BPL scos2              \ If A > 127 then set A = 127, so A is capped to the
+ LDA #127               \ range 0 to 127 and is suitable for looking up the
+                        \ result from the sine table
 
- BVS P0F92
+.scos2
 
-.C0F99
+ TAY                    \ Copy A into Y so we can use it as an index into the
+                        \ sine table, so we have the following:
+                        \
+                        \   Y = 127 - X
 
- STA L008F
- STX L008E
- RTS
+                        \ Because our angle is in the first quadrant where 127
+                        \ represents a quarter circle of 90 degrees or PI/2
+                        \ radians, we can now look up the sine and cosine as
+                        \ follows:
+
+ LDA sin,X              \ Set A = sin(X)
+
+ LDX sin,Y              \ Set X = sin(Y)
+                        \       = sin(127 - X)
+                        \       = sin(PI/2 - X)
+                        \
+                        \ And because X is in the range 0 to PI/2, we have:
+                        \
+                        \   X = sin(PI/2 - X)
+                        \     = cos(X)
+
+                        \ Because the sine table only contains positive values
+                        \ from the first quadrant, this means we have the
+                        \ following:
+                        \
+                        \   A = |sin(X)|
+                        \
+                        \   X = |cos(X)|
+                        \
+                        \ We now need to analyse the original angle argument A
+                        \ (via bits 6 and 7 of the angle in H) to make sure we
+                        \ return the correct result
+                        \
+                        \ Here's the angle system again:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of player
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ If our original angle argument A is the top-right
+                        \ quadrant then the result above will be correct
+                        \
+                        \ If our original angle argument A is the bottom-right
+                        \ quadrant then we can apply the following trigonometric
+                        \ identities:
+                        \
+                        \   sin(A) = sin(X + PI/2)
+                        \          = cos(X)
+                        \
+                        \   cos(A) = cos(X + PI/2)
+                        \          = -sin(X)
+                        \
+                        \ So for the original argument A, we have:
+                        \
+                        \   |sin(A)| = |cos(X)|
+                        \
+                        \   |cos(A)| = |-sin(X)|
+                        \            = |sin(X)|
+                        \
+                        \ So it follows that for this angle range, we need to
+                        \ return the current value of X for the sine result and
+                        \ the current value of A for the cosine result
+                        \
+                        \ If our original angle argument A is the bottom-left
+                        \ quadrant then we can apply the following trigonometric
+                        \ identities:
+                        \
+                        \   sin(A) = sin(X + PI)
+                        \          = -sin(X)
+                        \
+                        \   cos(A) = cos(X + PI)
+                        \          = -cos(X)
+                        \
+                        \ And given that we are returning the absolute value,
+                        \ this means for this quadrant, the return values are
+                        \ correct
+                        \
+                        \ If our original angle argument A is the top-left
+                        \ quadrant then we can apply the following trigonometric
+                        \ identities:
+                        \
+                        \   sin(A) = sin(X - PI/2)
+                        \          = -cos(X)
+                        \
+                        \   cos(A) = cos(X - PI/2)
+                        \          = sin(X)
+                        \
+                        \ So again we need to return the current value of X for
+                        \ the sine result and the current value of A for the
+                        \ cosine result
+                        \
+                        \ In terms of the original angle A, then, we have the
+                        \ following:
+                        \
+                        \   * Top-right quadrant = results are correct
+                        \
+                        \   * Bottom-right quadrant = swap sin and cos
+                        \
+                        \   * Bottom-left quadrant = results are correct
+                        \
+                        \   * Top-left quadrant = swap sin and cos
+                        \
+                        \ In terms of bits 6 and 7 of H, we swapped the left two
+                        \ quadrants, so this means:
+                        \
+                        \   * Top-right quadrant = both clear
+                        \
+                        \   * Bottom-right quadrant = bit 7 clear, bit 6 set
+                        \
+                        \   * Bottom-left quadrant = both set
+                        \
+                        \   * Top-left quadrant = bit 7 set, bit 6 clear
+                        \
+                        \ So the return values are correct when bits 6 and 7 are
+                        \ either both clear or both set, and we need to swap the
+                        \ sine and cosine results if one is set and the other is
+                        \ clear
+
+ BIT H                  \ If bit 7 of H is set, jump to scos4
+ BMI scos4
+
+                        \ If we get here then bit 7 of H is clear
+
+ BVS scos5              \ If bit 6 of H is set, jump to scos5
+
+.scos3
+
+
+                        \ If we get here then one of these is true:
+                        \
+                        \   * Bit 7 of H is clear and bit 6 of H is clear
+                        \
+                        \   * Bit 7 of H is set and bit 6 of H is set
+                        \
+                        \ So the results we calculated above are correct:
+                        \
+                        \   A = |sin(X)|
+                        \
+                        \   X = |cos(X)|
+                        \
+                        \ and they will be the same for |sin(A)| and |cos(A)|
+                        \ for the original argument A:
+
+ STA sinA               \ Store A in sinA to return |sin(A)|
+
+ STX cosA               \ Store X in cosA to return |cos(A)|
+
+ RTS                    \ Return from the subroutine
+
+.scos4
+
+                        \ If we get here then bit 7 of H is set
+
+ BVS scos3              \ If bit 6 of H is set, jump to scos3
+
+.scos5
+
+                        \ If we get here then one of these is true:
+                        \
+                        \   * Bit 7 of H is clear and bit 6 of H is set
+                        \
+                        \   * Bit 7 of H is set and bit 6 of H is clear
+                        \
+                        \ So the results we calculated above:
+                        \
+                        \   A = |sin(X)|
+                        \
+                        \   X = |cos(X)|
+                        \
+                        \ need to be swapped around to be correct for |sin(A)|
+                        \ and |cos(A)| for the original argument A:
+                        \
+                        \   A = |cos(A)|
+                        \
+                        \   X = |sin(A)|
+
+
+ STA cosA               \ Store A in cosA to return |cos(A)|
+
+ STX sinA               \ Store X in sinA to return |sin(A)|
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -15133,7 +15448,7 @@ L314A = C3148+2
 \       Name: PlayGame
 \       Type: Subroutine
 \   Category: Main game loop
-\    Summary: ???
+\    Summary: Start playing the generated landscape
 \
 \ ******************************************************************************
 
@@ -15188,40 +15503,55 @@ L314A = C3148+2
 
  LDA #0
  STA L0055
+
  STA L0008
+
  STA L0CC9
+
  STA L0C5F
+
  JSR sub_C5734
+
  LDA playerObjectSlot
  STA L006E
+
  BIT L0CDE
  BPL game2
+
  BVS game7
+
  JSR sub_C1090
+
  JMP game4
 
 .game2
 
  LDA L0C51
  BMI game3
+
  JSR sub_C2463
 
 .game3
 
  JSR sub_C1090
+
  JSR sub_C2624
+
  JSR sub_C36C7
 
 .game4
 
  LDA #&19
  STA L0055
+
  LDA #&02
+
  JSR sub_C2963
 
 .game5
 
  JSR sub_C355A
+
  LDA L0CE7
  BPL game5
 
@@ -15229,11 +15559,16 @@ L314A = C3148+2
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
 
  LDA L0CDE
+
  BPL game11
+
  STA L0C4E
+
  LDA #&06
  STA L0C73
+
  LDA #&05
+
  JSR sub_C5F24
 
 .game6
@@ -15255,14 +15590,17 @@ L314A = C3148+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- LDX #&03
+ LDX #3
+
  LDA #0
  STA L0C73
 
 .game8
 
  STA seedNumberLFSR+1,X
+
  DEX
+
  BPL game8
 
  JSR ResetVariables2    \ ???
@@ -15274,6 +15612,7 @@ L314A = C3148+2
 
  LDA #&0A
  STA L0CDF
+
  LDA #&42
  JSR sub_C5FF6
 
@@ -15306,19 +15645,26 @@ L314A = C3148+2
 
  LDA L0009
  STA L0008
+
  LDA #0
  STA L0CD1
+
  STA L0C1E
+
  BIT L0C5F
  BMI game13
+
  SEC
  ROR L0C1B
 
 .game13
 
  JSR sub_C10B7
+
  LSR L0C1B
+
  JSR sub_C36C7
+
  LDA L0CD1
  STA L0CC1
 
@@ -18988,7 +19334,25 @@ L314A = C3148+2
 \       Name: sin
 \       Type: Variable
 \   Category: Maths (Geometry)
-\    Summary: Table for sin values
+\    Summary: Table for sine values
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains sine values for a quarter of a circle, i.e. for the range
+\ 0 to 90 degrees, or 0 to PI/2 radians. The table contains values for indexes
+\ 0 to 127, which cover the quarter from 0 to PI/2 radians. Entry X in the table
+\ is therefore (X / 128) * (PI / 2) radians of the way round the quarter circle,
+\ so the table at index X contains the sine of this value.
+\
+\ The value of sine across the quarter circle ranges from 0 to 1:
+\
+\   sin(0) = 0
+\
+\   sin(90) = sin(PI/2) = 1
+\
+\ It might help to think of sin(X) as an integer ranging from 0 to 256 across
+\ the quarter circle, so entry X in this table contains sin(X) * 256, where X
+\ ranges from 0 to 128 over the course of a quarter circle.
 \
 \ ******************************************************************************
 
@@ -19364,11 +19728,11 @@ L314A = C3148+2
  LDA L005A
  CLC
  ADC L4AE0,Y
- JSR sub_C0F70
+ JSR GetSineAndCosine
  LDY L004E
  LDA L4D60,Y
  STA U
- LDA L008F
+ LDA cosA
 
  JSR Multiply8x8        \ Set (A T) = A * U
 
@@ -19402,7 +19766,7 @@ L314A = C3148+2
  STA L0085
  LDA L4D60,Y
  STA U
- LDA L008E
+ LDA sinA
 
  JSR Multiply8x8        \ Set (A T) = A * U
 

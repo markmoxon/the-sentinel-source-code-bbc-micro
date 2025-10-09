@@ -268,9 +268,9 @@
      008C
 .L008D
      008D
-.L008E
+.sinA
      008E
-.L008F
+.cosA
      008F
 .objectFlags
      0100
@@ -3077,10 +3077,10 @@
      0F6C   A8         TAY
      0F6D   E0 FF      CPX #&FF
      0F6F   60         RTS
-.sub_C0F70
+.GetSineAndCosine
      0F70   10 02      BPL &0F74
      0F72   49 40      EOR #&40
-.C0F74
+.scos1
      0F74   85 67      STA &67
      0F76   06 74      ASL &74
      0F78   2A         ROL A
@@ -3091,20 +3091,20 @@
      0F7F   69 01      ADC #&01
      0F81   10 02      BPL &0F85
      0F83   A9 7F      LDA #&7F
-.C0F85
+.scos2
      0F85   A8         TAY
      0F86   BD 80 59   LDA &5980,X
      0F89   BE 80 59   LDX &5980,Y
      0F8C   24 67      BIT &67
      0F8E   30 07      BMI &0F97
      0F90   70 07      BVS &0F99
-.P0F92
+.scos3
      0F92   85 8E      STA &8E
      0F94   86 8F      STX &8F
      0F96   60         RTS
-.C0F97
+.scos4
      0F97   70 F9      BVS &0F92
-.C0F99
+.scos5
      0F99   85 8F      STA &8F
      0F9B   86 8E      STX &8E
      0F9D   60         RTS
