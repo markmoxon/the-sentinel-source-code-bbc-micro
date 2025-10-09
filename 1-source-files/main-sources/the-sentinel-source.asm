@@ -302,29 +302,35 @@
 
  SKIP 1                 \ ???
 
-.L002C
+.xSightsVectorLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The x-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (low byte)
 
-.sinSightsPitchLo
+.ySightsVectorLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The y-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (low byte)
 
-.L002E
+.zSightsVectorLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The z-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (low byte)
 
-.L002F
+.xSightsVectorHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The x-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (high byte)
 
-.sinSightsPitchHi
+.ySightsVectorHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The y-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (high byte)
 
-.L0031
+.zSightsVectorHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The z-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (high byte)
 
 .cosSightsPitchLo
 
@@ -4253,16 +4259,16 @@ L1145 = C1144+1
  BCC rese4              \ leaving A = 0, so we zero &0C00 to &0CE3
 
  LDA #&80               \ If we get here then X >= &E4, so set A = &80 so we
-                        \ set &0CE4 to &0CEF to &80
+                        \ set L0CE4 to L0CEF to &80
 
 .rese4
 
- STA sinYawAngleLo,X    \ Set the X-th byte of sinYawAngleLo to A
+ STA L0CE4-&E4,X        \ Set the X-th byte of L0CE4 to A
 
  INX                    \ Increment the byte counter
 
- CPX #&F0               \ Loop back until we have processed X from 0 to &EF
- BCC rese1
+ CPX #&F0               \ Loop back until we have processed X from &E4 to &EF
+ BCC rese1              \ to set L0CE4 to L0CEF to &80
 
                         \ Fall through into ResetVariables2 to ???
 
@@ -7695,8 +7701,8 @@ L1145 = C1144+1
  LDY #0                 \ Set (A X) = sinSightsPitchAngle / 16
  JSR DivideBy16
 
- STA sinSightsPitchHi   \ Set (sinSightsPitchHi sinSightsPitchLo)
- STX sinSightsPitchLo   \                             = sinSightsPitchAngle / 16
+ STA ySightsVectorHi    \ Set (ySightsVectorHi ySightsVectorLo)
+ STX ySightsVectorLo    \                             = sinSightsPitchAngle / 16
 
  LDA sightsYawAngleLo   \ Set (A T) = (sightsYawAngleHi sightsYawAngleLo)
  STA T
@@ -7713,14 +7719,13 @@ L1145 = C1144+1
  LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
  LDX #2                 \ the following:
  JSR MultiplyCoords     \
-                        \   (L002E L0031)
+                        \   (zSightsVectorHi zSightsVectorLo)
                         \       = cosSightsPitchAngle * cosSightsYawAngle / 16
-
 
  LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
  LDX #0                 \ calculate the following:
                         \
-                        \   (L002C L002F)
+                        \   (xSightsVectorHi xSightsVectorLo)
                         \        = cosSightsPitchAngle * sinSightsYawAngle / 16
                         \
                         \ and return from the subroutine using a tail call
@@ -7737,21 +7742,21 @@ L1145 = C1144+1
 \ This routine multiplies two 16-bit values and stores the result according to
 \ the arguments, as follows.
 \
-\ When Y = 0, calculate:
+\ When Y = 0, it calculates:
 \
 \   (cosSightsPitchHi cosSightsPitchLo) * (sinYawAngleHi sinYawAngleLo)
 \
 \ i.e. cosSightsPitch * sinYawAngle
 \
-\ When Y = 1, calculate:
+\ When Y = 1, it calculates:
 \
 \   (cosSightsPitchHi cosSightsPitchLo) * (cosYawAngleHi cosYawAngleLo)
 \
 \ i.e. cosSightsPitch * cosYawAngle
 \
-\ When X = 0, store the result in (L002C L002F).
+\ When X = 0, store the result in (xSightsVectorHi xSightsVectorLo).
 \
-\ When X = 2, store the result in (L002E L0031).
+\ When X = 2, store the result in (zSightsVectorHi zSightsVectorLo).
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7769,9 +7774,9 @@ L1145 = C1144+1
 \
 \   X                   Offset of the variable to store the result in:
 \
-\                         * 0 = (L002C L002F)
+\                         * 0 = (xSightsVectorHi xSightsVectorLo)
 \
-\                         * 2 = (L002E L0031)
+\                         * 2 = (zSightsVectorHi zSightsVectorLo)
 \
 \ ******************************************************************************
 
@@ -7796,9 +7801,11 @@ L1145 = C1144+1
                         \ And apply the sign from bit 7 of H to ensure the
                         \ result is positive
 
- STA L002F,X            \ Store the result in (L002C+X L002F+X) ???
- LDA T
- STA L002C,X
+ STA xSightsVectorHi,X  \ Store the result in:
+ LDA T                  \
+ STA xSightsVectorLo,X  \   * (xSightsVectorHi xSightsVectorLo) when X = 0
+                        \
+                        \   * (zSightsVectorHi zSightsVectorLo) when X = 2
 
  RTS                    \ Return from the subroutine
 
@@ -7885,9 +7892,9 @@ L1145 = C1144+1
  STA T
  LDA L0034,X
  CLC
- ADC L002C,X
+ ADC xSightsVectorLo,X
  STA L0034,X
- LDA L002F,X
+ LDA xSightsVectorHi,X
  BPL C1CBD
  DEC T
 
@@ -7956,7 +7963,7 @@ L1145 = C1144+1
  LDA L0C6E
  ORA L0C67
  BMI C1D21
- LDA sinSightsPitchHi
+ LDA ySightsVectorHi
  BPL C1D33
 
 .C1D21
@@ -9563,8 +9570,8 @@ L1145 = C1144+1
 .sub_C2299
 
  LDA #&01
- STA L002C
- STA sinSightsPitchLo
+ STA xSightsVectorLo
+ STA ySightsVectorLo
  LDA tileAltitude
  CLC
  ADC L0004
@@ -9667,13 +9674,13 @@ L1145 = C1144+1
 .C2333
 
  LDA #0
- STA sinSightsPitchLo
+ STA ySightsVectorLo
  BEQ sub_C230D
 
 .C2339
 
  LDA #0
- STA L002C
+ STA xSightsVectorLo
  BEQ sub_C230D
 
 .C233F
@@ -9681,7 +9688,7 @@ L1145 = C1144+1
  LDA L0061
  ASL A
  STA L0056
- STA L002C
+ STA xSightsVectorLo
  BNE C23A6
 
 .C2348
@@ -9694,7 +9701,7 @@ L1145 = C1144+1
  SBC #&00
  STA Q
  LDA #0
- STA sinSightsPitchLo
+ STA ySightsVectorLo
  LDA #&F8
  BNE C23D8
 
@@ -10017,17 +10024,17 @@ L23E3 = C23E2+1
  STA L0086,X
  SEC
  SBC L0037,X
- STA L002C,X
+ STA xSightsVectorLo,X
  LDA L0018,X
  SBC L003A,X
- STA L002F,X
+ STA xSightsVectorHi,X
  BPL C2529
  DEC L0086,X
  LDA #0
  SEC
- SBC L002C,X
+ SBC xSightsVectorLo,X
  LDA #0
- SBC L002F,X
+ SBC xSightsVectorHi,X
 
 .C2529
 
@@ -10052,12 +10059,12 @@ L23E3 = C23E2+1
 
 .P253A
 
- ASL L002C
- ROL L002F
- ASL sinSightsPitchLo
- ROL sinSightsPitchHi
- ASL L002E
- ROL L0031
+ ASL xSightsVectorLo
+ ROL xSightsVectorHi
+ ASL ySightsVectorLo
+ ROL ySightsVectorHi
+ ASL zSightsVectorLo
+ ROL zSightsVectorHi
  LSR L0017
  ASL A
  BCC P253A
@@ -10206,13 +10213,13 @@ L23E3 = C23E2+1
 .P2583
 
  LDA L0034,X
- ADC L002C,X
+ ADC xSightsVectorLo,X
  STA L0034,X
 
 .C2589
 
  LDA L0037,X
- ADC L002F,X
+ ADC xSightsVectorHi,X
  STA L0037,X
  LDA L003A,X
  ADC L0086,X
@@ -11275,7 +11282,7 @@ L23E3 = C23E2+1
  BCS C2A90
  JSR sub_C2299
  LDY L0010
- LDA L002C,Y
+ LDA xSightsVectorLo,Y
  CMP #&01
  BEQ CRE18
 
@@ -13130,11 +13137,11 @@ L23E3 = C23E2+1
 
  LDA #0
  STA tileAltitude
- STA L0031
+ STA zSightsVectorHi
  STA L001E
  LDA #&FF
  STA L0004
- STA sinSightsPitchHi
+ STA ySightsVectorHi
  STA L007F
  LDY #0
 
@@ -13237,9 +13244,9 @@ L23E3 = C23E2+1
  BCS C2E88
  STY L0004
  STY tileAltitude
- LDA sinSightsPitchHi
+ LDA ySightsVectorHi
  STA L5A00,Y
- LDA L0031
+ LDA zSightsVectorHi
  STA L5B00,Y
  LDA #0
  STA L007F
@@ -13262,15 +13269,15 @@ L23E3 = C23E2+1
 .C2E96
 
  LDA L54A0,X
- CMP L0031
+ CMP zSightsVectorHi
  BCC C2E9F
- STA L0031
+ STA zSightsVectorHi
 
 .C2E9F
 
- CMP sinSightsPitchHi
+ CMP ySightsVectorHi
  BCS C2EA5
- STA sinSightsPitchHi
+ STA ySightsVectorHi
 
 .C2EA5
 
