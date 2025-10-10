@@ -7968,7 +7968,7 @@
      3164   E6 41      INC &41
      3166   20 6E 31   JSR &316E
      3169   4C 3D 31   JMP &313D
-.sub_C316C
+.CorruptSecretCode
      316C   90 26      BCC &3194
 .sub_C316E
      316E   48         PHA

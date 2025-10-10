@@ -12639,10 +12639,12 @@ L23E3 = C23E2+1
 
  CPX #32                \ Loop back until we have worked our way through the
  BCC stri12             \ strip and have smoothed tiles 0 to 31
+                        \
+                        \ This means that when we exit the loop, X = 32
 
- LDA &5A2E,X            \ X = 32, so this loads from &5A4E (tilesAtAltitude+14)
- STA &0F1D,X            \ and stores in &0F3D (the operand in the unused LDA #0
-                        \ instruction just before GetAngleInRadians) ???
+ LDA tilesAtAltitude+14-32,X    \ Copy the contents of tilesAtAltitude+14 into
+ STA GetAngleInRadians-1-32,X   \ the operand into GetAngleInRadians-1, which
+                                \ contains an unused LDA #0 instruction ???
 
 \ ******************************************************************************
 \
@@ -13955,16 +13957,22 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C316C
+\       Name: CorruptSecretCode
 \       Type: Subroutine
-\   Category: ???
+\   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C316C
+.CorruptSecretCode
 
- BCC GetNextSeedNumber
+ BCC GetNextSeedNumber  \ We only jump here with the C flag clear, so this
+                        \ generates the next number from the landscape's
+                        \ sequence of seed numbers, thus corrupting the
+                        \ generation of the landscape's secret code
+                        \
+                        \ We then return to the caller using a tail call, so the
+                        \ player doesn't know anything has gone wrong
 
 \ ******************************************************************************
 \
@@ -14190,11 +14198,26 @@ L314A = C3148+2
  JSR OSWORD
  LDA L0C4A
  STA zTile
- LDX #&07
- LDA L0C6E,X
- CMP rotm8-1,X
- BCS C3204
- JSR sub_C316C
+
+ LDX #7                 \ Set A = L0C75 ???
+ LDA L0C75-7,X
+
+ CMP GetAngleInRadians-1-7,X    \ If A >= the contents of GetAngleInRadians-1,
+ BCS C3204                      \ jump to C3204 to skip the following
+
+                        \ We set the contents of GetAngleInRadians-1 to the
+                        \ contents of tilesAtAltitude+14 in part 3 of the
+                        \ SmoothTileCorners routine when generating the
+                        \ landscape, so if we get here then something has gone
+                        \ wrong between then and now, presumably because
+                        \ something has been tampered with by crackers ???
+
+ JSR CorruptSecretCode  \ At this point A < the contents of GetAngleInRadians-1
+                        \ and the C flag is clear, so CorruptSecretCode will
+                        \ call the GetNextSeedNumber routine, which will in turn
+                        \ corrupt the generation of the landscape's secret code
+                        \ by moving one step too far in the landscape's sequence
+                        \ of seed numbers
 
 .C3204
 
