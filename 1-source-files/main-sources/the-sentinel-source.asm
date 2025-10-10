@@ -1492,9 +1492,13 @@
 
  EQUB &52               \ ???
 
-.L0C5F
+.sightsAreVisible
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Controls whether the sights are being shown:
+                        \
+                        \   * Bit 7 clear = sights are not being shown
+                        \
+                        \   * Bit 7 set = sights are being shown
 
 .printTextIn3D
 
@@ -4337,7 +4341,7 @@ L1145 = C1144+1
  STA L0009
 
  LDX #&8E               \ Scan the keyboard to see if function key f1 is being
- JSR ScanKeyboard       \ pressed
+ JSR ScanKeyboard       \ pressed ("Quit game")
 
  BNE C119A              \ If function key f1 is not being pressed, jump to C119A
                         \ to skip the following
@@ -4350,27 +4354,40 @@ L1145 = C1144+1
 .C119A
 
  LDX #&9D               \ Scan the keyboard to see if SPACE is being pressed
- JSR ScanKeyboard
+ JSR ScanKeyboard       \ ("Toggle sights on/off")
 
- BNE C11C0
+ BNE C11C0              \ If SPACE is not being pressed, jump to C11C0 to skip
+                        \ the following
+
  LDA L1222
  BNE C11C5
- LDA L0C5F
- EOR #&80
- STA L0C5F
- BPL C11B9
- JSR sub_C1331
- JSR sub_C39D9
- JMP C11BC
+
+ LDA sightsAreVisible   \ Flip bit 7 of sightsAreVisible to toggle the sights on
+ EOR #%10000000         \ and off
+ STA sightsAreVisible
+
+ BPL C11B9              \ If bit 7 is now clear then we just turned the sights
+                        \ off, so jump to C11B9 to remove them from the screen
+
+                        \ Otherwise bit 7 is now set, so we need to show the
+                        \ sights
+
+ JSR SetupSights        \ Setup sight position etc. ???
+
+ JSR ShowSights         \ Draw the sights on-screen ???
+
+ JMP C11BC              \ Jump to C11BC to skip the following
 
 .C11B9
 
- JSR sub_C3AA7
+ JSR HideSights         \ Remove the sights from the screen ???
 
 .C11BC
 
  LDA #&80
- BNE C11C2
+
+ BNE C11C2              \ Jump to C11C2 (this BNE is effectively a JMP as A is
+                        \ never zero)
 
 .C11C0
 
@@ -4395,7 +4412,7 @@ L1145 = C1144+1
 
 .C11DD
 
- LDX L0C5F
+ LDX sightsAreVisible
  BPL C11ED
  ASL L0CC8
  BCS C1208
@@ -4696,7 +4713,7 @@ L1145 = C1144+1
  BMI C12EB
  CMP #34
  BCS C12C1
- BIT L0C5F
+ BIT sightsAreVisible
  BPL C12EB
 
 .C12C1
@@ -4796,19 +4813,20 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1331
+\       Name: SetupSights
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C1331
+.SetupSights
 
  LDA L0CC2
  CLC
  ADC #&A0
  STA L0CC4
+
  LDA L0CC3
  ADC #&0F
  CMP #&80
@@ -4818,10 +4836,13 @@ L1145 = C1144+1
 .C1345
 
  STA L0CC5
+
  LDA #&50
  STA xSights
+
  LDA #&5F
  STA ySights
+
  RTS
 
 \ ******************************************************************************
@@ -8877,7 +8898,7 @@ L1145 = C1144+1
  LDA L0C6D
  BPL C1F98
  SEI
- JSR sub_C3AA7
+ JSR HideSights
  CLI
 
 .C1F98
@@ -8956,7 +8977,7 @@ L1145 = C1144+1
 .C2022
 
  SEI
- JSR sub_C3AA7
+ JSR HideSights
  SEC
  ROR L0CD7
  CLI
@@ -9011,10 +9032,10 @@ L1145 = C1144+1
 .C2080
 
  LSR L0CD7
- LDA L0C5F
+ LDA sightsAreVisible
  BPL C208D
  SEI
- JSR sub_C39D9
+ JSR ShowSights
  CLI
 
 .C208D
@@ -15776,7 +15797,7 @@ L314A = C3148+2
 
  STA L0CC9
 
- STA L0C5F
+ STA sightsAreVisible
 
  JSR sub_C5734
 
@@ -15919,7 +15940,7 @@ L314A = C3148+2
 
  STA L0C1E
 
- BIT L0C5F
+ BIT sightsAreVisible
  BMI game13
 
  SEC
@@ -16649,7 +16670,7 @@ L314A = C3148+2
 
 .C3931
 
- JMP sub_C39D9
+ JMP ShowSights
 
 \ ******************************************************************************
 \
@@ -16813,18 +16834,18 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C39D9
+\       Name: ShowSights
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C39D9
+.ShowSights
 
  LDA L0CD7
  BMI C3A05
- JSR sub_C3AA7
+ JSR HideSights
  LDA xSights
  AND #&03
  STA L0CCC
@@ -16945,7 +16966,7 @@ L314A = C3148+2
 \
 \       Name: L3A8A
 \       Type: Variable
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -16958,7 +16979,7 @@ L314A = C3148+2
 \
 \       Name: L3A8E
 \       Type: Variable
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -16972,7 +16993,7 @@ L314A = C3148+2
 \
 \       Name: L3A9A
 \       Type: Variable
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -16984,14 +17005,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3AA7
+\       Name: HideSights
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3AA7
+.HideSights
 
  LDX L0CC9
  BEQ CRE38
@@ -17019,7 +17040,7 @@ L314A = C3148+2
 \
 \       Name: L3AC7
 \       Type: Variable
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -17032,7 +17053,7 @@ L314A = C3148+2
 \
 \       Name: L3ACD
 \       Type: Variable
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -20668,7 +20689,7 @@ L314A = C3148+2
  JSR sub_C5F68
  LDY #0
  STY L0CC9
- STY L0C5F
+ STY sightsAreVisible
  LDA titleObjectToDraw
  JSR sub_C5F80
  LDA #&03

@@ -2489,7 +2489,7 @@
      0C5D   E4
 .L0C5E
      0C5E   52
-.L0C5F
+.sightsAreVisible
      0C5F   00
 .printTextIn3D
      0C60   00
@@ -3586,7 +3586,7 @@
      132C   8D 01 FE   STA &FE01
      132F   58         CLI
      1330   60         RTS
-.sub_C1331
+.SetupSights
      1331   AD C2 0C   LDA &0CC2
      1334   18         CLC
      1335   69 A0      ADC #&A0
@@ -9203,7 +9203,7 @@
      39D5   8D C5 0C   STA &0CC5
 .CRE36
      39D8   60         RTS
-.sub_C39D9
+.ShowSights
      39D9   AD D7 0C   LDA &0CD7
      39DC   30 27      BMI &3A05
      39DE   20 A7 3A   JSR &3AA7
@@ -9330,7 +9330,7 @@
      3AA4   02
      3AA5   02
      3AA6   80
-.sub_C3AA7
+.HideSights
      3AA7   AE C9 0C   LDX &0CC9
      3AAA   F0 1A      BEQ &3AC6
      3AAC   CA         DEX
