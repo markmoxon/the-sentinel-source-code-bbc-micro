@@ -4416,7 +4416,7 @@ L1145 = C1144+1
  BPL C11ED
  ASL L0CC8
  BCS C1208
- JSR sub_C3927
+ JSR MoveSights
  JMP C11F9
 
 .C11ED
@@ -16654,40 +16654,42 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3927
+\       Name: MoveSights
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3927
+.MoveSights
 
- JSR sub_C3934
+ JSR MoveSightsSideways
+
  LDA L0009
- BPL C3931
- JSR sub_C396B
+ BPL sigh1
 
-.C3931
+ JSR MoveSightsUpDown
+
+.sigh1
 
  JMP ShowSights
 
 \ ******************************************************************************
 \
-\       Name: sub_C3934
+\       Name: MoveSightsSideways
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3934
+.MoveSightsSideways
 
  LDX keyLogger          \ Set X to the key logger entry for "S" and "D", which
                         \ move the sights left and right respectively
 
- BMI CRE35
- BNE C3953
+ BMI sisd4
+ BNE sisd2
 
                         \ If we get here then X = 0, so "D" is being pressed,
                         \ which is the key for moving the sights right
@@ -16697,18 +16699,18 @@ L314A = C3148+2
  ADC #1
 
  CMP #&90
- BCC C3949
+ BCC sisd1
  SBC #&40
  STX L0009
 
-.C3949
+.sisd1
 
  STA xSights
  AND #&03
- BEQ C39B6
- JMP CRE35
+ BEQ siud5
+ JMP sisd4
 
-.C3953
+.sisd2
 
                         \ If we get here then X = 1, so "S" is being pressed,
                         \ which is the key for moving the sights left
@@ -16718,31 +16720,31 @@ L314A = C3148+2
  SBC #1
 
  CMP #&10
- BCS C3961
+ BCS sisd3
  ADC #&40
  STX L0009
 
-.C3961
+.sisd3
 
  STA xSights
  AND #&03
  CMP #&03
- BEQ C39B6
+ BEQ siud5
 
-.CRE35
+.sisd4
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: sub_C396B
+\       Name: MoveSightsUpDown
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sights
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C396B
+.MoveSightsUpDown
 
  LDX playerObjectSlot
  LDY objectPitchAngle,X
@@ -16750,9 +16752,9 @@ L314A = C3148+2
  LDX keyLogger+2        \ Set X to the key logger entry for "L" and ",", which
                         \ move the sights up and down respectively
 
- BMI CRE36
+ BMI siud8
  CPX #2
- BNE C3997
+ BNE siud2
 
                         \ If we get here then X = 2, so "L" is being pressed,
                         \ which is the key for moving the sights up
@@ -16762,21 +16764,21 @@ L314A = C3148+2
  ADC #1
 
  CMP #&A0
- BCC C398D
+ BCC siud1
  CPY L1147
- BEQ CRE36
+ BEQ siud8
  SEC
  SBC #&40
  STX L0009
 
-.C398D
+.siud1
 
  STA ySights
  AND #&07
- BNE C39B6
- JMP C39B4
+ BNE siud5
+ JMP siud4
 
-.C3997
+.siud2
 
                         \ If we get here then X <> 2, so "," is being pressed,
                         \ which is the key for moving the sights down
@@ -16786,26 +16788,26 @@ L314A = C3148+2
  SBC #1
 
  CMP #&20
- BCS C39AB
+ BCS siud3
  CPY L1148
- BEQ CRE36
+ BEQ siud8
  CLC
  ADC #&40
  STX L0009
 
-.C39AB
+.siud3
 
  STA ySights
  AND #&07
  CMP #&07
- BNE C39B6
+ BNE siud5
 
-.C39B4
+.siud4
 
  INX
  INX
 
-.C39B6
+.siud5
 
  LDA L0CC4
  CLC
@@ -16814,21 +16816,21 @@ L314A = C3148+2
  LDA L0CC5
  ADC L3ACD,X
  CMP #&80
- BCC C39CF
+ BCC siud6
  SBC #&20
- JMP C39D5
+ JMP siud7
 
-.C39CF
+.siud6
 
  CMP #&60
- BCS C39D5
+ BCS siud7
  ADC #&20
 
-.C39D5
+.siud7
 
  STA L0CC5
 
-.CRE36
+.siud8
 
  RTS
 

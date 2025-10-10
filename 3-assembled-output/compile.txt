@@ -9105,14 +9105,14 @@
 .sub_C3923
      3923   A0 01      LDY #&01
      3925   D0 E8      BNE &390F
-.sub_C3927
+.MoveSights
      3927   20 34 39   JSR &3934
      392A   A5 09      LDA &09
      392C   10 03      BPL &3931
      392E   20 6B 39   JSR &396B
-.C3931
+.sigh1
      3931   4C D9 39   JMP &39D9
-.sub_C3934
+.MoveSightsSideways
      3934   AE E8 0C   LDX &0CE8
      3937   30 31      BMI &396A
      3939   D0 18      BNE &3953
@@ -9123,12 +9123,12 @@
      3943   90 04      BCC &3949
      3945   E9 40      SBC #&40
      3947   86 09      STX &09
-.C3949
+.sisd1
      3949   8D C6 0C   STA &0CC6
      394C   29 03      AND #&03
      394E   F0 66      BEQ &39B6
      3950   4C 6A 39   JMP &396A
-.C3953
+.sisd2
      3953   AD C6 0C   LDA &0CC6
      3956   38         SEC
      3957   E9 01      SBC #&01
@@ -9136,14 +9136,14 @@
      395B   B0 04      BCS &3961
      395D   69 40      ADC #&40
      395F   86 09      STX &09
-.C3961
+.sisd3
      3961   8D C6 0C   STA &0CC6
      3964   29 03      AND #&03
      3966   C9 03      CMP #&03
      3968   F0 4C      BEQ &39B6
-.CRE35
+.sisd4
      396A   60         RTS
-.sub_C396B
+.MoveSightsUpDown
      396B   A6 0B      LDX &0B
      396D   BC 40 01   LDY &0140,X
      3970   AE EA 0C   LDX &0CEA
@@ -9160,12 +9160,12 @@
      3988   38         SEC
      3989   E9 40      SBC #&40
      398B   86 09      STX &09
-.C398D
+.siud1
      398D   8D C7 0C   STA &0CC7
      3990   29 07      AND #&07
      3992   D0 22      BNE &39B6
      3994   4C B4 39   JMP &39B4
-.C3997
+.siud2
      3997   AD C7 0C   LDA &0CC7
      399A   38         SEC
      399B   E9 01      SBC #&01
@@ -9176,15 +9176,15 @@
      39A6   18         CLC
      39A7   69 40      ADC #&40
      39A9   86 09      STX &09
-.C39AB
+.siud3
      39AB   8D C7 0C   STA &0CC7
      39AE   29 07      AND #&07
      39B0   C9 07      CMP #&07
      39B2   D0 02      BNE &39B6
-.C39B4
+.siud4
      39B4   E8         INX
      39B5   E8         INX
-.C39B6
+.siud5
      39B6   AD C4 0C   LDA &0CC4
      39B9   18         CLC
      39BA   7D C7 3A   ADC &3AC7,X
@@ -9195,13 +9195,13 @@
      39C8   90 05      BCC &39CF
      39CA   E9 20      SBC #&20
      39CC   4C D5 39   JMP &39D5
-.C39CF
+.siud6
      39CF   C9 60      CMP #&60
      39D1   B0 02      BCS &39D5
      39D3   69 20      ADC #&20
-.C39D5
+.siud7
      39D5   8D C5 0C   STA &0CC5
-.CRE36
+.siud8
      39D8   60         RTS
 .ShowSights
      39D9   AD D7 0C   LDA &0CD7
