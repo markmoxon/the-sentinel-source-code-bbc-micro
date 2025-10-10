@@ -1507,7 +1507,22 @@
 
 .objectType
 
- EQUB 0                 \ Storage for the type of object that we are spawning
+ SKIP 0                 \ Storage for the type of object that we are spawning
+
+.keyPress
+
+ EQUB 0                 \ Storage for the key logger value for a key press
+                        \
+                        \ This shares the same memory location as objectType
+                        \
+                        \ This means that if the player presses one of the
+                        \ "create" keys, then the value in the key logger (as
+                        \ defined in the keyLoggerConfig table) can be used as
+                        \ the object type to create, as "Create robot" puts a 0
+                        \ in the key logger (the object type for a robot),
+                        \ "Create tree" puts a 2 in the logger (the object type
+                        \ for a tree) and "Create boulder" puts a 3 in the
+                        \ logger (the object type for a boulder)
 
 .L0C62
 
@@ -4679,14 +4694,14 @@ L1145 = C1144+1
 
  LDA keyLogger+1
  BMI C12EB
- CMP #&22
+ CMP #34
  BCS C12C1
  BIT L0C5F
  BPL C12EB
 
 .C12C1
 
- STA objectType
+ STA keyPress
  LSR L0CE5
  JSR sub_C1B0B
  BCS C12E5
@@ -4865,7 +4880,7 @@ L1145 = C1144+1
                         \ move on to the next key in the table
 
  LDA keyLoggerConfig,Y  \ Set X to the key logger position where we should store
- AND #3                 \ this key press, which is in bits 0 and 1 of the
+ AND #%00000011         \ this key press, which is in bits 0 and 1 of the
  TAX                    \ corresponding entry in the keyLoggerConfig table
 
  LDA keyLoggerConfig,Y  \ Set A to the value to store in the key logger for this
@@ -7518,8 +7533,8 @@ L1145 = C1144+1
 
 .sub_C1B0B
 
- LDA objectType
- CMP #&22
+ LDA keyPress
+ CMP #34
  BNE C1B1C
  JSR sub_C2147
  LDA #0
@@ -7535,7 +7550,7 @@ L1145 = C1144+1
  LDX L006E              \ ??? This is value passed to sub_C1BFF, is it the
                         \ player slot ???
 
- CMP #&23
+ CMP #35
  BNE C1B33
  ASL L0C51
  BPL P1B1A
@@ -7551,8 +7566,8 @@ L1145 = C1144+1
  JSR sub_C1BFF
  JSR sub_C1CCC
  BCS C1B98
- LDA objectType
- AND #&20
+ LDA keyPress
+ AND #32
  BEQ C1BA9
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
@@ -7562,7 +7577,7 @@ L1145 = C1144+1
  BCC C1B98
  AND #&3F
  TAX
- LDA objectType
+ LDA keyPress
  LSR A
  BCC C1B7D
  LDY objectTypes,X
@@ -7626,7 +7641,7 @@ L1145 = C1144+1
 
 .C1BA9
 
- JSR SpawnObject+3      \ Spawn an object of type objectType
+ JSR SpawnObject+3      \ Spawn an object of type keyPress
 
  BCS C1B98
  SEC
@@ -9236,7 +9251,13 @@ L1145 = C1144+1
 \
 \ Other entry points:
 \
-\   SpawnObject+3       Spawn an object of the type specified in objectType
+\   SpawnObject+3       Spawn an object of the type specified in keyPress
+\
+\                       The keyPress and objectType variables share the same
+\                       memory location, so this lets us store object types in
+\                       the key press codes in keyLoggerConfig, so that pressing
+\                       one of the "create" keys will automatically spawn that
+\                       type of object
 \
 \ ******************************************************************************
 

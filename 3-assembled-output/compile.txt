@@ -2494,6 +2494,8 @@
 .printTextIn3D
      0C60   00
 .objectType
+     0C61
+.keyPress
      0C61   00
 .L0C62
      0C62   00
