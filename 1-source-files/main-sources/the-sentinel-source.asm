@@ -2984,7 +2984,6 @@
                         \ diagram, where the y-coordinates are negative, so we
                         \ need to negate the y-coordinate
 
-
  LDA #1                 \ Negate cosAngle by setting bit 0 of the low byte,
  ORA cosAngleLo         \ as cosAngle is a sign-magnitude number
  STA cosAngleLo
@@ -4890,11 +4889,11 @@ L1145 = C1144+1
                         \ The entries for logger positions 0 and 2 are as
                         \ follows:
                         \
-                        \   * Put %01 in logger position 0 for "S"
-                        \   * Put %00 in logger position 0 for "D"
+                        \   * Put %01 in logger position 0 for "S" (Pan left)
+                        \   * Put %00 in logger position 0 for "D" (Pan right)
                         \
-                        \   * Put %10 in logger position 2 for "L"
-                        \   * Put %11 in logger position 2 for ","
+                        \   * Put %10 in logger position 2 for "L" (Pan up)
+                        \   * Put %11 in logger position 2 for "," (Pan down)
                         \
                         \ So bit 0 of A will only be set if "S" and "," are both
                         \ pressed (pan left and down) and all other bits will be
@@ -4918,21 +4917,21 @@ L1145 = C1144+1
 
 .gameKeys
 
- EQUB &AE               \ Negative inkey value for "S"
- EQUB &CD               \ Negative inkey value for "D"
- EQUB &A9               \ Negative inkey value for "L"
- EQUB &99               \ Negative inkey value for ","
- EQUB &BE               \ Negative inkey value for "A"
- EQUB &EF               \ Negative inkey value for "Q"
- EQUB &CC               \ Negative inkey value for "R"
- EQUB &DC               \ Negative inkey value for "T"
- EQUB &9B               \ Negative inkey value for "B"
- EQUB &AB               \ Negative inkey value for "H"
- EQUB &DB               \ Negative inkey value for "7"
- EQUB &EA               \ Negative inkey value for "8"
- EQUB &96               \ Negative inkey value for "COPY"
- EQUB &A6               \ Negative inkey value for "DELETE"
- EQUB &CA               \ Negative inkey value for "U"
+ EQUB &AE               \ Negative inkey value for "S" (Pan left)
+ EQUB &CD               \ Negative inkey value for "D" (Pan right)
+ EQUB &A9               \ Negative inkey value for "L" (Pan up)
+ EQUB &99               \ Negative inkey value for "," (Pan down)
+ EQUB &BE               \ Negative inkey value for "A" (Absorb)
+ EQUB &EF               \ Negative inkey value for "Q" (Transfer)
+ EQUB &CC               \ Negative inkey value for "R" (Create robot)
+ EQUB &DC               \ Negative inkey value for "T" (Create tree)
+ EQUB &9B               \ Negative inkey value for "B" (Create boulder)
+ EQUB &AB               \ Negative inkey value for "H" (Hyperspace)
+ EQUB &DB               \ Negative inkey value for "7" (Volume down)
+ EQUB &EA               \ Negative inkey value for "8" (Volume up)
+ EQUB &96               \ Negative inkey value for "COPY" (Pause)
+ EQUB &A6               \ Negative inkey value for "DELETE" (Unpause)
+ EQUB &CA               \ Negative inkey value for "U" (U-turn)
 
 \ ******************************************************************************
 \
@@ -4955,25 +4954,25 @@ L1145 = C1144+1
 
 .keyLoggerConfig
 
- EQUB 0 +  1 << 2       \ Put  1 in logger position 0 for "S"
- EQUB 0 +  0 << 2       \ Put  0 in logger position 0 for "D"
+ EQUB 0 +  1 << 2       \ Put  1 in logger position 0 for "S" (Pan left)
+ EQUB 0 +  0 << 2       \ Put  0 in logger position 0 for "D" (Pan right)
 
- EQUB 2 +  2 << 2       \ Put  2 in logger position 2 for "L"
- EQUB 2 +  3 << 2       \ Put  3 in logger position 2 for ","
+ EQUB 2 +  2 << 2       \ Put  2 in logger position 2 for "L" (Pan up)
+ EQUB 2 +  3 << 2       \ Put  3 in logger position 2 for "," (Pan down)
 
- EQUB 1 + 32 << 2       \ Put 32 in logger position 1 for "A"
- EQUB 1 + 33 << 2       \ Put 33 in logger position 1 for "Q"
- EQUB 1 +  0 << 2       \ Put  0 in logger position 1 for "R"
- EQUB 1 +  2 << 2       \ Put  2 in logger position 1 for "T"
- EQUB 1 +  3 << 2       \ Put  3 in logger position 1 for "B"
- EQUB 1 + 34 << 2       \ Put 34 in logger position 1 for "H"
+ EQUB 1 + 32 << 2       \ Put 32 in logger position 1 for "A" (Absorb)
+ EQUB 1 + 33 << 2       \ Put 33 in logger position 1 for "Q" (Transfer)
+ EQUB 1 +  0 << 2       \ Put  0 in logger position 1 for "R" (Create robot)
+ EQUB 1 +  2 << 2       \ Put  2 in logger position 1 for "T" (Create tree)
+ EQUB 1 +  3 << 2       \ Put  3 in logger position 1 for "B" (Create boulder)
+ EQUB 1 + 34 << 2       \ Put 34 in logger position 1 for "H" (Hyperspace)
 
- EQUB 3 +  0 << 2       \ Put  0 in logger position 3 for "7"
- EQUB 3 +  1 << 2       \ Put  1 in logger position 3 for "8"
- EQUB 3 +  2 << 2       \ Put  2 in logger position 3 for "COPY"
- EQUB 3 +  3 << 2       \ Put  3 in logger position 3 for "DELETE"
+ EQUB 3 +  0 << 2       \ Put  0 in logger position 3 for "7" (Volume down)
+ EQUB 3 +  1 << 2       \ Put  1 in logger position 3 for "8" (Volume up)
+ EQUB 3 +  2 << 2       \ Put  2 in logger position 3 for "COPY" (Pause)
+ EQUB 3 +  3 << 2       \ Put  3 in logger position 3 for "DELETE" (Unpause)
 
- EQUB 1 + 35 << 2       \ Put 35 in logger position 1 for "U"
+ EQUB 1 + 35 << 2       \ Put 35 in logger position 1 for "U" (U-turn)
 
 \ ******************************************************************************
 \
