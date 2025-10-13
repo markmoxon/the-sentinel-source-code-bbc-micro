@@ -248,7 +248,7 @@
                         \ number along the axis)
                         \
                         \ Each tile in the landscape is defined by a tile
-                        \ corner (the "anchor") and the tile slope, with the
+                        \ corner (the "anchor") and the tile shape, with the
                         \ anchor being in the front-left corner of the tile,
                         \ nearest the origin
                         \
@@ -273,7 +273,7 @@
                         \ axis)
                         \
                         \ Each tile in the landscape is defined by a tile
-                        \ corner (the "anchor") and the tile slope, with the
+                        \ corner (the "anchor") and the tile shape, with the
                         \ anchor being in the front-left corner of the tile,
                         \ nearest the origin
                         \
@@ -738,7 +738,7 @@
 \       Name: tileData
 \       Type: Variable
 \   Category: Landscape
-\    Summary: Altitude and slope data for landscape tiles
+\    Summary: Altitude and shape data for landscape tiles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -757,8 +757,8 @@
 \ If there is no object placed on the tile, then the data contained in each byte
 \ is as follows:
 \
-\   * The low nibble of each byte contains the tile slope, which describes the
-\     shape of the tile (0 to 15).
+\   * The low nibble of each byte contains the tile shape, which describes the
+\     layout and structure of the landscape on that tile (0 to 15).
 \
 \   * The high nibble of each byte contains the altitude of the tile corner in
 \     the front-left corner of the tile (i.e. the corner closest to the origin
@@ -776,13 +776,13 @@
 \ whether both bit 6 and 7 are set (as empty tiles have the tile altitude in the
 \ top nibble, and this is in the range 1 to 11).
 \
-\ As each tile is defined by a tile corner and a slope, we tend to use the terms
+\ As each tile is defined by a tile corner and a shape, we tend to use the terms
 \ "tile" and "tile corner" interchangeably, depending on the context. That said,
 \ for tile corners along the furthest back and rightmost edges of the landscape,
-\ the slope data is ignored, as there are no slopes beyond the edges.
+\ the shape data is ignored, as there is no landscape beyond the edges.
 \
-\ See the SetTileSlope routine for information on the different types of tile
-\ slope.
+\ See the SetTileShape routine for information on the different types of tile
+\ shape.
 \
 \ ******************************************************************************
 
@@ -4587,7 +4587,7 @@ L1145 = C1144+1
                         \ to try another tile from the landscape's sequence of
                         \ seed numbers
 
- AND #%00001111         \ If the tile slope in the low nibble of the tile data
+ AND #%00001111         \ If the tile shape in the low nibble of the tile data
  BNE objb1              \ is non-zero, then the tile is not flat, so jump to
                         \ objb1 to try another tile from the landscape's
                         \ sequence of seed numbers
@@ -5967,7 +5967,7 @@ L1145 = C1144+1
  SBC #%00010000         \ tileAltitude to move down one level (we subtract from
  STA tileAltitude       \ the high nibble because tileAltitude contains tile
                         \ data, which has the tile altitude in the high nibble
-                        \ and the tile slope in the low nibble)
+                        \ and the tile shape in the low nibble)
 
  BNE aden2              \ Loop back to check for tile blocks at the lower
                         \ altitude until we have reached an altitude of zero
@@ -6136,7 +6136,7 @@ L1145 = C1144+1
  LDA tileAltitude       \ Extract the altitude from tileAltitude, which is in
  LSR A                  \ the high nibble (as tileAltitude contains tile data,
  LSR A                  \ which has the tile altitude in the high nibble and
- LSR A                  \ the tile slope in the low nibble)
+ LSR A                  \ the tile shape in the low nibble)
  LSR A
 
  STA minEnemyAltitude   \ Store the result in minEnemyAltitude, so it contains
@@ -6440,10 +6440,10 @@ L1145 = C1144+1
                         \ tile number in Y, so tileDataPage+Y now points to the
                         \ tile data entry in the tileData table
 
- AND #%00001111         \ Set A to the tile slope for the tile, which is in the
+ AND #%00001111         \ Set A to the tile shape for the tile, which is in the
                         \ bottom nibble of the tile data
 
- BNE high5              \ If the slope is non-zero then the tile is not flat, so
+ BNE high5              \ If the shape is non-zero then the tile is not flat, so
                         \ jump to high5 to move on to the next tile in the
 
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
@@ -11489,20 +11489,20 @@ L23E3 = C23E2+1
 \ One byte of tile data is generated for each tile corner in the landscape. Each
 \ byte of tile data contains two pieces of information:
 \
-\   * The low nibble of each byte contains the tile slope, which describes the
-\     shape of the tile.
+\   * The low nibble of each byte contains the tile shape, which describes the
+\     layout and structure of the landscape on that tile.
 \
 \   * The high nibble of each byte contains the altitude of the tile corner in
 \     the front-left corner of the tile (i.e. the corner closest to the
 \     landscape origin). We call this tile corner the "anchor".
 \
-\ As each tile is defined by a tile corner and a slope, we tend to use the terms
+\ As each tile is defined by a tile corner and a shape, we tend to use the terms
 \ "tile" and "tile corner" interchangeably, depending on the context. That said,
 \ for tile corners along the furthest back and rightmost edges of the landscape,
-\ the slope data is ignored, as there are no slopes beyond the edges.
+\ the shape data is ignored, as there is no landscape beyond the edges.
 \
-\ See the SetTileSlope routine for information on the different types of tile
-\ slope.
+\ See the SetTileShape routine for information on the different types of tile
+\ shape.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11621,17 +11621,17 @@ L23E3 = C23E2+1
                         \ so the altitude data is in the low nibble of each byte
                         \ of tile data
                         \
-                        \ We now calculate the tile slope for the tiles anchored
+                        \ We now calculate the tile shape for the tiles anchored
                         \ at each tile corner in turn, where the anchor is in
                         \ the front-left corner of the tile (i.e. nearest the
                         \ origin)
                         \
                         \ Note that the last tile corners at the right end of
                         \ each row or at the back of each column do not anchor
-                        \ any tiles, as they are at the edge (so their slopes
+                        \ any tiles, as they are at the edge (so their shapes
                         \ are not calculated)
                         \
-                        \ We put the tile slope into the high nibble of the tile
+                        \ We put the tile shape into the high nibble of the tile
                         \ data (for now)
 
  LDA #30                \ Set zTile = 30 so we start iterating from the rear, 
@@ -11648,7 +11648,7 @@ L23E3 = C23E2+1
 
 .land5
 
- JSR SetTileSlope       \ Set X to the slope of the tile anchored at
+ JSR SetTileShape       \ Set X to the shape of the tile anchored at
                         \ (xTile, zTile)
                         \
                         \ This will be in the range 1 to 11 (so it fits into
@@ -11660,17 +11660,17 @@ L23E3 = C23E2+1
                         \ tileDataPage+Y now points to the tile data entry in
                         \ the tileData table
 
-                        \ We now put the tile slope into the high nibble of the
+                        \ We now put the tile shape into the high nibble of the
                         \ tile data, so the low nibble of the tile data contains
                         \ the tile altitude and the high nibble contains the
-                        \ tile slope (for now)
+                        \ tile shape (for now)
 
- TXA                    \ Put the tile slope in X into the high nibble of A by
+ TXA                    \ Put the tile shape in X into the high nibble of A by
  ASL A                  \ shifting X to the left by three spaces and OR'ing the
  ASL A                  \ result into the tile data at tileData + Y
  ASL A                  \
  ASL A                  \ This works because both the tile altitude and tile
- ORA (tileDataPage),Y   \ slope fit into the range 0 to 15, or four bits
+ ORA (tileDataPage),Y   \ shape fit into the range 0 to 15, or four bits
  STA (tileDataPage),Y
 
  DEC xTile              \ Decrement the tile x-coordinate in the inner loop
@@ -11686,7 +11686,7 @@ L23E3 = C23E2+1
                         \ all the way to the front row
 
                         \ By this point the high nibble of each byte of tile
-                        \ data contains the tile slope and the low nibble
+                        \ data contains the tile shape and the low nibble
                         \ contains the tile altitude, so now we swap these
                         \ around
                         \
@@ -11700,14 +11700,14 @@ L23E3 = C23E2+1
                         \ a tile contains an object, and we can reuse the other
                         \ bits to store the object information (as we only ever
                         \ place objects on flat tiles, so we can discard the
-                        \ slope data)
+                        \ shape data)
 
  LDA #2                 \ Call ProcessTileData with A = 2 to swap the high and
  JSR ProcessTileData    \ low nibbles of all the tile data for the whole
                         \ landscape
                         \
                         \ So now the low nibble of each byte of tile data
-                        \ contains the tile slope and the high nibble contains
+                        \ contains the tile shape and the high nibble contains
                         \ the tile altitude, as required
                         \
                         \ This also sets the N flag, so a BMI branch would be
@@ -12195,7 +12195,7 @@ L23E3 = C23E2+1
 \
 \                         * If the tile does not contain an object, then:
 \
-\                           * The tile slope is in the low nibble (0 to 15)
+\                           * The tile shape is in the low nibble (0 to 15)
 \
 \                           * The tile altitude is in the high nibble (1 to 11)
 \
@@ -12454,7 +12454,7 @@ L23E3 = C23E2+1
                         \
                         \ So this algorithm smoothes the landscape by squeezing
                         \ the landscape into a flatter shape, moving outlier
-                        \ tiles closer to the landscape's overall shape
+                        \ tiles closer to the landscape's overall line
 
  LDA stripData+1,X      \ If this tile is at the same altitude as the previous
  CMP stripData+2,X      \ tile, jump to stri9 to move on to smoothing the next
@@ -12752,10 +12752,10 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SetTileSlope
+\       Name: SetTileShape
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Calculate the slope of the tile anchored at (xTile, zTile)
+\    Summary: Calculate the shape of the tile anchored at (xTile, zTile)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12768,7 +12768,7 @@ L23E3 = C23E2+1
 \    into
 \   screen      x-axis from left to right --->
 \
-\ The slope is calculated as follows, where:
+\ The shape is calculated as follows, where:
 \
 \   * 0, 1, 2 represent arbitrary altitudes that are in that order, with 2 being
 \     higher than 1 being higher than 0
@@ -12777,11 +12777,11 @@ L23E3 = C23E2+1
 \
 \   * c represents an arbitrary altitude where b <> c (so c can equal 1)
 \
-\ These are all the different types of slope (note there is no slope 8, and
-\ slopes 4 and 12 can have multiple shapes):
+\ These are all the different types of shape (note there is no shape 8, and
+\ shapes 4 and 12 can have multiple layouts):
 \
-\   Slope   S vs V      S vs T      S vs U      U vs V      U vs T      Shape
-\   -----   ------      ------      ------      ------      ------      -----
+\   Shape   S vs V      S vs T      S vs U      U vs V      U vs T      Layout
+\   -----   ------      ------      ------      ------      ------      ------
 \
 \   0       S == V      S == T      S == U                              1 1
 \                                                                       1 1
@@ -12838,11 +12838,11 @@ L23E3 = C23E2+1
 \
 \ Returns:
 \
-\   X                   The slope of the tile anchored at (xTile, zTile)
+\   X                   The shape of the tile anchored at (xTile, zTile)
 \
 \ ******************************************************************************
 
-.SetTileSlope
+.SetTileShape
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
@@ -12891,22 +12891,22 @@ L23E3 = C23E2+1
                         \   screen      x-axis from left to right --->
                         \
                         \ S is the altitude of the tile corner that anchors the
-                        \ tile for which we are calculating the slope, and T, U
+                        \ tile for which we are calculating the shape, and T, U
                         \ and V are the altitudes of the tile's other three
-                        \ corners, so now we can analyse the slope of the tile
+                        \ corners, so now we can analyse the shape of the tile
 
- LDA S                  \ If S = V then jump to slop10
+ LDA S                  \ If S = V then jump to shap10
  CMP V
- BEQ slop10
+ BEQ shap10
 
- CMP T                  \ If S = T then jump to slop4
- BEQ slop4
+ CMP T                  \ If S = T then jump to shap4
+ BEQ shap4
 
- LDA U                  \ If U = V then jump to slop2
+ LDA U                  \ If U = V then jump to shap2
  CMP V
- BEQ slop2
+ BEQ shap2
 
-.slop1
+.shap1
 
                         \ If we get here then we either fell through from above:
                         \
@@ -12914,18 +12914,18 @@ L23E3 = C23E2+1
                         \   * S <> T
                         \   * U <> V
                         \
-                        \ or we jumped here from slop10 and:
+                        \ or we jumped here from shap10 and:
                         \
                         \   * S == V
                         \   * S <> T
                         \   * U <> T
                         \   * U <> V
 
- LDX #12                \ Return a slope value of 12 in X
+ LDX #12                \ Return a shape value of 12 in X
 
  RTS                    \ Return from the subroutine
 
-.slop2
+.shap2
 
                         \ If we get here then then:
                         \
@@ -12935,8 +12935,8 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- CMP T                  \ If U <> T then jump to slop5
- BNE slop5
+ CMP T                  \ If U <> T then jump to shap5
+ BNE shap5
 
                         \ If we get here then:
                         \
@@ -12947,27 +12947,27 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- LDX #2                 \ Set X = 2 to return as the slope if U >= S
+ LDX #2                 \ Set X = 2 to return as the shape if U >= S
 
- CMP S                  \ If U >= S then jump to slop3 to return a slope value
- BCS slop3              \ of 2
+ CMP S                  \ If U >= S then jump to shap3 to return a shape value
+ BCS shap3              \ of 2
 
- LDX #11                \ U < S so return a slope value of 11 in X
+ LDX #11                \ U < S so return a shape value of 11 in X
 
-.slop3
+.shap3
 
  RTS                    \ Return from the subroutine
 
-.slop4
+.shap4
 
                         \ If we get here then:
                         \
                         \   * S <> V
                         \   * S == T
 
- LDA U                  \ If U = V then jump to slop8
+ LDA U                  \ If U = V then jump to shap8
  CMP V
- BEQ slop8
+ BEQ shap8
 
                         \ If we get here then:
                         \
@@ -12977,12 +12977,12 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- CMP T                  \ If U = T then jump to slop6
- BEQ slop6
+ CMP T                  \ If U = T then jump to shap6
+ BEQ shap6
 
-.slop5
+.shap5
 
-                        \ If we get here then either we jumped from slop2:
+                        \ If we get here then either we jumped from shap2:
                         \
                         \   * S <> V
                         \   * S <> T
@@ -12996,11 +12996,11 @@ L23E3 = C23E2+1
                         \   * U <> V
                         \   * U <> T
 
- LDX #4                 \ Return a slope value of 4 in X
+ LDX #4                 \ Return a shape value of 4 in X
 
  RTS                    \ Return from the subroutine
 
-.slop6
+.shap6
 
                         \ If we get here then:
                         \
@@ -13011,18 +13011,18 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- LDX #14                \ Set X = 14 to return as the slope if U < V
+ LDX #14                \ Set X = 14 to return as the shape if U < V
 
- CMP V                  \ If U < V then jump to slop7 to return a slope value
- BCC slop7              \ of 14
+ CMP V                  \ If U < V then jump to shap7 to return a shape value
+ BCC shap7              \ of 14
 
- LDX #7                 \ U >= V so return a slope value of 7 in X
+ LDX #7                 \ U >= V so return a shape value of 7 in X
 
-.slop7
+.shap7
 
  RTS                    \ Return from the subroutine
 
-.slop8
+.shap8
 
                         \ If we get here then:
                         \
@@ -13032,18 +13032,18 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- LDX #5                 \ Set X = 5 to return as the slope if U < T
+ LDX #5                 \ Set X = 5 to return as the shape if U < T
 
- CMP T                  \ If U < T then jump to slop7 to return a slope value
- BCC slop9              \ of 5
+ CMP T                  \ If U < T then jump to shap7 to return a shape value
+ BCC shap9              \ of 5
 
- LDX #13                \ U >= T so return a slope value of 13 in X
+ LDX #13                \ U >= T so return a shape value of 13 in X
 
-.slop9
+.shap9
 
  RTS                    \ Return from the subroutine
 
-.slop10
+.shap10
 
                         \ If we get here then:
                         \
@@ -13051,12 +13051,12 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to S
 
- CMP T                  \ If S = T then jump to slop14
- BEQ slop14
+ CMP T                  \ If S = T then jump to shap14
+ BEQ shap14
 
- LDA U                  \ If U = T then jump to slop12
+ LDA U                  \ If U = T then jump to shap12
  CMP T
- BEQ slop12
+ BEQ shap12
 
                         \ If we get here then:
                         \
@@ -13066,8 +13066,8 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- CMP V                  \ If U <> V then jump to slop1
- BNE slop1
+ CMP V                  \ If U <> V then jump to shap1
+ BNE shap1
 
                         \ If we get here then:
                         \
@@ -13078,18 +13078,18 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- LDX #6                 \ Set X = 6 to return as the slope if U < T
+ LDX #6                 \ Set X = 6 to return as the shape if U < T
 
- CMP T                  \ If U < T then jump to slop11 to return a slope value
- BCC slop11             \ of 6
+ CMP T                  \ If U < T then jump to shap11 to return a shape value
+ BCC shap11             \ of 6
 
- LDX #15                \ U >= T so return a slope value of 15 in X
+ LDX #15                \ U >= T so return a shape value of 15 in X
 
-.slop11
+.shap11
 
  RTS                    \ Return from the subroutine
 
-.slop12
+.shap12
 
                         \ If we get here then:
                         \
@@ -13099,18 +13099,18 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to U
 
- LDX #1                 \ Set X = 1 to return as the slope if U < V
+ LDX #1                 \ Set X = 1 to return as the shape if U < V
 
- CMP V                  \ If U < V then jump to slop11 to return a slope value
- BCC slop13             \ of 1
+ CMP V                  \ If U < V then jump to shap11 to return a shape value
+ BCC shap13             \ of 1
 
- LDX #9                 \ U >= V so return a slope value of 9 in X
+ LDX #9                 \ U >= V so return a shape value of 9 in X
 
-.slop13
+.shap13
 
  RTS                    \ Return from the subroutine
 
-.slop14
+.shap14
 
                         \ If we get here then:
                         \
@@ -13119,21 +13119,21 @@ L23E3 = C23E2+1
                         \
                         \ and A is set to S
 
- CMP U                  \ If S = U then jump to slop16
- BEQ slop16
+ CMP U                  \ If S = U then jump to shap16
+ BEQ shap16
 
- LDX #10                \ Set X = 10 to return as the slope if S < U
+ LDX #10                \ Set X = 10 to return as the shape if S < U
 
- BCC slop15             \ If S < U then jump to slop15 to return a slope value
+ BCC shap15             \ If S < U then jump to shap15 to return a shape value
                         \ of 10
 
- LDX #3                 \ S > U so return a slope value of 93 in X
+ LDX #3                 \ S > U so return a shape value of 93 in X
 
-.slop15
+.shap15
 
  RTS                    \ Return from the subroutine
 
-.slop16
+.shap16
 
                         \ If we get here then:
                         \
@@ -13141,7 +13141,7 @@ L23E3 = C23E2+1
                         \   * S == T
                         \   * S == U
 
- LDX #0                 \ Return a slope value of 0 in X
+ LDX #0                 \ Return a shape value of 0 in X
 
  RTS                    \ Return from the subroutine
 
