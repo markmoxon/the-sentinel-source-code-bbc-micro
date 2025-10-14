@@ -1747,7 +1747,7 @@
 .sightsInitialMoves
 
  EQUB 0                 \ Controls the initial movement of the sights over the
-                        \ first eight calls to the ProcessKeyPresses routine
+                        \ first eight calls to the CheckForKeyPresses routine
                         \
                         \ Movement in the first eight calls is determined by
                         \ the settings of bit 7 to bit 0, where a set bit
@@ -1759,7 +1759,7 @@
 
 .L0CCA
 
- EQUB &80               \ ???
+ EQUB %10000000         \ ???
 
 .L0CCB
 
@@ -1823,19 +1823,28 @@
 
 .L0CE4
 
- EQUB &80               \ ???
+ EQUB %10000000         \ ???
 
-.L0CE5
+.activateSentinel
 
- EQUB &80               \ ???
+ EQUB %10000000         \ A flag to record when the Sentinel is activated at the
+                        \ start of the game (by the player pressing a key that
+                        \ expends or absorbs energy
+                        \
+                        \   * Bit 7 clear = the Sentinel is actvated
+                        \
+                        \   * Bit 7 set = the Sentinel is not yet activated
+                        \
+                        \ This gives the player time to get their bearings when
+                        \ they first start a landscape
 
 .L0CE6
 
- EQUB &80               \ ???
+ EQUB %10000000         \ ???
 
 .L0CE7
 
- EQUB &80               \ ???
+ EQUB %10000000         \ ???
 
 .keyLogger
 
@@ -4253,7 +4262,7 @@ L1145 = C1144+1
                         \
                         \   * &0C00 to &0CE3
                         \
-                        \ and set the following variable block to &80:
+                        \ and set the following variable block to %10000000:
                         \
                         \   * &0CE4 to &0CEF
 
@@ -4284,8 +4293,8 @@ L1145 = C1144+1
  CPX #&E4               \ If X < &E4 then skip the following instruction,
  BCC rese4              \ leaving A = 0, so we zero &0C00 to &0CE3
 
- LDA #&80               \ If we get here then X >= &E4, so set A = &80 so we
-                        \ set L0CE4 to L0CEF to &80
+ LDA #%10000000         \ If we get here then X >= &E4, so set A = %10000000 to
+                        \ set bit 7 of L0CE4 to L0CEF
 
 .rese4
 
@@ -4348,14 +4357,15 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: ProcessKeyPresses
+\       Name: CheckForKeyPresses
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: Process all game key presses
+\    Summary: Check for various game key presses and update the key logger and
+\             relevant variables (during the interrupt routine)
 \
 \ ******************************************************************************
 
-.ProcessKeyPresses
+.CheckForKeyPresses
 
  LDA #%10000000         \ Set bit 7 of panKeyBeingPressed to indicate that no
  STA panKeyBeingPressed \ pan key is being pressed (we will update this below
@@ -4477,8 +4487,8 @@ L1145 = C1144+1
                         \ movement of the sights)
 
  LDA keyLogger+1        \ Set A to the key logger entry for "A", "Q", "R", "T",
-                        \ "B" or "H" (absorb, transfer, create robot, create
-                        \ tree, create boulder, hyperspace)
+                        \ "B", "H", or "U" (absorb, transfer, create robot,
+                        \ create tree, create boulder, hyperspace, U-turn)
 
  BPL sub_C1200          \ If there is a key press in the key logger entry, jump
                         \ to sub_C1200 to ??? and return from the subroutine
@@ -4585,8 +4595,8 @@ L1145 = C1144+1
 
 .sub_C1200
 
- LDA #%10000000         \ Set bit 7 of L0CE4 ???
- STA L0CE4
+ LDA #%10000000         \ Set bit 7 of L0CE4 ??? So we skip part of the IRQ and
+ STA L0CE4              \ sub_C1264
 
  STA L0C1E              \ Set bit 7 of L0C1E ???
 
@@ -4823,14 +4833,15 @@ L1145 = C1144+1
 
 .sub_C1264
 
- LDA #0
- STA L0CE4
+ LDA #0                 \ Clear bit 7 of L0CE4 ??? So we do more in the IRQ and
+ STA L0CE4              \ sub_C1264
+
  STA L0C51
 
 .C126C
 
- LDA L0CE4
- BMI C12AD
+ LDA L0CE4              \ If bit 7 of L0CE4 is set, jump to 12AD to skip the
+ BMI C12AD              \ following ???
 
  LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress ???
 
@@ -4867,9 +4878,9 @@ L1145 = C1144+1
  BIT quitGame
  BMI C128F
  JSR sub_C191A
- JSR sub_C34E1
+ JSR ProcessPauseKeys
  JSR sub_C355A
- JSR ChangeVolume
+ JSR ProcessVolumeKeys
  JMP C126C
 
 .C12AD
@@ -4882,26 +4893,34 @@ L1145 = C1144+1
 .C12B3
 
  LDA keyLogger+1        \ Set A to the key logger entry for "A", "Q", "R", "T",
-                        \ "B" or "H" (absorb, transfer, create robot, create
-                        \ tree, create boulder, hyperspace)
+                        \ "B", "H", or "U" (absorb, transfer, create robot,
+                        \ create tree, create boulder, hyperspace, U-turn)
 
  BMI C12EB              \ If there is no key press in the key logger entry, jump
                         \ to sub_C1264 via C12EB to ???
 
                         \ If we get here then the player is pressing "A", "Q",
-                        \ "R", "T", "B" or "H" (absorb, transfer, create robot,
-                        \ create tree, create boulder, hyperspace), which will
-                        \ put values into the key logger of 32, 33, 0, 2, 3 or
-                        \ 34 respectively
+                        \ "R", "T", "B", "H" or "U" (absorb, transfer, create
+                        \ robot, create tree, create boulder, hyperspace,
+                        \ U-turn), so the possible values for A are:
+                        \
+                        \   * 0  for key press "R" (Create robot)
+                        \   * 2  for key press "T" (Create tree)
+                        \   * 3  for key press "B" (Create boulder)
+                        \   * 32 for key press "A" (Absorb)
+                        \   * 33 for key press "Q" (Transfer)
+                        \   * 34 for key press "H" (Hyperspace)
+                        \   * 35 for key press "U" (U-turn)
 
- CMP #34                \ If A >= 34 then "H" (hyperspace) is being pressed, so
- BCS C12C1              \ jump to C12C1 to skip the following check, as we can
-                        \ hyperspace with or without the sights being shown
+ CMP #34                \ If A >= 34 then "H" (hyperspace) or "U" (U-turn) is
+ BCS C12C1              \ being pressed, so jump to C12C1 to skip the following
+                        \ check, as we can hyperspace and U-turn at any point,
+                        \ irrespective of whether the sights are being shown
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
  BPL C12EB              \ are not being shown, so jump to C12EB to ???, as we
-                        \ can only do these operations when the sights are
-                        \ visible
+                        \ can only create, absorb and transfer when the sights
+                        \ are visible
 
                         \ If we get here then the sights are being shown, so we
                         \ can process the key press
@@ -4909,11 +4928,21 @@ L1145 = C1144+1
 .C12C1
 
  STA keyPress           \ Record the value from the key logger in keyPress, so
-                        \ we can refer to it later (when creating objects like
-                        \ robots or trees, for example)
+                        \ we can refer to it in the call to ProcessActionKeys
 
- LSR L0CE5
- JSR sub_C1B0B
+ LSR activateSentinel   \ The player has pressed a key that expends or absorbs
+                        \ energy, which activates the Sentinel at the very start
+                        \ of each level (the Sentinel and Sentries are inactive
+                        \ until this point, giving the player time to get their
+                        \ bearings when they first start a landscape)
+                        \
+                        \ So clear bit 7 of activateSentinel to indicate that
+                        \ the Sentinal is activated and the game has started
+
+ JSR ProcessActionKeys  \ Process any key presses in key logger entry 1, which
+                        \ is where action key pressess are stored (absorb,
+                        \ transfer, create, hyperspace, U-turn)
+
  BCS C12E5
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
@@ -5147,20 +5176,20 @@ L1145 = C1144+1
 
 .gameKeys
 
- EQUB &AE               \ Negative inkey value for "S" (Pan left)
- EQUB &CD               \ Negative inkey value for "D" (Pan right)
- EQUB &A9               \ Negative inkey value for "L" (Pan up)
- EQUB &99               \ Negative inkey value for "," (Pan down)
- EQUB &BE               \ Negative inkey value for "A" (Absorb)
- EQUB &EF               \ Negative inkey value for "Q" (Transfer)
- EQUB &CC               \ Negative inkey value for "R" (Create robot)
- EQUB &DC               \ Negative inkey value for "T" (Create tree)
- EQUB &9B               \ Negative inkey value for "B" (Create boulder)
- EQUB &AB               \ Negative inkey value for "H" (Hyperspace)
- EQUB &DB               \ Negative inkey value for "7" (Volume down)
- EQUB &EA               \ Negative inkey value for "8" (Volume up)
- EQUB &96               \ Negative inkey value for "COPY" (Pause)
- EQUB &A6               \ Negative inkey value for "DELETE" (Unpause)
+ EQUB &AE               \ Negative inkey value for "S" (pan left)
+ EQUB &CD               \ Negative inkey value for "D" (pan right)
+ EQUB &A9               \ Negative inkey value for "L" (pan up)
+ EQUB &99               \ Negative inkey value for "," (pan down)
+ EQUB &BE               \ Negative inkey value for "A" (absorb)
+ EQUB &EF               \ Negative inkey value for "Q" (transfer)
+ EQUB &CC               \ Negative inkey value for "R" (create robot)
+ EQUB &DC               \ Negative inkey value for "T" (create tree)
+ EQUB &9B               \ Negative inkey value for "B" (create boulder)
+ EQUB &AB               \ Negative inkey value for "H" (hyperspace)
+ EQUB &DB               \ Negative inkey value for "7" (volume down)
+ EQUB &EA               \ Negative inkey value for "8" (volume up)
+ EQUB &96               \ Negative inkey value for "COPY" (pause)
+ EQUB &A6               \ Negative inkey value for "DELETE" (unpause)
  EQUB &CA               \ Negative inkey value for "U" (U-turn)
 
 \ ******************************************************************************
@@ -5180,27 +5209,37 @@ L1145 = C1144+1
 \
 \ Bits 2 to 7 contain the value to store in the key logger at that entry.
 \
+\ The key logger entries fall into four categories:
+\
+\   * Entry 0 is for sideways movement keys (pan left, pan right)
+\
+\   * Entry 1 is for action keys (absorb, transfer, create, hyperspace, U-turn)
+\
+\   * Entry 2 is for vertical movement keys (pan up, pan down)
+\
+\   * Entry 3 is for utility keys (volume control, pause)
+\
 \ ******************************************************************************
 
 .keyLoggerConfig
 
- EQUB 0 +  1 << 2       \ Put  1 in logger entry 0 for "S" (Pan left)
- EQUB 0 +  0 << 2       \ Put  0 in logger entry 0 for "D" (Pan right)
+ EQUB 0 +  1 << 2       \ Put  1 in logger entry 0 for "S" (pan left)
+ EQUB 0 +  0 << 2       \ Put  0 in logger entry 0 for "D" (pan right)
 
- EQUB 2 +  2 << 2       \ Put  2 in logger entry 2 for "L" (Pan up)
- EQUB 2 +  3 << 2       \ Put  3 in logger entry 2 for "," (Pan down)
+ EQUB 2 +  2 << 2       \ Put  2 in logger entry 2 for "L" (pan up)
+ EQUB 2 +  3 << 2       \ Put  3 in logger entry 2 for "," (pan down)
 
- EQUB 1 + 32 << 2       \ Put 32 in logger entry 1 for "A" (Absorb)
- EQUB 1 + 33 << 2       \ Put 33 in logger entry 1 for "Q" (Transfer)
- EQUB 1 +  0 << 2       \ Put  0 in logger entry 1 for "R" (Create robot)
- EQUB 1 +  2 << 2       \ Put  2 in logger entry 1 for "T" (Create tree)
- EQUB 1 +  3 << 2       \ Put  3 in logger entry 1 for "B" (Create boulder)
- EQUB 1 + 34 << 2       \ Put 34 in logger entry 1 for "H" (Hyperspace)
+ EQUB 1 + 32 << 2       \ Put 32 in logger entry 1 for "A" (absorb)
+ EQUB 1 + 33 << 2       \ Put 33 in logger entry 1 for "Q" (transfer)
+ EQUB 1 +  0 << 2       \ Put  0 in logger entry 1 for "R" (create robot)
+ EQUB 1 +  2 << 2       \ Put  2 in logger entry 1 for "T" (create tree)
+ EQUB 1 +  3 << 2       \ Put  3 in logger entry 1 for "B" (create boulder)
+ EQUB 1 + 34 << 2       \ Put 34 in logger entry 1 for "H" (hyperspace)
 
- EQUB 3 +  0 << 2       \ Put  0 in logger entry 3 for "7" (Volume down)
- EQUB 3 +  1 << 2       \ Put  1 in logger entry 3 for "8" (Volume up)
- EQUB 3 +  2 << 2       \ Put  2 in logger entry 3 for "COPY" (Pause)
- EQUB 3 +  3 << 2       \ Put  3 in logger entry 3 for "DELETE" (Unpause)
+ EQUB 3 +  0 << 2       \ Put  0 in logger entry 3 for "7" (volume down)
+ EQUB 3 +  1 << 2       \ Put  1 in logger entry 3 for "8" (volume up)
+ EQUB 3 +  2 << 2       \ Put  2 in logger entry 3 for "COPY" (pause)
+ EQUB 3 +  3 << 2       \ Put  3 in logger entry 3 for "DELETE" (unpause)
 
  EQUB 1 + 35 << 2       \ Put 35 in logger entry 1 for "U" (U-turn)
 
@@ -7741,25 +7780,45 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1B0B
+\       Name: ProcessActionKeys
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Process a key press from key logger entry 1
 \
 \ ******************************************************************************
 
-.sub_C1B0B
+.ProcessActionKeys
 
- LDA keyPress
- CMP #34
- BNE C1B1C
+ LDA keyPress           \ Set A to the value from the key logger for the key
+                        \ press we want to process
+                        \
+                        \ The possible values for key logger entry 1 are:
+                        \
+                        \   * 0  for key press "R" (Create robot)
+                        \   * 2  for key press "T" (Create tree)
+                        \   * 3  for key press "B" (Create boulder)
+                        \   * 32 for key press "A" (Absorb)
+                        \   * 33 for key press "Q" (Transfer)
+                        \   * 34 for key press "H" (Hyperspace)
+                        \   * 35 for key press "U" (U-turn)
+                        \
+                        \ So now we perform the correct action for the key press
+                        \ in A
+
+ CMP #34                \ If A <> 34 then the "H" key (hyperspace) is not being
+ BNE C1B1C              \ pressed, so jump to C1B1C to move on to the next check
+
+                        \ If we get here then "H" (hyperspace) is being pressed
+
  JSR sub_C2147
+
  LDA #0
  STA titleObjectToDraw
 
 .P1B1A
 
  SEC
+
  RTS
 
 .C1B1C
@@ -7767,8 +7826,11 @@ L1145 = C1144+1
  LDX L006E              \ ??? This is value passed to sub_C1BFF, is it the
                         \ player slot ???
 
- CMP #35
- BNE C1B33
+ CMP #35                \ If A <> 35 then the "U" key (U-turn) is not being
+ BNE C1B33              \ pressed, so jump to C1B33 to move on to the next check
+
+                        \ If we get here then "U" (U-turn) is being pressed
+
  ASL L0C51
  BPL P1B1A
  LDA objectYawAngle,X
@@ -7780,12 +7842,16 @@ L1145 = C1144+1
 .C1B33
 
  LSR L0C6E
+
  JSR sub_C1BFF
  JSR sub_C1CCC
  BCS C1B98
- LDA keyPress
- AND #32
- BEQ C1BA9
+
+ LDA keyPress           \ If bit 5 of keypress is clear then A is not 32 or 33,
+ AND #%00100000         \ so A must be 0, 2 or 3, so jump to C1BA9 to spawn a
+ BEQ C1BA9              \ robot, tree or boulder
+
+                        \ If we get here then A must be 32 or 33
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
@@ -15625,14 +15691,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: ChangeVolume
+\       Name: ProcessVolumeKeys
 \       Type: Subroutine
-\   Category: Sound
+\   Category: Keyboard
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.ChangeVolume
+.ProcessVolumeKeys
 
  LDA L0CE4
  BMI CRE29
@@ -15669,7 +15735,7 @@ L314A = C3148+2
 
  LDX L0CDF
  CPX #&02
- BCS ChangeVolume
+ BCS ProcessVolumeKeys
  STA L34D4
  TAY
  BEQ C34AD
@@ -15698,7 +15764,7 @@ L314A = C3148+2
  STA L0CDF
  LDA #&05
  JSR sub_C3440
- JMP ChangeVolume
+ JMP ProcessVolumeKeys
 
 .CRE29
 
@@ -15733,14 +15799,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C34E1
+\       Name: ProcessPauseKeys
 \       Type: Subroutine
-\   Category: ???
+\   Category: Keyboard
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C34E1
+.ProcessPauseKeys
 
  LDA keyLogger+3
 
@@ -16430,8 +16496,10 @@ L314A = C3148+2
 
 .C379B
 
- LDA L0CE5
- BMI C37A6
+ LDA activateSentinel   \ If bit 7 of activateSentinel is set then the Sentinel
+ BMI C37A6              \ has not yet been activated at the start of the game,
+                        \ so jump to C37A6 to skip the following
+
  JSR sub_C12EE
  JSR sub_C1623
 
@@ -16440,7 +16508,8 @@ L314A = C3148+2
  LDA L0CE4
  BMI C37CB
 
- JSR ProcessKeyPresses
+ JSR CheckForKeyPresses \ Check for various game key presses and update the key
+                        \ logger and relevant variables
 
  JMP C37CB
 

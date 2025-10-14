@@ -2685,7 +2685,7 @@
      0CE3   00
 .L0CE4
      0CE4   80
-.L0CE5
+.activateSentinel
      0CE5   80
 .L0CE6
      0CE6   80
@@ -3363,7 +3363,7 @@
      1184   EE 7D 0C   INC &0C7D
      1187   20 23 39   JSR &3923
      118A   60         RTS
-.ProcessKeyPresses
+.CheckForKeyPresses
      118B   A9 80      LDA #&80
      118D   85 09      STA &09
      118F   A2 8E      LDX #&8E
@@ -4683,7 +4683,7 @@
      1B09   AA         TAX
 .CRE10
      1B0A   60         RTS
-.sub_C1B0B
+.ProcessActionKeys
      1B0B   AD 61 0C   LDA &0C61
      1B0E   C9 22      CMP #&22
      1B10   D0 0A      BNE &1B1C
@@ -8452,7 +8452,7 @@
      347D   02
      347E   03
      347F   01
-.ChangeVolume
+.ProcessVolumeKeys
      3480   AD E4 0C   LDA &0CE4
      3483   30 4E      BMI &34D3
      3485   AD D4 34   LDA &34D4
@@ -8512,7 +8512,7 @@
      34DE   44
      34DF   4E
      34E0   52
-.sub_C34E1
+.ProcessPauseKeys
      34E1   AD EB 0C   LDA &0CEB
      34E4   30 1E      BMI &3504
      34E6   C9 02      CMP #&02
