@@ -2393,7 +2393,7 @@
      0C1D   00
 .L0C1E
      0C1E   00
-.L0C1F
+.samePanKeyPress
      0C1F   00
 .L0C20
      0C20   00
@@ -3430,7 +3430,7 @@
      1208   AD E4 0C   LDA &0CE4
      120B   8D DC 0C   STA &0CDC
      120E   60         RTS
-.sub_C120F
+.CheckForSamePanKey
      120F   78         SEI
      1210   A0 03      LDY #&03
      1212   20 53 13   JSR &1353
@@ -3438,7 +3438,7 @@
      1218   CD E8 0C   CMP &0CE8
      121B   F0 03      BEQ &1220
      121D   CD EA 0C   CMP &0CEA
-.C1220
+.cpan1
      1220   58         CLI
      1221   60         RTS
 .spaceKeyDebounce

@@ -1348,9 +1348,14 @@
 
  EQUB 0                 \ ???
 
-.L0C1F
+.samePanKeyPress
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Records whether the same pan key is being held down
+                        \ compared to the last time we checked
+                        \
+                        \   * Bit 7 clear = same pan key is bot being held down
+                        \
+                        \   * Bit 7 set = same pan key is being held down
 
 .L0C20
 
@@ -4594,16 +4599,31 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C120F
+\       Name: CheckForSamePanKey
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Check to see whether the same pan key is being held down compared
+\             to the last time we checked
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   Z flag              Determines whether the same pan key is being held down
+\                       compared to the last time we checked:
+\
+\                         * Z flag will be set if the same pan key is being held
+\                           down (so a BEQ branch will be taken)
+\
+\                         * Z flag will be clear otherwise (so a BNE branch will
+\                           be taken)
 \
 \ ******************************************************************************
 
-.sub_C120F
+.CheckForSamePanKey
 
- SEI                    \ Disable interrupts
+ SEI                    \ Disable interrupts so the key logger doesn't get
+                        \ updated while we check it for pan key presses
 
  LDY #3                 \ Scan the keyboard for the first four game keys ("S",
  JSR ScanForGameKeys    \ "D", "L" and ",", for pan left, right up and down)
@@ -4615,12 +4635,16 @@ L1145 = C1144+1
  CMP keyLogger          \ Compare with the key logger entry for "S" and "D"
                         \ (pan left and right)
 
- BEQ C1220
+ BEQ cpan1              \ If the key logger entry is unchanged from the previous
+                        \ pan key press in latestPanKeyPress, then the same pan
+                        \ key is being held down, so jump to cpan1 with the
+                        \ Z flag set accordingly
 
  CMP keyLogger+2        \ Compare with the key logger entry for "L" and ","
-                        \ (pan up and down)
+                        \ (pan up and down), so the Z flag will be set if the
+                        \ same pan key is being held down
 
-.C1220
+.cpan1
 
  CLI                    \ Re-enable interrupts
 
@@ -4807,13 +4831,20 @@ L1145 = C1144+1
 
  LDA L0CE4
  BMI C12AD
- LSR L0C1F
+
+ LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress ???
+
  LDA L0CDC
  BPL C1282
- JSR sub_C120F
- BNE C1282
- SEC
- ROR L0C1F
+
+ JSR CheckForSamePanKey \ Check to see whether the same pan key is being
+                        \ held down compared to the last time we checked
+
+ BNE C1282              \ If the same pan key is not being held down, jump to
+                        \ C1282 to skip the following
+
+ SEC                    \ The same pan key is still being held down, so set bit
+ ROR samePanKeyPress    \ 7 of samePanKeyPress to record this
 
 .C1282
 
@@ -7687,8 +7718,10 @@ L1145 = C1144+1
 .sub_C1AF3
 
  SEC
- BIT L0C1F
+
+ BIT samePanKeyPress
  BPL CRE10
+
  STA objectSlot
  LDA playerObjectSlot
  STA L006E
@@ -10888,8 +10921,13 @@ L23E3 = C23E2+1
  JSR sub_C292D
  BIT L0C1B
  BPL C2742
- JSR sub_C120F
- BNE C2745
+
+ JSR CheckForSamePanKey \ Check to see whether the same pan key is being
+                        \ held down compared to the last time we checked
+
+ BNE C2745              \ If the same pan key is not being held down, jump to
+                        \ C2745 to return from the subroutine with the C flag
+                        \ set ???
 
 .C2742
 
