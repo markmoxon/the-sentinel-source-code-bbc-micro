@@ -8452,7 +8452,7 @@
      347D   02
      347E   03
      347F   01
-.sub_C3480
+.ChangeVolume
      3480   AD E4 0C   LDA &0CE4
      3483   30 4E      BMI &34D3
      3485   AD D4 34   LDA &34D4

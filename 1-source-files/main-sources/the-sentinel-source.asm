@@ -4405,8 +4405,19 @@ L1145 = C1144+1
  BPL C11DD
  LDA #&6B
  STA L0CC8
- LDA keyLogger+1
- BPL sub_C1200
+
+ LDA keyLogger+1        \ Set A to the key logger entry for "A", "Q", "R", "T",
+                        \ "B" or "H" (absorb, transfer, create robot, create
+                        \ tree, create boulder or hyperspace)
+
+ BPL sub_C1200          \ If there is a key press in the key logger entry, jump
+                        \ to sub_C1200 to ??? and return from the subroutine
+                        \ using a tail call
+
+                        \ If we get here then the player is not pressing "A",
+                        \ "Q", "R", "T", "B" or "H" (absorb, transfer, create
+                        \ robot, create tree, create boulder or hyperspace)
+
  LDA #&40
  STA L0C51
  BNE C1208
@@ -4422,15 +4433,17 @@ L1145 = C1144+1
 
 .C11ED
 
- LDA keyLogger          \ Set A to the key logger entry for "S" and "D", which
-                        \ move the sights left and right respectively
+ LDA keyLogger          \ Set A to the key logger entry for "S" and "D" (pan
+                        \ left and right), which are used to move the sights
 
- BPL C11F7
+ BPL C11F7              \ If there is a key press in the key logger entry, jump
+                        \ to C11F7 to ???
 
- LDA keyLogger+2        \ Set A to the key logger entry for "L" and ",", which
-                        \ move the sights up and down respectively
+ LDA keyLogger+2        \ Set A to the key logger entry for "L" and "," (pan
+                        \ up and down), which are used to move the sights
 
- BMI C1208
+ BMI C1208              \ If there is no key press in the key logger entry, jump
+                        \ to C1208 to ???
 
 .C11F7
 
@@ -4704,7 +4717,7 @@ L1145 = C1144+1
  JSR sub_C191A
  JSR sub_C34E1
  JSR sub_C355A
- JSR sub_C3480
+ JSR ChangeVolume
  JMP C126C
 
 .C12AD
@@ -4716,16 +4729,37 @@ L1145 = C1144+1
 
 .C12B3
 
- LDA keyLogger+1
- BMI C12EB
- CMP #34
- BCS C12C1
- BIT sightsAreVisible
- BPL C12EB
+ LDA keyLogger+1        \ Set A to the key logger entry for "A", "Q", "R", "T",
+                        \ "B" or "H" (absorb, transfer, create robot, create
+                        \ tree, create boulder or hyperspace)
+
+ BMI C12EB              \ If there is no key press in the key logger entry, jump
+                        \ to sub_C1264 via C12EB to ???
+
+                        \ If we get here then the player is pressing "A", "Q",
+                        \ "R", "T", "B" or "H" (absorb, transfer, create robot,
+                        \ create tree, create boulder or hyperspace), which will
+                        \ put values into the key logger of 32, 33, 0, 2, 3 or
+                        \ 34 respectively
+
+ CMP #34                \ If A >= 34 then "H" (hyperspace) is being pressed, so
+ BCS C12C1              \ jump to C12C1 to skip the following check, as we can
+                        \ hyperspace with or without the sights being shown
+
+ BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
+ BPL C12EB              \ are not being shown, so jump to C12EB to ???, as we
+                        \ can only do these operations when the sights are
+                        \ visible
+
+                        \ If we get here then the sights are being shown, so we
+                        \ can process the key press
 
 .C12C1
 
- STA keyPress
+ STA keyPress           \ Record the value from the key logger in keyPress, so
+                        \ we can refer to it later (when creating objects like
+                        \ robots or trees, for example)
+
  LSR L0CE5
  JSR sub_C1B0B
  BCS C12E5
@@ -4926,11 +4960,11 @@ L1145 = C1144+1
  BPL gkey2              \ Loop back until we have checked all the keys up to the
                         \ start of the gameKey table
 
- LDA keyLogger          \ Combine the key logger entry for "S" and "D" with the
- AND keyLogger+2        \ key logger entry for "L" and ","
+ LDA keyLogger          \ Combine the key logger entry for "S" and "D" (pan left
+ AND keyLogger+2        \ and right) with the key logger entry for "L" and ","
+                        \ (pan left and right
                         \
-                        \ The entries for logger positions 0 and 2 are as
-                        \ follows:
+                        \ The entries for logger entries 0 and 2 are as follows:
                         \
                         \   * Put %01 in logger entry 0 for "S" (Pan left)
                         \   * Put %00 in logger entry 0 for "D" (Pan right)
@@ -15431,22 +15465,36 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3480
+\       Name: ChangeVolume
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3480
+.ChangeVolume
 
  LDA L0CE4
  BMI CRE29
  LDA L34D4
- LDX keyLogger+3
- BEQ C3498
- DEX
- BNE CRE29
+
+ LDX keyLogger+3        \ Set X to the key logger entry for "7", "8", "COPY"
+                        \ and "DELETE (volume down, volume up, pause and
+                        \ unpause)
+
+ BEQ C3498              \ If X = 0 then "7" (volume down) has been pressed, so
+                        \ jump to C3498 ???
+
+                        \ If we get here then X must be 1, 2 or 3 (for "8",
+                        \ "COPY" and "DELETE)
+
+ DEX                    \ If X - 1 <> 0 then the original key logger entry must
+ BNE CRE29              \ be 2 or 3 ("COPY" or "DELETE"), so jump to CRE29 to
+                        \ return from the subroutine
+
+                        \ If we get here then the key logger entry must be 1,
+                        \ so "8" (volume up) has been pressed
+
  CMP #&78
  BCS C349E
  ADC #&08
@@ -15462,7 +15510,7 @@ L314A = C3148+2
 
  LDX L0CDF
  CPX #&02
- BCS sub_C3480
+ BCS ChangeVolume
  STA L34D4
  TAY
  BEQ C34AD
@@ -15491,7 +15539,7 @@ L314A = C3148+2
  STA L0CDF
  LDA #&05
  JSR sub_C3440
- JMP sub_C3480
+ JMP ChangeVolume
 
 .CRE29
 
@@ -15536,8 +15584,10 @@ L314A = C3148+2
 .sub_C34E1
 
  LDA keyLogger+3
+
  BMI CRE30
- CMP #&02
+
+ CMP #2
  BNE CRE30
  ROR L0C72
  LDA #&08
@@ -15548,7 +15598,7 @@ L314A = C3148+2
 .P34F5
 
  LDA keyLogger+3
- CMP #&03
+ CMP #3
  BNE P34F5
  LDA #0
  JSR sub_C162D
@@ -16764,15 +16814,20 @@ L314A = C3148+2
 
 .MoveSightsUpDown
 
- LDX playerObjectSlot
+ LDX playerObjectSlot   \ Set Y to the current pitch angle of the player
  LDY objectPitchAngle,X
 
- LDX keyLogger+2        \ Set X to the key logger entry for "L" and ",", which
-                        \ move the sights up and down respectively
+ LDX keyLogger+2        \ Set X to the key logger entry for "L" and "," (pan
+                        \ up and down), which are used to move the sights
 
- BMI siud8
- CPX #2
- BNE siud2
+ BMI siud8              \ If there is no key press in the key logger entry, jump
+                        \ to siud8 to ???
+
+                        \ If we get here then "L" or "," is being pressed, which
+                        \ will put 2 or 3 into the key logger respectively
+
+ CPX #2                 \ If X <> 2 then "," is being pressed (pan down), so
+ BNE siud2              \ jump to siud2 to move the sights down
 
                         \ If we get here then X = 2, so "L" is being pressed,
                         \ which is the key for moving the sights up
