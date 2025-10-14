@@ -5570,7 +5570,7 @@
      2144   01
      2145   04
      2146   00
-.sub_C2147
+.PerformHyperspace
      2147   A9 00      LDA #&00
      2149   20 0E 21   JSR &210E
      214C   A6 0B      LDX &0B

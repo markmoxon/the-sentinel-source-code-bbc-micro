@@ -4947,8 +4947,9 @@ L1145 = C1144+1
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
- LDA #&02
+ LDA #2                 \ Sound ???
  JSR sub_C3440
+
  LDA #&C0
  STA L0C6D
  LSR L0C1E
@@ -6962,9 +6963,11 @@ L1145 = C1144+1
  BNE C174F
  LDA L0014
  BEQ C1754
- JSR sub_C2147
- LDA #&04
+ JSR PerformHyperspace
+
+ LDA #4
  STA titleObjectToDraw
+
  JMP C16C9
 
 .C171B
@@ -6991,8 +6994,10 @@ L1145 = C1144+1
  PHA
  LDX #&03
  LDY #&46
- LDA #&01
+
+ LDA #1                 \ Sound ???
  JSR sub_C343A
+
  PLA
  TAX
  JMP C1876
@@ -7126,8 +7131,10 @@ L1145 = C1144+1
  JSR sub_C196A
  LDX #&07
  LDY #&78
- LDA #0
+
+ LDA #0                 \ Sound ???
  JSR sub_C343A
+
  LDX L0000
  JMP C1876
 
@@ -7511,8 +7518,10 @@ L1145 = C1144+1
  SBC #&01
  STA L0C0A
  JSR sub_C36C7
- LDA #&05
+
+ LDA #5                 \ Sound ???
  JSR sub_C3440
+
  SEC
  JMP C1A46
 
@@ -7633,11 +7642,11 @@ L1145 = C1144+1
                         \ (Y X) and set maxEnemyCount and the landscapeZero flag
                         \ accordingly
 
-                        \ We set bit 7 of doNotPlayLandscape in the sub_C2147
-                        \ routine, so the following calls to GenerateLandscape
-                        \ and SpawnPlayer return normally, without previewing
-                        \ the landscape (GenerateLandscape) or starting the
-                        \ game (SpawnPlayer)
+                        \ We set bit 7 of doNotPlayLandscape when the landscape
+                        \ was completed in the PerformHyperspace routine, so the
+                        \ following calls to GenerateLandscape and SpawnPlayer
+                        \ return normally, without previewing the landscape
+                        \ (GenerateLandscape) or starting the game (SpawnPlayer)
 
  JSR GenerateLandscape  \ Call GenerateLandscape to generate the landscape
 
@@ -7783,14 +7792,27 @@ L1145 = C1144+1
 \       Name: ProcessActionKeys
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: Process a key press from key logger entry 1
+\    Summary: Process an action key press from key logger entry 1 (absorb,
+\             transfer, create, hyperspace, U-turn)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              ??? flag:
+\
+\                         * Clear if ???
+\
+\                         * Set if ???
 \
 \ ******************************************************************************
 
 .ProcessActionKeys
 
  LDA keyPress           \ Set A to the value from the key logger for the key
-                        \ press we want to process
+                        \ press we want to process, which we know contains a
+                        \ valid key press as we only call this routine when
+                        \ bit 7 of the key logger value is clear
                         \
                         \ The possible values for key logger entry 1 are:
                         \
@@ -7810,16 +7832,16 @@ L1145 = C1144+1
 
                         \ If we get here then "H" (hyperspace) is being pressed
 
- JSR sub_C2147
+ JSR PerformHyperspace  \ Hyperspace the player to a brand new tile
 
- LDA #0
- STA titleObjectToDraw
+ LDA #0                 \ Set titleObjectToDraw to the object type for a robot
+ STA titleObjectToDraw  \ ???
 
 .P1B1A
 
- SEC
+ SEC                    \ Set the C flag to denote ???
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .C1B1C
 
@@ -7833,15 +7855,23 @@ L1145 = C1144+1
 
  ASL L0C51
  BPL P1B1A
- LDA objectYawAngle,X
- EOR #&80
+
+ LDA objectYawAngle,X   \ Rotate the player's yaw angle through 180 degrees by
+ EOR #%10000000         \ flipping bit 7, which turns the player around
  STA objectYawAngle,X
- LDA #&28
- BNE C1B73
+
+ LDA #&28               \ Set A = &28 to set as the value of L0CE7 ???
+
+ BNE C1B73              \ Jump to C1B73 to set L0CE7, L0C63 and C flag and
+                        \ return from the subroutine (this BNE is effectively a
+                        \ JMP as A is never zero) ???
 
 .C1B33
 
- LSR L0C6E
+                        \ If we get here then the key press is either create,
+                        \ absorb or transfer
+
+ LSR L0C6E              \ ???
 
  JSR sub_C1BFF
  JSR sub_C1CCC
@@ -7887,10 +7917,13 @@ L1145 = C1144+1
 .C1B73
 
  JSR sub_C5FF6
- LDA #&80
+
+ LDA #%10000000
  STA L0C63
- SEC
- RTS
+
+ SEC                    \ Set the C flag to denote ???
+
+ RTS                    \ Return from the subroutine
 
 .C1B7D
 
@@ -7908,19 +7941,25 @@ L1145 = C1144+1
  STX objectSlot
  CLC
  JSR sub_C2127
- CLC
- RTS
+
+ CLC                    \ Clear the C flag to denote ???
+
+ RTS                    \ Return from the subroutine
 
 .C1B98
 
  LDA #&AA
  STA L591C
- LDA #&05
+
+ LDA #5                 \ Sound ???
  JSR sub_C3440
+
  LDA #&90
  STA L591C
- SEC
- RTS
+
+ SEC                    \ Set the C flag to denote ???
+
+ RTS                    \ Return from the subroutine
 
 .C1BA9
 
@@ -7955,8 +7994,9 @@ L1145 = C1144+1
 
 .C1BD9
 
- CLC
- RTS
+ CLC                    \ Clear the C flag to denote ???
+
+ RTS                    \ Return from the subroutine
 
 .C1BDB
 
@@ -9634,14 +9674,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2147
+\       Name: PerformHyperspace
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2147
+.PerformHyperspace
 
  LDA #0                 \ Spawn an object of type 0
  JSR SpawnObject
@@ -9696,8 +9736,9 @@ L1145 = C1144+1
 
 .C2198
 
- LDA #&80
+ LDA #%10000000
  STA L0C63
+
  CLC
 
 .CRE11
@@ -15579,8 +15620,14 @@ L314A = C3148+2
 \
 \       Name: sub_C343A
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   0, 1, 6
 \
 \ ******************************************************************************
 
@@ -15593,8 +15640,14 @@ L314A = C3148+2
 \
 \       Name: sub_C3440
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   0-6
 \
 \ ******************************************************************************
 
@@ -15611,17 +15664,21 @@ L314A = C3148+2
  JSR sub_C3463
  PLA
  TAX
+
  LDA L3479,X
- CMP #&01
- BNE sub_C3459
- JSR sub_C3459
+
+ CMP #1
+ BNE sub_C3459          \ Sound ???
+
+ JSR sub_C3459          \ Sound ???
+
  LDA #0
 
 \ ******************************************************************************
 \
 \       Name: sub_C3459
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15631,16 +15688,17 @@ L314A = C3148+2
  ASL A
  ASL A
  ASL A
- ADC #&00
+ ADC #0
  TAX
- LDA #&07
+
+ LDA #7
  BNE C3473
 
 \ ******************************************************************************
 \
 \       Name: sub_C3463
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15667,7 +15725,7 @@ L314A = C3148+2
 \
 \       Name: L3478
 \       Type: Variable
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15680,7 +15738,7 @@ L314A = C3148+2
 \
 \       Name: L3479
 \       Type: Variable
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15762,8 +15820,10 @@ L314A = C3148+2
  BPL P34B5
  LDA #&0C
  STA L0CDF
- LDA #&05
+
+ LDA #5                 \ Sound ???
  JSR sub_C3440
+
  JMP ProcessVolumeKeys
 
 .CRE29
@@ -15774,7 +15834,7 @@ L314A = C3148+2
 \
 \       Name: L34D4
 \       Type: Variable
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15787,7 +15847,7 @@ L314A = C3148+2
 \
 \       Name: L34D5
 \       Type: Variable
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -15875,7 +15935,8 @@ L314A = C3148+2
  STA L5910
  LDA #&04
  STA L5912
- LDA #&03
+
+ LDA #3                 \ Sound ???
  JMP sub_C3440
 
 .C3544
@@ -15980,7 +16041,8 @@ L314A = C3148+2
  LDY L0C74
  CPY #&50
  BCC CRE32
- LDA #&06
+
+ LDA #6                 \ Sound ???
  JSR sub_C343A
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
@@ -16008,11 +16070,13 @@ L314A = C3148+2
  STA L5914
  LDA #&03
  STA L5912
- LDA #&04
+
+ LDA #4                 \ Sound ???
  JSR sub_C3440
+
  RTS
 
- EQUB &B9
+ EQUB &B9               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
