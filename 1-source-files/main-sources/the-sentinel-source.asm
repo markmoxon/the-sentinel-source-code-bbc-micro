@@ -3896,7 +3896,9 @@
 \   main1               The entry point for rejoining the main title loop after
 \                       the player enters an incorrect secret code
 \
-\   main4               ???
+\   main4               The entry point for restarting a landscape after dying,
+\                       so the player doesn't have to enter the landscape's
+\                       secret code again
 \
 \ ******************************************************************************
 
@@ -3999,6 +4001,10 @@
                         \ The player has now chosen a landscape number and has
                         \ entered the secret code (or, in the case of landscape
                         \ 0000, we have entered the secret code for them)
+                        \
+                        \ We also jump here if we are restarting a landscape
+                        \ after dying, so the player doesn't have to enter the
+                        \ landscape's secret code again
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -4829,6 +4835,16 @@ L1145 = C1144+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Success flag:
+\
+\                         * Clear if ???
+\
+\                         * Set if ???
+\
 \ ******************************************************************************
 
 .sub_C1264
@@ -4836,7 +4852,7 @@ L1145 = C1144+1
  LDA #0                 \ Clear bit 7 of L0CE4 ??? So we do more in the IRQ and
  STA L0CE4              \ sub_C1264
 
- STA L0C51
+ STA L0C51              \ Set L0C51 = 0 ???
 
 .C126C
 
@@ -4845,8 +4861,8 @@ L1145 = C1144+1
 
  LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress ???
 
- LDA L0CDC
- BPL C1282
+ LDA L0CDC              \ If bit 7 of L0CDC is clear then jump to C1282 to skip
+ BPL C1282              \ the following
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -4868,15 +4884,19 @@ L1145 = C1144+1
 .C128F
 
  JSR sub_C1200
- SEC
- RTS
+
+ SEC                    \ Set the C flag to indicate that ???
+
+ RTS                    \ Return from the subroutine
 
 .C1294
 
  ASL L0C63
  BCS C128F
+
  BIT quitGame
  BMI C128F
+
  JSR sub_C191A
  JSR ProcessPauseKeys
  JSR sub_C355A
@@ -4887,8 +4907,10 @@ L1145 = C1144+1
 
  LDA panKeyBeingPressed
  BMI C12B3
- CLC
- RTS
+
+ CLC                    \ Clear the C flag to indicate that ???
+
+ RTS                    \ Return from the subroutine
 
 .C12B3
 
@@ -4897,7 +4919,7 @@ L1145 = C1144+1
                         \ create tree, create boulder, hyperspace, U-turn)
 
  BMI C12EB              \ If there is no key press in the key logger entry, jump
-                        \ to sub_C1264 via C12EB to ???
+                        \ back to the start of the routine via C12EB to ???
 
                         \ If we get here then the player is pressing "A", "Q",
                         \ "R", "T", "B", "H" or "U" (absorb, transfer, create
@@ -4918,9 +4940,9 @@ L1145 = C1144+1
                         \ irrespective of whether the sights are being shown
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
- BPL C12EB              \ are not being shown, so jump to C12EB to ???, as we
-                        \ can only create, absorb and transfer when the sights
-                        \ are visible
+ BPL C12EB              \ are not being shown, so jump back to the start of the
+                        \ routine via C12EB to ???, as we can only create,
+                        \ absorb and transfer when the sights are visible
 
                         \ If we get here then the sights are being shown, so we
                         \ can process the key press
@@ -4962,12 +4984,16 @@ L1145 = C1144+1
 .C12E5
 
  ASL L0C63
- BCC C12EB
- RTS
+
+ BCC C12EB              \ If bit 7 of L0C63 was clear, jump back to the start of
+                        \ the routine via C12EB to ???
+
+ RTS                    \ Return from the subroutine with the C flag set to
+                        \ indicate that ???
 
 .C12EB
 
- JMP sub_C1264
+ JMP sub_C1264          \ Jump back to the start of the sub_C1264 routine
 
 \ ******************************************************************************
 \
@@ -7621,7 +7647,8 @@ L1145 = C1144+1
 \       Name: FinishLandscape
 \       Type: Subroutine
 \   Category: Main game loop
-\    Summary: ???
+\    Summary: Add the player's energy to the landscape number to get the number
+\             of the next landscape and display that landscape's secret code
 \
 \ ******************************************************************************
 
@@ -7858,7 +7885,7 @@ L1145 = C1144+1
 
                         \ If we get here then "U" (U-turn) is being pressed
 
- ASL L0C51
+ ASL L0C51              \ ???
  BPL P1B1A
 
  LDA objectYawAngle,X   \ Rotate the player's yaw angle through 180 degrees by
@@ -16130,7 +16157,7 @@ L314A = C3148+2
 \       Name: MainGameLoop
 \       Type: Subroutine
 \   Category: Main game loop
-\    Summary: ???
+\    Summary: The main game loop for playing a landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16153,8 +16180,8 @@ L314A = C3148+2
 
 .game1
 
- LDA L0C4E
- BMI game6
+ LDA L0C4E              \ If bit 7 of L0C4E is set, jump to game6 to restart the
+ BMI game6              \ landscape (is this death flag ???)
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -16173,14 +16200,14 @@ L314A = C3148+2
  LDA playerObjectSlot
  STA L006E
 
- BIT L0CDE
+ BIT L0CDE              \ If bit 7 of L0CDE is clear, jump to game2
  BPL game2
 
- BVS game7
+ BVS game7              \ If bit 6 of L0CDE is set, jump to game7 to ???
 
  JSR sub_C1090
 
- JMP game4
+ JMP game4              \ Jump to game4 to skip the following ???
 
 .game2
 
@@ -16231,6 +16258,11 @@ L314A = C3148+2
 
 .game6
 
+                        \ If we get here then we restart the landscape by
+                        \ resetting all the game variables, initialising the
+                        \ the seed number generator and jumping into the main
+                        \ title loop to preview the landscape and play the game
+
  JSR ResetVariables     \ Reset all the game's main variables
 
  LDY landscapeNumberHi  \ Set (Y X) = (landscapeNumberHi landscapeNumberLo)
@@ -16241,9 +16273,14 @@ L314A = C3148+2
                         \ (Y X) and set maxEnemyCount and the landscapeZero flag
                         \ accordingly
 
- JMP main4
+ JMP main4              \ Jump to main4 in the main title loop to restart the
+                        \ landscape without having to enter the landscape's
+                        \ secret code again
 
 .game7
+
+                        \ If we get here then we have successfully completed
+                        \ the landascape, so ???
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -16263,7 +16300,9 @@ L314A = C3148+2
 
  JSR ResetVariables2    \ ???
 
- JSR FinishLandscape
+ JSR FinishLandscape    \ Add the player's energy to the landscape number to get
+                        \ the number of the next landscape and display that
+                        \ landscape's secret code as a title screen
 
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
@@ -16309,10 +16348,11 @@ L314A = C3148+2
 
  STA L0C1E
 
- BIT sightsAreVisible
- BMI game13
+ BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is set then the sights
+ BMI game13             \ are being shown, so jump to game13 to skip the
+                        \ following two instructions ???
 
- SEC
+ SEC                    \ Set bit 7 of L0C1B ???
  ROR L0C1B
 
 .game13
