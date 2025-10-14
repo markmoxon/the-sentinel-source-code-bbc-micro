@@ -1427,9 +1427,13 @@
 
  EQUB 0                 \ ???
 
-.L0C4E
+.playerIsDead
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record when the player dies
+                        \
+                        \   * Bit 7 clear = player is not dead
+                        \
+                        \   * Bit 7 set = player is dead
 
 .L0C4F
 
@@ -4876,7 +4880,7 @@ L1145 = C1144+1
 .C1282
 
  JSR sub_C16A8
- LDA L0C4E
+ LDA playerIsDead
  BEQ C1294
  LDA #&1E
  JSR sub_C5F24
@@ -7126,7 +7130,7 @@ L1145 = C1144+1
 
 .C17E1
 
- JSR sub_C19FF
+ JSR DrainObjectEnergy
  BCS C17F9
  LDY L0000
  LDA #&1E
@@ -7185,7 +7189,7 @@ L1145 = C1144+1
  BNE P1835
  LDA L0014
  BPL C184D
- JSR sub_C19FF
+ JSR DrainObjectEnergy
  LDY L0000
  LDA #&1E
  STA objRotationTimer,Y
@@ -7518,28 +7522,38 @@ L1145 = C1144+1
  INC L0C80,X
  JMP sub_C1AEC
 
-.P19F7
-
- LDA #&80
- STA L0C4E
- JMP sub_C1AEC
-
 \ ******************************************************************************
 \
-\       Name: sub_C19FF
+\       Name: DrainObjectEnergy
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C19FF
+.P19F7
 
- LDX L0C58
- CPX playerObjectSlot
- BNE C1A1D
- LDA playerEnergy
+                        \ If we get here then the player has run out of energy
+                        \ and has died
+
+ LDA #%10000000         \ Set bit 7 of playerIsDead to indicate that the player
+ STA playerIsDead       \ has died
+
+ JMP sub_C1AEC          \ This resets the stack - restart of some kind ???
+
+.DrainObjectEnergy
+
+ LDX L0C58              \ Set X to an object slot ???
+
+ CPX playerObjectSlot   \ If X is not the player slot, jump to C1A1D to drain
+ BNE C1A1D              \ energy from the object in slot X
+
+                        \ If we get here then this is the player's object, so we
+                        \ now drain energy from the player
+
+ LDA playerEnergy       \ If the player has no energy, jump to P19F7 to ???
  BEQ P19F7
+
  SEC
  SBC #1
  STA playerEnergy
@@ -9297,7 +9311,7 @@ L1145 = C1144+1
  STA L2093
  BIT L0C6D
  BVC C2022
- BIT L0C4E
+ BIT playerIsDead
  BPL C201A
  LDA #&28
  STA L2094
@@ -9305,7 +9319,7 @@ L1145 = C1144+1
 .C201A
 
  JSR sub_C5E5F
- LDA L0C4E
+ LDA playerIsDead
  BMI C2061
 
 .C2022
@@ -16180,8 +16194,8 @@ L314A = C3148+2
 
 .game1
 
- LDA L0C4E              \ If bit 7 of L0C4E is set, jump to game6 to restart the
- BMI game6              \ landscape (is this death flag ???)
+ LDA playerIsDead       \ If bit 7 of playerIsDead is set then the player has
+ BMI game6              \ died, so jump to game6 to restart the landscape
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -16247,7 +16261,7 @@ L314A = C3148+2
 
  BPL game11
 
- STA L0C4E
+ STA playerIsDead
 
  LDA #&06
  STA L0C73
@@ -16613,7 +16627,7 @@ L314A = C3148+2
                         \ following and return from the interrupt handler
                         \ without updating the game)
 
- LDA L0C4E
+ LDA playerIsDead
  BMI C37C3
  LDA L0C72
  BMI C37B1

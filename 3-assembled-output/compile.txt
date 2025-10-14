@@ -2456,7 +2456,7 @@
      0C4C   01
 .L0C4D
      0C4D   00
-.L0C4E
+.playerIsDead
      0C4E   00
 .L0C4F
      0C4F   00
@@ -4535,7 +4535,7 @@
      19F7   A9 80      LDA #&80
      19F9   8D 4E 0C   STA &0C4E
      19FC   4C EC 1A   JMP &1AEC
-.sub_C19FF
+.DrainObjectEnergy
      19FF   AE 58 0C   LDX &0C58
      1A02   E4 0B      CPX &0B
      1A04   D0 17      BNE &1A1D
