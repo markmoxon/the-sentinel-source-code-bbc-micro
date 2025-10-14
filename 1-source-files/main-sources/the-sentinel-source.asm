@@ -4399,8 +4399,9 @@ L1145 = C1144+1
 
 .C11C5
 
- LDY #&0E
- JSR ScanForGameKeys
+ LDY #14                \ Scan the keyboard for all 14 game keys in the gameKeys
+ JSR ScanForGameKeys    \ table
+
  BPL C11DD
  LDA #&6B
  STA L0CC8
@@ -4428,7 +4429,6 @@ L1145 = C1144+1
 
  LDA keyLogger+2        \ Set A to the key logger entry for "L" and ",", which
                         \ move the sights up and down respectively
-
 
  BMI C1208
 
@@ -4474,19 +4474,26 @@ L1145 = C1144+1
 
 .sub_C120F
 
- SEI
- LDY #&03
- JSR ScanForGameKeys
+ SEI                    \ Disable interrupts
+
+ LDY #3                 \ Scan the keyboard for the first four game keys ("S",
+ JSR ScanForGameKeys    \ "D", "L" and ",", for pan left, right up and down)
+
  LDA L0C1D
- CMP keyLogger
+
+ CMP keyLogger          \ Compare with the key logger entry for "S" and "D"
+                        \ (pan left and right)
+
  BEQ C1220
 
  CMP keyLogger+2        \ Compare with the key logger entry for "L" and ","
+                        \ (pan up and down)
 
 .C1220
 
- CLI
- RTS
+ CLI                    \ Re-enable interrupts
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4900,7 +4907,7 @@ L1145 = C1144+1
  BNE gkey3              \ If the key in X is not being pressed, jump to gkey3 to
                         \ move on to the next key in the table
 
- LDA keyLoggerConfig,Y  \ Set X to the key logger position where we should store
+ LDA keyLoggerConfig,Y  \ Set X to the key logger entry where we should store
  AND #%00000011         \ this key press, which is in bits 0 and 1 of the
  TAX                    \ corresponding entry in the keyLoggerConfig table
 
@@ -4908,7 +4915,7 @@ L1145 = C1144+1
  LSR A                  \ key, which is in bits 2 to 7 of the corresponding
  LSR A                  \ entry in the keyLoggerConfig table
 
- STA keyLogger,X        \ Store the configured value in the configured position
+ STA keyLogger,X        \ Store the configured value in the configured entry
                         \ for this key press
 
 .gkey3
@@ -4925,11 +4932,11 @@ L1145 = C1144+1
                         \ The entries for logger positions 0 and 2 are as
                         \ follows:
                         \
-                        \   * Put %01 in logger position 0 for "S" (Pan left)
-                        \   * Put %00 in logger position 0 for "D" (Pan right)
+                        \   * Put %01 in logger entry 0 for "S" (Pan left)
+                        \   * Put %00 in logger entry 0 for "D" (Pan right)
                         \
-                        \   * Put %10 in logger position 2 for "L" (Pan up)
-                        \   * Put %11 in logger position 2 for "," (Pan down)
+                        \   * Put %10 in logger entry 2 for "L" (Pan up)
+                        \   * Put %11 in logger entry 2 for "," (Pan down)
                         \
                         \ So bit 0 of A will only be set if "S" and "," are both
                         \ pressed (pan left and down) and all other bits will be
@@ -4981,34 +4988,34 @@ L1145 = C1144+1
 \ Each game key has an entry in the keyLoggerConfig table that corresponds with
 \ the internal key number in the gameKeys table.
 \
-\ Bits 0 and 1 determine the position in the four-byte key logger where we
-\ should record each key press (position numbers are 0 to 3).
+\ Bits 0 and 1 determine the entry in the four-byte key logger where we should
+\ record each key press (entry numbers are 0 to 3).
 \
-\ Bits 2 to 7 contain the value to store in the key logger at that position.
+\ Bits 2 to 7 contain the value to store in the key logger at that entry.
 \
 \ ******************************************************************************
 
 .keyLoggerConfig
 
- EQUB 0 +  1 << 2       \ Put  1 in logger position 0 for "S" (Pan left)
- EQUB 0 +  0 << 2       \ Put  0 in logger position 0 for "D" (Pan right)
+ EQUB 0 +  1 << 2       \ Put  1 in logger entry 0 for "S" (Pan left)
+ EQUB 0 +  0 << 2       \ Put  0 in logger entry 0 for "D" (Pan right)
 
- EQUB 2 +  2 << 2       \ Put  2 in logger position 2 for "L" (Pan up)
- EQUB 2 +  3 << 2       \ Put  3 in logger position 2 for "," (Pan down)
+ EQUB 2 +  2 << 2       \ Put  2 in logger entry 2 for "L" (Pan up)
+ EQUB 2 +  3 << 2       \ Put  3 in logger entry 2 for "," (Pan down)
 
- EQUB 1 + 32 << 2       \ Put 32 in logger position 1 for "A" (Absorb)
- EQUB 1 + 33 << 2       \ Put 33 in logger position 1 for "Q" (Transfer)
- EQUB 1 +  0 << 2       \ Put  0 in logger position 1 for "R" (Create robot)
- EQUB 1 +  2 << 2       \ Put  2 in logger position 1 for "T" (Create tree)
- EQUB 1 +  3 << 2       \ Put  3 in logger position 1 for "B" (Create boulder)
- EQUB 1 + 34 << 2       \ Put 34 in logger position 1 for "H" (Hyperspace)
+ EQUB 1 + 32 << 2       \ Put 32 in logger entry 1 for "A" (Absorb)
+ EQUB 1 + 33 << 2       \ Put 33 in logger entry 1 for "Q" (Transfer)
+ EQUB 1 +  0 << 2       \ Put  0 in logger entry 1 for "R" (Create robot)
+ EQUB 1 +  2 << 2       \ Put  2 in logger entry 1 for "T" (Create tree)
+ EQUB 1 +  3 << 2       \ Put  3 in logger entry 1 for "B" (Create boulder)
+ EQUB 1 + 34 << 2       \ Put 34 in logger entry 1 for "H" (Hyperspace)
 
- EQUB 3 +  0 << 2       \ Put  0 in logger position 3 for "7" (Volume down)
- EQUB 3 +  1 << 2       \ Put  1 in logger position 3 for "8" (Volume up)
- EQUB 3 +  2 << 2       \ Put  2 in logger position 3 for "COPY" (Pause)
- EQUB 3 +  3 << 2       \ Put  3 in logger position 3 for "DELETE" (Unpause)
+ EQUB 3 +  0 << 2       \ Put  0 in logger entry 3 for "7" (Volume down)
+ EQUB 3 +  1 << 2       \ Put  1 in logger entry 3 for "8" (Volume up)
+ EQUB 3 +  2 << 2       \ Put  2 in logger entry 3 for "COPY" (Pause)
+ EQUB 3 +  3 << 2       \ Put  3 in logger entry 3 for "DELETE" (Unpause)
 
- EQUB 1 + 35 << 2       \ Put 35 in logger position 1 for "U" (U-turn)
+ EQUB 1 + 35 << 2       \ Put 35 in logger entry 1 for "U" (U-turn)
 
 \ ******************************************************************************
 \
@@ -16228,17 +16235,28 @@ L314A = C3148+2
 
 .C37B1
 
- LDY #&0D
- JSR ScanForGameKeys
- LDX #&02
- LDA #&80
+ LDY #13                \ Scan the keyboard for all game keys in the gameKeys
+ JSR ScanForGameKeys    \ table except for the last one ("U" for U-turn)
+
+                        \ We now reset the first three entries in the key
+                        \ logger (i.e. entries 0 to 2), leaving the last entry
+                        \ populated (i.e. entry 3, which records the volume,
+                        \ paue and unpause key presses)
+
+ LDX #2                 \ Set a loop counter in X for resetting three entries
+
+ LDA #%10000000         \ Set A = %10000000 to reset the three entries, as the
+                        \ set bit 7 indicates an empty entry in the logger
 
 .P37BA
 
- STA keyLogger,X
- DEX
- BPL P37BA
- JMP C37CB
+ STA keyLogger,X        \ Reset the X-th entry in the key logger
+
+ DEX                    \ Decrement the loop counter
+
+ BPL P37BA              \ Loop back until we have reset all four entries
+
+ JMP C37CB              \ Jump to C37CB to return from the interrupt handler
 
 .C37C3
 
