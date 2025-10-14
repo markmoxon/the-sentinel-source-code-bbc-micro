@@ -1280,9 +1280,9 @@
 
  EQUB 0                 \ ???
 
-.L0C0A
+.playerEnergy
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The player's energy level
 
  EQUB 0                 \ ???
 
@@ -5524,8 +5524,8 @@ L1145 = C1144+1
  STX playerObjectSlot   \ Set playerObjectSlot to the slot number of the newly
                         \ spawned object
 
- LDA #10                \ Set L0C0A = 10 ???
- STA L0C0A
+ LDA #10                \ Set the player's energy level to 10
+ STA playerEnergy
 
  LDA landscapeZero      \ If the landscape number is not 0000, jump to sply1
  BNE sply1
@@ -7512,11 +7512,11 @@ L1145 = C1144+1
  LDX L0C58
  CPX playerObjectSlot
  BNE C1A1D
- LDA L0C0A
+ LDA playerEnergy
  BEQ P19F7
  SEC
- SBC #&01
- STA L0C0A
+ SBC #1
+ STA playerEnergy
  JSR sub_C36C7
 
  LDA #5                 \ Sound ???
@@ -7620,22 +7620,27 @@ L1145 = C1144+1
 \
 \       Name: FinishLandscape
 \       Type: Subroutine
-\   Category: ???
+\   Category: Main game loop
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .FinishLandscape
 
- SED
- JSR sub_C342C
- CLC
- ADC landscapeNumberLo
- TAX
- LDA landscapeNumberHi
- ADC #&00
+ SED                    \ Set the D flag to switch arithmetic to binary coded
+                        \ decimal (BCD), so the call to GetPlayerEnergyBCD and
+                        \ the following addition are all done in BCD
+
+ JSR GetPlayerEnergyBCD \ Set A to the player's energy in BCD
+
+ CLC                    \ Set (Y X) = (landscapeNumberHi landscapeNumberLo) + A
+ ADC landscapeNumberLo  \
+ TAX                    \ This addition is done in BCD so the result is a new
+ LDA landscapeNumberHi  \ landscape number that's also in BCD (which we need to
+ ADC #0                 \ do as landscape numbers are in BCD)
  TAY
- CLD
+
+ CLD                    \ Clear the D flag to switch arithmetic to normal
 
  JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
                         \ sequence of seed numbers for the landscape number in
@@ -9641,7 +9646,7 @@ L1145 = C1144+1
 .sub_C2127
 
  LDY objectTypes,X
- LDA L0C0A
+ LDA playerEnergy
  BCC C2136
  SBC L2140,Y
  BCS C2139
@@ -9655,7 +9660,7 @@ L1145 = C1144+1
 .C2139
 
  AND #&3F
- STA L0C0A
+ STA playerEnergy
  CLC
  RTS
 
@@ -15592,29 +15597,47 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C342C
+\       Name: GetPlayerEnergyBCD
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Fetch the player's energy in binary coded decimal (BCD)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The player's energy in BCD
 \
 \ ******************************************************************************
 
-.sub_C342C
+.GetPlayerEnergyBCD
 
- LDA #0
- LDX L0C0A
- BEQ CRE28
+ LDA #0                 \ Set A = 0 to use as the player's energy in binary
+                        \ coded decimal (BCD)
 
-.P3433
+ LDX playerEnergy       \ Set X to the player's energy level
 
- CLC
- ADC #&01
- DEX
- BNE P3433
+ BEQ plen2              \ If X = 0 then jump to plen2 to return A = 0 as the
+                        \ player's energy in BCD
 
-.CRE28
+                        \ Otherwise we convert X into BCD by simply adding 1 to
+                        \ A and repeating this X times
+                        \
+                        \ This works because we only call this routine when the
+                        \ D flag is set to switch arithmetic to BCD
+.plen1
 
- RTS
+ CLC                    \ Increment the BCD number we are building in A
+ ADC #1
+
+ DEX                    \ Decrement the player's energy level in S
+
+ BNE plen1              \ Loop back until we have added 1 to A, X times, so A
+                        \ now contains the original value of X but in BCD
+
+.plen2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -15668,9 +15691,9 @@ L314A = C3148+2
  LDA L3479,X
 
  CMP #1
- BNE sub_C3459          \ Sound ???
+ BNE sub_C3459
 
- JSR sub_C3459          \ Sound ???
+ JSR sub_C3459
 
  LDA #0
 
@@ -16401,7 +16424,7 @@ L314A = C3148+2
  LDA #0
  STA L0C05
  JSR sub_C373A
- LDA L0C0A
+ LDA playerEnergy
  STA loopCounter
 
 .P36D4
@@ -16536,7 +16559,8 @@ L314A = C3148+2
  TYA
  PHA
 
- CLD
+ CLD                    \ Clear the D flag to switch arithmetic to normal
+
  DEC L0CDF
  BPL C3781
  INC L0CDF

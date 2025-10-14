@@ -2360,7 +2360,7 @@
      0C08   00
 .L0C09
      0C09   00
-.L0C0A
+.playerEnergy
      0C0A   00
      0C0B   00
 .J
@@ -8391,16 +8391,16 @@
      3428   4A         LSR A
      3429   65 74      ADC &74
      342B   60         RTS
-.sub_C342C
+.GetPlayerEnergyBCD
      342C   A9 00      LDA #&00
      342E   AE 0A 0C   LDX &0C0A
      3431   F0 06      BEQ &3439
-.P3433
+.plen1
      3433   18         CLC
      3434   69 01      ADC #&01
      3436   CA         DEX
      3437   D0 FA      BNE &3433
-.CRE28
+.plen2
      3439   60         RTS
 .sub_C343A
      343A   8E 04 59   STX &5904
