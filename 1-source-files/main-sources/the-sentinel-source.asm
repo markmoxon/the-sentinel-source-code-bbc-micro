@@ -112,9 +112,9 @@
 
  SKIP 1                 \ ???
 
-.L0009
+.panKeyBeingPressed
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The direction that we are currently panning
 
 .L000A
 
@@ -1330,9 +1330,19 @@
  EQUB 5                 \ The object we are drawing in the DrawTitleObject
                         \ routine
 
-.L0C1D
+.latestPanKeyPress
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The key logger value of the latest pan key press,
+                        \ which will either be a current key press or the value
+                        \ from the last pan key press to be made
+                        \
+                        \   * 0 = Pan right
+                        \
+                        \   * 1 = Pan left
+                        \
+                        \   * 2 = Pan up
+                        \
+                        \   * 3 = Pan down
 
 .L0C1E
 
@@ -1729,9 +1739,14 @@
 
  EQUB 0                 \ The y-coordinate of the sights
 
-.L0CC8
+.sightsInitialMoves
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Controls the initial movement of the sights over the
+                        \ first eight calls to the ProcessKeyPresses routine
+                        \
+                        \ Movement in the first eight calls is determined by
+                        \ the settings of bit 7 to bit 0, where a set bit
+                        \ indicates a pause and a clear bit indicates a move
 
 .L0CC9
 
@@ -4328,22 +4343,23 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C118B
+\       Name: ProcessKeyPresses
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Process all game key presses
 \
 \ ******************************************************************************
 
-.sub_C118B
+.ProcessKeyPresses
 
- LDA #&80
- STA L0009
+ LDA #%10000000         \ Set bit 7 of panKeyBeingPressed to indicate that no
+ STA panKeyBeingPressed \ pan key is being pressed (we will update this below
+                        \ if a pan key is being pressed)
 
  LDX #&8E               \ Scan the keyboard to see if function key f1 is being
  JSR ScanKeyboard       \ pressed ("Quit game")
 
- BNE C119A              \ If function key f1 is not being pressed, jump to C119A
+ BNE pkey1              \ If function key f1 is not being pressed, jump to pkey1
                         \ to skip the following
 
  SEC                    \ Function key f1 is not being pressed, which quits the
@@ -4351,64 +4367,113 @@ L1145 = C1144+1
                         \ to the start of the main game loop it jumps to the
                         \ main title loop to restart the game
 
-.C119A
+.pkey1
 
  LDX #&9D               \ Scan the keyboard to see if SPACE is being pressed
  JSR ScanKeyboard       \ ("Toggle sights on/off")
 
- BNE C11C0              \ If SPACE is not being pressed, jump to C11C0 to skip
-                        \ the following
+ BNE pkey4              \ If SPACE is not being pressed, jump to pkey4 to reset
+                        \ the value of spaceKeyDebounce to flag that SPACE is
+                        \ not being pressed
 
- LDA L1222
- BNE C11C5
+                        \ If we get here then SPACE is being pressed
+
+ LDA spaceKeyDebounce   \ If spaceKeyDebounce is non-zero then we have already
+ BNE pkey6              \ toggled the sights but the player is still holding
+                        \ down SPACE, so jump to pkey6 to avoid toggling the
+                        \ sights again
 
  LDA sightsAreVisible   \ Flip bit 7 of sightsAreVisible to toggle the sights on
  EOR #%10000000         \ and off
  STA sightsAreVisible
 
- BPL C11B9              \ If bit 7 is now clear then we just turned the sights
-                        \ off, so jump to C11B9 to remove them from the screen
+ BPL pkey2              \ If bit 7 is now clear then we just turned the sights
+                        \ off, so jump to pkey2 to remove them from the screen
 
                         \ Otherwise bit 7 is now set, so we need to show the
                         \ sights
 
- JSR SetupSights        \ Setup sight position etc. ???
+ JSR SetupSights        \ Calculate the position of the sights on the screen
 
- JSR ShowSights         \ Draw the sights on-screen ???
+ JSR ShowSights         \ Draw the sights on the screen
 
- JMP C11BC              \ Jump to C11BC to skip the following
+ JMP pkey3              \ Jump to pkey3 to skip the following
 
-.C11B9
+.pkey2
 
- JSR HideSights         \ Remove the sights from the screen ???
+ JSR HideSights         \ Remove the sights from the screen
 
-.C11BC
+.pkey3
 
- LDA #&80
+ LDA #%10000000         \ Set bit 7 of A to store in spaceKeyDebounce, to flag
+                        \ that we have toggled the sights (so we can make sure
+                        \ we don't keep toggling the sights if SPACE is being
+                        \ held down)
 
- BNE C11C2              \ Jump to C11C2 (this BNE is effectively a JMP as A is
-                        \ never zero)
+ BNE pkey5              \ Jump to pkey5 to set spaceKeyDebounce to the value of
+                        \ A in (this BNE is effectively a JMP as A is never
+                        \ zero)
 
-.C11C0
+.pkey4
 
- LDA #0
+                        \ If we get here then SPACE is not being pressed
 
-.C11C2
+ LDA #0                 \ Clear bit 7 of spaceKeyDebounce to record that SPACE
+                        \ is not being pressed
 
- STA L1222
+.pkey5
 
-.C11C5
+ STA spaceKeyDebounce   \ Set spaceKeyDebounce to the value of A, so we record
+                        \ whether or not SPACE is being pressed to make sure
+                        \ we don't keep toggling the sights if SPACE is held
+                        \ down
+
+.pkey6
 
  LDY #14                \ Scan the keyboard for all 14 game keys in the gameKeys
  JSR ScanForGameKeys    \ table
 
- BPL C11DD
- LDA #&6B
- STA L0CC8
+ BPL pkey7              \ ScanForGameKeys will clear bit 7 of the result if at
+                        \ least one pan key is being pressed, in which case jump
+                        \ to pkey7 to skip the following, so pan keys take
+                        \ precedence over the other game keys (which are ignored
+                        \ while panning is taking place)
+
+                        \ If we get here then no pan keys are being pressed
+
+ LDA #%01101011         \ Set a bit pattern in sightsInitialMoves to control the
+ STA sightsInitialMoves \ initial movement of the sights when a pan key is
+                        \ pressed and held down
+                        \
+                        \ Specifically, this value is shifted left once on each
+                        \ call to this routine, with a zero shifted into bit 0,
+                        \ and we only move the sights when a zero is shifted out
+                        \ of bit 7
+                        \
+                        \ This means that when we start moving the sights, they
+                        \ move like this, with each step happening on one call
+                        \ of the interrupt handler:
+                        \
+                        \   0 = Move
+                        \   1 = Pause
+                        \   1 = Pause
+                        \   0 = Move
+                        \   1 = Pause
+                        \   0 = Move
+                        \   1 = Pause
+                        \   1 = Pause
+                        \
+                        \ ...and then we move on every subsequent shift, as by
+                        \ now all bits of sightsInitialMoves are clear
+                        \
+                        \ This means the sights move more slowly at the start,
+                        \ with a slight judder, before speeding up fully after
+                        \ eight steps (so this applies a bit of inertia to the
+                        \ movement of the sights)
 
  LDA keyLogger+1        \ Set A to the key logger entry for "A", "Q", "R", "T",
                         \ "B" or "H" (absorb, transfer, create robot, create
-                        \ tree, create boulder or hyperspace)
+                        \ tree, create boulder, hyperspace)
 
  BPL sub_C1200          \ If there is a key press in the key logger entry, jump
                         \ to sub_C1200 to ??? and return from the subroutine
@@ -4416,44 +4481,87 @@ L1145 = C1144+1
 
                         \ If we get here then the player is not pressing "A",
                         \ "Q", "R", "T", "B" or "H" (absorb, transfer, create
-                        \ robot, create tree, create boulder or hyperspace)
+                        \ robot, create tree, create boulder, hyperspace)
 
- LDA #&40
+ LDA #%01000000         \ Set bit 6 of L0C51 ???
  STA L0C51
- BNE C1208
 
-.C11DD
+ BNE C1208              \ Jump to C1208 to finish off and return from the
+                        \ subroutine (this BNE is effectively a JMP as A is
+                        \ never zero)
 
- LDX sightsAreVisible
- BPL C11ED
- ASL L0CC8
- BCS C1208
- JSR MoveSights
- JMP C11F9
+.pkey7
 
-.C11ED
+                        \ If we get here then at least one pan key is being
+                        \ pressed
+
+ LDX sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
+ BPL pkey8              \ are not being shown, so jump to pkey8 to skip the
+                        \ following, as we don't need to move the sights when
+                        \ they aren't on-screen
+
+                        \ If we get here then the sights are visible, so the pan
+                        \ keys move the sights rather than panning the view
+
+ ASL sightsInitialMoves \ Shift sightsInitialMoves to the left, so we pull the
+                        \ next bit from the pattern that determines the initial
+                        \ movement of the sights
+
+ BCS C1208              \ If we shifted a 1 out of bit 7 of sightsInitialMoves,
+                        \ jump to C1208 to return from the subroutine without
+                        \ moving the sights, as a set bit indicates a pause in
+                        \ the initial movement of the sights
+
+ JSR MoveSights         \ Move the sights according to the pan key presses in
+                        \ the key logger
+
+ JMP pkey10             \ Jump to pkey10 to skip the following (where we will
+                        \ then jump to C1208 to finish off and return from the
+                        \ subroutine, as we set bit 7 of panKeyBeingPressed at
+                        \ the start of the routine)
+
+.pkey8
 
  LDA keyLogger          \ Set A to the key logger entry for "S" and "D" (pan
-                        \ left and right), which are used to move the sights
+                        \ left, pan right), which are used to move the sights
 
- BPL C11F7              \ If there is a key press in the key logger entry, jump
-                        \ to C11F7 to ???
+ BPL pkey9              \ If there is a key press in the key logger entry, jump
+                        \ to pkey9 to store this value in panKeyBeingPressed (so
+                        \ panning left or right takes precedence over panning up
+                        \ or down)
 
  LDA keyLogger+2        \ Set A to the key logger entry for "L" and "," (pan
-                        \ up and down), which are used to move the sights
+                        \ up, pan down), which are used to move the sights
 
- BMI C1208              \ If there is no key press in the key logger entry, jump
-                        \ to C1208 to ???
+ BMI C1208              \ If there is no key press in the key logger entry then
+                        \ no pan keys are being pressed, so jump to C1208 to
+                        \ finish off and return from the subroutine without
+                        \ recording a pan key press in panKeyBeingPressed
 
-.C11F7
+.pkey9
 
- STA L0009
+ STA panKeyBeingPressed \ Set panKeyBeingPressed to the key logger value of the
+                        \ pan key that's being pressed, as follows:
+                        \
+                        \   * 0 = Pan right
+                        \
+                        \   * 1 = Pan left
+                        \
+                        \   * 2 = Pan up
+                        \
+                        \   * 3 = Pan down
 
-.C11F9
+.pkey10
 
- LDA L0009
- BMI C1208
- STA L0C1D
+ LDA panKeyBeingPressed \ If bit 7 of panKeyBeingPressed is set then no pan keys
+ BMI C1208              \ are being pressed, so jump to C1208 to finish off and
+                        \ return from the subroutine
+
+ STA latestPanKeyPress  \ Set latestPanKeyPress to the key logger value of the
+                        \ pan key that's being pressed, so it contains the most
+                        \ recent pan key press (i.e. the current one)
+
+                        \ Fall through into sub_C1200 to ???
 
 \ ******************************************************************************
 \
@@ -4462,19 +4570,27 @@ L1145 = C1144+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   C1208               ???
+\
 \ ******************************************************************************
 
 .sub_C1200
 
- LDA #&80
+ LDA #%10000000         \ Set bit 7 of L0CE4 ???
  STA L0CE4
- STA L0C1E
+
+ STA L0C1E              \ Set bit 7 of L0C1E ???
 
 .C1208
 
- LDA L0CE4
+ LDA L0CE4              \ Set L0CDC = L0CE4 ???
  STA L0CDC
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4492,7 +4608,9 @@ L1145 = C1144+1
  LDY #3                 \ Scan the keyboard for the first four game keys ("S",
  JSR ScanForGameKeys    \ "D", "L" and ",", for pan left, right up and down)
 
- LDA L0C1D
+ LDA latestPanKeyPress  \ Set A to the key logger value of the latest pan key
+                        \ press, which will either be a current key press or the
+                        \ value from the last pan key press to be made
 
  CMP keyLogger          \ Compare with the key logger entry for "S" and "D"
                         \ (pan left and right)
@@ -4510,16 +4628,19 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L1222
+\       Name: spaceKeyDebounce
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Leyboard
+\    Summary: A variable to flag whether the SPACE key has been pressed, so we
+\             can implement debounce
 \
 \ ******************************************************************************
 
-.L1222
+.spaceKeyDebounce
 
- EQUB &00, &00
+ EQUB 0
+
+ EQUB 0                 \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -4722,7 +4843,7 @@ L1145 = C1144+1
 
 .C12AD
 
- LDA L0009
+ LDA panKeyBeingPressed
  BMI C12B3
  CLC
  RTS
@@ -4731,14 +4852,14 @@ L1145 = C1144+1
 
  LDA keyLogger+1        \ Set A to the key logger entry for "A", "Q", "R", "T",
                         \ "B" or "H" (absorb, transfer, create robot, create
-                        \ tree, create boulder or hyperspace)
+                        \ tree, create boulder, hyperspace)
 
  BMI C12EB              \ If there is no key press in the key logger entry, jump
                         \ to sub_C1264 via C12EB to ???
 
                         \ If we get here then the player is pressing "A", "Q",
                         \ "R", "T", "B" or "H" (absorb, transfer, create robot,
-                        \ create tree, create boulder or hyperspace), which will
+                        \ create tree, create boulder, hyperspace), which will
                         \ put values into the key logger of 32, 33, 0, 2, 3 or
                         \ 34 respectively
 
@@ -4857,7 +4978,7 @@ L1145 = C1144+1
 \       Name: SetupSights
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: ???
+\    Summary: Calculate the position of the sights on the screen
 \
 \ ******************************************************************************
 
@@ -4904,9 +5025,13 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   A                   Bit 0 of A will only be set if "S" and "," are both
-\                       pressed (pan left and down) and all other bits will be
-\                       clear
+\   N flag              Determines whether a pan key is being pressed:
+\
+\                         * Bit 7 of A will be set if no pan keys are being
+\                           pressed (so a BMI branch will be taken)
+\
+\                         * Bit 7 of A will be clear if at least one pan key is
+\                           being pressed (so a BPL branch will be taken)
 \
 \ ******************************************************************************
 
@@ -4962,19 +5087,16 @@ L1145 = C1144+1
 
  LDA keyLogger          \ Combine the key logger entry for "S" and "D" (pan left
  AND keyLogger+2        \ and right) with the key logger entry for "L" and ","
-                        \ (pan left and right
+                        \ (pan left and right and set the status flags according
+                        \ to the result
                         \
-                        \ The entries for logger entries 0 and 2 are as follows:
+                        \ Specifically, if bit 7 is set in both entries, then no
+                        \ pan keys are being pressed, so a BMI following the
+                        \ call to ScanForGameKeys will be taken
                         \
-                        \   * Put %01 in logger entry 0 for "S" (Pan left)
-                        \   * Put %00 in logger entry 0 for "D" (Pan right)
-                        \
-                        \   * Put %10 in logger entry 2 for "L" (Pan up)
-                        \   * Put %11 in logger entry 2 for "," (Pan down)
-                        \
-                        \ So bit 0 of A will only be set if "S" and "," are both
-                        \ pressed (pan left and down) and all other bits will be
-                        \ clear
+                        \ If, however, bit 7 is clear in either entry, then at
+                        \ least one pan key is being pressed, so a BPL following
+                        \ the call to ScanForGameKeys will be taken
 
  RTS                    \ Return from the subroutine
 
@@ -15479,8 +15601,7 @@ L314A = C3148+2
  LDA L34D4
 
  LDX keyLogger+3        \ Set X to the key logger entry for "7", "8", "COPY"
-                        \ and "DELETE (volume down, volume up, pause and
-                        \ unpause)
+                        \ and "DELETE (volume down, volume up, pause, unpause)
 
  BEQ C3498              \ If X = 0 then "7" (volume down) has been pressed, so
                         \ jump to C3498 ???
@@ -15989,7 +16110,7 @@ L314A = C3148+2
 
 .game12
 
- LDA L0009
+ LDA panKeyBeingPressed
  STA L0008
 
  LDA #0
@@ -16280,7 +16401,9 @@ L314A = C3148+2
 
  LDA L0CE4
  BMI C37CB
- JSR sub_C118B
+
+ JSR ProcessKeyPresses
+
  JMP C37CB
 
 .C37B1
@@ -16733,7 +16856,7 @@ L314A = C3148+2
 
  JSR MoveSightsSideways
 
- LDA L0009
+ LDA panKeyBeingPressed
  BPL sigh1
 
  JSR MoveSightsUpDown
@@ -16753,8 +16876,8 @@ L314A = C3148+2
 
 .MoveSightsSideways
 
- LDX keyLogger          \ Set X to the key logger entry for "S" and "D", which
-                        \ move the sights left and right respectively
+ LDX keyLogger          \ Set X to the key logger entry for "S" and "D" (pan
+                        \ left, pan right), which are used to move the sights
 
  BMI sisd4
  BNE sisd2
@@ -16769,7 +16892,7 @@ L314A = C3148+2
  CMP #&90
  BCC sisd1
  SBC #&40
- STX L0009
+ STX panKeyBeingPressed
 
 .sisd1
 
@@ -16790,7 +16913,7 @@ L314A = C3148+2
  CMP #&10
  BCS sisd3
  ADC #&40
- STX L0009
+ STX panKeyBeingPressed
 
 .sisd3
 
@@ -16818,7 +16941,7 @@ L314A = C3148+2
  LDY objectPitchAngle,X
 
  LDX keyLogger+2        \ Set X to the key logger entry for "L" and "," (pan
-                        \ up and down), which are used to move the sights
+                        \ up, pan down), which are used to move the sights
 
  BMI siud8              \ If there is no key press in the key logger entry, jump
                         \ to siud8 to ???
@@ -16842,7 +16965,7 @@ L314A = C3148+2
  BEQ siud8
  SEC
  SBC #&40
- STX L0009
+ STX panKeyBeingPressed
 
 .siud1
 
@@ -16866,7 +16989,7 @@ L314A = C3148+2
  BEQ siud8
  CLC
  ADC #&40
- STX L0009
+ STX panKeyBeingPressed
 
 .siud3
 
@@ -16912,7 +17035,7 @@ L314A = C3148+2
 \       Name: ShowSights
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: ???
+\    Summary: Draw the sights on the screen
 \
 \ ******************************************************************************
 
@@ -17083,7 +17206,7 @@ L314A = C3148+2
 \       Name: HideSights
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: ???
+\    Summary: Remove the sights from the screen
 \
 \ ******************************************************************************
 
