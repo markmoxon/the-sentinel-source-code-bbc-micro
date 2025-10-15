@@ -2350,7 +2350,7 @@
      0C03   00
 .L0C04
      0C04   00
-.L0C05
+.xIconCounter
      0C05   28
 .minEnemyAltitude
      0C06   00
@@ -8754,13 +8754,13 @@
      36C4   44
      36C5   22
      36C6   11
-.sub_C36C7
+.UpdateIconsScanner
      36C7   A9 00      LDA #&00
      36C9   8D 05 0C   STA &0C05
      36CC   20 3A 37   JSR &373A
      36CF   AD 0A 0C   LDA &0C0A
      36D2   85 15      STA &15
-.P36D4
+.ener1
      36D4   A5 15      LDA &15
      36D6   C9 0F      CMP #&0F
      36D8   90 11      BCC &36EB
@@ -8771,7 +8771,7 @@
      36E3   A9 00      LDA #&00
      36E5   20 3A 37   JSR &373A
      36E8   4C D4 36   JMP &36D4
-.C36EB
+.ener2
      36EB   A5 15      LDA &15
      36ED   C9 03      CMP #&03
      36EF   90 11      BCC &3702
@@ -8782,7 +8782,7 @@
      36FA   A9 00      LDA #&00
      36FC   20 3A 37   JSR &373A
      36FF   4C EB 36   JMP &36EB
-.C3702
+.ener3
      3702   C9 01      CMP #&01
      3704   90 0A      BCC &3710
      3706   0A         ASL A
@@ -8790,7 +8790,7 @@
      370A   18         CLC
      370B   69 01      ADC #&01
      370D   20 3A 37   JSR &373A
-.C3710
+.ener4
      3710   A9 00      LDA #&00
      3712   20 3A 37   JSR &373A
      3715   AD 05 0C   LDA &0C05
@@ -8798,7 +8798,7 @@
      371A   90 F4      BCC &3710
      371C   A9 07      LDA #&07
      371E   20 3A 37   JSR &373A
-.P3721
+.ener5
      3721   A9 08      LDA #&08
      3723   20 3A 37   JSR &373A
      3726   AD 05 0C   LDA &0C05
@@ -8809,7 +8809,7 @@
      3732   A9 00      LDA #&00
      3734   20 3A 37   JSR &373A
      3737   4C EB 3A   JMP &3AEB
-.sub_C373A
+.DrawIcon
      373A   48         PHA
      373B   0A         ASL A
      373C   0A         ASL A
@@ -8827,7 +8827,7 @@
      3750   2A         ROL A
      3751   85 71      STA &71
      3753   A0 07      LDY #&07
-.P3755
+.deni1
      3755   BD B0 58   LDA &58B0,X
      3758   91 70      STA (&70),Y
      375A   CA         DEX
@@ -8987,7 +8987,7 @@
      3883   CA         DEX
      3884   D0 C9      BNE &384F
      3886   4C B1 38   JMP &38B1
-.C3889
+.sub_C3889
      3889   A2 28      LDX #&28
 .C388B
      388B   20 B2 38   JSR &38B2
@@ -14398,7 +14398,7 @@
      58AD   24
      58AE   24
      58AF   FF
-.L58B0
+.iconData
      58B0   0F
      58B1   0F
      58B2   0F
@@ -14739,6 +14739,7 @@
      59FE   FF
      59FF   FF
 .L5A00
+.iconBuffer
      5A00
 .L5B00
      5B00

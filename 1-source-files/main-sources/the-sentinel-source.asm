@@ -1252,9 +1252,11 @@
 
  EQUB 0                 \ ???
 
-.L0C05
+.xIconCounter
 
- EQUB &28               \ ???
+ EQUB &28               \ A counter for drawing the icons in the top-left of the
+                        \ screen that show the player's energy level, as we work
+                        \ from left top right along the x-axis
 
 .minEnemyAltitude
 
@@ -4983,7 +4985,9 @@ L1145 = C1144+1
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
- JSR sub_C36C7
+ JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
+                        \ to show the player's current energy level and redraw
+                        \ the scanner
 
 .C12E5
 
@@ -5303,7 +5307,7 @@ L1145 = C1144+1
 \                         * 1 = ???
 \
 \                         * 3 = ???
-\                         
+\
 \   Y                   ???
 \
 \                         * 0 = ???
@@ -5484,7 +5488,7 @@ L1145 = C1144+1
  LDA #1                 \ This is landscape 0000, so set A = 1 to use for the
                         \ total number of enemies
 
- BNE popu2              \ Jump to popu2 to store the value of A in 
+ BNE popu2              \ Jump to popu2 to store the value of A in enemyCount
 
 .popu1
 
@@ -6738,12 +6742,12 @@ L1145 = C1144+1
 
 .high4
 
- LDA xTile              \ Store the x-coordinate of the highest tile corner 
- STA xTileMaxAltitude,X \ in this block (so far) in the xTileMaxAltitude table
+ LDA xTile              \ Store the x-coordinate of the highest tile corner in
+ STA xTileMaxAltitude,X \ this block (so far) in the xTileMaxAltitude table
                         \ entry for this 4x4 block
 
- LDA zTile              \ Store the z-coordinate of the highest tile corner 
- STA zTileMaxAltitude,X \ in this block (so far) in the zTileMaxAltitude table
+ LDA zTile              \ Store the z-coordinate of the highest tile corner in
+ STA zTileMaxAltitude,X \ this block (so far) in the zTileMaxAltitude table
                         \ entry for this 4x4 block
 
 .high5
@@ -7554,10 +7558,13 @@ L1145 = C1144+1
  LDA playerEnergy       \ If the player has no energy then draining more energy
  BEQ dobj1              \ will kill them, so jump to dobj1 to process this
 
- SEC
+ SEC                    \ Subtract 1 from the player's energy
  SBC #1
  STA playerEnergy
- JSR sub_C36C7
+
+ JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
+                        \ to show the player's new energy level and redraw
+                        \ the scanner
 
  LDA #5                 \ Make sound #5 (???)
  JSR MakeSound
@@ -8106,7 +8113,7 @@ L1145 = C1144+1
                         \
                         \ and store it in (sightsYawAngleHi sightsYawAngleLo)
 
- CLC                    \ Clear the C flag for the following 
+ CLC                    \ Clear the C flag for the following
 
  STA sightsYawAngleLo   \ Store the low byte of the calculation (which we know
                         \ will be A) in sightsYawAngleLo
@@ -11988,7 +11995,7 @@ L23E3 = C23E2+1
                         \ We put the tile shape into the high nibble of the tile
                         \ data (for now)
 
- LDA #30                \ Set zTile = 30 so we start iterating from the rear, 
+ LDA #30                \ Set zTile = 30 so we start iterating from the rear,
  STA zTile              \ skipping the row right at the back as the tile corners
                         \ in that row do not anchor any tiles (so zTile iterates
                         \ from 30 to 0 in the outer loop)
@@ -12234,7 +12241,7 @@ L23E3 = C23E2+1
  SBC #128
 
  PHP                    \ Store the flags from the subtraction, so we can set
-                        \ the sign of the scaled 
+                        \ the sign of the scaled altitude below
 
  BPL proc4              \ If the result of the subtraction in A is positive,
                         \ skip the following as A is already positive
@@ -12915,7 +12922,7 @@ L23E3 = C23E2+1
                         \     fall through into SecretCodeError, which displays
                         \     the "WRONG SECRET CODE" error message for when the
                         \     player enters an incorrect secret code
-                        \   
+                        \
                         \   * If we called GenerateLandscape from the
                         \     FinishLandscape routine, then we return there to
                         \     display the landscape's secret entry code
@@ -15096,7 +15103,7 @@ L314A = C3148+2
                         \
                         \ The calls to DigitToNumber will backfill the input
                         \ buffer with &FF if we are reading from the last four
-                        \ characters of the input buffer, so the final result   
+                        \ characters of the input buffer, so the final result
                         \ will have four BCD numbers at the start of inputBuffer
                         \ (from inputBuffer to inputBuffer+3), and the rest of
                         \ the buffer will be padded out with four &FF bytes
@@ -16317,7 +16324,9 @@ L314A = C3148+2
 
  JSR sub_C2624
 
- JSR sub_C36C7
+ JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
+                        \ to show the player's current energy level and redraw
+                        \ the scanner
 
 .game4
 
@@ -16456,7 +16465,9 @@ L314A = C3148+2
 
  LSR L0C1B
 
- JSR sub_C36C7
+ JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
+                        \ to show the player's current energy level and redraw
+                        \ the scanner
 
  LDA L0CD1
  STA L0CC1
@@ -16480,13 +16491,13 @@ L314A = C3148+2
 .sub_C3699
 
  LDA #0
- STA L0C05
+ STA xIconCounter
 
 .P369E
 
  LDA #0
- JSR sub_C373A
- LDA L0C05
+ JSR DrawIcon
+ LDA xIconCounter
  CMP #&28
  BCC P369E
  JMP sub_C3AEB
@@ -16547,124 +16558,235 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C36C7
+\       Name: UpdateIconsScanner
 \       Type: Subroutine
 \   Category: ???
-\    Summary: ???
+\    Summary: Update the icons in the top-left corner of the screen to show the
+\             player's current energy level and redraw the scanner
 \
 \ ******************************************************************************
 
-.sub_C36C7
+.UpdateIconsScanner
 
- LDA #0
- STA L0C05
- JSR sub_C373A
- LDA playerEnergy
- STA loopCounter
+ LDA #0                 \ Set A = 0 to pass to DrawIcon
 
-.P36D4
+ STA xIconCounter       \ Set xIconCounter = 0 so we start drawing from the left
+                        \ edge of the screen
 
- LDA loopCounter
- CMP #&0F
- BCC C36EB
- SBC #&0F
- STA loopCounter
- LDA #&06
- JSR sub_C373A
- LDA #0
- JSR sub_C373A
- JMP P36D4
+ JSR DrawIcon           \ Draw a blank icon into the top part of the screen (via
+                        \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right, incrementing xIconCounter as we do
 
-.C36EB
+ LDA playerEnergy       \ Set a loop counter to count down through the player's
+ STA loopCounter        \ energy, so we can reduce it by the maximum possible
+                        \ amount each time to work out the minimum number of
+                        \ icons that represent that energy level
+                        \
+                        \ In other words, loopCounter contains the amount of
+                        \ energy that we have yet to draw
 
- LDA loopCounter
- CMP #&03
- BCC C3702
- SBC #&03
- STA loopCounter
- LDA #&01
- JSR sub_C373A
- LDA #0
- JSR sub_C373A
- JMP C36EB
+.ener1
 
-.C3702
+ LDA loopCounter        \ If loopCounter < 15 then we can't represent it with a
+ CMP #15                \ high-energy robot (as that represents 15 energy
+ BCC ener2              \ points), so jump to ener2 to skip to the next level
+                        \ down
 
- CMP #&01
- BCC C3710
- ASL A
- JSR sub_C373A
- CLC
- ADC #&01
- JSR sub_C373A
+ SBC #15                \ Subtract 15 from the loop counter as we are about to
+ STA loopCounter        \ draw a high-energy robot that represents 15 energy
+                        \ points (this subtraction works because we just passed
+                        \ through a BCC, so the C flag must be set)
 
-.C3710
+ LDA #6                 \ Draw a high-energy robot into the top part of the
+ JSR DrawIcon           \ screen (via the icon screen buffer at iconBuffer) and
+                        \ move along to the right, incrementing xIconCounter as
+                        \ we do
 
- LDA #0
- JSR sub_C373A
- LDA L0C05
- CMP #&1D
- BCC C3710
- LDA #&07
- JSR sub_C373A
+ LDA #0                 \ Draw a blank icon into the top part of the screen (via
+ JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right, incrementing xIconCounter as we do
 
-.P3721
+ JMP ener1              \ Loop back to ener1 to draw another high-energy robot,
+                        \ if required
 
- LDA #&08
- JSR sub_C373A
- LDA L0C05
- CMP #&26
- BCC P3721
- LDA #&09
- JSR sub_C373A
- LDA #0
- JSR sub_C373A
- JMP sub_C3AEB
+.ener2
+
+ LDA loopCounter        \ If loopCounter < 3 then we can't represent it with a
+ CMP #3                 \ blue robot (as that represents three energy points),
+ BCC ener3              \ so jump to ener3 to skip to the next level down
+
+ SBC #3                 \ Subtract 3 from the loop counter as we are about to
+ STA loopCounter        \ draw a high-energy robot that represents three energy
+                        \ points (this subtraction works because we just passed
+                        \ through a BCC, so the C flag must be set)
+
+ LDA #1                 \ Draw a blue robot into the top part of the screen (via
+ JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right, incrementing xIconCounter as we do
+
+ LDA #0                 \ Draw a blank icon into the top part of the screen (via
+ JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right, incrementing xIconCounter as we do
+
+ JMP ener2              \ Loop back to ener2 to draw another blue robot, if
+                        \ required
+
+.ener3
+
+                        \ If we get here then the value of loopCounter in A must
+                        \ be 0, 1 or 2, as otherwise we would still be drawing
+                        \ robots
+
+ CMP #1                 \ If A < 1 then A must be zero, so jump to ener4 to move
+ BCC ener4              \ on to the scanner as we have no more energy points to
+                        \ draw
+
+ ASL A                  \ If we get here then A is 1 or 2, so double it to get
+                        \ the correct icon numbers for the left part of the
+                        \ two-part tree or boulder icons:
+                        \
+                        \   * When A = 1, double it to 2 for the left tree icon
+                        \
+                        \   * When A = 2, double it to 4 for the left boulder
+                        \     icon
+
+ JSR DrawIcon           \ Draw the correct left icon into the top part of the
+                        \ screen (via the icon screen buffer at iconBuffer) and
+                        \ move along to the right, incrementing xIconCounter as
+                        \ we do
+
+ CLC                    \ Increment A to get the correct icon number for the
+ ADC #1                 \ right part of the tree or boulder
+
+ JSR DrawIcon           \ Draw the correct right icon into the top part of the
+                        \ screen (via the icon screen buffer at iconBuffer) and
+                        \ move along to the right, incrementing xIconCounter as
+                        \ we do
+
+                        \ We have updated the energy icons, so now we blank the
+                        \ rest of the top line of the screen before drawing the
+                        \ outline of the scanner
+
+.ener4
+
+ LDA #0                 \ Draw a blank icon into the top part of the screen (via
+ JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right, incrementing xIconCounter as we do
+
+ LDA xIconCounter       \ Loop back to keep drawing blank icons until we reach
+ CMP #29                \ column 29, which is where we want to draw the scanner
+ BCC ener4
+
+ LDA #7                 \ Draw the left edge of the scanner box into the top
+ JSR DrawIcon           \ part of the screen (via the icon screen buffer at
+                        \ iconBuffer) and move along to the right, incrementing
+                        \ xIconCounter as we do
+
+.ener5
+
+ LDA #8                 \ Draw the middle part of the scanner box into the top
+ JSR DrawIcon           \ part of the screen (via the icon screen buffer at
+                        \ iconBuffer) and move along to the right, incrementing
+                        \ xIconCounter as we do
+
+ LDA xIconCounter       \ Loop back to keep drawing the middle part of the
+ CMP #38                \ scanner box until we reach column 38
+ BCC ener5
+
+ LDA #9                 \ Draw the right edge of the scanner box into the top
+ JSR DrawIcon           \ part of the screen (via the icon screen buffer at
+                        \ iconBuffer) and move along to the right, incrementing
+                        \ xIconCounter as we do
+
+ LDA #0                 \ Draw a blank icon into the top part of the screen (via
+ JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right
+
+ JMP sub_C3AEB          \ ???
 
 \ ******************************************************************************
 \
-\       Name: sub_C373A
+\       Name: DrawIcon
 \       Type: Subroutine
 \   Category: ???
-\    Summary: ???
+\    Summary: Draw a single icon in the top-left corner of the screen (via the
+\             icon screen buffer at iconBuffer) and move along to the right
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The type of icon to draw:
+\
+\                         * 0 = Blank
+\
+\                         * 1 = Robot
+\
+\                         * 2 = Tree (left)
+\
+\                         * 3 = Tree (right)
+\
+\                         * 4 = Boulder (left)
+\
+\                         * 5 = Boulder (right)
+\
+\                         * 6 = High-energy robot
+\
+\                         * 7 = Scanner box (left)
+\
+\                         * 8 = Scanner box (middle)
+\
+\                         * 9 = Scanner box (right)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   A is preserved
 \
 \ ******************************************************************************
 
-.sub_C373A
+.DrawIcon
 
- PHA
+ PHA                    \ Store the icon type on the stack so we can preserve it
+
+ ASL A                  \ Set X = (A * 8) mod 8
  ASL A
  ASL A
- ASL A
- ORA #&07
+ ORA #7
  TAX
- LDA L0C05
+
+ LDA xIconCounter       \ Set P = xIconCounter * 4
+ ASL A                  \         + bit 6 of xIconCounter
  ASL A
- ASL A
- ADC #&00
+ ADC #0
  STA P
- LDA #&2D
- ADC #&00
+
+ LDA #HI(iconBuffer)/2
+ ADC #0
  ASL P
  ROL A
- STA Q
- LDY #&07
+ STA P+1
 
-.P3755
+ LDY #7
 
- LDA L58B0,X
+.deni1
+
+ LDA iconData,X
  STA (P),Y
+
  DEX
+
  DEY
- BPL P3755
- INC L0C05
- PLA
- RTS
 
-.C3763
+ BPL deni1
 
- JMP (irq1Address)      \ Jump to the original address from IRQ1V to pass
-                        \ control to the next interrupt handler
+ INC xIconCounter       \ Increment the icon counter, as we just drew an icon
+
+ PLA                    \ Restore the icon type into A that we stored on the
+                        \ stack above
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -16674,6 +16796,11 @@ L314A = C3148+2
 \    Summary: ???
 \
 \ ******************************************************************************
+
+.C3763
+
+ JMP (irq1Address)      \ Jump to the original address from IRQ1V to pass
+                        \ control to the next interrupt handler
 
 .IRQHandler
 
@@ -16861,7 +16988,7 @@ L314A = C3148+2
  STA L2091
  STA L0063
  CPY #&02
- BCS C3889
+ BCS sub_C3889
  LDX #&18
 
 .C384F
@@ -16902,7 +17029,16 @@ L314A = C3148+2
  BNE C384F
  JMP CRE34
 
-.C3889
+\ ******************************************************************************
+\
+\       Name: sub_C3889
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C3889
 
  LDX #&28
 
@@ -17627,15 +17763,17 @@ L314A = C3148+2
 
 .sub_C3AEB
 
- LDA #&5A
+ LDA #HI(iconBuffer)    \ Set (L0063 L0062) = iconBuffer
  STA L0063
- LDA #0
+ LDA #LO(iconBuffer)
  STA L0062
- LDA L0CCB
+
+ LDA L0CCB              \ Set (L0065 L0064) = (L0CCB L0CCC)
  STA L0065
  LDA L0CCA
  STA L0064
- JMP C3889
+
+ JMP sub_C3889          \ Jump to sub_C3889 to ???
 
 \ ******************************************************************************
 \
@@ -19399,7 +19537,7 @@ L314A = C3148+2
 \       Name: PrintCharacter
 \       Type: Subroutine
 \   Category: Text
-\    Summary: Print a single-byte VDU command or character from a text token, 
+\    Summary: Print a single-byte VDU command or character from a text token,
 \             optionally printing a drop shadow if the character is alphanumeric
 \
 \ ------------------------------------------------------------------------------
@@ -19519,10 +19657,10 @@ L314A = C3148+2
 
 .prin1
 
- INY                    \ Increment the offset of the character being printer to
-                        \ move on to the next character in the 
+ INY                    \ Increment the offset of the character being printed to
+                        \ move on to the next character in the token
 
- LDA tokenBase,Y
+ LDA tokenBase,Y        \ Set A to the next character to print
 
 .prin2
 
@@ -20087,25 +20225,34 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L58B0
+\       Name: iconData
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L58B0
+.iconData
 
- EQUB &0F, &0F, &0F, &0F, &0F, &0F, &0F, &0F
- EQUB &6F, &0F, &00, &06, &09, &09, &0F, &0F
- EQUB &2F, &2F, &7A, &7A, &FA, &2D, &0F, &0F
- EQUB &0F, &0F, &0F, &0F, &8F, &0F, &0F, &0F
- EQUB &0F, &0F, &78, &D2, &87, &87, &0F, &0F
- EQUB &0F, &0F, &0F, &87, &87, &87, &0F, &0F
- EQUB &6F, &0F, &FF, &9F, &6F, &6F, &0F, &0F
- EQUB &1E, &1E, &1E, &1E, &1E, &1E, &0F, &0F
- EQUB &F0, &0F, &0F, &0F, &0F, &F0, &0F, &0F
- EQUB &87, &87, &87, &87, &87, &87, &0F, &0F
+ EQUB &0F, &0F, &0F, &0F, &0F, &0F, &0F, &0F    \ Icon #0: Blank
+
+ EQUB &6F, &0F, &00, &06, &09, &09, &0F, &0F    \ Icon #1: Robot
+
+ EQUB &2F, &2F, &7A, &7A, &FA, &2D, &0F, &0F    \ Icon #2: Tree (left)
+
+ EQUB &0F, &0F, &0F, &0F, &8F, &0F, &0F, &0F    \ Icon #3: Tree (right)
+
+ EQUB &0F, &0F, &78, &D2, &87, &87, &0F, &0F    \ Icon #4: Boulder (left)
+
+ EQUB &0F, &0F, &0F, &87, &87, &87, &0F, &0F    \ Icon #5: Boulder (right)
+
+ EQUB &6F, &0F, &FF, &9F, &6F, &6F, &0F, &0F    \ Icon #6: High-energy robot
+
+ EQUB &1E, &1E, &1E, &1E, &1E, &1E, &0F, &0F    \ Icon #7: Scanner box (left)
+
+ EQUB &F0, &0F, &0F, &0F, &0F, &F0, &0F, &0F    \ Icon #8: Scanner box (middle)
+
+ EQUB &87, &87, &87, &87, &87, &87, &0F, &0F    \ Icon #9: Scanner box (right)
 
 \ ******************************************************************************
 \
@@ -20253,6 +20400,7 @@ L314A = C3148+2
 \ ******************************************************************************
 
 .L5A00
+.iconBuffer
 
  SKIP 256
 
@@ -20285,7 +20433,7 @@ L314A = C3148+2
 \ ******************************************************************************
 
  CLEAR &5A00, &5C00     \ Memory from &5A00 to &5BFF has two separate uses
- ORG &5A00              \ 
+ ORG &5A00              \
                         \ During the landscape generation process, it is used
                         \ for storing tile data that can be discarded once the
                         \ landscape is generated
