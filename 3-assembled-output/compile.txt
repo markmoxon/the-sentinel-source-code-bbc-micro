@@ -184,14 +184,10 @@
      0060
 .L0061
      0061
-.L0062
+.fromAddr
      0062
-.L0063
-     0063
-.L0064
+.toAddr
      0064
-.L0065
-     0065
 .smoothingAction
      0066
 .H
@@ -2625,10 +2621,8 @@
      0CC0   00
 .L0CC1
      0CC1   00
-.L0CC2
-     0CC2   C0
-.L0CC3
-     0CC3   60
+.mainScreenAddr
+     0CC2   C0 60
 .L0CC4
      0CC4   00
 .L0CC5
@@ -2641,10 +2635,8 @@
      0CC8   00
 .L0CC9
      0CC9   00
-.L0CCA
-     0CCA   80
-.L0CCB
-     0CCB   7F
+.iconRowAddr
+     0CCA   80 7F
 .L0CCC
      0CCC   00
 .L0CCD
@@ -9374,7 +9366,7 @@
 .C3AE7
      3AE7   8D CB 0C   STA &0CCB
      3AEA   60         RTS
-.sub_C3AEB
+.DisplayIconBuffer
      3AEB   A9 5A      LDA #&5A
      3AED   85 63      STA &63
      3AEF   A9 00      LDA #&00

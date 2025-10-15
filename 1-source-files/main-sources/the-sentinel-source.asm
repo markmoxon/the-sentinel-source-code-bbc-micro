@@ -494,21 +494,15 @@
 
  SKIP 1                 \ ???
 
-.L0062
+.fromAddr
 
- SKIP 1                 \ ???
+ SKIP 2                 \ An address, typically used as a source address when
+                        \ copying
 
-.L0063
+.toAddr
 
- SKIP 1                 \ ???
-
-.L0064
-
- SKIP 1                 \ ???
-
-.L0065
-
- SKIP 1                 \ ???
+ SKIP 2                 \ An address, typically used as a destination address
+                        \ when copying
 
 .smoothingAction
 
@@ -1726,13 +1720,10 @@
 
  EQUB 0                 \ ???
 
-.L0CC2
+.mainScreenAddr
 
- EQUB &C0               \ ???
-
-.L0CC3
-
- EQUB &60               \ ???
+ EQUW &60C0             \ The screen address of the main game screen, just below
+                        \ the icon and scanner row at the top of the screen
 
 .L0CC4
 
@@ -1763,13 +1754,10 @@
 
  EQUB 0                 \ ???
 
-.L0CCA
+.iconRowAddr
 
- EQUB %10000000         \ ???
-
-.L0CCB
-
- EQUB &7F               \ ???
+ EQUW &7F80             \ The screen address of the icon and scanner row along
+                        \ the top of the screen
 
 .L0CCC
 
@@ -5050,11 +5038,14 @@ L1145 = C1144+1
 .sub_C130C
 
  SEI
- LDA #&C0
- STA L0CC2
+
+ LDA #&C0               \ Set mainScreenAddr(1 0) = &60C0
+ STA mainScreenAddr
  LDA #&60
- STA L0CC3
+ STA mainScreenAddr+1
+
  JSR sub_C3AD3
+
  LDA #&0F
  PHA
  LDA #&F0
@@ -5079,12 +5070,12 @@ L1145 = C1144+1
 
 .SetupSights
 
- LDA L0CC2
+ LDA mainScreenAddr
  CLC
  ADC #&A0
  STA L0CC4
 
- LDA L0CC3
+ LDA mainScreenAddr+1
  ADC #&0F
  CMP #&80
  BCC C1345
@@ -6804,11 +6795,11 @@ L1145 = C1144+1
 
  STA L0C09
  STA L169B
- LDA L0CC2
+ LDA mainScreenAddr
  SEC
  SBC #&4F
  STA L0022
- LDA L0CC3
+ LDA mainScreenAddr+1
  SBC #&00
  CMP #&60
  BCS C1646
@@ -9305,9 +9296,9 @@ L1145 = C1144+1
  ASL A
  ROL U
  CLC
- ADC L0CC2
+ ADC mainScreenAddr
  STA L2092
- LDA L0CC3
+ LDA mainScreenAddr+1
  ADC U
  CMP #&80
  BCC C2008
@@ -9337,9 +9328,9 @@ L1145 = C1144+1
  ROR L0CD7
  CLI
  LDA L2092
- STA L0064
+ STA toAddr
  LDA L2093
- STA L0065
+ STA toAddr+1
  LDA L0C69
  STA loopCounter
  JMP C2058
@@ -9350,7 +9341,7 @@ L1145 = C1144+1
  CLC
  ADC #&08
  STA L2092
- STA L0064
+ STA toAddr
  LDA L2093
  ADC #&00
  CMP #&80
@@ -9360,7 +9351,7 @@ L1145 = C1144+1
 .C2053
 
  STA L2093
- STA L0065
+ STA toAddr+1
 
 .C2058
 
@@ -16500,7 +16491,10 @@ L314A = C3148+2
  LDA xIconCounter
  CMP #&28
  BCC P369E
- JMP sub_C3AEB
+
+ JMP DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
+                        \ into screen memory, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -16702,7 +16696,9 @@ L314A = C3148+2
  JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
                         \ to the right
 
- JMP sub_C3AEB          \ ??? Does this draw the buffer to the screen
+ JMP DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
+                        \ into screen memory, returning from the subroutine
+                        \ using a tail call
 
 \ ******************************************************************************
 \
@@ -16773,11 +16769,10 @@ L314A = C3148+2
                         \
                         \   (iconBuffer / 2) + (xIconCounter * 4)
                         \
-                        \ It isn't totally clear why the calculation is done
-                        \ this way, as xIconCounter doesn't get higher than 31
-                        \ so there is no risk of overflow, but perhaps this code
-                        \ is designed to work with screen modes that have more
-                        \ than the 32 columns of screen mode 5
+                        \ The calculation is done this way to cater for values
+                        \ of xIconCounter between 32 and 39, as multiplying 32
+                        \ by 8 won't fit into one byte, but multiplying by 4
+                        \ will fit (and doubling just requires a simple shift)
 
  LDA xIconCounter       \ Set P = xIconCounter * 4 + LO(iconBuffer / 2)
  ASL A                  \      
@@ -16872,7 +16867,9 @@ L314A = C3148+2
  LDA L0CC1
  BEQ C379B
  JSR sub_C37D1
- JSR sub_C3AEB
+
+ JSR DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
+                        \ into screen memory
 
 .C379B
 
@@ -16946,11 +16943,11 @@ L314A = C3148+2
 .sub_C37D1
 
  LDY L0008
- LDA L0CC2
+ LDA mainScreenAddr
  CLC
  ADC L38E4,Y
- STA L0CC2
- LDA L0CC3
+ STA mainScreenAddr
+ LDA mainScreenAddr+1
  ADC L38E8,Y
  CMP #&80
  BCC C37EC
@@ -16965,10 +16962,10 @@ L314A = C3148+2
 
 .C37F2
 
- STA L0CC3
+ STA mainScreenAddr+1
  JSR sub_C3AD3
  STA L006D
- LDA L0CCA
+ LDA iconRowAddr
  LSR L006D
  ROR A
  LSR L006D
@@ -16983,11 +16980,11 @@ L314A = C3148+2
  LDA L006D
  STA SHEILA+&01         \ crtc_register_data
  DEC L0CC1
- LDA L0CC2
+ LDA mainScreenAddr
  CLC
  ADC L38DC,Y
- STA L0064
- LDA L0CC3
+ STA toAddr
+ LDA mainScreenAddr+1
  ADC L38E0,Y
  CMP #&80
  BCC C3830
@@ -16995,7 +16992,7 @@ L314A = C3148+2
 
 .C3830
 
- STA L0065
+ STA toAddr+1
 
 \ ******************************************************************************
 \
@@ -17012,11 +17009,11 @@ L314A = C3148+2
  CLC
  ADC L38E4,Y
  STA L2090
- STA L0062
+ STA fromAddr
  LDA L2091
  ADC L38E8,Y
  STA L2091
- STA L0063
+ STA fromAddr+1
  CPY #&02
  BCS sub_C3889
  LDX #&18
@@ -17024,29 +17021,29 @@ L314A = C3148+2
 .C384F
 
  JSR sub_C38B2
- LDA L0062
+ LDA fromAddr
  CLC
  ADC #&40
- STA L0062
- LDA L0063
+ STA fromAddr
+ LDA fromAddr+1
  ADC #&01
  CMP #&53
  BNE C386E
  LDA L2090
  CLC
  ADC #&A0
- STA L0062
+ STA fromAddr
  LDA L2091
  ADC #&00
 
 .C386E
 
- STA L0063
- LDA L0064
+ STA fromAddr+1
+ LDA toAddr
  CLC
  ADC #&40
- STA L0064
- LDA L0065
+ STA toAddr
+ LDA toAddr+1
  ADC #&01
  CMP #&80
  BCC C3881
@@ -17054,7 +17051,7 @@ L314A = C3148+2
 
 .C3881
 
- STA L0065
+ STA toAddr+1
  DEX
  BNE C384F
  JMP CRE34
@@ -17075,18 +17072,18 @@ L314A = C3148+2
 .C388B
 
  JSR sub_C38B2
- LDA L0062
+ LDA fromAddr
  CLC
  ADC #&08
- STA L0062
- LDA L0063
+ STA fromAddr
+ LDA fromAddr+1
  ADC #&00
- STA L0063
- LDA L0064
+ STA fromAddr+1
+ LDA toAddr
  CLC
  ADC #&08
- STA L0064
- LDA L0065
+ STA toAddr
+ LDA toAddr+1
  ADC #&00
  CMP #&80
  BCC C38AC
@@ -17094,7 +17091,7 @@ L314A = C3148+2
 
 .C38AC
 
- STA L0065
+ STA toAddr+1
  DEX
  BNE C388B
 
@@ -17114,29 +17111,29 @@ L314A = C3148+2
 .sub_C38B2
 
  LDY #0
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  INY
- LDA (L0062),Y
- STA (L0064),Y
+ LDA (fromAddr),Y
+ STA (toAddr),Y
  RTS
 
 \ ******************************************************************************
@@ -17760,50 +17757,65 @@ L314A = C3148+2
 \
 \       Name: sub_C3AD3
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Calculate the address in screen memory of the icon and scanner row
+\             at the top of the screen
 \
 \ ******************************************************************************
 
 .sub_C3AD3
 
- LDA L0CC2
- SEC
- SBC #&40
- STA L0CCA
- LDA L0CC3
+ LDA mainScreenAddr     \ Set iconRowAddr(1 0) = mainScreenAddr(1 0) - &0140
+ SEC                    \                      = mainScreenAddr(1 0) - 320
+ SBC #&40               \
+ STA iconRowAddr        \ starting with the low bytes
+
+ LDA mainScreenAddr+1   \ And then the high bytes
  SBC #&01
- CMP #&60
- BCS C3AE7
- ADC #&20
+
+ CMP #&60               \ If the result of the subtraction is less than &6000,
+ BCS C3AE7              \ add &2000 to wrap it around so the result is within
+ ADC #&20               \ screen memory from &6000 and up
 
 .C3AE7
 
- STA L0CCB
- RTS
+ STA iconRowAddr+1      \ Store the high byte of the result in iconRowAddr(1 0),
+                        \ so we have the following:
+                        \
+                        \   iconRowAddr(1 0) = mainScreenAddr(1 0) - 320
+                        \
+                        \ Each character row in screen mode 5 takes up 320 bytes
+                        \ (40 characters of eight bytes each), so this sets
+                        \ iconRowAddr(1 0) to the address of the character row
+                        \ just above main screen memory at mainScreenAddr(1 0)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C3AEB
+\       Name: DisplayIconBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Display the redrawn icon and scanner row by copying the contents
+\             of the icon buffer into screen memory
 \
 \ ******************************************************************************
 
-.sub_C3AEB
+.DisplayIconBuffer
 
- LDA #HI(iconBuffer)    \ Set (L0063 L0062) = iconBuffer
- STA L0063
- LDA #LO(iconBuffer)
- STA L0062
+ LDA #HI(iconBuffer)    \ Set fromAddr(1 0) = iconBuffer(1 0)
+ STA fromAddr+1         \
+ LDA #LO(iconBuffer)    \ So the call to sub_C3889 copies from the icon buffer,
+ STA fromAddr           \ which contains the redrawn icon and scanner row
 
- LDA L0CCB              \ Set (L0065 L0064) = (L0CCB L0CCC)
- STA L0065
- LDA L0CCA
- STA L0064
+ LDA iconRowAddr+1      \ Set toAddr(1 0) = iconRowAddr(1 0)
+ STA toAddr+1           \
+ LDA iconRowAddr        \ So the call to sub_C3889 copies from the icon buffer 
+ STA toAddr             \ into the screen memory for the icon and scanner row
+                        \ at the top of the screen
 
- JMP sub_C3889          \ Jump to sub_C3889 to ???
+ JMP sub_C3889          \ Jump to copy the contents of the icon buffer to the
+                        \ screen to ???
 
 \ ******************************************************************************
 \
@@ -19455,11 +19467,11 @@ L314A = C3148+2
  CMP #&1E
  BCS C56E3
  STA L0023
- LDA L0CC2
+ LDA mainScreenAddr
  CLC
  ADC L0022
  STA L0022
- LDA L0CC3
+ LDA mainScreenAddr+1
  ADC L0023
  CMP #&80
  BCC C5708
@@ -21341,36 +21353,36 @@ L314A = C3148+2
  LSR L0013
  ROR A
  ADC L0CCD
- STA L0062
+ STA fromAddr
  LDA L0013
  ADC #&00
- STA L0063
+ STA fromAddr+1
  LDA L2092
  CLC
- ADC L0062
- STA L0064
+ ADC fromAddr
+ STA toAddr
  LDA L2093
- ADC L0063
+ ADC fromAddr+1
  CMP #&80
  BCC C5ED9
  SBC #&20
 
 .C5ED9
 
- STA L0065
- LDA L0063
+ STA toAddr+1
+ LDA fromAddr+1
  CLC
  ADC #&3F
- STA L0063
+ STA fromAddr+1
  CMP #&53
  BCC C5EF3
- LDA L0062
+ LDA fromAddr
  SEC
  SBC #&60
- STA L0062
- LDA L0063
+ STA fromAddr
+ LDA fromAddr+1
  SBC #&13
- STA L0063
+ STA fromAddr+1
 
 .C5EF3
 
@@ -21381,13 +21393,13 @@ L314A = C3148+2
  AND #&03
  TAX
  LDY #0
- LDA (L0062),Y
+ LDA (fromAddr),Y
  AND L227F,X
  STA L0013
- LDA (L0064),Y
+ LDA (toAddr),Y
  AND L36BF,X
  ORA L0013
- STA (L0064),Y
+ STA (toAddr),Y
  BIT L0C1E
  BMI CRE41
  DEC L0CD2
