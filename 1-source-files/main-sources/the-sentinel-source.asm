@@ -4987,7 +4987,7 @@ L1145 = C1144+1
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw
-                        \ the scanner
+                        \ the scanner box
 
 .C12E5
 
@@ -7563,8 +7563,8 @@ L1145 = C1144+1
  STA playerEnergy
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
-                        \ to show the player's new energy level and redraw
-                        \ the scanner
+                        \ to show the player's current energy level and redraw
+                        \ the scanner box
 
  LDA #5                 \ Make sound #5 (???)
  JSR MakeSound
@@ -16326,7 +16326,7 @@ L314A = C3148+2
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw
-                        \ the scanner
+                        \ the scanner box
 
 .game4
 
@@ -16467,7 +16467,7 @@ L314A = C3148+2
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw
-                        \ the scanner
+                        \ the scanner box
 
  LDA L0CD1
  STA L0CC1
@@ -16560,9 +16560,9 @@ L314A = C3148+2
 \
 \       Name: UpdateIconsScanner
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: Update the icons in the top-left corner of the screen to show the
-\             player's current energy level and redraw the scanner
+\             player's current energy level and redraw the scanner box
 \
 \ ******************************************************************************
 
@@ -16702,13 +16702,13 @@ L314A = C3148+2
  JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
                         \ to the right
 
- JMP sub_C3AEB          \ ???
+ JMP sub_C3AEB          \ ??? Does this draw the buffer to the screen
 
 \ ******************************************************************************
 \
 \       Name: DrawIcon
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: Draw a single icon in the top-left corner of the screen (via the
 \             icon screen buffer at iconBuffer) and move along to the right
 \
@@ -16750,38 +16750,68 @@ L314A = C3148+2
 
  PHA                    \ Store the icon type on the stack so we can preserve it
 
- ASL A                  \ Set X = (A * 8) mod 8
- ASL A
- ASL A
- ORA #7
- TAX
+ ASL A                  \ Set X = (A * 8) + 7
+ ASL A                  \
+ ASL A                  \ Each icon definition in iconData contains eight bytes,
+ ORA #7                 \ so we can use this as an index into iconData, where it
+ TAX                    \ points to the last of the eight bytes for icon A (as
+                        \ we added 7 to A * 8 with the ORA instruction)
 
- LDA xIconCounter       \ Set P = xIconCounter * 4
- ASL A                  \         + bit 6 of xIconCounter
- ASL A
- ADC #0
+                        \ We now calculate the address of the icon in the screen
+                        \ buffer at iconBuffer
+                        \
+                        \ The icon needs to be drawn in column xIconCounter,
+                        \ where each column is eight pixels wide, and because
+                        \ the screen is split into 8x8-pixel character blocks of
+                        \ eight bytes in each, the icon is in screen memory at
+                        \ this address, which we store in (Q P): 
+                        \
+                        \   (Q P) = iconBuffer + xIconCounter * 8
+                        \
+                        \ This is calculated by doing half the sum first, and
+                        \ then doubling the result, like this:
+                        \
+                        \   (iconBuffer / 2) + (xIconCounter * 4)
+                        \
+                        \ It isn't totally clear why the calculation is done
+                        \ this way, as xIconCounter doesn't get higher than 31
+                        \ so there is no risk of overflow, but perhaps this code
+                        \ is designed to work with screen modes that have more
+                        \ than the 32 columns of screen mode 5
+
+ LDA xIconCounter       \ Set P = xIconCounter * 4 + LO(iconBuffer / 2)
+ ASL A                  \      
+ ASL A                  \ so those are the low bytes
+ ADC #LO(iconBuffer)/2
  STA P
 
- LDA #HI(iconBuffer)/2
- ADC #0
- ASL P
- ROL A
- STA P+1
+ LDA #HI(iconBuffer)/2  \ Set A = 0 + HI(iconBuffer / 2)
+ ADC #0                 \
+                        \ and those are the high bytes, with the result of the
+                        \ half sum in (A P)
 
- LDY #7
+ ASL P                  \ Set (Q P) = (A P) * 2
+ ROL A                  \           = iconBuffer + xIconCounter * 8
+ STA Q                  \
+                        \ So we now have the address within the screen buffer
+                        \ for the icon we want to draw
+
+ LDY #7                 \ We now copy eight bytes of icon data into the screen
+                        \ buffer at iconBuffer
 
 .deni1
 
- LDA iconData,X
- STA (P),Y
+ LDA iconData,X         \ Copy the X-th byte of icon data to the Y-th byte of
+ STA (P),Y              \ (Q P)
 
- DEX
+ DEX                    \ Decrement the source byte counter
 
- DEY
+ DEY                    \ Decrement the destination byte counter
 
- BPL deni1
+ BPL deni1              \ Loop back until we have copied all eight bytes
 
- INC xIconCounter       \ Increment the icon counter, as we just drew an icon
+ INC xIconCounter       \ Increment the icon counter to move along to the right
+                        \ by one column, as we just drew an icon
 
  PLA                    \ Restore the icon type into A that we stored on the
                         \ stack above
@@ -21106,7 +21136,7 @@ L314A = C3148+2
 \
 \       Name: SetColourPalette
 \       Type: Subroutine
-\   Category: Screen mode
+\   Category: Graphics
 \    Summary: Set the logical colours for each of the four physical colours in
 \             screen mode 5
 \
@@ -21209,7 +21239,7 @@ L314A = C3148+2
 \
 \       Name: colourPalettes
 \       Type: Variable
-\   Category: Screen mode
+\   Category: Graphics
 \    Summary: The logical colours for two mode 5 palettes
 \
 \ ------------------------------------------------------------------------------
