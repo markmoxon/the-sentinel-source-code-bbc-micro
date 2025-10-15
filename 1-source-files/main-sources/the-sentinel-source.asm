@@ -7398,7 +7398,7 @@ L1145 = C1144+1
  STY L0C73
  BEQ CRE08
  LDY #&12
- STY L5910
+ STY soundData+16       \ First parameter of sound block 2
  CMP #&03
  BEQ CRE08
  LDX #&06
@@ -7531,7 +7531,7 @@ L1145 = C1144+1
 \
 \ ******************************************************************************
 
-.P19F7
+.dobj1
 
                         \ If we get here then the player has run out of energy
                         \ and has died
@@ -7545,14 +7545,14 @@ L1145 = C1144+1
 
  LDX L0C58              \ Set X to an object slot ???
 
- CPX playerObjectSlot   \ If X is not the player slot, jump to C1A1D to drain
- BNE C1A1D              \ energy from the object in slot X
+ CPX playerObjectSlot   \ If this is not the player slot, jump to dobj2 to drain
+ BNE dobj2              \ energy from the object in slot X
 
                         \ If we get here then this is the player's object, so we
                         \ now drain energy from the player
 
- LDA playerEnergy       \ If the player has no energy, jump to P19F7 to ???
- BEQ P19F7
+ LDA playerEnergy       \ If the player has no energy then draining more energy
+ BEQ dobj1              \ will kill them, so jump to dobj1 to process this
 
  SEC
  SBC #1
@@ -7563,42 +7563,42 @@ L1145 = C1144+1
  JSR sub_C3440
 
  SEC
- JMP C1A46
+ JMP dobj7
 
-.C1A1D
+.dobj2
 
  TXA
  JSR sub_C1AE7
  LDA objectTypes,X
- BNE C1A31
+ BNE dobj3
  LDY L0000
  LDA #0
  STA L0C20,Y
  LDA #&03
- BNE C1A42
+ BNE dobj5
 
-.C1A31
+.dobj3
 
  CMP #&02
- BNE C1A3B
+ BNE dobj4
  JSR sub_C1ED8
- JMP C1A45
+ JMP dobj6
 
-.C1A3B
+.dobj4
 
  LDA #&74
  STA L0CD4
  LDA #&02
 
-.C1A42
+.dobj5
 
  STA objectTypes,X
 
-.C1A45
+.dobj6
 
  CLC
 
-.C1A46
+.dobj7
 
  PHP
  LDY L0000
@@ -7995,13 +7995,13 @@ L1145 = C1144+1
 .C1B98
 
  LDA #&AA
- STA L591C
+ STA soundData+28       \ Fifth parameter of sound block 3
 
  LDA #5                 \ Sound ???
  JSR sub_C3440
 
  LDA #&90
- STA L591C
+ STA soundData+28       \ Fifth parameter of sound block 3
 
  SEC                    \ Set the C flag to denote ???
 
@@ -15697,8 +15697,8 @@ L314A = C3148+2
 
 .sub_C343A
 
- STX L5904
- STY L590C
+ STX soundData+4        \ Fourth parameter of sound block 0
+ STY soundData+12       \ Fourth parameter of sound block 1
 
 \ ******************************************************************************
 \
@@ -15756,7 +15756,7 @@ L314A = C3148+2
  TAX
 
  LDA #7
- BNE C3473
+ BNE MakeSoundEnvelope
 
 \ ******************************************************************************
 \
@@ -15778,12 +15778,43 @@ L314A = C3148+2
  ASL A
  ADC #&28
  TAX
- LDA #&08
 
-.C3473
+ LDA #8
 
- LDY #&59
- JMP OSWORD
+\ ******************************************************************************
+\
+\       Name: MakeSoundEnvelope
+\       Type: Subroutine
+\   Category: Sound
+\    Summary: Either make a sound or set up an envelope
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The action:
+\
+\                         * A = 7 to make a sound
+\
+\                         * A = 8 to define a sound envelope
+\
+\   X                   The low byte of the address of the OSWORD block
+\
+\ ******************************************************************************
+
+.MakeSoundEnvelope
+
+ LDY #&59               \ Set Y to the high byte of the soundData block
+                        \ address, so (Y X) now points to the relevant envelope
+                        \ or sound data block
+
+ JMP OSWORD             \ Call OSWORD with action A, as follows:
+                        \
+                        \  * A = 7 to make the sound at (Y X)
+                        \
+                        \  * A = 8 to set up the sound envelope at (Y X)
+                        \
+                        \ and return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -15865,8 +15896,8 @@ L314A = C3148+2
 
 .C34AD
 
- STY L595F
- STY L5951
+ STY envelopeData+42+13 \ Last parameter of envelope 3
+ STY envelopeData+28+13 \ Last parameter of envelope 2
  LDY #&0B
 
 .P34B5
@@ -15879,7 +15910,7 @@ L314A = C3148+2
 
 .C34C0
 
- STA L5928,X
+ STA envelopeData,X
  DEY
  BPL P34B5
  LDA #&0C
@@ -15984,10 +16015,10 @@ L314A = C3148+2
 
 .C3522
 
- STA L5914
+ STA soundData+20       \ Fifth parameter of sound block 2
  LDA L0C70
  STA L0CDF
- LDA L5910
+ LDA soundData+16       \ First parameter of sound block 2
  CLC
  ADC #&01
  CMP #&14
@@ -15996,9 +16027,9 @@ L314A = C3148+2
 
 .C3537
 
- STA L5910
+ STA soundData+16       \ First parameter of sound block 2
  LDA #&04
- STA L5912
+ STA soundData+18       \ Third parameter of sound block 2
 
  LDA #3                 \ Sound ???
  JMP sub_C3440
@@ -16131,9 +16162,9 @@ L314A = C3148+2
  LDA #&32
  STA L0CDF
  LDA #&22
- STA L5914
+ STA soundData+20       \ Fifth parameter of sound block 2
  LDA #&03
- STA L5912
+ STA soundData+18       \ Third parameter of sound block 2
 
  LDA #4                 \ Sound ???
  JSR sub_C3440
@@ -20028,65 +20059,98 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5900
+\       Name: soundData
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Sound
+\    Summary: OSWORD blocks for making the various game sounds
+\
+\ ------------------------------------------------------------------------------
+\
+\ Sound data. To make a sound, the MakeSound routine passes the bytes in this
+\ table to OSWORD 7. These bytes are the OSWORD equivalents of the parameters
+\ passed to the SOUND keyword in BASIC. The parameters have these meanings:
+\
+\   channel/flush, amplitude (or envelope number if 1-4), pitch, duration
+\
+\ where each value consists of two bytes, with the low byte first and the high
+\ byte second.
+\
+\ For the channel/flush parameter, the top nibble of the low byte is the flush
+\ control (where a flush control of 0 queues the sound, and a flush control of
+\ 1 makes the sound instantly), while the bottom nibble of the low byte is the
+\ channel number. When written in hexadecimal, the first figure gives the flush
+\ control, while the second is the channel (so &13 indicates flush control = 1
+\ and channel = 3).
 \
 \ ******************************************************************************
 
-.L5900
+.soundData
 
- EQUB &10, &00, &01, &00
+ EQUB &10, &00          \ Sound #0: ??? (SOUND &10, 1, 7, 5)
+ EQUB &01, &00
+ EQUB &07, &00
+ EQUB &05, &00
 
-.L5904
+ EQUB &11, &00          \ Sound #1: ??? (SOUND &11, 0, 120, 10)
+ EQUB &00, &00
+ EQUB &78, &00
+ EQUB &0A, &00
 
- EQUB &07, &00, &05, &00
- EQUB &11, &00, &00, &00
-
-.L590C
-
- EQUB &78, &00, &0A, &00
-
-.L5910
-
- EQUB &12, &00
-
-.L5912
-
+ EQUB &12, &00          \ Sound #2: ??? (SOUND &12, 3, 34, 20)
  EQUB &03, &00
+ EQUB &22, &00
+ EQUB &14, &00
 
-.L5914
+ EQUB &13, &00          \ Sound #3: ??? (SOUND &13, 4, 144, 20)
+ EQUB &04, &00
+ EQUB &90, &00
+ EQUB &14, &00
 
- EQUB &22, &00, &14, &00
- EQUB &13, &00, &04, &00
+ EQUB &10, &00          \ Sound #4: ??? (SOUND &10, 2, 4, 40)
+ EQUB &02, &00
+ EQUB &04, &00
+ EQUB &28, &00
 
-.L591C
+\ ******************************************************************************
+\
+\       Name: envelopeData
+\       Type: Variable
+\   Category: Sound
+\    Summary: Data for the six sound envelopes
+\
+\ ------------------------------------------------------------------------------
+\
+\ There are six sound envelopes defined in The Sentinel.
+\
+\   * Envelope 1 defines ???.
+\
+\   * Envelope 2 defines ???.
+\
+\   * Envelope 3 defines ???.
+\
+\   * Envelope 4 defines ???.
+\
+\   * Envelope 5 defines ???.
+\
+\   * Envelope 6 defines ???.
+\
+\ ******************************************************************************
 
- EQUB &90, &00, &14, &00
- EQUB &10, &00, &02, &00, &04, &00, &28, &00
+.envelopeData
 
-.L5928
+ EQUB 1, 2, 0, 0, 0, 0, 0, 0, 20, 0, -20, -20, 120, 120
 
- EQUB &01, &02, &00, &00, &00, &00, &00, &00
- EQUB &14, &00, &EC, &EC, &78, &78, &02, &04
- EQUB &00, &00, &00, &00, &00, &00, &02, &FF
- EQUB &00, &00, &78, &78, &04, &02, &01, &FF
- EQUB &00, &01, &01, &08, &78, &FF, &00, &FF
- EQUB &78
+ EQUB 2, 4, 0, 0, 0, 0, 0, 0, 2, -1, 0, 0, 120, 120
 
-.L5951
+ EQUB 4, 2, 1, -1, 0, 1, 1, 8, 120, -1, 0, -1, 120, 8
 
- EQUB &08, &03, &01, &06, &FA, &00, &01
- EQUB &01, &00, &01, &FF, &00, &00, &78
+ EQUB 3, 1, 6, -6, 0, 1, 1, 0, 1, -1, 0, 0, 120, 8
 
-.L595F
+ EQUB 4, &82, 1, -1, 0, 2, 1, 7, 120, -6, -2, -2, 120, 0
 
- EQUB &08
- EQUB &04, &82, &01, &FF, &00, &02, &01, &07
- EQUB &78, &FA, &FE, &FE, &78, &00, &01, &01
- EQUB &00, &00, &00, &00, &00, &00, &78, &88
- EQUB &FF, &FF, &78, &00, &00, &00, &00, &00
+ EQUB 1, 1, 0, 0, 0, 0, 0, 0, 120, -120, -1, -1, 120, 0
+
+ EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
 \ ******************************************************************************
 \
