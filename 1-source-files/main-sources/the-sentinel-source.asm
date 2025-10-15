@@ -4973,8 +4973,8 @@ L1145 = C1144+1
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
- LDA #2                 \ Sound ???
- JSR sub_C3440
+ LDA #2                 \ Make sound #2 (???)
+ JSR MakeSound
 
  LDA #&C0
  STA L0C6D
@@ -7025,8 +7025,8 @@ L1145 = C1144+1
  LDX #&03
  LDY #&46
 
- LDA #1                 \ Sound ???
- JSR sub_C343A
+ LDA #1                 \ Make sound #1 (???) with the pitch in X and Y
+ JSR MakeSound-6
 
  PLA
  TAX
@@ -7162,8 +7162,8 @@ L1145 = C1144+1
  LDX #&07
  LDY #&78
 
- LDA #0                 \ Sound ???
- JSR sub_C343A
+ LDA #0                 \ Make sound #0 (???) with the pitch in X and Y
+ JSR MakeSound-6
 
  LDX L0000
  JMP C1876
@@ -7398,7 +7398,7 @@ L1145 = C1144+1
  STY L0C73
  BEQ CRE08
  LDY #&12
- STY soundData+16       \ First parameter of sound block 2
+ STY soundData+16       \ First parameter of sound block #2 (channel)
  CMP #&03
  BEQ CRE08
  LDX #&06
@@ -7559,8 +7559,8 @@ L1145 = C1144+1
  STA playerEnergy
  JSR sub_C36C7
 
- LDA #5                 \ Sound ???
- JSR sub_C3440
+ LDA #5                 \ Make sound #5 (???)
+ JSR MakeSound
 
  SEC
  JMP dobj7
@@ -7995,13 +7995,13 @@ L1145 = C1144+1
 .C1B98
 
  LDA #&AA
- STA soundData+28       \ Fifth parameter of sound block 3
+ STA soundData+28       \ Third parameter of sound data block #3 (pitch)
 
- LDA #5                 \ Sound ???
- JSR sub_C3440
+ LDA #5                 \ Make sound #5 (???)
+ JSR MakeSound
 
  LDA #&90
- STA soundData+28       \ Fifth parameter of sound block 3
+ STA soundData+28       \ Third parameter of sound data block #3 (pitch)
 
  SEC                    \ Set the C flag to denote ???
 
@@ -15682,104 +15682,140 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C343A
+\       Name: MakeSound
 \       Type: Subroutine
 \   Category: Sound
-\    Summary: ???
+\    Summary: Make a sound
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   0, 1, 6
+\   A                   The number of the sound to make (0 to 6):
+\
+\                         * A = 0 for ??? (two-part)
+\
+\                         * A = 1 for ??? (two-part)
+\
+\                         * A = 2 for ???
+\
+\                         * A = 3 for ???
+\
+\                         * A = 4 for ???
+\
+\                         * A = 6 for ??? (two-part)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   MakeSound-6         Make a two-part sound at the pitches defined in X and Y,
+\                       where X is the pitch for sound data block #0 and Y is
+\                       the pitch for sound data block #1
 \
 \ ******************************************************************************
 
-.sub_C343A
+ STX soundData+4        \ Set the third parameter of sound data block #0 to X,
+                        \ to set the pitch of the first sound
 
- STX soundData+4        \ Fourth parameter of sound block 0
- STY soundData+12       \ Fourth parameter of sound block 1
+ STY soundData+12       \ Set the third parameter of sound data block #1 to X,
+                        \ to set the pitch of the second sound
+
+.MakeSound
+
+ PHA                    \ Store the sound number on the stack
+
+ SEC                    \ Decrement A, keeping the result positive
+ SBC #1
+ BCS soun1
+ ADC #1
+
+.soun1
+
+ JSR DefineEnvelope     \ Define envelope data A from the envelopeData table, so
+                        \ sounds #0 and #1 both define envelope data 0, while
+                        \ sounds #2 to #6 define envelope data 1 to 5
+
+ PLA                    \ Retrieve the sound number from the stack and put it
+ TAX                    \ into X, so we can use it as an index
+
+ LDA soundNumberData,X  \ Set A to the corresponding entry from soundNumberData
+                        \ for the sound number in X, which tells us which blocks
+                        \ of sound data to use from the soundData table when
+                        \ making the sound
+
+ CMP #1                 \ If A <> 1 then jump to soun2 to make the sound using
+ BNE soun2              \ the sound data in soundData block number A
+
+                        \ If A = 1 then this is a two-part sound, with the first
+                        \ part using the sound data in soundData block number A
+                        \ and the second using the sound data in soundData block
+                        \ zero
+
+ JSR soun2              \ Call soun2 to make the first sound using the sound
+                        \ data in soundData block number A
+
+ LDA #0                 \ Set A = 0 and fall through into soun2 to make the
+                        \ second sound using the sound data in soundData block
+                        \ zero
+
+.soun2
+
+                        \ At this point we have the number of a soundData block
+                        \ in A, in the range 0 to 4, so now we make the sound
+                        \ using that sound data
+
+ ASL A                  \ Set (Y X) = soundData + A * 8
+ ASL A                  \
+ ASL A                  \ starting with the low byte (we set the high byte in
+ ADC #LO(soundData)     \ MakeSoundEnvelope)
+ TAX                    \
+                        \ Each sound data block in soundData contains 8 bytes
+                        \ of data, so this sets (Y X) to the address within
+                        \ the soundData table of the data block specified in A
+
+ LDA #7                 \ Set A = 7 for the OSWORD command to make a sound
+
+ BNE MakeSoundEnvelope  \ Jump to MakeSoundEnvelope to set up Y and apply the
+                        \ OSWORD command to the (Y X) block, which makes the
+                        \ relevant sound (this BNE is effectively a JMP as A is
+                        \ never zero)
 
 \ ******************************************************************************
 \
-\       Name: sub_C3440
+\       Name: DefineEnvelope
 \       Type: Subroutine
 \   Category: Sound
-\    Summary: ???
+\    Summary: Define a sound envelope
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   0-6
+\   A                   The number of the sound envelope data block to define in
+\                       the envelopeData table (0 to 5)
 \
 \ ******************************************************************************
 
-.sub_C3440
+.DefineEnvelope
 
- PHA
- SEC
- SBC #&01
- BCS C3448
- ADC #&01
+ STA aStoreEnvelope     \ Set (Y X) = envelopeData + (A * 8 - A) * 2
+ ASL A                  \           = envelopeData + A * 7 * 2
+ ASL A                  \           = envelopeData + A * 14
+ ASL A                  \
+ SEC                    \ starting with the low byte (we set the high byte in
+ SBC aStoreEnvelope     \ MakeSoundEnvelope)
+ ASL A                  \
+ ADC #LO(envelopeData)  \ Each envelope definition in envelopeData contains 14
+ TAX                    \ bytes of data, so this sets A to the address within
+                        \ the envelopeData table of the data for the envelope
+                        \ number in A
 
-.C3448
+ LDA #8                 \ Set A = 8 for the OSWORD command to define an envelope
 
- JSR sub_C3463
- PLA
- TAX
-
- LDA L3479,X
-
- CMP #1
- BNE sub_C3459
-
- JSR sub_C3459
-
- LDA #0
-
-\ ******************************************************************************
-\
-\       Name: sub_C3459
-\       Type: Subroutine
-\   Category: Sound
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C3459
-
- ASL A
- ASL A
- ASL A
- ADC #0
- TAX
-
- LDA #7
- BNE MakeSoundEnvelope
-
-\ ******************************************************************************
-\
-\       Name: sub_C3463
-\       Type: Subroutine
-\   Category: Sound
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C3463
-
- STA L3478
- ASL A
- ASL A
- ASL A
- SEC
- SBC L3478
- ASL A
- ADC #&28
- TAX
-
- LDA #8
+                        \ Fall through into MakeSoundEnvelope to set up Y and
+                        \ apply the OSWORD command to the (Y X) block, which
+                        \ defines the relevant sound envelope
 
 \ ******************************************************************************
 \
@@ -15804,9 +15840,10 @@ L314A = C3148+2
 
 .MakeSoundEnvelope
 
- LDY #&59               \ Set Y to the high byte of the soundData block
-                        \ address, so (Y X) now points to the relevant envelope
-                        \ or sound data block
+ LDY #HI(soundData)     \ Set Y to the high byte of the soundData block address,
+                        \ which is the same as the high byte of the envelopeData
+                        \ block address, so (Y X) now points to the relevant
+                        \ envelope or sound or sound data block
 
  JMP OSWORD             \ Call OSWORD with action A, as follows:
                         \
@@ -15818,29 +15855,42 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3478
+\       Name: aStoreEnvelope
 \       Type: Variable
 \   Category: Sound
-\    Summary: ???
+\    Summary: Temporary storage for use in the DefineEnvelope routine
 \
 \ ******************************************************************************
 
-.L3478
+.aStoreEnvelope
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: L3479
+\       Name: soundNumberData
 \       Type: Variable
 \   Category: Sound
-\    Summary: ???
+\    Summary: A table to map a sound number (0 to 6) to the sound data block(s)
+\             that are used to make the sound
 \
 \ ******************************************************************************
 
-.L3479
+.soundNumberData
 
- EQUB &01, &01, &04, &02, &02, &03, &01
+ EQUB 1                 \ Sound #0 = sound data block #1 then block #0
+
+ EQUB 1                 \ Sound #1 = sound data block #1 then block #0
+
+ EQUB 4                 \ Sound #2 = sound data block #4
+
+ EQUB 2                 \ Sound #3 = sound data block #2
+
+ EQUB 2                 \ Sound #4 = sound data block #2
+
+ EQUB 3                 \ Sound #5 = sound data block #3
+
+ EQUB 1                 \ Sound #6 = sound data block #1 then block #0
 
 \ ******************************************************************************
 \
@@ -15916,8 +15966,8 @@ L314A = C3148+2
  LDA #&0C
  STA L0CDF
 
- LDA #5                 \ Sound ???
- JSR sub_C3440
+ LDA #5                 \ Make sound #5 (???)
+ JSR MakeSound
 
  JMP ProcessVolumeKeys
 
@@ -16015,10 +16065,10 @@ L314A = C3148+2
 
 .C3522
 
- STA soundData+20       \ Fifth parameter of sound block 2
+ STA soundData+20       \ Third parameter of sound data block #2 (pitch)
  LDA L0C70
  STA L0CDF
- LDA soundData+16       \ First parameter of sound block 2
+ LDA soundData+16       \ First parameter of sound data block #2 (channel)
  CLC
  ADC #&01
  CMP #&14
@@ -16027,12 +16077,12 @@ L314A = C3148+2
 
 .C3537
 
- STA soundData+16       \ First parameter of sound block 2
+ STA soundData+16       \ First parameter of sound data block #2 (channel)
  LDA #&04
- STA soundData+18       \ Third parameter of sound block 2
+ STA soundData+18       \ Second parameter of sound data block #2 (amplitude)
 
- LDA #3                 \ Sound ???
- JMP sub_C3440
+ LDA #3                 \ Make sound #3 (???)
+ JMP MakeSound
 
 .C3544
 
@@ -16137,8 +16187,8 @@ L314A = C3148+2
  CPY #&50
  BCC CRE32
 
- LDA #6                 \ Sound ???
- JSR sub_C343A
+ LDA #6                 \ Make sound #6 (???) with the pitch in X and Y
+ JSR MakeSound-6
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
@@ -16162,12 +16212,12 @@ L314A = C3148+2
  LDA #&32
  STA L0CDF
  LDA #&22
- STA soundData+20       \ Fifth parameter of sound block 2
+ STA soundData+20       \ Third parameter of sound data block #2 (pitch)
  LDA #&03
- STA soundData+18       \ Third parameter of sound block 2
+ STA soundData+18       \ Second parameter of sound data block #2 (amplitude)
 
- LDA #4                 \ Sound ???
- JSR sub_C3440
+ LDA #4                 \ Make sound #4 (???)
+ JSR MakeSound
 
  RTS
 
@@ -20086,29 +20136,29 @@ L314A = C3148+2
 
 .soundData
 
- EQUB &10, &00          \ Sound #0: ??? (SOUND &10, 1, 7, 5)
- EQUB &01, &00
- EQUB &07, &00
+ EQUB &10, &00          \ Sound data block #0: SOUND &10, 1, 7, 5
+ EQUB &01, &00          \
+ EQUB &07, &00          \ Used for the first part of sounds #0 and #1 (???)
  EQUB &05, &00
 
- EQUB &11, &00          \ Sound #1: ??? (SOUND &11, 0, 120, 10)
- EQUB &00, &00
- EQUB &78, &00
+ EQUB &11, &00          \ Sound data block #1: SOUND &11, 0, 120, 10
+ EQUB &00, &00          \
+ EQUB &78, &00          \ Used for the second part of sounds #0 and #1 (???)
  EQUB &0A, &00
 
- EQUB &12, &00          \ Sound #2: ??? (SOUND &12, 3, 34, 20)
- EQUB &03, &00
- EQUB &22, &00
+ EQUB &12, &00          \ Sound data block #2: SOUND &12, 3, 34, 20
+ EQUB &03, &00          \
+ EQUB &22, &00          \ Used for sounds #3 and #4 (???)
  EQUB &14, &00
 
- EQUB &13, &00          \ Sound #3: ??? (SOUND &13, 4, 144, 20)
- EQUB &04, &00
- EQUB &90, &00
+ EQUB &13, &00          \ Sound data block #3: SOUND &13, 4, 144, 20
+ EQUB &04, &00          \
+ EQUB &90, &00          \ Used for sound #5 (???)
  EQUB &14, &00
 
- EQUB &10, &00          \ Sound #4: ??? (SOUND &10, 2, 4, 40)
- EQUB &02, &00
- EQUB &04, &00
+ EQUB &10, &00          \ Sound data block #4: SOUND &10, 2, 4, 40
+ EQUB &02, &00          \
+ EQUB &04, &00          \ Used for sound #2 (???)
  EQUB &28, &00
 
 \ ******************************************************************************
@@ -20122,17 +20172,17 @@ L314A = C3148+2
 \
 \ There are six sound envelopes defined in The Sentinel.
 \
-\   * Envelope 1 defines ???.
+\   * Envelope 0 is used for sounds #0 and #1 (???).
 \
-\   * Envelope 2 defines ???.
+\   * Envelope 1 is used for sound #2 (???).
 \
-\   * Envelope 3 defines ???.
+\   * Envelope 2 is used for sound #3 (???).
 \
-\   * Envelope 4 defines ???.
+\   * Envelope 3 is used for sound #4 (???).
 \
-\   * Envelope 5 defines ???.
+\   * Envelope 4 is used for sound #5 (???).
 \
-\   * Envelope 6 defines ???.
+\   * Envelope 5 is used for sound #6 (???).
 \
 \ ******************************************************************************
 

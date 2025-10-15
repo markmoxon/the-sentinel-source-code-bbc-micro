@@ -8402,16 +8402,15 @@
      3437   D0 FA      BNE &3433
 .plen2
      3439   60         RTS
-.sub_C343A
      343A   8E 04 59   STX &5904
      343D   8C 0C 59   STY &590C
-.sub_C3440
+.MakeSound
      3440   48         PHA
      3441   38         SEC
      3442   E9 01      SBC #&01
      3444   B0 02      BCS &3448
      3446   69 01      ADC #&01
-.C3448
+.soun1
      3448   20 63 34   JSR &3463
      344B   68         PLA
      344C   AA         TAX
@@ -8420,7 +8419,7 @@
      3452   D0 05      BNE &3459
      3454   20 59 34   JSR &3459
      3457   A9 00      LDA #&00
-.sub_C3459
+.soun2
      3459   0A         ASL A
      345A   0A         ASL A
      345B   0A         ASL A
@@ -8428,7 +8427,7 @@
      345E   AA         TAX
      345F   A9 07      LDA #&07
      3461   D0 10      BNE &3473
-.sub_C3463
+.DefineEnvelope
      3463   8D 78 34   STA &3478
      3466   0A         ASL A
      3467   0A         ASL A
@@ -8442,9 +8441,9 @@
 .MakeSoundEnvelope
      3473   A0 59      LDY #&59
      3475   4C F1 FF   JMP &FFF1
-.L3478
+.aStoreEnvelope
      3478   00
-.L3479
+.soundNumberData
      3479   01
      347A   01
      347B   04
