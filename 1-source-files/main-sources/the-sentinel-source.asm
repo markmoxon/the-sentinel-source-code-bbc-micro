@@ -78,11 +78,12 @@
 
 .L0000
 
- SKIP 1                 \ ???
+ SKIP 1                 \ ??? An object number, 0-7
 
-.objectSlot
+.currentObject
 
- SKIP 1                 \ Used to store an object slot number
+ SKIP 1                 \ Used to store the number of the object we are
+                        \ currently processing
 
 .L0002
 
@@ -120,9 +121,9 @@
 
  SKIP 1                 \ ???
 
-.playerObjectSlot
+.playerObject
 
- SKIP 1                 \ The slot number of the player object
+ SKIP 1                 \ The number of the player object
 
 .L000C
 .zCounter
@@ -683,26 +684,27 @@
 
 .objectFlags
 
- SKIP 64                \ Object flags for up to 64 object slots:
+ SKIP 64                \ Object flags for up to 64 objects:
                         \
-                        \   * Bits 0-5 = the slot number of the object beneath
-                        \                this one, if bit 6 is set (0 to 63)
+                        \   * Bits 0-5 = the number of the object beneath this
+                        \                one, if bit 6 is set (0 to 63)
                         \
-                        \   * Bit 6 = is the object in this slot stacked on top
-                        \             of another object?
+                        \   * Bit 6 = is this object stacked on top of another
+                        \             object?
                         \
                         \       * Clear = no
                         \
                         \       * Set = this object is on top of another object
-                        \               and the slot number of the object
-                        \               beneath this one is in bits 0-5
+                        \               and the number of the object beneath
+                        \               this one is in bits 0-5
                         \
-                        \   * Bit 7 = is this object slot occupied?
+                        \   * Bit 7 = has this object number been allocated to
+                        \             an object or is it unused?
                         \
-                        \       * Clear = this slot is occupied and contains an
-                        \                 object
+                        \       * Clear = this object number has been allocated
+                        \                 to an object
                         \
-                        \       * Set = this slot is empty
+                        \       * Set = this object number is unused
 
 .objectPitchAngle
 
@@ -762,7 +764,7 @@
 \ If there is an object placed on the tile, then the data contained in each byte
 \ is as follows:
 \
-\   * Bits 0 to 5 contain the slot number of the object on the tile (0 to 63).
+\   * Bits 0 to 5 contain the number of the object on the tile (0 to 63).
 \
 \   * Bits 6 and 7 of the byte are set.
 \
@@ -1079,13 +1081,13 @@
 \
 \   * 0 = Robot (one of which is the player)
 \
-\   * 1 = ???
+\   * 1 = Sentry
 \
 \   * 2 = Tree
 \
 \   * 3 = Boulder
 \
-\   * 4 = ???
+\   * 4 = Meanie
 \
 \   * 5 = The Sentinel
 \
@@ -1675,46 +1677,47 @@
  EQUB 0
  EQUB 0
 
-.L0C80
+.enemyData1
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0C88
+.enemyData2
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0C90
+.enemyData3
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0C98
+.enemyData4
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0CA0
+.enemyData5
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0CA8
+.enemyData6
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0CB0
+.enemyData7
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.L0CB8
+.enemyData8
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
- EQUB 0
+
+ EQUB 0                 \ ???
 
 .L0CC1
 
@@ -4172,7 +4175,7 @@
  JSR sub_C2202
  JSR sub_C3908
  JSR sub_C2624
- LDX playerObjectSlot
+ LDX playerObject
  LDY L0008
  BCS C113A
  CPY #&03
@@ -4337,8 +4340,8 @@ L1145 = C1144+1
 
  STA L3EC0,X            \ Set the X-th byte of L3EC0 to &FF ???
 
- LDA #%10000000         \ Set bit 7 of the X-th byte of objectFlags, to empty
- STA objectFlags,X      \ the X-th object slot
+ LDA #%10000000         \ Set bit 7 of the X-th byte of objectFlags, to denote
+ STA objectFlags,X      \ that object #X is not allocated to an object
 
  DEX                    \ Decrement the byte counter
 
@@ -4681,7 +4684,7 @@ L1145 = C1144+1
 \       Name: PlaceObjectBelow
 \       Type: Subroutine
 \   Category: 3D objects
-\    Summary: Attempt to place the player's object on a tile that is below the
+\    Summary: Attempt to place the player object on a tile that is below the
 \             maximum altitude specified in A
 \
 \ ------------------------------------------------------------------------------
@@ -4785,8 +4788,7 @@ L1145 = C1144+1
                         \ contain an object, so we can use this for placing our
                         \ object
 
- JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
-                        \ (xTile, zTile)
+ JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ placed the object on a tile
@@ -5544,9 +5546,9 @@ L1145 = C1144+1
 .SpawnPlayer
 
  LDA #0                 \ Spawn the player's robot (an object of type 0),
- JSR SpawnObject        \ returning the slot number of the new object in X
+ JSR SpawnObject        \ returning the object number of the new object in X
 
- STX playerObjectSlot   \ Set playerObjectSlot to the slot number of the newly
+ STX playerObject       \ Set playerObject to the object number of the newly
                         \ spawned object
 
  LDA #10                \ Set the player's energy level to 10
@@ -5560,8 +5562,7 @@ L1145 = C1144+1
  LDA #17                \ So the player always starts on this tile in the first
  STA zTile              \ landscape
 
- JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
-                        \ (xTile, zTile)
+ JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
 
  JMP SpawnTrees         \ Jump to SpawnTrees to add trees to the landscape and
                         \ move towards playing the game
@@ -5587,7 +5588,7 @@ L1145 = C1144+1
                         \ the enemies, and in the bottom half of the landscape
                         \ (which ranges from altitude 1 to 11)
 
- JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+ JSR PlaceObjectBelow   \ Attempt to place the player object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
@@ -5653,13 +5654,13 @@ L1145 = C1144+1
 .tree2
 
  LDA #2                 \ Spawn a tree (an object of type 2), returning the
- JSR SpawnObject        \ slot number of the new object in X
+ JSR SpawnObject        \ object number of the new object in X
 
  LDA minEnemyAltitude   \ Set A to the altitude of the lowest enemy on the
                         \ landscape, so we try to spawn all the trees at a lower
                         \ altitude to the enemies
 
- JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+ JSR PlaceObjectBelow   \ Attempt to place the player object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
@@ -5913,25 +5914,26 @@ L1145 = C1144+1
                         \
                         \ The secret stash adds a known value into the mix, by
                         \ fetching the value of objectFlags, which contains the
-                        \ object flags for the object in slot 0
+                        \ object flags for object #0
                         \
-                        \ Slot 0 always contains the Sentinel, and the Sentinel
+                        \ Object #0 is always the Sentinel, and the Sentinel
                         \ is always placed on top of the Sentinel's tower, so
                         \ the object flags for the Sentinel are constructed as
                         \ follows:
                         \
-                        \   * Bits 0-5 = the slot number of the object beneath
-                        \                this one
+                        \   * Bits 0-5 = the number of the object beneath this
+                        \                one
                         \
                         \   * Bit 6 = set to indicate that this object is on top
                         \             of another object
                         \
-                        \   * Bit 7 = clear to indicate that this object slot is
-                        \             occupied
+                        \   * Bit 7 = clear to indicate that this object number
+                        \             is allocated to an object
                         \
                         \ The Sentinel's tower is always the first object to be
-                        \ spawned, and objects are added to slot 63 and down, so
-                        \ this means the tower is in slot 63, or %111111
+                        \ spawned, and object numberss are allocated from 63 and
+                        \ down, so this means the tower is always object #63, or
+                        \ %111111
                         \
                         \ The Sentinel's object flags are therefore %01111111
                         \
@@ -6060,26 +6062,26 @@ L1145 = C1144+1
  PLA                    \ it
 
                         \ In the following we use the value in objectFlags,
-                        \ which contains the object flags for the object in
-                        \ slot 0
+                        \ which contains the object flags for the object #0
                         \
-                        \ Slot 0 always contains the Sentinel, and the Sentinel
+                        \ Object #0 is always the Sentinel, and the Sentinel
                         \ is always placed on top of the Sentinel's tower, so
                         \ the object flags for the Sentinel are constructed as
                         \ follows:
                         \
-                        \   * Bits 0-5 = the slot number of the object beneath
-                        \                this one
+                        \   * Bits 0-5 = the number of the object beneath this
+                        \                one
                         \
                         \   * Bit 6 = set to indicate that this object is on top
                         \             of another object
                         \
-                        \   * Bit 7 = clear to indicate that this object slot is
-                        \             occupied
+                        \   * Bit 7 = clear to indicate that this object number
+                        \             is allocated to an object
                         \
                         \ The Sentinel's tower is always the first object to be
-                        \ spawned, and objects are added to slot 63 and down, so
-                        \ this means the tower is in slot 63, or %111111
+                        \ spawned, and object numberss are allocated from 63 and
+                        \ down, so this means the tower is always object #63, or
+                        \ %111111
                         \
                         \ The Sentinel's object flags are therefore %01111111
                         \
@@ -6190,14 +6192,21 @@ L1145 = C1144+1
                         \ If this is a level with only one enemy, then that
                         \ enemy must be the Sentinel, so when X = 0, we add the
                         \ Sentinel to the landscape, otherwise we add a sentry
+                        \
+                        \ Enemies are allocated object numbers from 0 to 7, with
+                        \ the Sentinel in object #0, and sentries from object #1
+                        \ to object #7 (if there are any)
 
 .aden1
 
  STX enemyCounter       \ Set enemyCounter to the enemy counter in X, so we can
                         \ retrieve it later in the loop
 
- LDA #1                 \ Set the object type for the object in slot X to 1 ???
- STA objectTypes,X
+ LDA #1                 \ Set the object type for object #X to type 1, which
+ STA objectTypes,X      \ denotes a sentry, so we spawn sentries in objects #1
+                        \ to #enemyCount (this also sets object #0 to type 1,
+                        \ but this gets overridden when the Sentinel is spawned
+                        \ as object #0 below)
 
                         \ We now work down the landscape, from the highest peaks
                         \ down to lower altitudes, looking for suitable tile
@@ -6311,23 +6320,22 @@ L1145 = C1144+1
  STA xTileSentinel      \ which we put in (xTile, zTile) above, so this is the
                         \ tile coordinate where we now spawn the Sentinel
 
- LDA #5                 \ Set the object type for the object in slot #0 to
- STA objectTypes        \ type 5, which denotes the Sentinel (so the Sentinel
-                        \ is always in object slot #0, while other objects that
-                        \ are spawned start from slot #63 and work down)
+ LDA #5                 \ Set the object type for object #0 to type 5, which
+ STA objectTypes        \ denotes the Sentinel (so the Sentinel is always
+                        \ object #0, while other objects that are spawned are
+                        \ allocated to object #63 and work down the bumbers)
 
  LDA #6                 \ Spawn the Sentinel's tower (an object of type 6),
- JSR SpawnObject        \ returning the slot number of the new object in X
+ JSR SpawnObject        \ returning the object number of the new object in X
 
- JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
-                        \ (xTile, zTile), so this places the tower on the
-                        \ landscape
+ JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+                        \ to place the tower on the landscape
 
  LDA #0                 \ Set the tower object's objectYawAngle to 0, so it's
  STA objectYawAngle,X   \ facing forwards and into the screen
 
- LDX enemyCounter       \ Set X to the enemy counter, so X now contains the slot
-                        \ number for the Sentinel object (which is always zero
+ LDX enemyCounter       \ Set X to the enemy counter, so X now contains the
+                        \ object number of the Sentinel (which is always zero
                         \ as we only add the Sentinel on the first iteration of
                         \ the loop)
                         \
@@ -6336,10 +6344,11 @@ L1145 = C1144+1
 
 .aden4
 
- JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
-                        \ (xTile, zTile)
+ JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+                        \ to place the Sentinel or sentry in the correct place
+                        \ on the landscape
 
- JSR sub_C196A          \ Sets a number of table variables for this object ???
+ JSR SetEnemyData       \ ???
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
@@ -6949,14 +6958,14 @@ L1145 = C1144+1
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
 
- DEC L0000
- BPL C16D4
+ DEC L0000              \ ??? This is the only place L0000 is updated, it seems
+ BPL C16D4              \ to contain an object number, 0 to 7
  LDA #&07
  STA L0000
 
 .C16D4
 
- LDA playerObjectSlot
+ LDA playerObject
  STA L006E
  RTS
 
@@ -6969,14 +6978,14 @@ L1145 = C1144+1
  STA objRotationTimer,X
  LDA #&14
  STA L0C68
- LDA L0CA0,X
+ LDA enemyData5,X
  BPL C16F2
  JMP C176A
 
 .C16F2
 
  STA L006E
- LDY L0CA8,X
+ LDY enemyData6,X
  LDA objectFlags,Y
  BMI C174F
  LDA #0
@@ -6984,7 +6993,7 @@ L1145 = C1144+1
  LDA L0C57
  CMP #&14
  BCS C171B
- CPY playerObjectSlot
+ CPY playerObject
  BNE C174F
  LDA L0014
  BEQ C1754
@@ -7006,7 +7015,7 @@ L1145 = C1144+1
 
  STA L0C0E
  LDY L0000
- LDX L0CA0,Y
+ LDX enemyData5,Y
  TXA
  JSR sub_C1AE7
  LDA objectYawAngle,X
@@ -7035,11 +7044,11 @@ L1145 = C1144+1
 .C1754
 
  LDY L0000
- LDX L0CA0,Y
+ LDX enemyData5,Y
  TXA
  JSR sub_C1AE7
  LDA #&80
- STA L0CA0,Y
+ STA enemyData5,Y
  LDA #&02
  STA objectTypes,X
  JMP C1871
@@ -7054,24 +7063,24 @@ L1145 = C1144+1
 .C1774
 
  LDX L0000
- LDA L0CB8,X
+ LDA enemyData8,X
  BPL C178C
  JSR sub_C1AA7
  LDX L0000
  BCS C1789
  LDA #&40
- STA L0C80,X
+ STA enemyData1,X
  BNE C17E1
 
 .C1789
 
- LSR L0CB8,X
+ LSR enemyData8,X
 
 .C178C
 
  LDA L0C20,X
  BEQ C17A3
- LDY L0CA8,X
+ LDY enemyData6,X
  LDA #0
  JSR sub_C1882
  LDA L0014
@@ -7098,7 +7107,7 @@ L1145 = C1144+1
  LDA L0014
  BEQ C17C1
  BMI C1820
- CPY playerObjectSlot
+ CPY playerObject
  BNE C17C1
  STY L000F
 
@@ -7109,9 +7118,9 @@ L1145 = C1144+1
  LDY L000F
  BMI C17D7
  TYA
- CMP L0C90,X
+ CMP enemyData3,X
  BEQ C17D7
- JSR sub_C196A
+ JSR SetEnemyData
  LDA #&40
  STA L0014
  BNE C1820
@@ -7153,7 +7162,7 @@ L1145 = C1144+1
  STA objectYawAngle,X
  LDA #&C8
  STA L0C28,X
- JSR sub_C196A
+ JSR SetEnemyData
  LDX #&07
  LDY #&78
 
@@ -7166,9 +7175,9 @@ L1145 = C1144+1
 .C1820
 
  TYA
- STA L0CA8,X
+ STA enemyData6,X
  LDA L0014
- STA L0CB0,X
+ STA enemyData7,X
  LDA L0C20,X
  CMP #&01
  BCS C1838
@@ -7196,11 +7205,11 @@ L1145 = C1144+1
  JSR sub_C197D
  LDY L0000
  BCC C1869
- LDA L0C98,Y
+ LDA enemyData4,Y
  CMP #&02
  BCS C1862
  LDA #&80
- STA L0CB8,Y
+ STA enemyData8,Y
  BNE C187F
 
 .C1862
@@ -7213,7 +7222,7 @@ L1145 = C1144+1
 
  LDA #&32
  STA objRotationTimer,Y
- LDX L0CA0,Y
+ LDX enemyData5,Y
 
 .C1871
 
@@ -7222,8 +7231,8 @@ L1145 = C1144+1
 
 .C1876
 
- STX objectSlot
- LDA playerObjectSlot
+ STX currentObject
+ LDA playerObject
  STA L006E
  JSR sub_C1F84
 
@@ -7368,13 +7377,13 @@ L1145 = C1144+1
 
 .C1930
 
- LDA L0CA8,X
- CMP playerObjectSlot
+ LDA enemyData6,X
+ CMP playerObject
  BNE C1945
  LDA L0C20,X
  BEQ C1945
  LDY #&04
- LDA L0CB0,X
+ LDA enemyData7,X
  STA T
  BMI C1948
 
@@ -7405,31 +7414,31 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C196A
+\       Name: SetEnemyData
 \       Type: Subroutine
-\   Category: ???
+\   Category: Landscape
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   X                   The slot number of the object
+\   X                   The object number of the enemy being added
 \
 \ ******************************************************************************
 
-.sub_C196A
+.SetEnemyData
 
- LDA #&80               \ Set the X-th byte of L0CA0 to &80 ???
- STA L0CA0,X
+ LDA #%10000000         \ Set bit 7 of enemyData5 for object #X ???
+ STA enemyData5,X
 
- STA L0C90,X            \ Set the X-th byte of L0C90 to &80 ???
+ STA enemyData3,X       \ Set bit 7 of enemyData3 for object #X ???
 
- LDA #0                 \ Set the X-th byte of L0C98 to &80 ???
- STA L0C98,X
+ LDA #0                 \ Zero enemyData4 for object #X ???
+ STA enemyData4,X
 
- LDA #&40               \ Set the X-th byte of L0C80 to &40 ???
- STA L0C80,X
+ LDA #%01000000         \ Clear bit 7 and set bit 6 of enemyData1 for object #X
+ STA enemyData1,X       \ ???
 
  RTS                    \ Return from the subroutine
 
@@ -7452,24 +7461,24 @@ L1145 = C1144+1
 .C1986
 
  LDX L0000
- LDY L0C80,X
+ LDY enemyData1,X
  BNE C1998
- INC L0C98,X
- LDA L0CA8,X
- STA L0C90,X
+ INC enemyData4,X
+ LDA enemyData6,X
+ STA enemyData3,X
  SEC
  RTS
 
 .C1998
 
- DEC L0C80,X
+ DEC enemyData1,X
  DEY
  LDA objectFlags,Y
  BMI C1986
  LDA objectTypes,Y
  CMP #&02
  BNE C1986
- LDA L0CA8,X
+ LDA enemyData6,X
  TAX
  LDA xObject,X
  SEC
@@ -7504,7 +7513,7 @@ L1145 = C1144+1
  JSR sub_C1AF3
  BCC C19F1
  TYA
- STA L0CA0,X
+ STA enemyData5,X
  LDA #&04
  STA objectTypes,Y
  LDA #&68
@@ -7514,7 +7523,7 @@ L1145 = C1144+1
 
 .C19F1
 
- INC L0C80,X
+ INC enemyData1,X
  JMP sub_C1AEC
 
 \ ******************************************************************************
@@ -7538,12 +7547,12 @@ L1145 = C1144+1
 
 .DrainObjectEnergy
 
- LDX L0C58              \ Set X to an object slot ???
+ LDX L0C58              \ Set X to an object number ???
 
- CPX playerObjectSlot   \ If this is not the player slot, jump to dobj2 to drain
- BNE dobj2              \ energy from the object in slot X
+ CPX playerObject       \ If this is not the player object, jump to dobj2 to
+ BNE dobj2              \ drain energy from object #X
 
-                        \ If we get here then this is the player's object, so we
+                        \ If we get here then this is the player object, so we
                         \ now drain energy from the player
 
  LDA playerEnergy       \ If the player has no energy then draining more energy
@@ -7600,10 +7609,10 @@ L1145 = C1144+1
 
  PHP
  LDY L0000
- LDA L0C88,Y
+ LDA enemyData2,Y
  CLC
  ADC #&01
- STA L0C88,Y
+ STA enemyData2,Y
  PLP
  RTS
 
@@ -7620,7 +7629,7 @@ L1145 = C1144+1
 
  LDX L0000
  SEC
- LDA L0C88,X
+ LDA enemyData2,X
  BEQ CRE09
 
  LDA #2                 \ Spawn an object of type 2
@@ -7641,8 +7650,8 @@ L1145 = C1144+1
  JSR sub_C1AF3
  BCC C1A78
  LDX L0000
- DEC L0C88,X
- LDX objectSlot
+ DEC enemyData2,X
+ LDX currentObject
  CLC
 
 .CRE09
@@ -7814,8 +7823,8 @@ L1145 = C1144+1
  BIT samePanKeyPress
  BPL CRE10
 
- STA objectSlot
- LDA playerObjectSlot
+ STA currentObject
+ LDA playerObject
  STA L006E
  TXA
  PHA
@@ -7890,7 +7899,7 @@ L1145 = C1144+1
 .C1B1C
 
  LDX L006E              \ ??? This is value passed to sub_C1BFF, is it the
-                        \ player slot ???
+                        \ player object number ???
 
  CMP #35                \ If A <> 35 then the "U" key (U-turn) is not being
  BNE C1B33              \ pressed, so jump to C1B33 to move on to the next check
@@ -7940,7 +7949,7 @@ L1145 = C1144+1
  LDY objectTypes,X
  BNE C1B98
  JSR sub_C1200
- STX playerObjectSlot
+ STX playerObject
 
 .P1B5D
 
@@ -7982,7 +7991,7 @@ L1145 = C1144+1
 .C1B8D
 
  JSR sub_C1ED8
- STX objectSlot
+ STX currentObject
  CLC
  JSR sub_C2127
 
@@ -8013,14 +8022,13 @@ L1145 = C1144+1
  SEC
  JSR sub_C2127
  BCS C1B98
- LDX objectSlot
+ LDX currentObject
  LDA L003A
  STA xTile
  LDA L003C
  STA zTile
 
- JSR PlaceObjectOnTile  \ Place the object in slot X on the tile anchored at
-                        \ (xTile, zTile)
+ JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
 
  BCC C1BCA
  CLC
@@ -8031,7 +8039,7 @@ L1145 = C1144+1
 
  LDA objectTypes,X
  BNE C1BD9
- LDY playerObjectSlot
+ LDY playerObject
  LDA objectYawAngle,Y
  EOR #&80
  STA objectYawAngle,X
@@ -8059,10 +8067,10 @@ L1145 = C1144+1
 .C1BED
 
  TXA
- CMP L0CA0,Y
+ CMP enemyData5,Y
  BNE C1BFA
  LDA #&80
- STA L0CA0,Y
+ STA enemyData5,Y
  BNE C1B8D
 
 .C1BFA
@@ -8082,7 +8090,7 @@ L1145 = C1144+1
 \
 \ Arguments:
 \
-\   X                   The slot number of an object ??? Is this the player?
+\   X                   The object number ??? Is this the player?
 \
 \ ******************************************************************************
 
@@ -8898,11 +8906,12 @@ L1145 = C1144+1
 \   * X-th entry in (xObject, yObject, zObject) is set to the 3D coordinate of
 \     the newly added object, where the y-coordinate is (yObjectHi yObjectLo)
 \
-\   * X-th entry in objectFlags, bit 7 is clear to indicate that slot X contains
-\     an object
+\   * X-th entry in objectFlags, bit 7 is clear to indicate that object #X has
+\     been allocated to an object
 \
 \   * X-th entry in objectFlags, bit 6 is set if we add the object on top of a
-\     boulder or tower (and the slot number of the boulder/tower is in bits 0-5)
+\     boulder or tower (and the object number of the boulder/tower is in bits
+\     0-5)
 \
 \   * X-th entry in yObjectLo = &E0 ???
 \
@@ -8911,14 +8920,14 @@ L1145 = C1144+1
 \   * X-th entry in objectYawAngle is set to a multiple of 11.25 degrees, as
 \     determined by the next seed
 \
-\   * tileData for the tile is set to the slot number in X in bits 0 to 5, and
+\   * tileData for the tile is set to the object number in X in bits 0 to 5, and
 \     bits 6 and 7 are set to indicate that the tile contains an object
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   X                   The slot number of the object to add to the tile
+\   X                   The number of the object to add to the tile
 \
 \   (xTile, zTile)      The tile coordinate where we place the object
 \
@@ -8937,9 +8946,9 @@ L1145 = C1144+1
 
 .PlaceObjectOnTile
 
- LDA xTile              \ Set the 3D coordinate for the object in slot X to
- STA xObject,X          \ (xTile, zTile) by updating the X-th entries in the
- LDA zTile              \ xObject and zObject tables
+ LDA xTile              \ Set the 3D coordinate for object #X to (xTile, yTile)
+ STA xObject,X          \ by updating the X-th entries in the xObject and
+ LDA zTile              \ zObject tables
  STA zObject,X          \
                         \ So this sets the x- and z-coordinates of the 3D
                         \ coordinate for our object; we set the y-coordinate
@@ -8955,17 +8964,17 @@ L1145 = C1144+1
 
  BCC objt4              \ If C flag is clear then this tile does not already
                         \ have an object placed on it, so jump to objt4 to place
-                        \ the object in slot X on the tile
+                        \ object #X on the tile
 
  STY tileNumber         \ Store the tile number in tileNumber so we can refer to
                         \ it later
 
  AND #%00111111         \ Because the tile already has an object on it, the tile
- TAY                    \ data contains the existing object's slot number in
-                        \ bits 0 to 5, so extract the slot number into Y
+ TAY                    \ data contains the existing object's number in bits 0
+                        \ to 5, so extract the object number into Y
 
  LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
-                        \ (i.e. the type of the object in slot Y)
+                        \ (i.e. the type of object #Y)
 
  CMP #3                 \ If the tile contains an object of type 3 (a boulder),
  BEQ objt1              \ jump to objt1 to put the new object on top of the
@@ -8985,24 +8994,23 @@ L1145 = C1144+1
                         \ In either case, we want to place our object on top of
                         \ the object that is already there, which we can do by
                         \ setting bit 6 of the object flags for the new object
-                        \ and putting the slot number of the existing object
-                        \ into bits 0 to 5
+                        \ and putting the number of the existing object into
+                        \ bits 0 to 5
 
  TYA                    \ Set the object flags for the object that we are adding
- ORA #%01000000         \ (i.e. the object in slot X) so that bit 6 is set, and
- STA objectFlags,X      \ bits 0 to 5 contain the slot number of the object that
-                        \ is already on the tile
+ ORA #%01000000         \ (i.e. object #X) so that bit 6 is set, and bits 0 to 5
+ STA objectFlags,X      \ contain the number of the object that is already on
+                        \ the tile
                         \
-                        \ This denotes that our new object in slot X is on top
-                        \ of the object in slot Y
+                        \ This denotes that our new object, object #X, is on top
+                        \ of object #Y
 
  LDA objectTypes,Y      \ If the object that's already on the tile is not the
  CMP #6                 \ Sentinel's tower (type 6), jump to objt2
  BNE objt2
 
-                        \ If we get here then we are placing our new object in
-                        \ slot X on top of the Sentinel's tower (type 6) in
-                        \ slot Y
+                        \ If we get here then we are placing object #X on top of
+                        \ the Sentinel's tower (type 6) in object #Y
                         \
                         \ The next task is to calculate the altitude of the
                         \ object when it is placed on top of the tower (i.e. the
@@ -9049,8 +9057,8 @@ L1145 = C1144+1
 
 .objt2
 
-                        \ If we get here then we are placing our new object in
-                        \ slot X on top of the boulder (type 3) in slot Y
+                        \ If we get here then we are placing our new object #X
+                        \ on top of the boulder (type 3) in object #Y
                         \
                         \ The next task is to calculate the altitude of the
                         \ object when it is placed on top of the boulder (i.e.
@@ -9111,8 +9119,7 @@ L1145 = C1144+1
                         \ can retrieve it below
 
  LDA #0                 \ Clear bit 7 of the object's flags to indicate that
- STA objectFlags,X      \ object slot X contains an object (so this populates
-                        \ the slot with the object)
+ STA objectFlags,X      \ object #X is allocated to an object
 
  LDA #224               \ Set the object's entry in yObjectLo to 224
  STA yObjectLo,X        \
@@ -9129,21 +9136,21 @@ L1145 = C1144+1
  LSR A
 
                         \ We now fall through into objt5 to set the tile
-                        \ y-coordinate for the object in slot X to the tile
-                        \ altitude in A
+                        \ y-coordinate for object #X to the tile altitude in A
 
 .objt5
 
- STA yObjectHi,X        \ Set the high byte of the 3D y-coordinate for the
-                        \ object in slot X to the value of A by updating the
-                        \ X-th entry in the we now have a full 3D coordinate
-                        \ for the object in (xObject, yObject, zObject), where
-                        \ yObject is stored as a 16-bit number in
-                        \ (yObjectHi yObjectLo)
+ STA yObjectHi,X        \ Set the high byte of the 3D y-coordinate for object #X
+                        \ to the value of A by updating the X-th entry in the
+                        \ yObjectHi table
+                        \ 
+                        \ We now have a full 3D coordinate for the object in
+                        \ (xObject, yObject, zObject), where yObject is stored
+                        \ as a 16-bit number in (yObjectHi yObjectLo)
 
- TXA                    \ Set the tile data for this tile to the object slot
- ORA #%11000000         \ number in X, with bits 6 and 6 set to indicate that
- STA (tileDataPage),Y   \ the tile now contains an object
+ TXA                    \ Set the tile data for this tile to object number X,
+ ORA #%11000000         \ with bits 6 and 7 set to indicate that the tile now
+ STA (tileDataPage),Y   \ contains an object
 
  LDA #245               \ Set the object's pitch angle to 245, or -11 degrees
  STA objectPitchAngle,X \ ???
@@ -9269,7 +9276,7 @@ L1145 = C1144+1
  JSR sub_C2202
  BIT L0C4D
  BPL C1FD2
- LDY objectSlot
+ LDY currentObject
  JSR sub_C5D33
  JMP C1FD5
 
@@ -9477,11 +9484,11 @@ L1145 = C1144+1
 
 .sub_C2096
 
- LDY objectSlot
- CPY playerObjectSlot
+ LDY currentObject
+ CPY playerObject
  BEQ C2105
  JSR sub_C5C01
- LDY objectSlot
+ LDY currentObject
  LDX objectTypes,Y
  LDA L2107,X
  CMP L0CD4
@@ -9573,9 +9580,10 @@ L1145 = C1144+1
 \ ------------------------------------------------------------------------------
 \
 \ This routine spawns a new object by searching the objectFlags table for a free
-\ slot. If there is no free slot then the routine returns with the C flag set,
-\ otherwise the C flag is clear, X and objectSlot are set to the slot number of
-\ of the new object, and the object type is added to the objectTypes table.
+\ number to allocate. If there is no free number then the routine returns with
+\ the C flag set, otherwise the C flag is clear, X and currentObject are set to
+\ the number of the new object, and the object type is added to the objectTypes
+\ table.
 \
 \ Note that this routine only adds the object to the objectTypes table; it
 \ doesn't update the flags or add any other information about the object.
@@ -9588,13 +9596,13 @@ L1145 = C1144+1
 \
 \                         * 0 = Robot (one of which is the player)
 \
-\                         * 1 = ???
+\                         * 1 = Sentry
 \
 \                         * 2 = Tree
 \
 \                         * 3 = Boulder
 \
-\                         * 4 = ???
+\                         * 4 = Meanie
 \
 \                         * 5 = The Sentinel
 \
@@ -9604,15 +9612,15 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   X                   The slot number of the new object (if successful)
+\   X                   The number of the new object (if successful)
 \
-\   objectSlot          The slot number of the new object (if successful)
+\   currentObject       The number of the new object (if successful)
 \
 \   C flag              Success flag:
 \
 \                         * Clear if the object was successfully spawned
 \
-\                         * Set if there are no free slots for the new object
+\                         * Set if there is no free number for the new object
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9634,35 +9642,38 @@ L1145 = C1144+1
                         \ reference
 
  LDX #63                \ In order to be able to create a new object, we need to
-                        \ find a free slot in the objectFlags table
+                        \ find an unallocated object number in the objectFlags
+                        \ table
                         \
                         \ The game can support up to 64 objects, each with its
-                        \ own slot, so set a counter in X to work through the
-                        \ slots until we find a free space
+                        \ own number (0 to 63), so set a counter in X to work
+                        \ through the object numbers until we find one that is
+                        \ not allocated to an object
 
 .sobj1
 
  LDA objectFlags,X      \ If bit 7 of the X-th entry in the objectFlags table is
- BMI sobj2              \ set then this slot is empty, so jump to sobj2 use this
-                        \ slot for our new object
+ BMI sobj2              \ set then this object number is not yet allocated to an
+                        \ object, so jump to sobj2 use this number for our new
+                        \ object
 
- DEX                    \ Otherwise decrement the slot counter in X to move on
-                        \ to the next slot
+ DEX                    \ Otherwise decrement the counter in X to move on to the
+                        \ next object number
 
- BPL sobj1              \ Loop back to sobj1 to check the next slot
+ BPL sobj1              \ Loop back to sobj1 to check the next object number
 
- SEC                    \ If we get here then we have checked all 64 slots and
-                        \ none of them are free, so set the C flag to indicate
-                        \ that we have failed to spawn the object
+ SEC                    \ If we get here then we have checked all 64 object
+                        \ numbers and none of them are free, so set the C flag
+                        \ to indicate that we have failed to spawn the object
 
  RTS                    \ Return from the subroutine
 
 .sobj2
 
-                        \ If we get here then we have found an empty slot in the
-                        \ objectFlags table at index X
+                        \ If we get here then we have found an unallocated
+                        \ object number in the objectFlags table at index X
 
- STX objectSlot         \ Set objectSlot to the slot number in X
+ STX currentObject      \ Set currentObject to the object number in X
 
  LDA objectType         \ Set the corresponding entry in the objectTypes table
  STA objectTypes,X      \ to the object type that we are spawning, which we
@@ -9730,13 +9741,13 @@ L1145 = C1144+1
  LDA #0                 \ Spawn an object of type 0
  JSR SpawnObject
 
- LDX playerObjectSlot
+ LDX playerObject
  LDA yObjectHi,X
  CLC
  ADC #&01
- LDX objectSlot
+ LDX currentObject
 
- JSR PlaceObjectBelow   \ Attempt to place the player's object on a tile that is
+ JSR PlaceObjectBelow   \ Attempt to place the player object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
@@ -9759,7 +9770,7 @@ L1145 = C1144+1
 
  LDA #0
  JSR sub_C5FF6
- LDX playerObjectSlot
+ LDX playerObject
  LDA xObject,X
  CMP xTileSentinel
  BNE C2191
@@ -9775,8 +9786,8 @@ L1145 = C1144+1
 .C2191
 
  JSR sub_C1200
- LDX objectSlot
- STX playerObjectSlot
+ LDX currentObject
+ STX playerObject
 
 .C2198
 
@@ -9818,7 +9829,7 @@ L1145 = C1144+1
 
 .C21B7
 
- LDX playerObjectSlot
+ LDX playerObject
  LDA yObjectLo,X
  SEC
  SBC yObjectLo,Y
@@ -10435,7 +10446,7 @@ L23E3 = C23E2+1
  EOR #&20
  STA L0005
  JSR sub_C24EA
- LDX playerObjectSlot
+ LDX playerObject
  LDA yObjectHi,X
  STA V
  LDX #&1E
@@ -10534,7 +10545,7 @@ L23E3 = C23E2+1
  LDA (P),Y
  LSR A
  STA L0019
- LDX playerObjectSlot
+ LDX playerObject
  JSR sub_C1EB5
  LDX #&02
 
@@ -12553,8 +12564,8 @@ L23E3 = C23E2+1
 \
 \                         * If the tile contains an object, then:
 \
-\                           * Bits 0 to 5 contain the slot number of the object
-\                             on the tile (0 to 63)
+\                           * Bits 0 to 5 contain the object number of the
+\                             object on the tile (0 to 63)
 \
 \                           * Bits 6 and 7 are both set
 \
@@ -14717,12 +14728,12 @@ L314A = C3148+2
                         \      -96   |   +96
                         \           128
                         \
-                        \ So this makes the object in slot 63 face directly out
-                        \ of the screen
+                        \ So this makes object #63 face directly out of the
+                        \ screen
 
- LDA #224               \ Set (yObjectHi yObjectLo) for the object in slot 63 to
- STA yObjectLo+63       \ (2 224), i.e. 736
- LDA #2
+ LDA #&E0               \ Set (yObjectHi yObjectLo) for object #63 to &230,
+ STA yObjectLo+63       \ or 736
+ LDA #&02
  STA yObjectHi+63
 
  SEC                    \ Set bit 7 of drawingTitleScreen to indicate that we
@@ -16290,7 +16301,7 @@ L314A = C3148+2
 
  JSR sub_C5734
 
- LDA playerObjectSlot
+ LDA playerObject
  STA L006E
 
  BIT L0CDE              \ If bit 7 of L0CDE is clear, jump to game2
@@ -17430,7 +17441,7 @@ L314A = C3148+2
 
 .MoveSightsUpDown
 
- LDX playerObjectSlot   \ Set Y to the current pitch angle of the player
+ LDX playerObject       \ Set Y to the current pitch angle of the player
  LDY objectPitchAngle,X
 
  LDX keyLogger+2        \ Set X to the key logger entry for "L" and "," (pan
@@ -21416,7 +21427,7 @@ L314A = C3148+2
  LDA #&03
  STA L0C4C
  LDA #&01
- STA objectSlot
+ STA currentObject
  LDA #&C0
  STA L0C4D
  STA L0C6D

@@ -1,6 +1,6 @@
 .L0000
      0000
-.objectSlot
+.currentObject
      0001
 .L0002
      0002
@@ -20,7 +20,7 @@
      0009
 .L000A
      000A
-.playerObjectSlot
+.playerObject
      000B
 .L000C
 .zCounter
@@ -2546,7 +2546,7 @@
      0C7D   01
      0C7E   00
      0C7F   00
-.L0C80
+.enemyData1
      0C80   00
      0C81   00
      0C82   00
@@ -2555,7 +2555,7 @@
      0C85   00
      0C86   00
      0C87   00
-.L0C88
+.enemyData2
      0C88   00
      0C89   00
      0C8A   00
@@ -2564,7 +2564,7 @@
      0C8D   00
      0C8E   00
      0C8F   00
-.L0C90
+.enemyData3
      0C90   00
      0C91   00
      0C92   00
@@ -2573,7 +2573,7 @@
      0C95   00
      0C96   00
      0C97   00
-.L0C98
+.enemyData4
      0C98   00
      0C99   00
      0C9A   00
@@ -2582,7 +2582,7 @@
      0C9D   00
      0C9E   00
      0C9F   00
-.L0CA0
+.enemyData5
      0CA0   00
      0CA1   00
      0CA2   00
@@ -2591,7 +2591,7 @@
      0CA5   00
      0CA6   00
      0CA7   00
-.L0CA8
+.enemyData6
      0CA8   00
      0CA9   00
      0CAA   00
@@ -2600,7 +2600,7 @@
      0CAD   00
      0CAE   00
      0CAF   00
-.L0CB0
+.enemyData7
      0CB0   00
      0CB1   00
      0CB2   00
@@ -2609,7 +2609,7 @@
      0CB5   00
      0CB6   00
      0CB7   00
-.L0CB8
+.enemyData8
      0CB8   00
      0CB9   00
      0CBA   00
@@ -4451,7 +4451,7 @@
      1966   20 55 35   JSR &3555
 .CRE08
      1969   60         RTS
-.sub_C196A
+.SetEnemyData
      196A   A9 80      LDA #&80
      196C   9D A0 0C   STA &0CA0,X
      196F   9D 90 0C   STA &0C90,X
