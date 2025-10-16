@@ -76,9 +76,9 @@
 
  ORG &0000              \ Set the assembly address to &0000
 
-.L0000
+.enemyObject
 
- SKIP 1                 \ ??? An object number, 0-7
+ SKIP 1                 \ An enemy object number, 0-7 ???
 
 .currentObject
 
@@ -6937,7 +6937,7 @@ L1145 = C1144+1
 
  TSX
  STX L0C0D
- LDX L0000
+ LDX enemyObject
  LDA objectTypes,X
  CMP #&01
  BEQ C16B9
@@ -6958,10 +6958,10 @@ L1145 = C1144+1
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
 
- DEC L0000              \ ??? This is the only place L0000 is updated, it seems
- BPL C16D4              \ to contain an object number, 0 to 7
+ DEC enemyObject        \ ??? This is the only place enemyObject is updated, it
+ BPL C16D4              \ seems to contain an enemy object number, 0 to 7
  LDA #&07
- STA L0000
+ STA enemyObject
 
 .C16D4
 
@@ -7014,7 +7014,7 @@ L1145 = C1144+1
 .C1724
 
  STA L0C0E
- LDY L0000
+ LDY enemyObject
  LDX enemyData5,Y
  TXA
  JSR sub_C1AE7
@@ -7043,7 +7043,7 @@ L1145 = C1144+1
 
 .C1754
 
- LDY L0000
+ LDY enemyObject
  LDX enemyData5,Y
  TXA
  JSR sub_C1AE7
@@ -7062,11 +7062,11 @@ L1145 = C1144+1
 
 .C1774
 
- LDX L0000
+ LDX enemyObject
  LDA enemyData8,X
  BPL C178C
  JSR sub_C1AA7
- LDX L0000
+ LDX enemyObject
  BCS C1789
  LDA #&40
  STA enemyData1,X
@@ -7136,14 +7136,14 @@ L1145 = C1144+1
 
  JSR DrainObjectEnergy
  BCS C17F9
- LDY L0000
+ LDY enemyObject
  LDA #&1E
  STA objRotationTimer,Y
  JMP C1871
 
 .C17F0
 
- LDX L0000
+ LDX enemyObject
  LDA L0C28,X
  CMP #&02
  BCC C17FC
@@ -7169,7 +7169,7 @@ L1145 = C1144+1
  LDA #0                 \ Make sound #0 (???) with the pitch in X and Y
  JSR MakeSound-6
 
- LDX L0000
+ LDX enemyObject
  JMP C1876
 
 .C1820
@@ -7194,7 +7194,7 @@ L1145 = C1144+1
  LDA L0014
  BPL C184D
  JSR DrainObjectEnergy
- LDY L0000
+ LDY enemyObject
  LDA #&1E
  STA objRotationTimer,Y
  BCS C187F
@@ -7203,7 +7203,7 @@ L1145 = C1144+1
 .C184D
 
  JSR sub_C197D
- LDY L0000
+ LDY enemyObject
  BCC C1869
  LDA enemyData4,Y
  CMP #&02
@@ -7455,12 +7455,12 @@ L1145 = C1144+1
 
  LDA #&28
  STA L0C68
- LDX L0000
+ LDX enemyObject
  STX L006E
 
 .C1986
 
- LDX L0000
+ LDX enemyObject
  LDY enemyData1,X
  BNE C1998
  INC enemyData4,X
@@ -7508,7 +7508,7 @@ L1145 = C1144+1
  JSR sub_C1882
  LDA L0014
  BPL C1986
- LDX L0000
+ LDX enemyObject
  TYA
  JSR sub_C1AF3
  BCC C19F1
@@ -7578,7 +7578,7 @@ L1145 = C1144+1
  JSR sub_C1AE7
  LDA objectTypes,X
  BNE dobj3
- LDY L0000
+ LDY enemyObject
  LDA #0
  STA L0C20,Y
  LDA #&03
@@ -7608,7 +7608,7 @@ L1145 = C1144+1
 .dobj7
 
  PHP
- LDY L0000
+ LDY enemyObject
  LDA enemyData2,Y
  CLC
  ADC #&01
@@ -7627,7 +7627,7 @@ L1145 = C1144+1
 
 .sub_C1A54
 
- LDX L0000
+ LDX enemyObject
  SEC
  LDA enemyData2,X
  BEQ CRE09
@@ -7649,7 +7649,7 @@ L1145 = C1144+1
  TXA
  JSR sub_C1AF3
  BCC C1A78
- LDX L0000
+ LDX enemyObject
  DEC enemyData2,X
  LDX currentObject
  CLC

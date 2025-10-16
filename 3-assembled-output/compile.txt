@@ -1,4 +1,4 @@
-.L0000
+.enemyObject
      0000
 .currentObject
      0001
