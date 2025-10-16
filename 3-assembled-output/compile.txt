@@ -2524,7 +2524,7 @@
      0C70   00
 .doNotPlayLandscape
      0C71   00
-.L0C72
+.gamePaused
      0C72   00
 .L0C73
      0C73   00
@@ -4021,7 +4021,7 @@
      1626   D0 05      BNE &162D
      1628   CD 09 0C   CMP &0C09
      162B   F0 6B      BEQ &1698
-.sub_C162D
+.UpdateScanner
      162D   8D 09 0C   STA &0C09
      1630   8D 9B 16   STA &169B
      1633   AD C2 0C   LDA &0CC2
@@ -8512,14 +8512,14 @@
      34ED   A9 08      LDA #&08
      34EF   20 2D 16   JSR &162D
      34F2   20 48 35   JSR &3548
-.P34F5
+.paws1
      34F5   AD EB 0C   LDA &0CEB
      34F8   C9 03      CMP #&03
      34FA   D0 F9      BNE &34F5
      34FC   A9 00      LDA #&00
      34FE   20 2D 16   JSR &162D
      3501   4E 72 0C   LSR &0C72
-.CRE30
+.paws2
      3504   60         RTS
 .sub_C3505
      3505   AE E7 0C   LDX &0CE7

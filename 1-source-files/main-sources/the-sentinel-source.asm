@@ -684,7 +684,7 @@
 
 .objectFlags
 
- SKIP 64                \ Object flags for up to 64 objects:
+ SKIP 64                \ Object flags for up to 64 objects
                         \
                         \   * Bits 0-5 = the number of the object beneath this
                         \                one, if bit 6 is set (0 to 63)
@@ -1299,7 +1299,7 @@
 .textDropShadow
 
  EQUB 0                 \ Controls whether text in text tokens is printed with a
-                        \ drop shadow:
+                        \ drop shadow
                         \
                         \   * Bit 7 clear = drop shadow
                         \
@@ -1411,7 +1411,7 @@
 .drawingTitleScreen
 
  EQUB %10000000         \ A flag to indicate whether we are currently drawing
-                        \ the title screen in the DrawTitleScreen routine:
+                        \ the title screen in the DrawTitleScreen routine
                         \
                         \   * Bit 7 clear = we are not drawing the title screen
                         \
@@ -1448,7 +1448,7 @@
 .landscapeZero
 
  EQUB 0                 \ A flag that is set depending on whether we are playing
-                        \ landscape 0000:
+                        \ landscape 0000
                         \
                         \   * Zero = this is landscape 0000
                         \
@@ -1511,7 +1511,7 @@
 
 .sightsAreVisible
 
- EQUB 0                 \ Controls whether the sights are being shown:
+ EQUB 0                 \ Controls whether the sights are being shown
                         \
                         \   * Bit 7 clear = sights are not being shown
                         \
@@ -1520,7 +1520,7 @@
 .printTextIn3D
 
  EQUB 0                 \ Controls whether we are printing text normally or in
-                        \ 3D (as in the game's title on the title screen):
+                        \ 3D (as in the game's title on the title screen)
                         \
                         \   * Bit 7 clear = normal text
                         \
@@ -1641,9 +1641,13 @@
                         \ behaviour is to preview and play the landscape after
                         \ generating it in the GenerateLandscape routine
 
-.L0C72
+.gamePaused
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether the game is paused
+                        \
+                        \   * Bit 7 clear = the game is not paused
+                        \
+                        \   * Bit 7 set = the game is paused
 
 .L0C73
 
@@ -5223,8 +5227,8 @@ L1145 = C1144+1
  EQUB &AB               \ Negative inkey value for "H" (hyperspace)
  EQUB &DB               \ Negative inkey value for "7" (volume down)
  EQUB &EA               \ Negative inkey value for "8" (volume up)
- EQUB &96               \ Negative inkey value for "COPY" (pause)
- EQUB &A6               \ Negative inkey value for "DELETE" (unpause)
+ EQUB &96               \ Negative inkey value for COPY (pause)
+ EQUB &A6               \ Negative inkey value for DELETE (unpause)
  EQUB &CA               \ Negative inkey value for "U" (U-turn)
 
 \ ******************************************************************************
@@ -5273,8 +5277,8 @@ L1145 = C1144+1
 
  EQUB 3 +  0 << 2       \ Put  0 in logger entry 3 for "7" (volume down)
  EQUB 3 +  1 << 2       \ Put  1 in logger entry 3 for "8" (volume up)
- EQUB 3 +  2 << 2       \ Put  2 in logger entry 3 for "COPY" (pause)
- EQUB 3 +  3 << 2       \ Put  3 in logger entry 3 for "DELETE" (unpause)
+ EQUB 3 +  2 << 2       \ Put  2 in logger entry 3 for COPY (pause)
+ EQUB 3 +  3 << 2       \ Put  3 in logger entry 3 for DELETE (unpause)
 
  EQUB 1 + 35 << 2       \ Put 35 in logger entry 1 for "U" (U-turn)
 
@@ -6794,20 +6798,32 @@ L1145 = C1144+1
 .sub_C1623
 
  LDA L0C04
- BNE sub_C162D
+ BNE UpdateScanner
  CMP L0C09
  BEQ CRE07
 
 \ ******************************************************************************
 \
-\       Name: sub_C162D
+\       Name: UpdateScanner
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The update action:
+\
+\                         * 0 = fill scanner with black
+\
+\                         * 8 = fill scanner with green
+\
+\                         * ???
 \
 \ ******************************************************************************
 
-.sub_C162D
+.UpdateScanner
 
  STA L0C09
  STA L169B
@@ -15928,17 +15944,17 @@ L314A = C3148+2
 
  LDA volumeLevel        \ Set A to the current volume level
 
- LDX keyLogger+3        \ Set X to the key logger entry for "7", "8", "COPY"
-                        \ and "DELETE (volume down, volume up, pause, unpause)
+ LDX keyLogger+3        \ Set X to the key logger entry for "7", "8", COPY and
+                        \ DELETE (volume down, volume up, pause, unpause)
 
  BEQ volk1              \ If X = 0 then "7" (volume down) has been pressed, so
                         \ jump to volk1 ???
 
                         \ If we get here then X must be 1, 2 or 3 (for "8",
-                        \ "COPY" and "DELETE)
+                        \ COPY and DELETE)
 
  DEX                    \ If X - 1 <> 0 then the original key logger entry must
- BNE volk6              \ be 2 or 3 ("COPY" or "DELETE"), so jump to volk6 to
+ BNE volk6              \ be 2 or 3 (COPY or DELETE), so jump to volk6 to
                         \ return from the subroutine
 
                         \ If we get here then the key logger entry must be 1,
@@ -16121,36 +16137,52 @@ L314A = C3148+2
 \       Name: ProcessPauseKeys
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: ???
+\    Summary: Pause or unpause the game when COPY or DELETE are pressed
 \
 \ ******************************************************************************
 
 .ProcessPauseKeys
 
- LDA keyLogger+3
+ LDA keyLogger+3        \ Set A to the key logger entry for "7", "8", COPY and
+                        \ DELETE (volume down, volume up, pause, unpause)
 
- BMI CRE30
+ BMI paws2              \ If there is no key press in the key logger entry, jump
+                        \ to paws2 to return from the subroutine
 
- CMP #2
- BNE CRE30
- ROR L0C72
- LDA #&08
- JSR sub_C162D
+ CMP #2                 \ If A <> 2 then COPY is not being pressed, so jump to
+ BNE paws2              \ paws2 to check for DELETE
+
+                        \ If we get here then COPY is being pressed, so we need
+                        \ to pause the game
+
+ ROR gamePaused         \ Set bit 7 of gamePaused to indicate that the game is
+                        \ paused (this works because the CMP above returned an
+                        \ equality, so the C flag is set and ready to be rotated
+                        \ into bit 7 of gamePaused)
+
+ LDA #8                 \ Update the scanner so it's filled with green, to show
+ JSR UpdateScanner      \ that the game is paused
 
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
-.P34F5
+.paws1
 
- LDA keyLogger+3
- CMP #3
- BNE P34F5
- LDA #0
- JSR sub_C162D
- LSR L0C72
+ LDA keyLogger+3        \ Set A to the key logger entry for "7", "8", COPY and
+                        \ DELETE (volume down, volume up, pause, unpause)
 
-.CRE30
+ CMP #3                 \ If A <> 3 then DELETE is not being pressed, so jump
+ BNE paws1              \ paws1 to check for key presses (or wait until no key
+                        \ is being pressed)
 
- RTS
+ LDA #0                 \ Update the scanner so it's filled with black, so the
+ JSR UpdateScanner      \ game can resume with a blank scanner
+
+ LSR gamePaused         \ Clear bit 7 of gamePaused to indicate that the game is
+                        \ unpaused
+
+.paws2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -16979,7 +17011,7 @@ L314A = C3148+2
 
  LDA playerIsDead
  BMI C37C3
- LDA L0C72
+ LDA gamePaused
  BMI C37B1
  LDA L0CC1
  BEQ C379B
