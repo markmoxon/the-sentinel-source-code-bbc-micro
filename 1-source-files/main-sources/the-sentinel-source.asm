@@ -5057,7 +5057,8 @@ L1145 = C1144+1
  LDA #&60
  STA mainScreenAddr+1
 
- JSR sub_C3AD3
+ JSR GetIconRowAddress  \ Set iconRowAddr(1 0) to the address in screen memory
+                        \ of the icon and scanner row at the top of the screen
 
  LDA #&0F
  PHA
@@ -15930,7 +15931,7 @@ L314A = C3148+2
 \
 \       Name: ProcessVolumeKeys
 \       Type: Subroutine
-\   Category: Keyboard
+\   Category: Sound
 \    Summary: Adjust the volume of the sound envelopes when the volume keys are
 \             pressed
 \
@@ -17112,7 +17113,10 @@ L314A = C3148+2
 .C37F2
 
  STA mainScreenAddr+1
- JSR sub_C3AD3
+
+ JSR GetIconRowAddress  \ Set iconRowAddr(1 0) to the address in screen memory
+                        \ of the icon and scanner row at the top of the screen
+
  STA L006D
  LDA iconRowAddr
  LSR L006D
@@ -17904,7 +17908,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3AD3
+\       Name: GetIconRowAddress
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Calculate the address in screen memory of the icon and scanner row
@@ -17912,7 +17916,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.sub_C3AD3
+.GetIconRowAddress
 
  LDA mainScreenAddr     \ Set iconRowAddr(1 0) = mainScreenAddr(1 0) - &0140
  SEC                    \                      = mainScreenAddr(1 0) - 320
@@ -17923,10 +17927,10 @@ L314A = C3148+2
  SBC #&01
 
  CMP #&60               \ If the result of the subtraction is less than &6000,
- BCS C3AE7              \ add &2000 to wrap it around so the result is within
+ BCS gicn1              \ add &2000 to wrap it around so the result is within
  ADC #&20               \ screen memory from &6000 and up
 
-.C3AE7
+.gicn1
 
  STA iconRowAddr+1      \ Store the high byte of the result in iconRowAddr(1 0),
                         \ so we have the following:

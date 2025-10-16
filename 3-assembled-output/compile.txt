@@ -9353,7 +9353,7 @@
      3AD0   00
      3AD1   FE
      3AD2   01
-.sub_C3AD3
+.GetIconRowAddress
      3AD3   AD C2 0C   LDA &0CC2
      3AD6   38         SEC
      3AD7   E9 40      SBC #&40
@@ -9363,7 +9363,7 @@
      3AE1   C9 60      CMP #&60
      3AE3   B0 02      BCS &3AE7
      3AE5   69 20      ADC #&20
-.C3AE7
+.gicn1
      3AE7   8D CB 0C   STA &0CCB
      3AEA   60         RTS
 .DisplayIconBuffer
