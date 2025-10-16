@@ -2669,7 +2669,7 @@
      0CDD   00
 .L0CDE
      0CDE   00
-.L0CDF
+.soundCounter
      0CDF   00
      0CE0   00
      0CE1   00
@@ -8455,11 +8455,11 @@
      3492   B0 0A      BCS &349E
      3494   69 08      ADC #&08
      3496   D0 06      BNE &349E
-.C3498
+.volk1
      3498   C9 00      CMP #&00
      349A   F0 02      BEQ &349E
      349C   E9 08      SBC #&08
-.C349E
+.volk2
      349E   AE DF 0C   LDX &0CDF
      34A1   E0 02      CPX #&02
      34A3   B0 DB      BCS &3480
@@ -8467,17 +8467,17 @@
      34A8   A8         TAY
      34A9   F0 02      BEQ &34AD
      34AB   A0 08      LDY #&08
-.C34AD
+.volk3
      34AD   8C 5F 59   STY &595F
      34B0   8C 51 59   STY &5951
      34B3   A0 0B      LDY #&0B
-.P34B5
+.volk4
      34B5   BE D5 34   LDX &34D5,Y
      34B8   E0 4F      CPX #&4F
      34BA   D0 04      BNE &34C0
      34BC   49 FF      EOR #&FF
      34BE   69 00      ADC #&00
-.C34C0
+.volk5
      34C0   9D 28 59   STA &5928,X
      34C3   88         DEY
      34C4   10 EF      BPL &34B5
@@ -8486,11 +8486,11 @@
      34CB   A9 05      LDA #&05
      34CD   20 40 34   JSR &3440
      34D0   4C 80 34   JMP &3480
-.CRE29
+.volk6
      34D3   60         RTS
-.L34D4
+.volumeLevel
      34D4   58
-.L34D5
+.envelopeVolumes
      34D5   4F
      34D6   0C
      34D7   0D

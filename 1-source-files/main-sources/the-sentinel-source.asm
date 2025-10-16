@@ -1814,13 +1814,20 @@
 
  EQUB 0                 \ ???
 
-.L0CDF
+.soundCounter
 
- EQUB 0, 0, 0, 0, 0     \ ???
+ EQUB 0                 \ A counter for the sound currently being made, which
+                        \ counts down in the IRQHandler routine, reaching zero
+                        \ when the sound has finished
+
+ EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
 .L0CE4
 
- EQUB %10000000         \ ???
+ EQUB %10000000         \ ??? Skips various aspects if bit 7 is set:
+                        \ volume keys, key presses in IRQHandler ???
+                        \
+                        \ Bit 7 set in sub_C1200, cleared in sub_C1264
 
 .activateSentinel
 
@@ -7566,7 +7573,7 @@ L1145 = C1144+1
                         \ to show the player's current energy level and redraw
                         \ the scanner box
 
- LDA #5                 \ Make sound #5 (???)
+ LDA #5                 \ Make sound #5 (ping)
  JSR MakeSound
 
  SEC
@@ -8004,7 +8011,7 @@ L1145 = C1144+1
  LDA #&AA
  STA soundData+28       \ Third parameter of sound data block #3 (pitch)
 
- LDA #5                 \ Make sound #5 (???)
+ LDA #5                 \ Make sound #5 (ping)
  JSR MakeSound
 
  LDA #&90
@@ -15712,6 +15719,8 @@ L314A = C3148+2
 \
 \                         * A = 4 for ???
 \
+\                         * A = 5 for ping
+\
 \                         * A = 6 for ??? (two-part)
 \
 \ ------------------------------------------------------------------------------
@@ -15906,110 +15915,206 @@ L314A = C3148+2
 \       Name: ProcessVolumeKeys
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: ???
+\    Summary: Adjust the volume of the sound envelopes when the volume keys are
+\             pressed
 \
 \ ******************************************************************************
 
 .ProcessVolumeKeys
 
- LDA L0CE4
- BMI CRE29
- LDA L34D4
+ LDA L0CE4              \ If bit 7 of L0CE4 is set, jump to volk6 to return from
+ BMI volk6              \ the subroutine without chcking for volume key presses
+                        \ ???
+
+ LDA volumeLevel        \ Set A to the current volume level
 
  LDX keyLogger+3        \ Set X to the key logger entry for "7", "8", "COPY"
                         \ and "DELETE (volume down, volume up, pause, unpause)
 
- BEQ C3498              \ If X = 0 then "7" (volume down) has been pressed, so
-                        \ jump to C3498 ???
+ BEQ volk1              \ If X = 0 then "7" (volume down) has been pressed, so
+                        \ jump to volk1 ???
 
                         \ If we get here then X must be 1, 2 or 3 (for "8",
                         \ "COPY" and "DELETE)
 
  DEX                    \ If X - 1 <> 0 then the original key logger entry must
- BNE CRE29              \ be 2 or 3 ("COPY" or "DELETE"), so jump to CRE29 to
+ BNE volk6              \ be 2 or 3 ("COPY" or "DELETE"), so jump to volk6 to
                         \ return from the subroutine
 
                         \ If we get here then the key logger entry must be 1,
                         \ so "8" (volume up) has been pressed
 
- CMP #&78
- BCS C349E
- ADC #&08
- BNE C349E
+ CMP #120               \ If A >= 120 then the volume level is already at the
+ BCS volk2              \ maximum level of 120, so jump to volk2 without
+                        \ changing it
 
-.C3498
+ ADC #8                 \ Otherwise we can turn the volume up, so add 8 to the
+                        \ volume level in A (the addition works because we know
+                        \ we just passed through a BCS, so we know the C flag is
+                        \ clear)
 
- CMP #&00
- BEQ C349E
- SBC #&08
+ BNE volk2              \ Jump to volk1 to update the volume level
 
-.C349E
+.volk1
 
- LDX L0CDF
- CPX #&02
- BCS ProcessVolumeKeys
- STA L34D4
- TAY
- BEQ C34AD
- LDY #&08
+                        \ If we get here then "7" (volume down) has been pressed
 
-.C34AD
+ CMP #0                 \ If A = 0 then the volume level is already at the
+ BEQ volk2              \ minimum level of 0, so jump to volk2 without changing
+                        \ it
 
- STY envelopeData+42+13 \ Last parameter of envelope 3
- STY envelopeData+28+13 \ Last parameter of envelope 2
- LDY #&0B
+ SBC #8                 \ Otherwise we can turn the volume down, so subtract 8
+                        \ from the volume level in A (the subtraction works
+                        \ because we know that A > 0, so the CMP above will have
+                        \ set the C)
 
-.P34B5
+.volk2
 
- LDX L34D5,Y
- CPX #&4F
- BNE C34C0
- EOR #&FF
- ADC #&00
+ LDX soundCounter       \ If soundCounter >= 2 then a sound is currently being
+ CPX #2                 \ made (such as the confirmation ping we make when
+ BCS ProcessVolumeKeys  \ changing the volume level) and it hasn't finished yet,
+                        \ so loop back to the start of the routine to keep
+                        \ checking for key presses and without changing the
+                        \ volume, as we only want to change the volume when we
+                        \ can make a pinging sound so the player can hear the
+                        \ effect of the volume change
 
-.C34C0
+ STA volumeLevel        \ Update the volume level in volumeLevel to the new
+                        \ value
 
- STA envelopeData,X
- DEY
- BPL P34B5
- LDA #&0C
- STA L0CDF
+ TAY                    \ Set Y to 0 (if the volume has been turned right down)
+ BEQ volk3              \ or to 8 (if the volume level is non-zero)
+ LDY #8
 
- LDA #5                 \ Make sound #5 (???)
- JSR MakeSound
+.volk3
 
- JMP ProcessVolumeKeys
+ STY envelopeData+42+13 \ Set parameter #13 of envelope 3 to Y, to set the ALD
+                        \ for the sound (the amplitude target level at the end
+                        \ of the decay phase)
 
-.CRE29
+ STY envelopeData+28+13 \ Set parameter #13 of envelope 2 to Y, to set the ALD
+                        \ for the sound (the amplitude target level at the end
+                        \ of the decay phase)
 
- RTS
+ LDY #11                \ We now work through the envelopeVolumes table, which
+                        \ contains offsets into the envelopeData table of the
+                        \ bytes that control the volume of each envelope
+                        \
+                        \ We update each of the bytes to reflect the new volume
+                        \ level, so set a counter in Y to work through all 12
+                        \ bytes of envelope data
+
+.volk4
+
+ LDX envelopeVolumes,Y  \ Fetch the Y-th entry of the envelopeVolumes table into
+                        \ X, so it contains the offset within the envelopeData
+                        \ table that we need to update
+
+ CPX #79                \ If this is not the entry at the beginning of the table
+ BNE volk5              \ (which will be the last to be processed), jump to
+                        \ volk5 to set the envelope byte to the new volume level
+
+ EOR #%11111111         \ If this is the entry at the beginning of the table,
+ ADC #0                 \ negate the volume level in A, as this entry is for the
+                        \ AD parameter (the change of amplitude per step during
+                        \ the decay phase), and we want this aspect to drop more
+                        \ quickly at higher volume levels
+
+.volk5
+
+ STA envelopeData,X     \ Set the X-th byte of the envelope data to the volume
+                        \ level in A
+
+ DEY                    \ Decrement the envelope byte counter
+
+ BPL volk4              \ Loop back until we have updated all 12 bytes with the
+                        \ new volume level
+
+ LDA #12                \ Set soundCounter = 12 to count down while the ping
+ STA soundCounter       \ sound is made
+
+ LDA #5                 \ Make sound #5 (ping) so the player can hear the new
+ JSR MakeSound          \ volume level
+
+ JMP ProcessVolumeKeys  \ Loop back to the start of the routine to keep checking
+                        \ for key presses
+
+.volk6
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L34D4
+\       Name: volumeLevel
 \       Type: Variable
 \   Category: Sound
-\    Summary: ???
+\    Summary: The volume level, which can be changed by pressing "7" and "8"
 \
 \ ******************************************************************************
 
-.L34D4
+.volumeLevel
 
- EQUB &58
+ EQUB 88
 
 \ ******************************************************************************
 \
-\       Name: L34D5
+\       Name: envelopeVolumes
 \       Type: Variable
 \   Category: Sound
-\    Summary: ???
+\    Summary: A table of offsets into the envelope data for bytes that control
+\             the volume of each envelope, so we can change their volume levels
 \
 \ ******************************************************************************
 
-.L34D5
+.envelopeVolumes
 
- EQUB &4F, &0C, &0D, &1A, &1B, &24, &28, &36
- EQUB &40, &44, &4E, &52
+ EQUB 5 * 14 + 9        \ Offset for parameter #9 of envelope 5
+                        \
+                        \ AD (change of amplitude per step during decay phase)
+
+ EQUB 0 * 14 + 12       \ Offset for parameter #12 of envelope 0
+                        \
+                        \ ALA (target amplitude level at end of attack phase)
+
+ EQUB 0 * 14 + 13       \ Offset for parameter #13 of envelope 0
+                        \
+                        \ ALD (target amplitude level at end of decay phase)
+
+ EQUB 1 * 14 + 12       \ Offset for parameter #12 of envelope 1
+                        \
+                        \ ALA (target amplitude level at end of attack phase)
+
+ EQUB 1 * 14 + 13       \ Offset for parameter #13 of envelope 1
+                        \
+                        \ ALD (target amplitude level at end of decay phase)
+
+ EQUB 2 * 14 + 8        \ Offset for parameter #8 of envelope 2
+                        \
+                        \ AA (change of amplitude per step during attack phase)
+
+ EQUB 2 * 14 + 12       \ Offset for parameter #12 of envelope 2
+                        \
+                        \ ALA (target amplitude level at end of attack phase)
+
+ EQUB 3 * 14 + 12       \ Offset for parameter #12 of envelope 3
+                        \
+                        \ ALA (target amplitude level at end of attack phase)
+
+ EQUB 4 * 14 + 8        \ Offset for parameter #8 of envelope 5
+                        \
+                        \ AA (change of amplitude per step during attack phase)
+
+ EQUB 4 * 14 + 12       \ Offset for parameter #12 of envelope 4
+                        \
+                        \ ALA (target amplitude level at end of attack phase)
+
+ EQUB 5 * 14 + 8        \ Offset for parameter #8 of envelope 5
+                        \
+                        \ AA (change of amplitude per step during attack phase)
+
+ EQUB 5 * 14 + 12       \ Offset for parameter #12 of envelope 5
+                        \
+                        \ ALA (target amplitude level at end of attack phase)
 
 \ ******************************************************************************
 \
@@ -16076,7 +16181,7 @@ L314A = C3148+2
 
  STA soundData+20       \ Third parameter of sound data block #2 (pitch)
  LDA L0C70
- STA L0CDF
+ STA soundCounter
  LDA soundData+16       \ First parameter of sound data block #2 (channel)
  CLC
  ADC #&01
@@ -16182,7 +16287,7 @@ L314A = C3148+2
 
 .sub_C355A
 
- LDA L0CDF
+ LDA soundCounter
  BNE CRE32
  LDA L0C73
  CMP #&04
@@ -16205,7 +16310,7 @@ L314A = C3148+2
  AND #&03
  CLC
  ADC #&01
- STA L0CDF
+ STA soundCounter
  DEC L0C74
 
 .CRE32
@@ -16218,8 +16323,9 @@ L314A = C3148+2
 
 .C358E
 
- LDA #&32
- STA L0CDF
+ LDA #50                \ Set soundCounter = 50 to count down while the next
+ STA soundCounter       \ sound is made
+
  LDA #&22
  STA soundData+20       \ Third parameter of sound data block #2 (pitch)
  LDA #&03
@@ -16413,8 +16519,8 @@ L314A = C3148+2
  LDA #&87               \ Set the palette to the second set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
 
- LDA #&0A
- STA L0CDF
+ LDA #10                \ Set soundCounter = 10 to count down while the next
+ STA soundCounter       \ sound is made
 
  LDA #&42
  JSR sub_C5FF6
@@ -16859,9 +16965,9 @@ L314A = C3148+2
 
  CLD                    \ Clear the D flag to switch arithmetic to normal
 
- DEC L0CDF
- BPL C3781
- INC L0CDF
+ DEC soundCounter       \ Decrement the sound counter so we can detect when the
+ BPL C3781              \ current sound effect has finished, making sure it
+ INC soundCounter       \ doesn't go below zero
 
 .C3781
 
@@ -20250,8 +20356,9 @@ L314A = C3148+2
 \
 \       Name: iconData
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Screen mode 5 bitmap data for the ten icons that make up the
+\             energy icon and scanner row at the top of the screen
 \
 \ ******************************************************************************
 
@@ -20323,7 +20430,7 @@ L314A = C3148+2
 
  EQUB &13, &00          \ Sound data block #3: SOUND &13, 4, 144, 20
  EQUB &04, &00          \
- EQUB &90, &00          \ Used for sound #5 (???)
+ EQUB &90, &00          \ Used for sound #5 (ping)
  EQUB &14, &00
 
  EQUB &10, &00          \ Sound data block #4: SOUND &10, 2, 4, 40
@@ -20350,7 +20457,7 @@ L314A = C3148+2
 \
 \   * Envelope 3 is used for sound #4 (???).
 \
-\   * Envelope 4 is used for sound #5 (???).
+\   * Envelope 4 is used for sound #5 (ping).
 \
 \   * Envelope 5 is used for sound #6 (???).
 \
