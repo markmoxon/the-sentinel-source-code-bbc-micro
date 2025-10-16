@@ -17814,8 +17814,8 @@ L314A = C3148+2
  STA toAddr             \ into the screen memory for the icon and scanner row
                         \ at the top of the screen
 
- JMP sub_C3889          \ Jump to copy the contents of the icon buffer to the
-                        \ screen to ???
+ JMP sub_C3889          \ Jump to sub_C3889 to copy the contents of the icon
+                        \ buffer into screen memory ???
 
 \ ******************************************************************************
 \
@@ -18352,32 +18352,16 @@ L314A = C3148+2
 
  RTS                    \ Return from the subroutine
 
-\ ******************************************************************************
-\
-\       Name: L400A
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ------------------------------------------------------------------------------
-\
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
-\ ******************************************************************************
-
-.L400A
-
- EQUB &20, &65, &74, &73, &36, &0D, &12, &CA
- EQUB &19, &20, &20, &20, &20, &20, &20, &4C
- EQUB &44, &58, &23, &36, &3A, &4A, &53, &52
- EQUB &20, &43, &46, &4C, &53, &48, &0D, &12
- EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E
- EQUB &65, &74, &73, &36, &20, &72, &74, &73
- EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2
- EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D
- EQUB &13, &06, &05, &20, &0D, &13, &10, &05
- EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13
+ EQUB &20, &65, &74, &73, &36, &0D, &12, &CA    \ These bytes are unused until
+ EQUB &19, &20, &20, &20, &20, &20, &20, &4C    \ the game is in progress, at
+ EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
+ EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
+ EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
+ EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial contents is just
+ EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored 
+ EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
+ EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
+ EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
  EQUB &24, &05, &20, &0D, &13, &2E, &2A, &2E
  EQUB &4D, &49, &4E, &49, &20, &4C, &44, &41
  EQUB &23, &31, &32, &38, &3A, &53, &54, &41
@@ -18400,7 +18384,29 @@ L314A = C3148+2
  EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
  EQUB &53, &54, &58, &20, &58, &54
 
- SKIP &08A0             \ &4100 to &499F
+ SKIPTO &4900           \ All bytes from &4100 to &48FF are zeroes and appear
+                        \ to be unused
+
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &10
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
 
 \ ******************************************************************************
 \
@@ -18413,8 +18419,8 @@ L314A = C3148+2
 
 .L49A0
 
- EQUB 0, 0, 0, 0, 0, 0
- EQUB 0, 0, 0, 0, 0
+ EQUB &00, &1D, &33, &44, &4C, &5E, &7C
+ EQUB &88, &90, &98, &A0
 
 \ ******************************************************************************
 \
@@ -18427,8 +18433,8 @@ L314A = C3148+2
 
 .L49AB
 
- EQUB 0, 0, 0, 0, 0, 0
- EQUB 0, 0, 0, 0, 0
+ EQUB &00, &1B, &34, &43
+ EQUB &4D, &66, &89, &94, &98, &9C, &A0
 
 \ ******************************************************************************
 \
@@ -18441,8 +18447,9 @@ L314A = C3148+2
 
 .L49B6
 
- EQUB 0, 0, 0, 0, 0, 0
- EQUB 0, 0, 0, 0, 0
+ EQUB &03
+ EQUB &03, &00, &00, &02, &03, &00, &00, &00
+ EQUB &00, &00
 
 \ ******************************************************************************
 \
@@ -18455,22 +18462,34 @@ L314A = C3148+2
 
 .L49C1
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF
 
- EQUB &4B, &4A, &46, &4B, &47, &4D, &4C, &47
- EQUB &4B, &4E, &4A, &4B, &4C, &4D, &4F, &4C
- EQUB &4C, &4F, &4E, &4B, &4C, &46, &4A, &49
- EQUB &46, &47, &48, &4D, &47, &4A, &50, &49
- EQUB &4A, &48, &51, &4D, &48, &4A, &4E, &50
- EQUB &4A, &4D, &51, &4F, &4D, &49, &50, &51
- EQUB &48, &49, &4F, &51, &50, &4E, &4F
+\ ******************************************************************************
+\
+\       Name: L49CD
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.L49CD
+
+ EQUB &47, &4C
+ EQUB &4B, &46, &47, &40, &45, &42, &40, &41
+ EQUB &44, &40, &41, &40, &44, &43, &40, &40
+ EQUB &43, &45, &40, &42, &45, &44, &41, &42
+ EQUB &45, &46, &49, &45, &44, &48, &47, &44
+ EQUB &45, &49, &48, &44, &45, &43, &46, &45
+ EQUB &43, &44, &47, &43, &44, &43, &47, &46
+ EQUB &43, &4B, &4A, &46, &4B, &47, &4D, &4C
+ EQUB &47, &4B, &4E, &4A, &4B, &4C, &4D, &4F
+ EQUB &4C, &4C, &4F, &4E, &4B, &4C, &46, &4A
+ EQUB &49, &46, &47, &48, &4D, &47, &4A, &50
+ EQUB &49, &4A, &48, &51, &4D, &48, &4A, &4E
+ EQUB &50, &4A, &4D, &51, &4F, &4D, &49, &50
+ EQUB &51, &48, &49, &4F, &51, &50, &4E, &4F
 
 \ ******************************************************************************
 \
@@ -18493,31 +18512,20 @@ L314A = C3148+2
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
-\ ******************************************************************************
-\
-\       Name: L4A77
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L4A77
-
- EQUB &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &10
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These bytes appear to be
+ EQUB &10, &FE, &FE, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
+ EQUB &00, &FF, &FF, &FF, &FF, &FF, &7F, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF
 
 \ ******************************************************************************
 \
@@ -18550,8 +18558,9 @@ L314A = C3148+2
  EQUB &E0, &FD, &83, &A0, &E0, &FD, &83, &A0
  EQUB &03, &20, &60, &7D, &03, &20, &60, &7D
  EQUB &E0, &20, &60, &A0, &E0, &20, &60, &A0
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -18602,8 +18611,9 @@ L314A = C3148+2
  EQUB &F0, &F0, &F0, &F0, &70, &70, &70, &70
  EQUB &F0, &F0, &F0, &F0, &70, &70, &70, &70
  EQUB &F0, &F0, &F0, &F0, &70, &70, &70, &70
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -18654,8 +18664,9 @@ L314A = C3148+2
  EQUB &C0, &88, &88, &C0, &C0, &88, &88, &C0
  EQUB &88, &C0, &C0, &88, &88, &C0, &C0, &88
  EQUB &C0, &C0, &C0, &C0, &C0, &C0, &C0, &C0
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -18707,19 +18718,8 @@ L314A = C3148+2
  EQUB &3C, &3D, &3D, &3D, &15, &15, &29, &3D
  EQUB &15, &15, &29, &3D, &15, &15, &29, &3D
 
-\ ******************************************************************************
-\
-\       Name: L4F40
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L4F40
-
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -18771,19 +18771,8 @@ L314A = C3148+2
  EQUB &8D, &91, &96, &9B, &A0, &A5, &AA, &AF
  EQUB &A0, &A5, &AA, &AF, &A0, &A5, &AA, &AF
 
-\ ******************************************************************************
-\
-\       Name: L5080
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L5080
-
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -18835,19 +18824,8 @@ L314A = C3148+2
  EQUB &53, &53, &53, &53, &53, &53, &53, &53
  EQUB &53, &53, &53, &53, &53, &53, &53, &53
 
-\ ******************************************************************************
-\
-\       Name: L51C0
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L51C0
-
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -21694,39 +21672,7 @@ L314A = C3148+2
  STA L0C73
  RTS
 
- EQUB &23, &FE, &FE, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &FF, &FF, &FF, &FF, &FF, &7F, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &10, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &00, &1D, &33, &44, &4C, &5E, &7C
- EQUB &88, &90, &98, &A0, &00, &1B, &34, &43
- EQUB &4D, &66, &89, &94, &98, &9C, &A0, &03
- EQUB &03, &00, &00, &02, &03, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &47, &4C
- EQUB &4B, &46, &47, &40, &45, &42, &40, &41
- EQUB &44, &40, &41, &40, &44, &43, &40, &40
- EQUB &43, &45, &40, &42, &45, &44, &41, &42
- EQUB &45, &46, &49, &45, &44, &48, &47, &44
- EQUB &45, &49, &48, &44, &45, &43, &46, &45
- EQUB &43, &44, &47, &43, &44, &43, &47, &46
- EQUB &43
+ EQUB &23
 
 \ ******************************************************************************
 \
@@ -21792,10 +21738,9 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-\SAVE "3-assembled-output/TheSentinel.bin", CODE%, P%
+                               \ Game addr to file addr
+ COPYBLOCK &4900, &4A00, &6000 \ 4900-49FF to 6000-60FF
+ COPYBLOCK &5800, &6100, &4100 \ 5800-60FF to 4100-49FF
+ COPYBLOCK &0400, &5800, LOAD% \ 0400-57FF to 1900-6CFF
 
-                              \ Game addr to file addr
-COPYBLOCK &5800, &6100, &4100 \ 5800-60FF to 4100-49FF
-COPYBLOCK &0400, &5800, &1900 \ 0400-57FF to 1900-6CFF
-
-SAVE "3-assembled-output/TheSentinel.bin", &1900, &6D24
+ SAVE "3-assembled-output/TheSentinel.bin", LOAD%, P%
