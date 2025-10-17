@@ -7570,6 +7570,18 @@ L1145 = C1144+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Result flag:
+\
+\                         * Set if the player still has a positive energy
+\                           level after the update
+\
+\                         * Clear if the player now has a negative energy level,
+\                           which means the Sentinel has won
+\
 \ ******************************************************************************
 
 .dobj1
@@ -7580,14 +7592,15 @@ L1145 = C1144+1
  LDA #%10000000         \ Set bit 7 of sentinelHasWon to indicate that the
  STA sentinelHasWon     \ player has run out of energy and the Sentinel has won
 
- JMP sub_C1AEC          \ This resets the stack - restart of some kind ???
+ JMP sub_C1AEC          \ This resets the stack - restart of some kind ??? and
+                        \ return from the subroutine using a tail call
 
 .DrainObjectEnergy
 
  LDX L0C58              \ Set X to an object number ???
 
  CPX playerObject       \ If this is not the player object, jump to dobj2 to
- BNE dobj2              \ drain energy from object #X
+ BNE dobj2              \ drain energy from object #X rather than the player
 
                         \ If we get here then this is the player object, so we
                         \ now drain energy from the player
@@ -7606,10 +7619,16 @@ L1145 = C1144+1
  LDA #5                 \ Make sound #5 (ping)
  JSR MakeSound
 
- SEC
- JMP dobj7
+ SEC                    \ Set the C flag to indicate that the player still has a
+                        \ non-zero energy level
+
+ JMP dobj7              \ Jump to dobj7 to finish up and return from the
+                        \ subroutine
 
 .dobj2
+
+                        \ If we get here then we need to drain energy from
+                        \ object #X
 
  TXA
  JSR sub_C1AE7
