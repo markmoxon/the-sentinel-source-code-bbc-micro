@@ -764,7 +764,9 @@
 \ If there is an object placed on the tile, then the data contained in each byte
 \ is as follows:
 \
-\   * Bits 0 to 5 contain the number of the object on the tile (0 to 63).
+\   * Bits 0 to 5 contain the number of the object on the tile (0 to 63). If
+\     there are multiple objects stacked on the tile, this is the number of the
+\     object on the top of the stack.
 \
 \   * Bits 6 and 7 of the byte are set.
 \
@@ -4893,7 +4895,7 @@ L1145 = C1144+1
 
 .C128F
 
- JSR sub_C1200
+ JSR sub_C1200          \ ??? Sets L0CE4, L0C1E, L0CDC
 
  SEC                    \ Set the C flag to indicate that ???
 
@@ -6976,7 +6978,9 @@ L1145 = C1144+1
 .C16B9
 
  STA titleObjectToDraw
- LDA objectFlags,X
+
+ LDA objectFlags,X      \ Set A to the object flags for object #X
+
  BPL C16D9
  JSR sub_C1A54
  BCS C16C9
@@ -7397,9 +7401,12 @@ L1145 = C1144+1
 
 .C1920
 
- LDA objectFlags,X
+ LDA objectFlags,X      \ Set A to the object flags for object #X
+
  BMI C1945
+
  LDA objectTypes,X
+
  CMP #&01
  BEQ C1930
  CMP #&05
@@ -7618,7 +7625,9 @@ L1145 = C1144+1
 
  CMP #&02
  BNE dobj4
- JSR sub_C1ED8
+
+ JSR DeleteObject       \ Delete object #X and remove it from the landscape
+
  JMP dobj6
 
 .dobj4
@@ -7690,7 +7699,8 @@ L1145 = C1144+1
 
 .C1A78
 
- JSR sub_C1ED8
+ JSR DeleteObject       \ Delete object #X and remove it from the landscape
+
  JMP sub_C1AEC
 
 \ ******************************************************************************
@@ -7764,8 +7774,10 @@ L1145 = C1144+1
 
 .C1AA9
 
- LDA objectFlags,X
+ LDA objectFlags,X      \ Set A to the object flags for object #X
+
  BMI C1AE2
+
  CMP #&40
  BCS C1AB9
  LDA objectTypes,X
@@ -7774,8 +7786,8 @@ L1145 = C1144+1
 
 .C1AB9
 
- LDA xObject,X
- STA xTile
+ LDA xObject,X          \ Set (xTile, zTile) to the tile coordinates of the
+ STA xTile              \ tile containing object #X
  LDA zObject,X
  STA zTile
 
@@ -7978,13 +7990,17 @@ L1145 = C1144+1
  BCC C1B7D
  LDY objectTypes,X
  BNE C1B98
- JSR sub_C1200
+
+ JSR sub_C1200          \ ??? Sets L0CE4, L0C1E, L0CDC
+
  STX playerObject
 
 .P1B5D
 
- LDA objectFlags,X
+ LDA objectFlags,X      \ Set A to the object flags for object #X
+
  CMP #&40
+
  BCC C1B71
  AND #&3F
  TAX
@@ -8020,7 +8036,8 @@ L1145 = C1144+1
 
 .C1B8D
 
- JSR sub_C1ED8
+ JSR DeleteObject       \ Delete object #X and remove it from the landscape
+
  STX currentObject
  CLC
  JSR UpdatePlayerEnergy
@@ -8881,17 +8898,30 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1ED8
+\       Name: DeleteObject
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: Delete an object, removing it from the landscape and vacating its
+\             object number
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The number of the object to delete
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   X is preserved
 \
 \ ******************************************************************************
 
-.sub_C1ED8
+.DeleteObject
 
- LDA xObject,X
- STA xTile
+ LDA xObject,X          \ Set (xTile, zTile) to the tile coordinates of the
+ STA xTile              \ tile containing object #X
  LDA zObject,X
  STA zTile
 
@@ -8899,28 +8929,79 @@ L1145 = C1144+1
                         \ (xTile, zTile), which we ignore, but this also sets
                         \ the tile page in tileDataPage and the index in Y, so
                         \ tileDataPage+Y now points to the tile data entry in
-                        \ the tileData table
+                        \ the tileData table for object #X
 
- LDA objectFlags,X
- CMP #&40
- BCC C1EF0
- ORA #&C0
- BNE C1EF7
+ LDA objectFlags,X      \ Set A to the object flags for object #X
 
-.C1EF0
+ CMP #%01000000         \ If both bits 6 and 7 of the object flags for object #X
+ BCC delo1              \ are clear then object #X is not stacked on top of
+                        \ another object, so jump to delo1 to remove object #X
+                        \ from the tile itself
 
- LDA yObjectHi,X
- ASL A
- ASL A
- ASL A
- ASL A
+                        \ If we get here then object #X is stacked on top of
+                        \ another object, and the number of that object is in
+                        \ bits 0 to 5 of the object flags for object #X, which
+                        \ is currently in A
 
-.C1EF7
+ ORA #%11000000         \ Set bits of 6 and 7 of A to create a byte with the
+                        \ number of the object below object #X in bits 0 to 5,
+                        \ and bits 6 and 7 set
+                        \
+                        \ We now set this as the updated tile data for the tile
+                        \ that used to contain object #X at the top of the
+                        \ stack, but which now contains the next object down on
+                        \ the top of the stack instead
 
- STA (tileDataPage),Y
- LDA #&80
- STA objectFlags,X
- RTS
+ BNE delo2              \ Jump to delo2 to store A as the new tile data for this
+                        \ tile (this BNE is effectively a JMP as the value of A
+                        \ before the ORA has to have at least one of bits 6 and
+                        \ 7 set, so the result of the ORA is never zero)
+
+.delo1
+
+                        \ If we get here then object #X is not stacked on top of
+                        \ another object, so we can remove the object from the
+                        \ tile by changing the tile data into the following
+                        \ format:
+                        \
+                        \   * The low nibble contains the tile shape, which in
+                        \     this case is flat because only flat tiles can
+                        \     contain objects, so we need to set the low nibble
+                        \     to shape 0 (to indicate a flat tile)
+                        \
+                        \   * The high nibble contains the altitude of the tile
+                        \     corner in the front-left corner of the tile
+                        \
+                        \ The altitude of object #X is a 16-bit value in
+                        \ (yObjectHi yObjectLo), where the yObjectLo part is
+                        \ effectively a fractional part of the altitude that
+                        \ describes how far the object is above the tile itself
+                        \
+                        \ Tile altitudes are whole numbers, so the altitude of
+                        \ the tile on which object #X is placed is given in the
+                        \ high byte of the object's 16-bit altitude
+
+ LDA yObjectHi,X        \ Set the high nibble of A to the high byte of the
+ ASL A                  \ altitude of object #X (which is the tile's altitude)
+ ASL A                  \ and set the low nibble to zero to indicate a flat tile
+ ASL A                  \
+ ASL A                  \ A is now in the format required for the tileData table
+                        \ for a flat tile that doesn't contain an object, so we
+                        \ can update the tile's data to remove object #X from
+                        \ the tile
+
+.delo2
+
+ STA (tileDataPage),Y   \ Update the tile data for object #X to the value in A
+                        \ (as we set Y to the relevant index with the call to
+                        \ GetTileData above)
+
+ LDA #%10000000         \ Set bit 7 of the object flags for object #X to denote
+ STA objectFlags,X      \ that object number X has not been allocated to an
+                        \ object and is reusable, so this effectively deletes
+                        \ the object
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9683,10 +9764,12 @@ L1145 = C1144+1
 
 .sobj1
 
- LDA objectFlags,X      \ If bit 7 of the X-th entry in the objectFlags table is
- BMI sobj2              \ set then this object number is not yet allocated to an
-                        \ object, so jump to sobj2 use this number for our new
-                        \ object
+ LDA objectFlags,X      \ Set A to the object flags for object #X, which are
+                        \ stored in the X-th entry in the objectFlags table
+
+ BMI sobj2              \ If bit 7 of object flags for object #X is set then
+                        \ this object number is not yet allocated to an object,
+                        \ so jump to sobj2 use this number for our new object
 
  DEX                    \ Otherwise decrement the counter in X to move on to the
                         \ next object number
@@ -9727,8 +9810,8 @@ L1145 = C1144+1
 \
 \ Arguments:
 \
-\   X                   The object number of the object whose energy is being
-\                       added to or subtracted from the player's energy
+\   X                   The number of the object whose energy is being added to
+\                       or subtracted from the player's energy
 \
 \   C flag              Controls whether we add or subtract the energy:
 \
@@ -9845,10 +9928,11 @@ L1145 = C1144+1
 \
 \   C flag              Returns:
 \
-\                         * Clear if we have managed to hyperspace the player to
-\                           a new tile
+\                         * Clear if the hyperspace was a success, or if the
+\                           player didn't have enough energy to hyperspace
 \
-\                         * Set if the hyperspace has failed
+\                         * Set if we could not spawn a robot to use as the
+\                           destination for the hyperspace
 \
 \ ******************************************************************************
 
@@ -9879,43 +9963,75 @@ L1145 = C1144+1
                         \ set to indicate that we haven't managed to hyperspace
                         \ the player
 
- SEC
- JSR UpdatePlayerEnergy
+ SEC                    \ Call UpdatePlayerEnergy with the C flag set to
+ JSR UpdatePlayerEnergy \ subtract the amount of energy in object #X from the
+                        \ player's energy
+                        \
+                        \ Object #X is the robot we just spawned, so this will
+                        \ subtract three energy points from the player
 
- BCC hypr1
- JSR sub_C1ED8
- LDA #&03
+ BCC hypr1              \ If the player still has positive energy then the call
+                        \ to UpdatePlayerEnergy will clear the C flag, so jump
+                        \ to hypr1 to keep going
+
+                        \ If we get here then the player doesn't have enough
+                        \ energy to create a robot for hyperspacing
+
+ JSR DeleteObject       \ Delete object #X and remove it from the landscape, so
+                        \ we remove the robot that we just spawned
+
+ LDA #3                 \ Set L0C4C = 3 ???
  STA L0C4C
- LDA #&80
+
+ LDA #%10000000         \ Set bit 7 and clear bit 6 of L0CDE ???
  STA L0CDE
- BNE hypr3
+
+ BNE hypr3              \ Jump to hypr3 to return from the subroutine (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .hypr1
 
- LDA #0
+ LDA #0                 \ ???
  JSR sub_C5FF6
- LDX playerObject
- LDA xObject,X
+
+ LDX playerObject       \ If the player is not on the Sentinel's tile in terms
+ LDA xObject,X          \ of the x-coordinate, jump to hypr2
  CMP xTileSentinel
  BNE hypr2
- LDA zObject,X
- CMP zTileSentinel
+
+ LDA zObject,X          \ If the player is not on the Sentinel's tile in terms
+ CMP zTileSentinel      \ of the z-coordinate, jump to hypr2
  BNE hypr2
- LDA #&C0
+
+                        \ The player is on the Sentinel's tile in both axes, so
+                        \ they must have hyperspaced while standing on top of
+                        \ the Sentinel's tower, so they have just completed this
+                        \ landscape
+
+ LDA #%11000000         \ Set bits 6 and 7 of L0CDE ???
  STA L0CDE
 
- LDA #%10000000
- STA doNotPlayLandscape
+ LDA #%10000000         \ Set bit 7 of doNotPlayLandscape so that when we finish
+ STA doNotPlayLandscape \ the landscape, the landscape generation process will
+                        \ return normally, without previewing the landscape
+                        \
+                        \ As the last step in winning a game is to hyperspace
+                        \ onto the Sentinel's tower, this ensures that winning a
+                        \ level will then display that landscape's secret code
+                        \ rather than displaying the preview and making us play
+                        \ it again
 
 .hypr2
 
- JSR sub_C1200
- LDX currentObject
- STX playerObject
+ JSR sub_C1200          \ ??? Sets L0CE4, L0C1E, L0CDC
+
+ LDX currentObject      \ Set the player's object number to that of the new
+ STX playerObject       \ robot that we spawned above, so this effectively
+                        \ performs the hyperspace into the new robot
 
 .hypr3
 
- LDA #%10000000
+ LDA #%10000000         \ Set bit 7 of L0C63 ???
  STA L0C63
 
  CLC                    \ Clear the C flag to indicate that we have successfully

@@ -5220,7 +5220,7 @@
      1ED2   BD 80 09   LDA &0980,X
      1ED5   85 3C      STA &3C
      1ED7   60         RTS
-.sub_C1ED8
+.DeleteObject
      1ED8   BD 00 09   LDA &0900,X
      1EDB   85 24      STA &24
      1EDD   BD 80 09   LDA &0980,X
@@ -5231,13 +5231,13 @@
      1EEA   90 04      BCC &1EF0
      1EEC   09 C0      ORA #&C0
      1EEE   D0 07      BNE &1EF7
-.C1EF0
+.delo1
      1EF0   BD 40 09   LDA &0940,X
      1EF3   0A         ASL A
      1EF4   0A         ASL A
      1EF5   0A         ASL A
      1EF6   0A         ASL A
-.C1EF7
+.delo2
      1EF7   91 5E      STA (&5E),Y
      1EF9   A9 80      LDA #&80
      1EFB   9D 00 01   STA &0100,X
