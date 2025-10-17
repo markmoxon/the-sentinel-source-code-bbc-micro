@@ -2452,7 +2452,7 @@
      0C4C   01
 .L0C4D
      0C4D   00
-.playerIsDead
+.sentinelHasWon
      0C4E   00
 .L0C4F
      0C4F   00
@@ -5539,7 +5539,7 @@
      2122   9D 40 0A   STA &0A40,X
      2125   18         CLC
      2126   60         RTS
-.sub_C2127
+.UpdatePlayerEnergy
      2127   BC 40 0A   LDY &0A40,X
      212A   AD 0A 0C   LDA &0C0A
      212D   90 07      BCC &2136
@@ -5547,14 +5547,14 @@
      2132   B0 05      BCS &2139
      2134   38         SEC
      2135   60         RTS
-.C2136
+.uple1
      2136   79 40 21   ADC &2140,Y
-.C2139
+.uple2
      2139   29 3F      AND #&3F
      213B   8D 0A 0C   STA &0C0A
      213E   18         CLC
      213F   60         RTS
-.L2140
+.objectTypeEnergy
      2140   03
      2141   03
      2142   01
@@ -5581,7 +5581,7 @@
      2169   A9 80      LDA #&80
      216B   8D DE 0C   STA &0CDE
      216E   D0 28      BNE &2198
-.C2170
+.hypr1
      2170   A9 00      LDA #&00
      2172   20 F6 5F   JSR &5FF6
      2175   A6 0B      LDX &0B
@@ -5595,15 +5595,15 @@
      2189   8D DE 0C   STA &0CDE
      218C   A9 80      LDA #&80
      218E   8D 71 0C   STA &0C71
-.C2191
+.hypr2
      2191   20 00 12   JSR &1200
      2194   A6 01      LDX &01
      2196   86 0B      STX &0B
-.C2198
+.hypr3
      2198   A9 80      LDA #&80
      219A   8D 63 0C   STA &0C63
      219D   18         CLC
-.CRE11
+.hypr4
      219E   60         RTS
 .sub_C219F
      219F   29 3F      AND #&3F

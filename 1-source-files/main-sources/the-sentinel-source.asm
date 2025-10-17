@@ -1280,7 +1280,7 @@
 
 .playerEnergy
 
- EQUB 0                 \ The player's energy level
+ EQUB 0                 \ The player's energy level (in the range 0 to 63)
 
  EQUB 0                 \ ???
 
@@ -1425,13 +1425,16 @@
 
  EQUB 0                 \ ???
 
-.playerIsDead
+.sentinelHasWon
 
- EQUB 0                 \ A flag to record when the player dies
+ EQUB 0                 \ A flag to record when the player runs out of energy
+                        \ (i.e. the energy level goes negative), at which point
+                        \ the Sentinel wins
                         \
-                        \   * Bit 7 clear = player is not dead
+                        \   * Bit 7 clear = player still has positive energy
                         \
-                        \   * Bit 7 set = player is dead
+                        \   * Bit 7 set = player has run out of energy and the
+                        \                 Sentinel has won
 
 .L0C4F
 
@@ -4883,7 +4886,7 @@ L1145 = C1144+1
 .C1282
 
  JSR sub_C16A8
- LDA playerIsDead
+ LDA sentinelHasWon
  BEQ C1294
  LDA #&1E
  JSR sub_C5F24
@@ -5559,6 +5562,7 @@ L1145 = C1144+1
 
  LDA #0                 \ Spawn the player's robot (an object of type 0),
  JSR SpawnObject        \ returning the object number of the new object in X
+                        \ and currentObject
 
  STX playerObject       \ Set playerObject to the object number of the newly
                         \ spawned object
@@ -5666,7 +5670,7 @@ L1145 = C1144+1
 .tree2
 
  LDA #2                 \ Spawn a tree (an object of type 2), returning the
- JSR SpawnObject        \ object number of the new object in X
+ JSR SpawnObject        \ object number of the new object in X and currentObject
 
  LDA minEnemyAltitude   \ Set A to the altitude of the lowest enemy on the
                         \ landscape, so we try to spawn all the trees at a lower
@@ -6339,6 +6343,7 @@ L1145 = C1144+1
 
  LDA #6                 \ Spawn the Sentinel's tower (an object of type 6),
  JSR SpawnObject        \ returning the object number of the new object in X
+                        \ and currentObject
 
  JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
                         \ to place the tower on the landscape
@@ -7021,7 +7026,8 @@ L1145 = C1144+1
  BNE C174F
  LDA L0014
  BEQ C1754
- JSR PerformHyperspace
+
+ JSR PerformHyperspace  \ Hyperspace the player to a brand new tile
 
  LDA #4
  STA titleObjectToDraw
@@ -7561,11 +7567,11 @@ L1145 = C1144+1
 
 .dobj1
 
-                        \ If we get here then the player has run out of energy
-                        \ and has died
+                        \ If we jump here from below here then the player has
+                        \ run out of energy
 
- LDA #%10000000         \ Set bit 7 of playerIsDead to indicate that the player
- STA playerIsDead       \ has died
+ LDA #%10000000         \ Set bit 7 of sentinelHasWon to indicate that the
+ STA sentinelHasWon     \ player has run out of energy and the Sentinel has won
 
  JMP sub_C1AEC          \ This resets the stack - restart of some kind ???
 
@@ -7656,8 +7662,8 @@ L1145 = C1144+1
  LDA enemyData2,X
  BEQ CRE09
 
- LDA #2                 \ Spawn an object of type 2
- JSR SpawnObject
+ LDA #2                 \ Spawn a tree (an object of type 2), returning the
+ JSR SpawnObject        \ object number of the new object in X and currentObject
 
  LDA minEnemyAltitude
 
@@ -8017,7 +8023,7 @@ L1145 = C1144+1
  JSR sub_C1ED8
  STX currentObject
  CLC
- JSR sub_C2127
+ JSR UpdatePlayerEnergy
 
  CLC                    \ Clear the C flag to denote ???
 
@@ -8040,11 +8046,12 @@ L1145 = C1144+1
 
 .C1BA9
 
- JSR SpawnObject+3      \ Spawn an object of type keyPress
+ JSR SpawnObject+3      \ Spawn an object of type keyPress, returning the object
+                        \ number of the new object in X and currentObject
 
  BCS C1B98
  SEC
- JSR sub_C2127
+ JSR UpdatePlayerEnergy
  BCS C1B98
  LDX currentObject
  LDA L003A
@@ -8056,7 +8063,7 @@ L1145 = C1144+1
 
  BCC C1BCA
  CLC
- JSR sub_C2127
+ JSR UpdatePlayerEnergy
  JMP C1B98
 
 .C1BCA
@@ -9340,7 +9347,7 @@ L1145 = C1144+1
  STA L2093
  BIT L0C6D
  BVC C2022
- BIT playerIsDead
+ BIT sentinelHasWon
  BPL C201A
  LDA #&28
  STA L2094
@@ -9348,7 +9355,7 @@ L1145 = C1144+1
 .C201A
 
  JSR sub_C5E5F
- LDA playerIsDead
+ LDA sentinelHasWon
  BMI C2061
 
 .C2022
@@ -9710,119 +9717,213 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2127
+\       Name: UpdatePlayerEnergy
 \       Type: Subroutine
 \   Category: ???
-\    Summary: ???
+\    Summary: Update the player's energy levels by adding or subtracting the
+\             amount of energy in a specific object
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The object number of the object whose energy is being
+\                       added to or subtracted from the player's energy
+\
+\   C flag              Controls whether we add or subtract the energy:
+\
+\                         * Clear = add object #X's energy to the player's
+\                                   energy
+\
+\                         * Set = Subtract object #X's energy from the player's
+\                                 energy
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Result flag:
+\
+\                         * Clear if the player still has a positive energy
+\                           level after the update
+\
+\                         * Set if the player now has a negative energy level,
+\                           which means the Sentinel has won
 \
 \ ******************************************************************************
 
-.sub_C2127
+.UpdatePlayerEnergy
 
- LDY objectTypes,X
- LDA playerEnergy
- BCC C2136
- SBC L2140,Y
- BCS C2139
- SEC
- RTS
+ LDY objectTypes,X      \ Set Y to the object type of object #X
 
-.C2136
+ LDA playerEnergy       \ Set A to the player's current energy level
 
- ADC L2140,Y
+ BCC uple1              \ If the C flag argument is clear, jump to uple1 to add
+                        \ the energies
 
-.C2139
+                        \ Otherwise the C flag argument is set, so we subtract
+                        \ object #X's energy from the player's energy in A
 
- AND #&3F
- STA playerEnergy
- CLC
- RTS
+ SBC objectTypeEnergy,Y \ The objectTypeEnergy table contains the energy levels
+                        \ for each of the object types, so this subtracts the
+                        \ energy of object #X from the player's energy in A
+                        \
+                        \ The subtraction works because we know the C flag is
+                        \ set, as we just passed through a BCC
+
+ BCS uple2              \ If the subtraction didn't underflow then the player
+                        \ still has some energy left, so jump to uple2 to return
+                        \ from the subroutine with the C flag clear
+
+ SEC                    \ The player now has negative energy, so return from the
+                        \ subroutine with the C flag set to indicate this
+
+ RTS                    \ Return from the subroutine
+
+.uple1
+
+                        \ If we get here then the C flag argument is clear, so
+                        \ we add object #X's energy to the player's energy in A
+
+
+ ADC objectTypeEnergy,Y \ The objectTypeEnergy table contains the energy levels
+                        \ for each of the object types, so this adds the energy
+                        \ of object #X to the player's energy in A
+                        \
+                        \ The addition works because we know the C flag is
+                        \ clear, as we got here by taking a BCC
+
+.uple2
+
+ AND #63                \ Cap the value in A to a maximum of 63, so the player's
+                        \ energy is always in the range 0 to 63
+
+ STA playerEnergy       \ Update the player's energy level to the new level in A
+
+ CLC                    \ Clear the C flag to indicate that the player still has
+                        \ a positive amount of energy (i.e. 0 or above)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L2140
+\       Name: objectTypeEnergy
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: The amout of energy required to create each object or the amount
+\             energy acquired when absorbing each object
 \
 \ ******************************************************************************
 
-.L2140
+.objectTypeEnergy
 
- EQUB &03, &03, &01, &02, &01, &04, &00
+ EQUB 3                 \ Robot = 3 energy
+
+ EQUB 3                 \ Sentry = 3 energy
+
+ EQUB 1                 \ Tree = 1 energy
+
+ EQUB 2                 \ Boulder = 2 energy
+
+ EQUB 1                 \ Meanie = 1 energy
+
+ EQUB 4                 \ The Sentinel = 4 energy
+
+ EQUB 0                 \ The Sentinel's tower = 0 energy
 
 \ ******************************************************************************
 \
 \       Name: PerformHyperspace
 \       Type: Subroutine
 \   Category: ???
-\    Summary: ???
+\    Summary: Hyperspace the player to a brand new tile, ideally at the same
+\             altitude as the current tile
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Returns:
+\
+\                         * Clear if we have managed to hyperspace the player to
+\                           a new tile
+\
+\                         * Set if the hyperspace has failed
 \
 \ ******************************************************************************
 
 .PerformHyperspace
 
- LDA #0                 \ Spawn an object of type 0
- JSR SpawnObject
+ LDA #0                 \ Spawn a robot (an object of type 0), returning the
+ JSR SpawnObject        \ object number of the new object in X and currentObject
 
- LDX playerObject
- LDA yObjectHi,X
- CLC
- ADC #&01
- LDX currentObject
+ LDX playerObject       \ Set A to the high byte of the altitude of the player
+ LDA yObjectHi,X        \ object (i.e. the high byte of the player object's
+                        \ y-coordinate in yObjectHi)
 
- JSR PlaceObjectBelow   \ Attempt to place the player object on a tile that is
-                        \ below the maximum altitude specified in A (though we
-                        \ may end up placing the object higher than this)
+ CLC                    \ Increment A so it's one coordinate higher than the
+ ADC #1                 \ player object, so the call to PlaceObjectBelow will
+                        \ try to hyperspace the player to the same height as
+                        \ before
 
- BCS CRE11              \ If the call to PlaceObjectBelow sets the C flag then
+ LDX currentObject      \ Set X to the object number of the new robot that we
+                        \ spawned above
+
+ JSR PlaceObjectBelow   \ Attempt to place the new robot on a tile that is below
+                        \ the maximum altitude specified in A (though we may end
+                        \ up placing the object higher than this)
+
+ BCS hypr4              \ If the call to PlaceObjectBelow sets the C flag then
                         \ the object has not been successfully placed, so jump
-                        \ to CRE11 to return from the subroutine with the C flag
-                        \ set
+                        \ to hypr4 to return from the subroutine with the C flag
+                        \ set to indicate that we haven't managed to hyperspace
+                        \ the player
 
  SEC
- JSR sub_C2127
- BCC C2170
+ JSR UpdatePlayerEnergy
+
+ BCC hypr1
  JSR sub_C1ED8
  LDA #&03
  STA L0C4C
  LDA #&80
  STA L0CDE
- BNE C2198
+ BNE hypr3
 
-.C2170
+.hypr1
 
  LDA #0
  JSR sub_C5FF6
  LDX playerObject
  LDA xObject,X
  CMP xTileSentinel
- BNE C2191
+ BNE hypr2
  LDA zObject,X
  CMP zTileSentinel
- BNE C2191
+ BNE hypr2
  LDA #&C0
  STA L0CDE
 
  LDA #%10000000
  STA doNotPlayLandscape
 
-.C2191
+.hypr2
 
  JSR sub_C1200
  LDX currentObject
  STX playerObject
 
-.C2198
+.hypr3
 
  LDA #%10000000
  STA L0C63
 
- CLC
+ CLC                    \ Clear the C flag to indicate that we have successfully
+                        \ hyperspaced the player
 
-.CRE11
+.hypr4
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12278,7 +12379,7 @@ L23E3 = C23E2+1
                         \   A = |tile data - 128|
                         \
                         \ This negation reflects negative altitudes from below
-                        \ sea level to the equivalent height above sea level
+                        \ sea level to the equivalent altitude above sea level
 
 .proc4
 
@@ -16423,8 +16524,10 @@ L314A = C3148+2
 
 .game1
 
- LDA playerIsDead       \ If bit 7 of playerIsDead is set then the player has
- BMI game6              \ died, so jump to game6 to restart the landscape
+ LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is set then the player has
+ BMI game6              \ run out of energy and has been absorbed by the
+                        \ victorious Sentinel, so jump to game6 to restart the
+                        \ landscape
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -16492,7 +16595,7 @@ L314A = C3148+2
 
  BPL game11
 
- STA playerIsDead
+ STA sentinelHasWon
 
  LDA #&06
  STA L0C73
@@ -17010,7 +17113,7 @@ L314A = C3148+2
                         \ following and return from the interrupt handler
                         \ without updating the game)
 
- LDA playerIsDead
+ LDA sentinelHasWon
  BMI C37C3
  LDA gamePaused
  BMI C37B1
@@ -20635,14 +20738,14 @@ L314A = C3148+2
 \       Name: tilesAtAltitude
 \       Type: Variable
 \   Category: Landscape
-\    Summary: Storage for tile blocks at specific heights for placing enemies on
-\             the landscape
+\    Summary: Storage for tile blocks at specific altitudes for placing enemies
+\             on the landscape
 \
 \ ------------------------------------------------------------------------------
 \
-\ This table stores the altitude of 4x4 tile blocks at specific heights, for use
-\ when placing enemies on the landscape. It is only used while the landscape is
-\ being generated and the allocated memory is reused during gameplay.
+\ This table stores the altitude of 4x4 tile blocks at specific altitudes, for
+\ use when placing enemies on the landscape. It is only used while the landscape
+\ is being generated and the allocated memory is reused during gameplay.
 \
 \ The initial contents of the variable is just workspace noise and is ignored.
 \ It actually contains snippets of the original source code.
