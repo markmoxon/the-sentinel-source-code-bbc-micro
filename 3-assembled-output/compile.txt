@@ -2350,7 +2350,7 @@
      0C05   28
 .minEnemyAltitude
      0C06   00
-.maxEnemyCount
+.maxNumberOfEnemies
      0C07   00
 .tileDataMultiplier
      0C08   00
@@ -2518,7 +2518,7 @@
      0C6D   00
 .L0C6E
      0C6E   00
-.enemyCount
+.numberOfEnemies
      0C6F   00
 .L0C70
      0C70   00
@@ -8828,7 +8828,7 @@
      375E   EE 05 0C   INC &0C05
      3761   68         PLA
      3762   60         RTS
-.C3763
+.irqh1
      3763   6C 01 0D   JMP (&0D01)
 .IRQHandler
      3766   78         SEI
@@ -8846,7 +8846,7 @@
      3779   CE DF 0C   DEC &0CDF
      377C   10 03      BPL &3781
      377E   EE DF 0C   INC &0CDF
-.C3781
+.irqh2
      3781   AD FC 0C   LDA &0CFC
      3784   30 45      BMI &37CB
      3786   AD 4E 0C   LDA &0C4E
@@ -8857,31 +8857,31 @@
      3793   F0 06      BEQ &379B
      3795   20 D1 37   JSR &37D1
      3798   20 EB 3A   JSR &3AEB
-.C379B
+.irqh3
      379B   AD E5 0C   LDA &0CE5
      379E   30 06      BMI &37A6
      37A0   20 EE 12   JSR &12EE
      37A3   20 23 16   JSR &1623
-.C37A6
+.irqh4
      37A6   AD E4 0C   LDA &0CE4
      37A9   30 20      BMI &37CB
      37AB   20 8B 11   JSR &118B
      37AE   4C CB 37   JMP &37CB
-.C37B1
+.irqh5
      37B1   A0 0D      LDY #&0D
      37B3   20 53 13   JSR &1353
      37B6   A2 02      LDX #&02
      37B8   A9 80      LDA #&80
-.P37BA
+.irqh6
      37BA   9D E8 0C   STA &0CE8,X
      37BD   CA         DEX
      37BE   10 FA      BPL &37BA
      37C0   4C CB 37   JMP &37CB
-.C37C3
+.irqh7
      37C3   AD 4D 0C   LDA &0C4D
      37C6   10 03      BPL &37CB
      37C8   20 D9 56   JSR &56D9
-.C37CB
+.irqh8
      37CB   68         PLA
      37CC   A8         TAY
      37CD   68         PLA

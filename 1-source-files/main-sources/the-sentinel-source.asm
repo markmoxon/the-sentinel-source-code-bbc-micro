@@ -263,6 +263,14 @@
                         \ The tile corner coordinate along the y-axis, where the
                         \ y-axis goes up the screen (so this is also the corner
                         \ number along the axis)
+                        \
+                        \ Each tile in the landscape is defined by a tile
+                        \ corner (the "anchor") and the tile shape, with the
+                        \ anchor being in the front-left corner of the tile,
+                        \ nearest the origin
+                        \
+                        \ As a result we tend to use the terms "tile" and "tile
+                        \ corner" interchangeably, depending on the context
 
 .zTile
 
@@ -1260,7 +1268,7 @@
 
  EQUB 0                 \ The altitude of the lowest enemy on the landscape
 
-.maxEnemyCount
+.maxNumberOfEnemies
 
  EQUB 0                 \ The maximum number of enemies that can appear on the
                         \ current landscape, which is calculated as follows:
@@ -1274,7 +1282,9 @@
 
 .tileDataMultiplier
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A multiplier that we apply to the altitudes of the
+                        \ tile corners to alter the steepness of the landscape
+                        \ during landscape generation
 
 .L0C09
 
@@ -1610,7 +1620,7 @@
 
  EQUB 0                 \ ???
 
-.enemyCount
+.numberOfEnemies
 
  EQUB 0                 \ The number of enemies in the current landscape,
                         \ including the Sentinel (in the range 1 to 8)
@@ -1730,7 +1740,11 @@
 
 .L0CC1
 
- EQUB 0                 \ ???
+ EQUB 0                 \ If 0, interrupt handler skips calls to sub_C37D1 and
+                        \ and DisplayIconBuffer ???
+                        \
+                        \ Does non-zero mean "pan screen by one pixel"? So is it
+                        \ a pixel counter for panning?
 
 .mainScreenAddr
 
@@ -1826,8 +1840,11 @@
 .soundCounter
 
  EQUB 0                 \ A counter for the sound currently being made, which
-                        \ counts down in the IRQHandler routine, reaching zero
-                        \ when the sound has finished
+                        \ counts down in the IRQHandler routine at a rate of 50
+                        \ times a second
+                        \
+                        \ When the counter reaches zero, it indicates that the
+                        \ sound has finished
 
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
@@ -3969,8 +3986,8 @@
 
  JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
                         \ sequence of seed numbers for the landscape number in
-                        \ (Y X) and set maxEnemyCount and the landscapeZero flag
-                        \ accordingly
+                        \ (Y X) and set maxNumberOfEnemies and the landscapeZero
+                        \ flag accordingly
 
  LDA landscapeZero      \ If the landscape number is not 0000, jump to main3
  BNE main3              \ to ask for the landscape's secret entry code
@@ -5498,7 +5515,7 @@ L1145 = C1144+1
  LDA #1                 \ This is landscape 0000, so set A = 1 to use for the
                         \ total number of enemies
 
- BNE popu2              \ Jump to popu2 to store the value of A in enemyCount
+ BNE popu2              \ Jump to popu2 to set numberOfEnemies to the value of A
 
 .popu1
 
@@ -5511,12 +5528,12 @@ L1145 = C1144+1
                         \ At this point A is in the range 1 to 8, with higher
                         \ values for higher landscape numbers
 
- CMP maxEnemyCount      \ If A < maxEnemyCount then skip the following
+ CMP maxNumberOfEnemies \ If A < maxNumberOfEnemies then skip the following
  BCC popu2              \ instruction
 
- LDA maxEnemyCount      \ Set A = maxEnemyCount, so the number of enemies does
-                        \ not exceed the value of maxEnemyCount that we set in
-                        \ the InitialiseSeeds routine
+ LDA maxNumberOfEnemies \ Set A = maxNumberOfEnemies, so the number of enemies
+                        \ does not exceed the value of maxNumberOfEnemies that
+                        \ we set in the InitialiseSeeds routine
                         \
                         \ So landscapes 0000 to 0009 have a maximum enemy count
                         \ of 1, landscapes 0010 to 0019 have a maximum enemy
@@ -5525,8 +5542,8 @@ L1145 = C1144+1
 
 .popu2
 
- STA enemyCount         \ Store the number of enemies for this landscape in
-                        \ enemyCount
+ STA numberOfEnemies    \ Store the number of enemies for this landscape in
+                        \ numberOfEnemies
 
  JSR AddEnemiesToTiles  \ Add the required number of enemies to the landscape,
                         \ starting from the highest altitude and working down,
@@ -5535,10 +5552,10 @@ L1145 = C1144+1
                         \ We now update colours 2 and 3 in the first palette in
                         \ colourPalettes according to the number of enemies
 
- LDA enemyCount         \ Set X = (enemyCount - 1) mod 8
+ LDA numberOfEnemies    \ Set X = (numberOfEnemies - 1) mod 8
  SEC                    \
- SBC #1                 \ The mod 8 is not strictly necessary as enemyCount is
- AND #7                 \ in the range 1 to 8, but doing this ensures we can
+ SBC #1                 \ The mod 8 is not strictly necessary as numberOfEnemies
+ AND #7                 \ is in the range 1 to 8, but doing this ensures we can
  TAX                    \ safely use X as an index into the landscapeColour
                         \ tables
 
@@ -5632,11 +5649,11 @@ L1145 = C1144+1
 
 .SpawnTrees
 
- LDA #48                \ Set U = 48 - 3 * enemyCount
+ LDA #48                \ Set U = 48 - 3 * numberOfEnemies
  SEC                    \
- SBC enemyCount         \ We use this to cap the number of trees we add to the
- SBC enemyCount         \ landscape (though it only affects higher levels)
- SBC enemyCount
+ SBC numberOfEnemies    \ We use this to cap the number of trees we add to the
+ SBC numberOfEnemies    \ landscape (though it only affects higher levels)
+ SBC numberOfEnemies
  STA U
 
  JSR GetNextSeed0To22   \ Set A to the next number from the landscape's sequence
@@ -5652,14 +5669,14 @@ L1145 = C1144+1
 .tree1
 
  STA treeCounter        \ By this point A contains a value in the range 10 to 32
-                        \ that's no greater than 48 - 3 * enemyCount
+                        \ that's no greater than 48 - 3 * numberOfEnemies
                         \
-                        \ So when enemyCount is six or more, this reduces the
-                        \ value of A as follows:
+                        \ So when numberOfEnemies is six or more, this reduces
+                        \ the value of A as follows:
                         \
-                        \   * When enemyCount = 6, range is 10 to 30
-                        \   * When enemyCount = 7, range is 10 to 27
-                        \   * When enemyCount = 8, range is 10 to 24
+                        \   * When numberOfEnemies = 6, range is 10 to 30
+                        \   * When numberOfEnemies = 7, range is 10 to 27
+                        \   * When numberOfEnemies = 8, range is 10 to 24
                         \
                         \ As the number of trees determines the total amount of
                         \ energy in the landscape, this makes the levels get
@@ -6204,8 +6221,9 @@ L1145 = C1144+1
                         \     tile in the entire landscape
 
  LDX #0                 \ We now loop through the number of enemies, adding one
-                        \ enemy for each loop and iterating enemyCount tiles, so
-                        \ set an enemy counter in X
+                        \ enemy for each loop and iterating numberOfEnemies
+                        \ times, so set an enemy counter in X to count the
+                        \ enemies as we add them
                         \
                         \ If this is a level with only one enemy, then that
                         \ enemy must be the Sentinel, so when X = 0, we add the
@@ -6222,9 +6240,9 @@ L1145 = C1144+1
 
  LDA #1                 \ Set the object type for object #X to type 1, which
  STA objectTypes,X      \ denotes a sentry, so we spawn sentries in objects #1
-                        \ to #enemyCount (this also sets object #0 to type 1,
-                        \ but this gets overridden when the Sentinel is spawned
-                        \ as object #0 below)
+                        \ to #numberOfEnemies (this also sets the type for
+                        \ object #0 to type 1, but this gets overridden when
+                        \ the Sentinel is spawned as object #0 below)
 
                         \ We now work down the landscape, from the highest peaks
                         \ down to lower altitudes, looking for suitable tile
@@ -6258,9 +6276,9 @@ L1145 = C1144+1
  BNE aden2              \ Loop back to check for tile blocks at the lower
                         \ altitude until we have reached an altitude of zero
 
- STX enemyCount         \ When the GetTilesAtAltitude routine returns with no
+ STX numberOfEnemies    \ When the GetTilesAtAltitude routine returns with no
                         \ matching tile blocks, it also returns a value of &FF
-                        \ in X, so this sets enemyCount to -1
+                        \ in X, so this sets numberOfEnemies to -1
 
  JMP aden6              \ Jump to aden6 to set the value of minEnemyAltitude
                         \ and return from the subroutine
@@ -6413,8 +6431,8 @@ L1145 = C1144+1
 
  INX                    \ Increment the enemy loop counter in X
 
- CPX enemyCount         \ If we have added a total of enemyCount enemies, jump
- BCS aden6              \ to aden6 to finish off
+ CPX numberOfEnemies    \ If we have added a total of numberOfEnemies enemies,
+ BCS aden6              \ jump to aden6 to finish off
 
  JMP aden1              \ Otherwise loop back to add another enemy
 
@@ -7751,8 +7769,8 @@ L1145 = C1144+1
 
  JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
                         \ sequence of seed numbers for the landscape number in
-                        \ (Y X) and set maxEnemyCount and the landscapeZero flag
-                        \ accordingly
+                        \ (Y X) and set maxNumberOfEnemies and the landscapeZero
+                        \ flag accordingly
 
                         \ We set bit 7 of doNotPlayLandscape when the landscape
                         \ was completed in the PerformHyperspace routine, so the
@@ -8450,7 +8468,7 @@ L1145 = C1144+1
  BCC divi1              \ If the sign bit was 0 then the original number was
                         \ positivem so skip the following
 
- JSR Negate16Bit        \ The original 16-bit sign-magnitude number was negative,
+ JSR Negate16Bit        \ The original 16-bit sign-magnitude number was negative
                         \ so call Negate16Bit to negate the result as follows:
                         \
                         \   (A T) = -(A T)
@@ -15676,7 +15694,7 @@ L314A = C3148+2
  STY landscapeZero      \ If the high byte of the landscape number is non-zero,
  TYA                    \ then set landscapeZero to this non-zero value (to
  BNE seed1              \ indicate that we are not playing landscape 0000) and
-                        \ jump to seed1 to set maxEnemyCount = 8
+                        \ jump to seed1 to set maxNumberOfEnemies to 8
 
  TXA                    \ Set landscapeZero to the low byte of the landscape,
  STA landscapeZero      \ so this sets landscapeZero to zero if we are playing
@@ -15695,10 +15713,10 @@ L314A = C3148+2
                         \ number
 
  CMP #9                 \ If A < 9 then A is in the range 1 to 8, so jump to
- BCC seed2              \ seed2 to set maxEnemyCount to this value
+ BCC seed2              \ seed2 to set maxNumberOfEnemies to this value
 
                         \ Otherwise A is 9 or higher, so we now cap A to 8 as
-                        \ the maximum allowed value for maxEnemyCount
+                        \ the maximum allowed value for maxNumberOfEnemies
 
 .seed1
 
@@ -15706,10 +15724,10 @@ L314A = C3148+2
 
 .seed2
 
- STA maxEnemyCount      \ Set maxEnemyCount to the value in A, so we get the
-                        \ following:
+ STA maxNumberOfEnemies \ Set maxNumberOfEnemies to the value in A, so we get
+                        \ the following cap on the number of enemies:
                         \
-                        \   A = min(8, 1 + (landscapeNumber div 10))
+                        \   min(8, 1 + (landscapeNumber div 10))
                         \
                         \ So landscapes 0000 to 0009 have a maximum enemy count
                         \ of 1, landscapes 0010 to 0019 have a maximum enemy
@@ -15870,7 +15888,8 @@ L314A = C3148+2
                         \ So A is now a number in the range 1 to 8, with higher
                         \ values for higher landscape numbers, which we can use
                         \ as our enemy count (after capping it to the value of
-                        \ maxEnemyCount after we return from the subroutine)
+                        \ maxNumberOfEnemies after we return from the
+                        \ subroutine)
 
  RTS                    \ Return from the subroutine
 
@@ -16753,8 +16772,8 @@ L314A = C3148+2
 
  JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
                         \ sequence of seed numbers for the landscape number in
-                        \ (Y X) and set maxEnemyCount and the landscapeZero flag
-                        \ accordingly
+                        \ (Y X) and set maxNumberOfEnemies and the landscapeZero
+                        \ flag accordingly
 
  JMP main4              \ Jump to main4 in the main title loop to restart the
                         \ landscape without having to enter the landscape's
@@ -17206,23 +17225,61 @@ L314A = C3148+2
 \       Name: IRQHandler
 \       Type: Subroutine
 \   Category: Main game loop
-\    Summary: ???
+\    Summary: The main interrupt handler, which gets run 50 times a second to
+\             update the game state and check for game key presses
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine is called exactly 50 times a second, and it does the following:
+\
+\   * Count down the sound timer
+\
+\   * If a game is not in progress (i.e. we are in the title screen rather than
+\     playing a landscape), return from the handler
+\
+\   * If the Sentinel has won, then call sub_C56D9 (if bit 7 of L0C4D is set),
+\     and return from the handler
+\
+\   * If the game is paused, scan for the pause and volume keys and return from
+\     the handler
+\
+\   * If a game is in progress and the Sentinel has not won and the game is not
+\     paused, then:
+\
+\     * If L0CC1 is non-zero then call sub_C37D1 (which decrements L0CC1) and
+\       DisplayIconBuffer
+\
+\     * If the Sentinel has been activated, call sub_C12EE and sub_C1623
+\
+\     * If bit 7 of L0CE4 is clear, scan for and process all the game keys
 \
 \ ******************************************************************************
 
-.C3763
+.irqh1
 
  JMP (irq1Address)      \ Jump to the original address from IRQ1V to pass
                         \ control to the next interrupt handler
 
 .IRQHandler
 
- SEI
+ SEI                    \ Disable interrupts so the following process isn't
+                        \ interrupted by another interrupt
 
- LDA SHEILA+&6D         \ user_via_ifr
- AND #&40
- BEQ C3763
- STA SHEILA+&6D         \ user_via_ifr
+ LDA SHEILA+&6D         \ Set A to the 6522 User VIA interrupt flag register IFR
+                        \ (SHEILA &6D)
+
+ AND #%01000000         \ If bit 6 of the IFR is clear then this interrupt has
+ BEQ irqh1              \ not been triggered by the 6522 User VIA timer 1
+                        \ reaching zero, so jump to irqh1 to pass the interrupt
+                        \ on to the next interrupt handler
+
+                        \ If we get here then bit 6 of the IFR is set, so this
+                        \ interrupt has been triggered by the 6522 User VIA
+                        \ timer 1 reaching zero
+
+ STA SHEILA+&6D         \ The AND instruction above leaves A containing bit 6
+                        \ set and all other bits clear, so we can write this to
+                        \ the IFR at SHEILA &6D to clear the timer 1 interrupt
 
  LDA &FC                \ Set A to the interrupt accumulator save register,
                         \ which restores A to the value it had on entering the
@@ -17234,51 +17291,64 @@ L314A = C3148+2
  TYA
  PHA
 
- CLD                    \ Clear the D flag to switch arithmetic to normal
+ CLD                    \ Clear the D flag to switch arithmetic to normal, in
+                        \ case the interrupt was triggered during any BCD
+                        \ calculations
 
  DEC soundCounter       \ Decrement the sound counter so we can detect when the
- BPL C3781              \ current sound effect has finished, making sure it
+ BPL irqh2              \ current sound effect has finished, making sure it
  INC soundCounter       \ doesn't go below zero
 
-.C3781
+.irqh2
 
  LDA gameInProgress     \ If bit 7 of gameInProgress is set then a game is not
- BMI C37CB              \ currently in progress and we are in the title and
-                        \ preview screens, so jump to C37CB to skip the
+ BMI irqh8              \ currently in progress and we are in the title and
+                        \ preview screens, so jump to irqh8 to skip the
                         \ following and return from the interrupt handler
-                        \ without updating the game)
+                        \ without updating the game state
 
- LDA sentinelHasWon
- BMI C37C3
- LDA gamePaused
- BMI C37B1
- LDA L0CC1
- BEQ C379B
- JSR sub_C37D1
+ LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is set then the Sentinel
+ BMI irqh7              \ has won the game, so jump to irqh7 to ??? and return
+                        \ from the interrupt handler
+
+ LDA gamePaused         \ If bit 7 of gamePaused is set then the game is paused,
+ BMI irqh5              \ so jump to irqh5 to scan for the unpause and volume
+                        \ keys and return from the interrupt handler
+
+ LDA L0CC1              \ If L0CC1 = 0, jump to irqh3 to skip the following ???
+ BEQ irqh3
+
+ JSR sub_C37D1          \ This scrolls the screen and copies data, so does this
+                        \ draw the buffer into screen memory ???
 
  JSR DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
                         \ into screen memory
 
-.C379B
+.irqh3
 
  LDA activateSentinel   \ If bit 7 of activateSentinel is set then the Sentinel
- BMI C37A6              \ has not yet been activated at the start of the game,
-                        \ so jump to C37A6 to skip the following
+ BMI irqh4              \ has not yet been activated at the start of the game,
+                        \ so jump to irqh4 to skip the following
 
- JSR sub_C12EE
- JSR sub_C1623
+ JSR sub_C12EE          \ ???
 
-.C37A6
+ JSR sub_C1623          \ ???
 
- LDA L0CE4
- BMI C37CB
+.irqh4
+
+ LDA L0CE4              \ If bit 7 of L0CE4 is set, jump to irqh8 to return from
+ BMI irqh8              \ the interrupt handler ???
 
  JSR CheckForKeyPresses \ Check for various game key presses and update the key
                         \ logger and relevant variables
 
- JMP C37CB
+ JMP irqh8              \ Jump to irqh8 to return from the interrupt handler
 
-.C37B1
+.irqh5
+
+                        \ If we get here then the game is paused, so we scan for
+                        \ key presses and discard them all except for the
+                        \ unpause and volume keys
 
  LDY #13                \ Scan the keyboard for all game keys in the gameKeys
  JSR ScanForGameKeys    \ table except for the last one ("U" for U-turn)
@@ -17293,23 +17363,26 @@ L314A = C3148+2
  LDA #%10000000         \ Set A = %10000000 to reset the three entries, as the
                         \ set bit 7 indicates an empty entry in the logger
 
-.P37BA
+.irqh6
 
  STA keyLogger,X        \ Reset the X-th entry in the key logger
 
  DEX                    \ Decrement the loop counter
 
- BPL P37BA              \ Loop back until we have reset all four entries
+ BPL irqh6              \ Loop back until we have reset all four entries
 
- JMP C37CB              \ Jump to C37CB to return from the interrupt handler
+ JMP irqh8              \ Jump to irqh8 to return from the interrupt handler
 
-.C37C3
+.irqh7
 
- LDA L0C4D
- BPL C37CB
- JSR sub_C56D9
+                        \ If we get here then the Sentinel has won the game
 
-.C37CB
+ LDA L0C4D              \ If bit 7 of L0C4D is clear, skip the following to
+ BPL irqh8              \ return from the interrupt handler ???
+
+ JSR sub_C56D9          \ ???
+
+.irqh8
 
  PLA                    \ Restore A, X and Y from the stack
  TAY
@@ -17323,7 +17396,7 @@ L314A = C3148+2
 \
 \       Name: sub_C37D1
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -18659,6 +18732,25 @@ L314A = C3148+2
  BIT SHEILA+&4D         \ Loop around until bit 1 of the 6522 System VIA status
  BEQ setp6              \ byte is set, so we wait until the vertical sync
 
+                        \ We now set timer 1 in the 6522 User VIA to count down
+                        \ regularly, triggering the interrupt handler routine at
+                        \ IRQHandler every time it counts down
+                        \
+                        \ The timer is initially set to count down from 14,592
+                        \ to zero, and then a value of 19,998 is latched into
+                        \ the timer so that it triggers the interrupt every time
+                        \ it counts down from 20,000 to zero (the latching
+                        \ process takes two ticks, which gives us a total count
+                        \ of 20,000)
+                        \
+                        \ The timer counts down at 1 MHz. or one million times a
+                        \ second, so this means the interrupt is triggered every
+                        \ 0.02 seconds, or exactly 50 times a second
+                        \
+                        \ This regular interrupt is used to progress the game
+                        \ counters and manage the screen panning effect (see the
+                        \ IRQHandler routine for details)
+
  LDA #%01000000         \ Set 6522 User VIA auxiliary control register ACR
  STA SHEILA+&6B         \ (SHEILA &6B) bits 7 and 6 to disable PB7 (which is one
                         \ of the pins on the user port) and set continuous
@@ -18749,7 +18841,7 @@ L314A = C3148+2
  EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
  EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
  EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial contents is just
- EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored 
+ EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored
  EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
  EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
  EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
