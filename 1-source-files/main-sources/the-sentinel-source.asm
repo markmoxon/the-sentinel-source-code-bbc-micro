@@ -5065,14 +5065,14 @@ L1145 = C1144+1
 \
 \       Name: sub_C130C
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .sub_C130C
 
- SEI
+ SEI                    \ Disable interrupts so we can update the 6845 registers
 
  LDA #&C0               \ Set mainScreenAddr(1 0) = &60C0
  STA mainScreenAddr
@@ -5082,18 +5082,34 @@ L1145 = C1144+1
  JSR GetIconRowAddress  \ Set iconRowAddr(1 0) to the address in screen memory
                         \ of the icon and scanner row at the top of the screen
 
- LDA #&0F
- PHA
- LDA #&F0
- LDX #13                \ crtc_screen_start_low
- STX SHEILA+&00         \ crtc_address_register
- STA SHEILA+&01         \ crtc_register_data
- DEX
- STX SHEILA+&00         \ crtc_address_register
- PLA
- STA SHEILA+&01         \ crtc_register_data
- CLI
- RTS
+                        \ We now set the address of screen memory to &7F80
+
+ LDA #&0F               \ Store &0F on the stack to use as the value of R12 in
+ PHA                    \ the following
+
+ LDA #&F0               \ Set 6845 register R13 = &F0, for the low byte
+ LDX #13                \
+ STX SHEILA+&00         \ We do this by writing the register number (13) to
+ STA SHEILA+&01         \ SHEILA &00, and then the value (&F0) to SHEILA &01
+
+ DEX                    \ Set 6845 register R12 = &0F, for the high byte
+ STX SHEILA+&00         \
+ PLA                    \ We do this by writing the register number (12) to
+ STA SHEILA+&01         \ SHEILA &00, and then the value (&0F) to SHEILA &01
+
+                        \ This sets 6845 registers (R12 R13) = &0FF0 to point
+                        \ to the start of screen memory in terms of character
+                        \ rows. There are 8 pixel lines in each character row,
+                        \ so to get the actual address of the start of screen
+                        \ memory, we multiply by 8:
+                        \
+                        \   &0FF0 * 8 = &7F80
+                        \
+                        \ So this sets the start of screen memory to &7F80
+
+ CLI                    \ Re-enable interrupts
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -17479,13 +17495,32 @@ L314A = C3148+2
  ROR A
  LSR L006D
  ROR A
- LDX #13                \ crtc_screen_start_low
- STX SHEILA+&00         \ crtc_address_register
- STA SHEILA+&01         \ crtc_register_data
- LDX #12                \ crtc_screen_start_high
- STX SHEILA+&00         \ crtc_address_register
- LDA L006D
- STA SHEILA+&01         \ crtc_register_data
+
+                        \ We now set the address of screen memory to
+                        \ (L006D A) * 8
+
+ LDX #13                \ Set 6845 register R13 = A, for the low byte
+ STX SHEILA+&00         \
+ STA SHEILA+&01         \ We do this by writing the register number (13) to
+                        \ SHEILA &00, and then the value (A) to SHEILA &01
+
+ LDX #12                \ Set 6845 register R12 = &0F, for the high byte
+ STX SHEILA+&00         \
+ LDA L006D              \ We do this by writing the register number (12) to
+ STA SHEILA+&01         \ SHEILA &00, and then the value (L006D) to SHEILA &01
+
+
+                        \ This sets 6845 registers (R12 R13) = (L006D A) to
+                        \ point to the start of screen memory in terms of
+                        \ character rows. There are 8 pixel lines in each
+                        \ character row, so to get the actual address of the
+                        \ start of screen memory, we multiply by 8:
+                        \
+                        \   (L006D A) * 8
+                        \
+                        \ So this sets the start of screen memory to
+                        \ (L006D A) * 8
+
  DEC L0CC1
  LDA mainScreenAddr
  CLC
