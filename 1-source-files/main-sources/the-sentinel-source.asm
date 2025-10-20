@@ -5309,7 +5309,7 @@ L1145 = C1144+1
 \
 \       Name: DrawTitleObject
 \       Type: Subroutine
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -5410,7 +5410,7 @@ L1145 = C1144+1
 \
 \       Name: L1403
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -5423,7 +5423,7 @@ L1145 = C1144+1
 \
 \       Name: L1405
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -5436,7 +5436,7 @@ L1145 = C1144+1
 \
 \       Name: L1407
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -5449,7 +5449,7 @@ L1145 = C1144+1
 \
 \       Name: L1409
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -5462,7 +5462,7 @@ L1145 = C1144+1
 \
 \       Name: L140B
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -5475,7 +5475,7 @@ L1145 = C1144+1
 \
 \       Name: L140D
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -5488,7 +5488,7 @@ L1145 = C1144+1
 \
 \       Name: L140F
 \       Type: Variable
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -11671,21 +11671,64 @@ L23E3 = C23E2+1
 
 .C28A4
 
- STY T
- TXA
+                        \ We now fetch the tile data for the tile anchored at
+                        \ (X, Y), using code that's very similar to the
+                        \ GetTileData routine
+                        \
+                        \ In the following comments I will refer to (X, Y) as
+                        \ (xTile, zTile), just as in GetTileData, as that's
+                        \ easier to follow
+
+ STY T                  \ Store zTile in T, so we can use it in the following
+                        \ calculation
+
+ TXA                    \ Set Y = (xTile << 3 and %11100000) + zTile
+ ASL A                  \       = (xTile >> 2 and %00000111) << 5 + zTile
+ ASL A                  \       = (xTile div 4) * &20 + zTile
  ASL A
- ASL A
- ASL A
- AND #&E0
+ AND #%11100000
  ORA T
  TAY
- TXA
- AND #&03
- STA T
- CLC
- ADC #&04
- STA tileDataPage+1
- LDA (tileDataPage),Y
+
+ TXA                    \ Set A = bits 0-1 of xTile
+ AND #%00000011         \       = xTile mod 4
+
+ STA T                  \ Store A in T so we can use it later ???
+
+                        \ The low byte of tileDataPage(1 0) gets set to zero in
+                        \ ResetVariables and is never changed
+                        \
+                        \ The low byte of tileData is also zero, as we know that
+                        \ tileData is &0400
+                        \
+                        \ So in the following, we are just adding the high bytes
+                        \ to get a result that is on a page boundary
+
+ CLC                    \ Set the following:
+ ADC #HI(tileData)      \
+ STA tileDataPage+1     \   tileDataPage(1 0) = tileData + (A 0)
+                        \                     = tileData + (xTile mod 4) * &100
+
+                        \ So we now have the following:
+                        \
+                        \   tileDataPage(1 0) = tileData + (xTile mod 4) * &100
+                        \
+                        \   Y = (xTile div 4) * &20 + zTile
+                        \
+                        \ The address in tileDataPage(1 0) is the page within
+                        \ tileData for the tile anchored at (xTile, zTile), and
+                        \ is always one of &0400, &0500, &0600 or &0700 because
+                        \ (xTile mod 4) is one of 0, 1, 2 or 3
+                        \
+                        \ The value of Y is the offset within that page of the
+                        \ tile data for the tile anchored at (xTile, zTile)
+                        \
+                        \ We can therefore fetch the tile data for the specified
+                        \ tile using Y as an index offset from tileDataPage(1 0)
+
+ LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
+                        \ (xTile, zTile)
+
  LDX L0021
  STA L0180,X
  CMP #&C0
