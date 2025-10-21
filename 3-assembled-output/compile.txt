@@ -8982,7 +8982,7 @@
      3886   4C B1 38   JMP &38B1
 .DisplayBufferRow
      3889   A2 28      LDX #&28
-.C388B
+.drow1
      388B   20 B2 38   JSR &38B2
      388E   A5 62      LDA &62
      3890   18         CLC
@@ -9000,11 +9000,11 @@
      38A6   C9 80      CMP #&80
      38A8   90 02      BCC &38AC
      38AA   E9 20      SBC #&20
-.C38AC
+.drow2
      38AC   85 65      STA &65
      38AE   CA         DEX
      38AF   D0 DA      BNE &388B
-.CRE34
+.drow3
      38B1   60         RTS
 .DisplayBufferBlock
      38B2   A0 00      LDY #&00

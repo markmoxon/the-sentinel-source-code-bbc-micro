@@ -17642,7 +17642,9 @@ L314A = C3148+2
  STA toAddr+1
  DEX
  BNE C384F
- JMP CRE34
+
+ JMP drow3              \ Jump to drow3 to return from the subroutine, as drow3
+                        \ contains an RTS
 
 \ ******************************************************************************
 \
@@ -17650,46 +17652,74 @@ L314A = C3148+2
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Update the player's scrolling landscape view by copying an 8-pixel
-\             high row from the view screen buffer into screen memory
+\             high character row from the view screen buffer into screen memory
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   fromAddr(1 0)       The source address from which we copy the character row
+\
+\   toAddr(1 0)         The destination address to which we copy the character
+\                       row
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   drow3               Contains an RTS
 \
 \ ******************************************************************************
 
 .DisplayBufferRow
 
- LDX #&28
+ LDX #40                \ Each character row in screen mode 5 contains 40
+                        \ character blocks of eight bytes, so set a block
+                        \ counter in X to count the character blocks
 
-.C388B
+.drow1
 
  JSR DisplayBufferBlock \ Copy an eight-byte 8x2-pixel character block from the
                         \ view screen buffer at fromAddr(1 0) into screen memory
                         \ at toAddr(1 0)
 
- LDA fromAddr
- CLC
- ADC #&08
- STA fromAddr
+ LDA fromAddr           \ Set fromAddr(1 0) = fromAddr(1 0) + 8
+ CLC                    \
+ ADC #8                 \ So this moves the from address to the next character
+ STA fromAddr           \ block in the character row
  LDA fromAddr+1
- ADC #&00
+ ADC #0
  STA fromAddr+1
- LDA toAddr
+
+ LDA toAddr             \ Set (A toAddr) = toAddr(1 0) + 8
  CLC
- ADC #&08
+ ADC #8
  STA toAddr
  LDA toAddr+1
- ADC #&00
- CMP #&80
- BCC C38AC
- SBC #&20
+ ADC #0
 
-.C38AC
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC drow2              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
- STA toAddr+1
- DEX
- BNE C388B
+.drow2
 
-.CRE34
+ STA toAddr+1           \ Store the high byte of the result, so we now have:
+                        \
+                        \   toAddr(1 0) = toAddr(1 0) + 8
+                        \
+                        \ with the address wrapped around as required
 
- RTS
+ DEX                    \ Decrement the counter in X to move on to the next
+                        \ character block in the row
+
+ BNE drow1              \ Loop back until we have copied all 40 character blocks
+                        \ in the character row from fromAddr(1 0) to toAddr(1 0)
+
+.drow3
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
