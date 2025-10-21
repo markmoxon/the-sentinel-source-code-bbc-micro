@@ -17699,35 +17699,53 @@ L314A = C3148+2
 \    Summary: Update the player's scrolling landscape view by copying an 8-byte
 \             character block from the view screen buffer into screen memory
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   fromAddr(1 0)       The source address from which we copy the eight-byte
+\                       character block
+\
+\   toAddr(1 0)         The destination address to which we copy the eight-byte
+\                       character block
+\
 \ ******************************************************************************
 
 .DisplayBufferBlock
 
- LDY #0
+ LDY #0                 \ Copy byte #0 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #1 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #2 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #3 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #4 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #5 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #6 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- INY
+
+ INY                    \ Copy byte #7 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
  STA (toAddr),Y
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
