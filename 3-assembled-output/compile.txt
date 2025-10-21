@@ -14,7 +14,7 @@
      0006
 .L0007
      0007
-.L0008
+.lastPanKeyPressed
      0008
 .panKeyBeingPressed
      0009
@@ -5442,10 +5442,8 @@
      208C   58         CLI
 .C208D
      208D   4C 78 1F   JMP &1F78
-.L2090
-     2090   00
-.L2091
-     2091   00
+.viewBufferAddr
+     2090   00 00
 .L2092
      2092   00
 .L2093
@@ -8948,7 +8946,7 @@
      384B   B0 3C      BCS &3889
 .DisplayBufferColumn
      384D   A2 18      LDX #&18
-.C384F
+.dcol1
      384F   20 B2 38   JSR &38B2
      3852   A5 62      LDA &62
      3854   18         CLC
@@ -8964,7 +8962,7 @@
      3867   85 62      STA &62
      3869   AD 91 20   LDA &2091
      386C   69 00      ADC #&00
-.C386E
+.dcol2
      386E   85 63      STA &63
      3870   A5 64      LDA &64
      3872   18         CLC
@@ -8975,7 +8973,7 @@
      387B   C9 80      CMP #&80
      387D   90 02      BCC &3881
      387F   E9 20      SBC #&20
-.C3881
+.dcol3
      3881   85 65      STA &65
      3883   CA         DEX
      3884   D0 C9      BNE &384F
@@ -9042,22 +9040,22 @@
      38E1   00
      38E2   00
      38E3   1C
-.L38E4
+.scrollScreenLo
      38E4   08
      38E5   F8
      38E6   C0
      38E7   40
-.L38E8
+.scrollScreenHi
      38E8   00
      38E9   FF
      38EA   FE
      38EB   01
-.L38EC
+.viewBufferAddrHi
      38EC   3E
      38ED   3F
      38EE   49
      38EF   3D
-.L38F0
+.viewBufferAddrLo
      38F0   F8
      38F1   80
      38F2   00
@@ -10417,7 +10415,8 @@
      3EFF   FF
 .secretCodeStash
      3F00
-.sub_C3F00
+.viewBuffer
+     3F00
      3F00   38         SEC
      3F01   6E FC 0C   ROR &0CFC
 .ConfigureMachine
@@ -14886,8 +14885,9 @@
      59FD   FF
      59FE   FF
      59FF   FF
-.L5A00
 .iconBuffer
+     5A00
+.L5A00
      5A00
 .L5B00
      5B00

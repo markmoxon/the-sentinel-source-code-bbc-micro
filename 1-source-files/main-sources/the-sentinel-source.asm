@@ -109,9 +109,10 @@
 
  SKIP 1                 \ ???
 
-.L0008
+.lastPanKeyPressed
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The direction of the last pan key that was pressed
+                        \ (which may still be being held down)
 
 .panKeyBeingPressed
 
@@ -4156,7 +4157,7 @@
 
 .sub_C10B7
 
- LDY L0008
+ LDY lastPanKeyPressed
  LDX L006E
  CPY #&02
  BCS C10FD
@@ -4172,7 +4173,7 @@
  JSR sub_C391E
  JSR sub_C2624
  LDX L006E
- LDY L0008
+ LDY lastPanKeyPressed
  BCS C10F2
  BNE C10EC
  LDA objectYawAngle,X
@@ -4210,7 +4211,7 @@
  JSR sub_C3908
  JSR sub_C2624
  LDX playerObject
- LDY L0008
+ LDY lastPanKeyPressed
  BCS C113A
  CPY #&03
  BNE C1131
@@ -9449,7 +9450,7 @@ L1145 = C1144+1
  ADC objectYawAngle,X
  STA objectYawAngle,X
  LDY #0
- STY L0008
+ STY lastPanKeyPressed
  LDA L0C69
  JSR sub_C2997
  LDA #&19
@@ -9544,7 +9545,7 @@ L1145 = C1144+1
 
 .C2058
 
- LDY L0008
+ LDY lastPanKeyPressed
 
  JSR DisplayViewBuffer  \ Update the player's scrolling landscape view by
                         \ copying the relevant parts of the view screen buffer
@@ -9583,29 +9584,16 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L2090
+\       Name: viewBufferAddr
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L2090
+.viewBufferAddr
 
- EQUB &00
-
-\ ******************************************************************************
-\
-\       Name: L2091
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L2091
-
- EQUB &00
+ EQUW &0000
 
 \ ******************************************************************************
 \
@@ -16769,7 +16757,7 @@ L314A = C3148+2
  LDA #0
  STA L0055
 
- STA L0008
+ STA lastPanKeyPressed
 
  STA L0CC9
 
@@ -16923,7 +16911,7 @@ L314A = C3148+2
 .game12
 
  LDA panKeyBeingPressed
- STA L0008
+ STA lastPanKeyPressed
 
  LDA #0
  STA L0CD1
@@ -17485,13 +17473,18 @@ L314A = C3148+2
 
 .ScrollPlayerView
 
- LDY L0008
+ LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
+                        \ pressed (which may still be being held down)
+                        \
+                        \ So this contains the direction of any scrolling that
+                        \ we still need to apply
+
  LDA viewScreenAddr
  CLC
- ADC L38E4,Y
+ ADC scrollScreenLo,Y
  STA viewScreenAddr
  LDA viewScreenAddr+1
- ADC L38E8,Y
+ ADC scrollScreenHi,Y
  CMP #&80
  BCC C37EC
  SBC #&20
@@ -17577,14 +17570,14 @@ L314A = C3148+2
 
 .DisplayViewBuffer
 
- LDA L2090
+ LDA viewBufferAddr
  CLC
- ADC L38E4,Y
- STA L2090
+ ADC scrollScreenLo,Y
+ STA viewBufferAddr
  STA fromAddr
- LDA L2091
- ADC L38E8,Y
- STA L2091
+ LDA viewBufferAddr+1
+ ADC scrollScreenHi,Y
+ STA viewBufferAddr+1
  STA fromAddr+1
  CPY #&02
  BCS DisplayBufferRow
@@ -17597,51 +17590,88 @@ L314A = C3148+2
 \    Summary: Update the player's scrolling landscape view by copying a 2-pixel
 \             wide column from the view screen buffer into screen memory
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   fromAddr(1 0)       The source address from which we copy the character
+\                       column
+\
+\   toAddr(1 0)         The destination address to which we copy the character
+\                       column
+\
 \ ******************************************************************************
 
 .DisplayBufferColumn
 
- LDX #&18
+ LDX #24                \ The custom screen mode 5 used by the game contains 25
+                        \ character rows, each of which is eight pixels high, so
+                        \ set a row counter in X to count the character rows in
+                        \ the view screen buffer, which is one row less than the
+                        \ screen height, as the top row is the energy icon and
+                        \ scanner row 
 
-.C384F
+.dcol1
 
  JSR DisplayBufferBlock \ Copy an eight-byte 8x2-pixel character block from the
                         \ view screen buffer at fromAddr(1 0) into screen memory
                         \ at toAddr(1 0)
 
- LDA fromAddr
- CLC
- ADC #&40
- STA fromAddr
- LDA fromAddr+1
- ADC #&01
- CMP #&53
- BNE C386E
- LDA L2090
- CLC
- ADC #&A0
- STA fromAddr
- LDA L2091
- ADC #&00
+ LDA fromAddr           \ Set (A fromAddr) = fromAddr(1 0) + &140
+ CLC                    \                  = fromAddr(1 0) + 320
+ ADC #&40               \
+ STA fromAddr           \ Each character row in screen mode 5 takes up 320 bytes
+ LDA fromAddr+1         \ (40 characters of eight bytes each), so this sets
+ ADC #&01               \ fromAddr(1 0) to the address of the next row down in
+                        \ the view screen buffer
 
-.C386E
+ CMP #&53               \ If the result of the addition is less than &5300, then
+ BNE dcol2              \ we have not reached the end of the view screen buffer,
+                        \ so jump to dcol2 to skip the following
 
- STA fromAddr+1
- LDA toAddr
- CLC
+ LDA viewBufferAddr     \ The address in (A fromAddr) is now greater than &5300,
+ CLC                    \ so it has gone past the end of the view screen buffer,
+ ADC #&A0               \ so set the following:
+ STA fromAddr           \
+ LDA viewBufferAddr+1   \   (A fromAddr) = viewBufferAddr(1 0) + &A0
+ ADC #&00               \
+                        \ So this wraps the address around to the start of the
+                        \ view screen buffer for when we go past the end of the
+                        \ buffer ???
+
+.dcol2
+
+ STA fromAddr+1         \ Store the high byte of the result, so we now have:
+                        \
+                        \   fromAddr(1 0) = fromAddr(1 0) + 320
+                        \
+                        \ with the address wrapped around as required
+
+ LDA toAddr             \ Set (A toAddr) = toAddr(1 0) + &140
+ CLC                    \                = toAddr(1 0) + 320
  ADC #&40
- STA toAddr
+ STA toAddr             
  LDA toAddr+1
  ADC #&01
- CMP #&80
- BCC C3881
- SBC #&20
 
-.C3881
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC dcol3              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
- STA toAddr+1
- DEX
- BNE C384F
+.dcol3
+
+ STA toAddr+1           \ Store the high byte of the result, so we now have:
+                        \
+                        \   toAddr(1 0) = toAddr(1 0) + 320
+                        \
+                        \ with the address wrapped around as required
+
+ DEX                    \ Decrement the counter in X to move on to the next
+                        \ character row down
+
+ BNE dcol1              \ Loop back until we have copied all 24 character blocks
+                        \ in the column from fromAddr(1 0) to toAddr(1 0)
 
  JMP drow3              \ Jump to drow3 to return from the subroutine, as drow3
                         \ contains an RTS
@@ -17805,55 +17835,69 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L38E4
+\       Name: scrollScreenLo
+\       Type: Variable
+\   Category: Graphics
+\    Summary: The amount to change the start of screen memory in order to scroll
+\             the player's landscape view through each direction (low byte)
+\
+\ ******************************************************************************
+
+.scrollScreenLo
+
+ EQUB &08               \ 0 = &0008 =   +8 (scroll right)
+ EQUB &F8               \ 1 = &FFF8 =   -8 (scroll left)
+ EQUB &C0               \ 2 = &FEC0 = -320 (scroll up)
+ EQUB &40               \ 4 = &0140 = +320 (scroll down)
+
+\ ******************************************************************************
+\
+\       Name: scrollScreenHi
+\       Type: Variable
+\   Category: Graphics
+\    Summary: The amount to change the start of screen memory in order to scroll
+\             the player's landscape view through each direction (high byte)
+\
+\ ******************************************************************************
+
+.scrollScreenHi
+
+ EQUB &00               \ 0 = &0008 =   +8 (scroll right)
+ EQUB &FF               \ 1 = &FFF8 =   -8 (scroll left)
+ EQUB &FE               \ 2 = &FEC0 = -320 (scroll up)
+ EQUB &01               \ 4 = &0140 = +320 (scroll down)
+
+\ ******************************************************************************
+\
+\       Name: viewBufferAddrHi
 \       Type: Variable
 \   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L38E4
+.viewBufferAddrHi
 
- EQUB &08, &F8, &C0, &40
+ EQUB &3E               \ 0 = &3EF8 (scroll right)
+ EQUB &3F               \ 1 = &3F80 (scroll left)
+ EQUB &49               \ 2 = &4900 (scroll up)
+ EQUB &3D               \ 4 = &3DC0 (scroll down)
 
 \ ******************************************************************************
 \
-\       Name: L38E8
+\       Name: viewBufferAddrLo
 \       Type: Variable
 \   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L38E8
+.viewBufferAddrLo
 
- EQUB &00, &FF, &FE, &01
-
-\ ******************************************************************************
-\
-\       Name: L38EC
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L38EC
-
- EQUB &3E, &3F, &49, &3D
-
-\ ******************************************************************************
-\
-\       Name: L38F0
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L38F0
-
- EQUB &F8, &80, &00, &C0
+ EQUB &F8               \ 0 = &3EF8 (scroll right)
+ EQUB &80               \ 1 = &3F80 (scroll left)
+ EQUB &00               \ 2 = &4900 (scroll up)
+ EQUB &C0               \ 4 = &3DC0 (scroll down)
 
 \ ******************************************************************************
 \
@@ -17892,10 +17936,10 @@ L314A = C3148+2
 
 .sub_C38FB
 
- LDA L38F0,Y
- STA L2090
- LDA L38EC,Y
- STA L2091
+ LDA viewBufferAddrLo,Y
+ STA viewBufferAddr
+ LDA viewBufferAddrHi,Y
+ STA viewBufferAddr+1
  RTS
 
 \ ******************************************************************************
@@ -18647,23 +18691,24 @@ L314A = C3148+2
 .secretCodeStash
 
  SKIP 0                 \ This variable overwrites the startup routines as they
-                        \ aren't needed again
+                        \ aren't needed again, and it shares memory with the
+                        \ view screen buffer
 
 \ ******************************************************************************
 \
-\       Name: sub_C3F00
+\       Name: viewBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: The view screen buffer, which is used to buffer the player's
+\             scrolling landscape view before writing to screen memory
 \
 \ ******************************************************************************
 
-.sub_C3F00
+.viewBuffer
 
- SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
- ROR gameInProgress     \ not currently in progress and that we are in the title
-                        \ and preview screens (so the interrupt handler doesn't
-                        \ progress the game)
+ SKIP 0                 \ This variable overwrites the startup routines as they
+                        \ aren't needed again, and it shares memory with the
+                        \ secret code stash
 
 \ ******************************************************************************
 \
@@ -18686,6 +18731,15 @@ L314A = C3148+2
 \ per byte and four colours per pixel.
 \
 \ ******************************************************************************
+
+ SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
+ ROR gameInProgress     \ not currently in progress and that we are in the title
+                        \ and preview screens (so the interrupt handler doesn't
+                        \ progress the game)
+                        \
+                        \ This code is never actually run in this location
+                        \ (identical code can be found at the start of the
+                        \ ResetVariables routine)
 
 .ConfigureMachine
 
@@ -21067,6 +21121,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
+\       Name: iconBuffer
+\       Type: Variable
+\   Category: Graphics
+\    Summary: The icon screen buffer, which is used to buffer the energy icon
+\             and scanner row before writing to screen memory
+\
+\ ******************************************************************************
+
+.iconBuffer
+
+ SKIP 0                 \ The icon screen buffer shares memory with L5A00
+
+\ ******************************************************************************
+\
 \       Name: L5A00
 \       Type: Variable
 \   Category: ???
@@ -21075,7 +21143,6 @@ L314A = C3148+2
 \ ******************************************************************************
 
 .L5A00
-.iconBuffer
 
  SKIP 256
 
