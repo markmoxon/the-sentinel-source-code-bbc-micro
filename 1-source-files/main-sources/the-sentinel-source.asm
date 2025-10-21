@@ -1740,16 +1740,17 @@
 
 .L0CC1
 
- EQUB 0                 \ If 0, interrupt handler skips calls to sub_C37D1 and
-                        \ and DisplayIconBuffer ???
+ EQUB 0                 \ If L0CC1 = 0, the interrupt handler skips calls to
+                        \ ScrollPlayerView and and DisplayIconBuffer ???
                         \
                         \ Does non-zero mean "pan screen by one pixel"? So is it
                         \ a pixel counter for panning?
 
-.mainScreenAddr
+.viewScreenAddr
 
- EQUW &60C0             \ The screen address of the main game screen, just below
-                        \ the icon and scanner row at the top of the screen
+ EQUW &60C0             \ The screen address of the player's scrolling landscape
+                        \ view, which is just below the icon and scanner row at
+                        \ the top of the screen
 
 .L0CC4
 
@@ -4113,14 +4114,14 @@
 \
 \       Name: sub_C1090
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .sub_C1090
 
- JSR sub_C130C
+ JSR ResetScreenAddress 
  JSR sub_C3699
  LDA #0
  JSR sub_C2963
@@ -5063,21 +5064,37 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C130C
+\       Name: ResetScreenAddress
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Reset the address of the start of screen memory
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine sets the screen addresses as follows:
+\
+\   * Address of the start of screen memory in the 6845 CRTC registers = &7F80
+\
+\   * Address of the icon and scanner row at the top of the screen in
+\     iconRowAddr(1 0) = &7F80
+\
+\   * Address of the player's scrolling landscape view in viewScreenAddr(1 0) =
+\     &60C0
+\
+\ Note that &7F80 + 320 = &60C0, when the wrapping of screen memory is taken
+\ into consideration, so the player's scrolling landscape view in memory is one
+\ character line after the icon and scanner row at the top of the screen.
 \
 \ ******************************************************************************
 
-.sub_C130C
+.ResetScreenAddress
 
  SEI                    \ Disable interrupts so we can update the 6845 registers
 
- LDA #&C0               \ Set mainScreenAddr(1 0) = &60C0
- STA mainScreenAddr
+ LDA #&C0               \ Set viewScreenAddr(1 0) = &60C0
+ STA viewScreenAddr
  LDA #&60
- STA mainScreenAddr+1
+ STA viewScreenAddr+1
 
  JSR GetIconRowAddress  \ Set iconRowAddr(1 0) to the address in screen memory
                         \ of the icon and scanner row at the top of the screen
@@ -5122,12 +5139,12 @@ L1145 = C1144+1
 
 .SetupSights
 
- LDA mainScreenAddr
+ LDA viewScreenAddr
  CLC
  ADC #&A0
  STA L0CC4
 
- LDA mainScreenAddr+1
+ LDA viewScreenAddr+1
  ADC #&0F
  CMP #&80
  BCC C1345
@@ -6869,11 +6886,11 @@ L1145 = C1144+1
 
  STA L0C09
  STA L169B
- LDA mainScreenAddr
+ LDA viewScreenAddr
  SEC
  SBC #&4F
  STA L0022
- LDA mainScreenAddr+1
+ LDA viewScreenAddr+1
  SBC #&00
  CMP #&60
  BCS C1646
@@ -9468,9 +9485,9 @@ L1145 = C1144+1
  ASL A
  ROL U
  CLC
- ADC mainScreenAddr
+ ADC viewScreenAddr
  STA L2092
- LDA mainScreenAddr+1
+ LDA viewScreenAddr+1
  ADC U
  CMP #&80
  BCC C2008
@@ -9528,7 +9545,11 @@ L1145 = C1144+1
 .C2058
 
  LDY L0008
- JSR sub_C3832
+
+ JSR DisplayViewBuffer  \ Update the player's scrolling landscape view by
+                        \ copying the relevant parts of the view screen buffer
+                        \ into screen memory
+
  DEC loopCounter
  BNE C203D
 
@@ -16958,9 +16979,9 @@ L314A = C3148+2
  CMP #&28
  BCC P369E
 
- JMP DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
-                        \ into screen memory, returning from the subroutine
-                        \ using a tail call
+ JMP DisplayIconBuffer  \ Display the contents of the icon screen buffer by
+                        \ copying it into screen memory, returning from the
+                        \ subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -17162,9 +17183,9 @@ L314A = C3148+2
  JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
                         \ to the right
 
- JMP DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
-                        \ into screen memory, returning from the subroutine
-                        \ using a tail call
+ JMP DisplayIconBuffer  \ Display the contents of the icon screen buffer by
+                        \ copying it into screen memory, returning from the
+                        \ subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -17254,11 +17275,11 @@ L314A = C3148+2
  ASL P                  \ Set (Q P) = (A P) * 2
  ROL A                  \           = iconBuffer + xIconCounter * 8
  STA Q                  \
-                        \ So we now have the address within the screen buffer
-                        \ for the icon we want to draw
+                        \ So we now have the address within the icon screen
+                        \ buffer for the icon we want to draw
 
- LDY #7                 \ We now copy eight bytes of icon data into the screen
-                        \ buffer at iconBuffer
+ LDY #7                 \ We now copy eight bytes of icon data into the icon
+                        \ screen buffer at iconBuffer
 
 .deni1
 
@@ -17305,8 +17326,8 @@ L314A = C3148+2
 \   * If a game is in progress and the Sentinel has not won and the game is not
 \     paused, then:
 \
-\     * If L0CC1 is non-zero then call sub_C37D1 (which decrements L0CC1) and
-\       DisplayIconBuffer
+\     * If L0CC1 is non-zero then call ScrollPlayerView (which decrements L0CC1)
+\       and DisplayIconBuffer
 \
 \     * If the Sentinel has been activated, call sub_C12EE and sub_C1623
 \
@@ -17377,11 +17398,12 @@ L314A = C3148+2
  LDA L0CC1              \ If L0CC1 = 0, jump to irqh3 to skip the following ???
  BEQ irqh3
 
- JSR sub_C37D1          \ This scrolls the screen and copies data, so does this
-                        \ draw the buffer into screen memory ???
+ JSR ScrollPlayerView   \ Scroll the screen and copy data from the view screen
+                        \ buffer into screen memory to implement the player's
+                        \ scrolling landscape view
 
- JSR DisplayIconBuffer  \ Display the contents of the icon buffer by copying it
-                        \ into screen memory
+ JSR DisplayIconBuffer  \ Display the contents of the icon screen buffer by
+                        \ copying it into screen memory
 
 .irqh3
 
@@ -17453,21 +17475,22 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C37D1
+\       Name: ScrollPlayerView
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Scroll the screen and copy data from the view screen buffer into
+\             screen memory to implement the player's scrolling landscape view
 \
 \ ******************************************************************************
 
-.sub_C37D1
+.ScrollPlayerView
 
  LDY L0008
- LDA mainScreenAddr
+ LDA viewScreenAddr
  CLC
  ADC L38E4,Y
- STA mainScreenAddr
- LDA mainScreenAddr+1
+ STA viewScreenAddr
+ LDA viewScreenAddr+1
  ADC L38E8,Y
  CMP #&80
  BCC C37EC
@@ -17482,7 +17505,7 @@ L314A = C3148+2
 
 .C37F2
 
- STA mainScreenAddr+1
+ STA viewScreenAddr+1
 
  JSR GetIconRowAddress  \ Set iconRowAddr(1 0) to the address in screen memory
                         \ of the icon and scanner row at the top of the screen
@@ -17522,11 +17545,11 @@ L314A = C3148+2
                         \ (L006D A) * 8
 
  DEC L0CC1
- LDA mainScreenAddr
+ LDA viewScreenAddr
  CLC
  ADC L38DC,Y
  STA toAddr
- LDA mainScreenAddr+1
+ LDA viewScreenAddr+1
  ADC L38E0,Y
  CMP #&80
  BCC C3830
@@ -17538,14 +17561,21 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3832
+\       Name: DisplayViewBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Update the player's scrolling landscape view by copying the
+\             relevant parts of the view screen buffer into screen memory
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   ???
 \
 \ ******************************************************************************
 
-.sub_C3832
+.DisplayViewBuffer
 
  LDA L2090
  CLC
@@ -17557,12 +17587,28 @@ L314A = C3148+2
  STA L2091
  STA fromAddr+1
  CPY #&02
- BCS sub_C3889
+ BCS DisplayBufferRow
+
+\ ******************************************************************************
+\
+\       Name: DisplayBufferColumn
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Update the player's scrolling landscape view by copying a 2-pixel
+\             wide column from the view screen buffer into screen memory
+\
+\ ******************************************************************************
+
+.DisplayBufferColumn
+
  LDX #&18
 
 .C384F
 
- JSR sub_C38B2
+ JSR DisplayBufferBlock \ Copy an eight-byte 8x2-pixel character block from the
+                        \ view screen buffer at fromAddr(1 0) into screen memory
+                        \ at toAddr(1 0)
+
  LDA fromAddr
  CLC
  ADC #&40
@@ -17600,20 +17646,24 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3889
+\       Name: DisplayBufferRow
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Update the player's scrolling landscape view by copying an 8-pixel
+\             high row from the view screen buffer into screen memory
 \
 \ ******************************************************************************
 
-.sub_C3889
+.DisplayBufferRow
 
  LDX #&28
 
 .C388B
 
- JSR sub_C38B2
+ JSR DisplayBufferBlock \ Copy an eight-byte 8x2-pixel character block from the
+                        \ view screen buffer at fromAddr(1 0) into screen memory
+                        \ at toAddr(1 0)
+
  LDA fromAddr
  CLC
  ADC #&08
@@ -17643,14 +17693,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C38B2
+\       Name: DisplayBufferBlock
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Update the player's scrolling landscape view by copying an 8-byte
+\             character block from the view screen buffer into screen memory
 \
 \ ******************************************************************************
 
-.sub_C38B2
+.DisplayBufferBlock
 
  LDY #0
  LDA (fromAddr),Y
@@ -17708,7 +17759,7 @@ L314A = C3148+2
 \
 \       Name: L38E4
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -17721,7 +17772,7 @@ L314A = C3148+2
 \
 \       Name: L38E8
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -18307,12 +18358,12 @@ L314A = C3148+2
 
 .GetIconRowAddress
 
- LDA mainScreenAddr     \ Set iconRowAddr(1 0) = mainScreenAddr(1 0) - &0140
- SEC                    \                      = mainScreenAddr(1 0) - 320
+ LDA viewScreenAddr     \ Set iconRowAddr(1 0) = viewScreenAddr(1 0) - &0140
+ SEC                    \                      = viewScreenAddr(1 0) - 320
  SBC #&40               \
  STA iconRowAddr        \ starting with the low bytes
 
- LDA mainScreenAddr+1   \ And then the high bytes
+ LDA viewScreenAddr+1   \ And then the high bytes
  SBC #&01
 
  CMP #&60               \ If the result of the subtraction is less than &6000,
@@ -18324,12 +18375,13 @@ L314A = C3148+2
  STA iconRowAddr+1      \ Store the high byte of the result in iconRowAddr(1 0),
                         \ so we have the following:
                         \
-                        \   iconRowAddr(1 0) = mainScreenAddr(1 0) - 320
+                        \   iconRowAddr(1 0) = viewScreenAddr(1 0) - 320
                         \
                         \ Each character row in screen mode 5 takes up 320 bytes
                         \ (40 characters of eight bytes each), so this sets
                         \ iconRowAddr(1 0) to the address of the character row
-                        \ just above main screen memory at mainScreenAddr(1 0)
+                        \ just above the player's scrolling landscape view,
+                        \ which is in screen memory at viewScreenAddr(1 0)
 
  RTS                    \ Return from the subroutine
 
@@ -18339,7 +18391,7 @@ L314A = C3148+2
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Display the redrawn icon and scanner row by copying the contents
-\             of the icon buffer into screen memory
+\             of the icon screen buffer into screen memory
 \
 \ ******************************************************************************
 
@@ -18347,17 +18399,18 @@ L314A = C3148+2
 
  LDA #HI(iconBuffer)    \ Set fromAddr(1 0) = iconBuffer(1 0)
  STA fromAddr+1         \
- LDA #LO(iconBuffer)    \ So the call to sub_C3889 copies from the icon buffer,
- STA fromAddr           \ which contains the redrawn icon and scanner row
+ LDA #LO(iconBuffer)    \ So the call to DisplayBufferRow copies from the icon
+ STA fromAddr           \ screen buffer, which contains the redrawn icon and
+                        \ scanner row
 
  LDA iconRowAddr+1      \ Set toAddr(1 0) = iconRowAddr(1 0)
  STA toAddr+1           \
- LDA iconRowAddr        \ So the call to sub_C3889 copies from the icon buffer 
- STA toAddr             \ into the screen memory for the icon and scanner row
-                        \ at the top of the screen
+ LDA iconRowAddr        \ So the call to DisplayBufferRow copies from the icon
+ STA toAddr             \ screen buffer into the screen memory for the icon and
+                        \ scanner row at the top of the screen
 
- JMP sub_C3889          \ Jump to sub_C3889 to copy the contents of the icon
-                        \ buffer into screen memory ???
+ JMP DisplayBufferRow   \ Jump to DisplayBufferRow to copy the contents of the
+                        \ icon screen buffer into screen memory ???
 
 \ ******************************************************************************
 \
@@ -20006,11 +20059,11 @@ L314A = C3148+2
  CMP #&1E
  BCS C56E3
  STA L0023
- LDA mainScreenAddr
+ LDA viewScreenAddr
  CLC
  ADC L0022
  STA L0022
- LDA mainScreenAddr+1
+ LDA viewScreenAddr+1
  ADC L0023
  CMP #&80
  BCC C5708

@@ -2621,7 +2621,7 @@
      0CC0   00
 .L0CC1
      0CC1   00
-.mainScreenAddr
+.viewScreenAddr
      0CC2   C0 60
 .L0CC4
      0CC4   00
@@ -3559,7 +3559,7 @@
 .C1308
      1308   CE 50 0C   DEC &0C50
      130B   60         RTS
-.sub_C130C
+.ResetScreenAddress
      130C   78         SEI
      130D   A9 C0      LDA #&C0
      130F   8D C2 0C   STA &0CC2
@@ -8888,7 +8888,7 @@
      37CE   AA         TAX
      37CF   68         PLA
      37D0   40         RTI
-.sub_C37D1
+.ScrollPlayerView
      37D1   A4 08      LDY &08
      37D3   AD C2 0C   LDA &0CC2
      37D6   18         CLC
@@ -8934,7 +8934,7 @@
      382E   E9 20      SBC #&20
 .C3830
      3830   85 65      STA &65
-.sub_C3832
+.DisplayViewBuffer
      3832   AD 90 20   LDA &2090
      3835   18         CLC
      3836   79 E4 38   ADC &38E4,Y
@@ -8946,6 +8946,7 @@
      3847   85 63      STA &63
      3849   C0 02      CPY #&02
      384B   B0 3C      BCS &3889
+.DisplayBufferColumn
      384D   A2 18      LDX #&18
 .C384F
      384F   20 B2 38   JSR &38B2
@@ -8979,7 +8980,7 @@
      3883   CA         DEX
      3884   D0 C9      BNE &384F
      3886   4C B1 38   JMP &38B1
-.sub_C3889
+.DisplayBufferRow
      3889   A2 28      LDX #&28
 .C388B
      388B   20 B2 38   JSR &38B2
@@ -9005,7 +9006,7 @@
      38AF   D0 DA      BNE &388B
 .CRE34
      38B1   60         RTS
-.sub_C38B2
+.DisplayBufferBlock
      38B2   A0 00      LDY #&00
      38B4   B1 62      LDA (&62),Y
      38B6   91 64      STA (&64),Y
