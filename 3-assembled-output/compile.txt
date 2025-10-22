@@ -202,7 +202,7 @@
      006B
 .L006C
      006C
-.L006D
+.screenAddrHi
      006D
 .L006E
 .enemyCounter
@@ -2619,7 +2619,7 @@
      0CBE   00
      0CBF   00
      0CC0   00
-.L0CC1
+.scrollCounter
      0CC1   00
 .viewScreenAddr
      0CC2   C0 60
@@ -2647,7 +2647,7 @@
      0CCF   00
 .L0CD0
      0CD0   00
-.L0CD1
+.numberOfScrolls
      0CD1   00
 .L0CD2
      0CD2   00
@@ -8898,11 +8898,11 @@
      37E5   90 05      BCC &37EC
      37E7   E9 20      SBC #&20
      37E9   4C F2 37   JMP &37F2
-.C37EC
+.scro1
      37EC   C9 60      CMP #&60
      37EE   B0 02      BCS &37F2
      37F0   69 20      ADC #&20
-.C37F2
+.scro2
      37F2   8D C3 0C   STA &0CC3
      37F5   20 D3 3A   JSR &3AD3
      37F8   85 6D      STA &6D
@@ -8930,7 +8930,7 @@
      382A   C9 80      CMP #&80
      382C   90 02      BCC &3830
      382E   E9 20      SBC #&20
-.C3830
+.scro3
      3830   85 65      STA &65
 .DisplayViewBuffer
      3832   AD 90 20   LDA &2090
@@ -9030,12 +9030,12 @@
      38D7   B1 62      LDA (&62),Y
      38D9   91 64      STA (&64),Y
      38DB   60         RTS
-.L38DC
+.updateOffsetLo
      38DC   38
      38DD   00
      38DE   00
      38DF   C0
-.L38E0
+.updateOffsetHi
      38E0   01
      38E1   00
      38E2   00
@@ -9065,9 +9065,9 @@
      38F5   F8
      38F6   04
      38F7   F4
-.sub_C38F8
+.SetNumberOfScrolls
      38F8   8D D1 0C   STA &0CD1
-.sub_C38FB
+.SetViewBufferAddr
      38FB   B9 F0 38   LDA &38F0,Y
      38FE   8D 90 20   STA &2090
      3901   B9 EC 38   LDA &38EC,Y

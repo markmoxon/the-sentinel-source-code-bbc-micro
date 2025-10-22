@@ -113,10 +113,30 @@
 
  SKIP 1                 \ The direction of the last pan key that was pressed
                         \ (which may still be being held down)
+                        \
+                        \   * Bit 7 set = not currently panning
+                        \
+                        \   * 0 = pan right
+                        \
+                        \   * 1 = pan left
+                        \
+                        \   * 2 = pan up
+                        \
+                        \   * 3 = pan down
 
 .panKeyBeingPressed
 
- SKIP 1                 \ The direction that we are currently panning
+ SKIP 1                 \ The direction in which we are currently panning
+                        \
+                        \   * Bit 7 set = not currently panning
+                        \
+                        \   * 0 = pan right
+                        \
+                        \   * 1 = pan left
+                        \
+                        \   * 2 = pan up
+                        \
+                        \   * 3 = pan down
 
 .L000A
 
@@ -545,9 +565,10 @@
 
  SKIP 1                 \ ???
 
-.L006D
+.screenAddrHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Storage for the high byte of the screen memory address
+                        \ in the ScrollPlayerView routine
 
 .L006E
 .enemyCounter
@@ -1227,11 +1248,11 @@
 
 \ ******************************************************************************
 \
-\       Name: L0C00
+\       Name: Main variable workspace
 \       Type: Workspace
-\    Address: ??? to ???
+\    Address: &0C00 to &0CFF
 \   Category: Workspaces
-\    Summary: ???
+\    Summary: The main block of game variables
 \
 \ ******************************************************************************
 
@@ -1347,13 +1368,13 @@
                         \ which will either be a current key press or the value
                         \ from the last pan key press to be made
                         \
-                        \   * 0 = Pan right
+                        \   * 0 = pan right
                         \
-                        \   * 1 = Pan left
+                        \   * 1 = pan left
                         \
-                        \   * 2 = Pan up
+                        \   * 2 = pan up
                         \
-                        \   * 3 = Pan down
+                        \   * 3 = pan down
 
 .L0C1E
 
@@ -1739,13 +1760,20 @@
 
  EQUB 0                 \ ???
 
-.L0CC1
+.scrollCounter
 
- EQUB 0                 \ If L0CC1 = 0, the interrupt handler skips calls to
-                        \ ScrollPlayerView and and DisplayIconBuffer ???
+ EQUB 0                 \ A counter for the number of columns or rows we still
+                        \ need to scroll in the player's scrolling landscape
+                        \ view when the player pans
                         \
-                        \ Does non-zero mean "pan screen by one pixel"? So is it
-                        \ a pixel counter for panning?
+                        \ Scrolling is implemented in the interrupt handler one
+                        \ column or row at a time, scrolling one character block
+                        \ width or height at each step via the ScrollPlayerView
+                        \ routine
+                        \
+                        \ This counter keeps track of each step, decrementing
+                        \ after each column or row is scrolled, so we only
+                        \ scroll when scrollCounter is non-zero
 
 .viewScreenAddr
 
@@ -1807,9 +1835,13 @@
 
  EQUB 0                 \ ???
 
-.L0CD1
+.numberOfScrolls
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The total number of scrolls that we need to perform
+                        \ for the current panning operation
+                        \
+                        \ This is used to initialise the value of the scroll
+                        \ counter in scrollCounter before we start scrolling
 
 .L0CD2
 
@@ -4184,7 +4216,7 @@
 .C10EC
 
  LDA #&10
- JSR sub_C38F8
+ JSR SetNumberOfScrolls
  RTS
 
 .C10F2
@@ -4223,7 +4255,7 @@
 .C1131
 
  LDA #&08
- JSR sub_C38F8
+ JSR SetNumberOfScrolls
 
 .P1136
 
@@ -4596,13 +4628,13 @@ L1145 = C1144+1
  STA panKeyBeingPressed \ Set panKeyBeingPressed to the key logger value of the
                         \ pan key that's being pressed, as follows:
                         \
-                        \   * 0 = Pan right
+                        \   * 0 = pan right
                         \
-                        \   * 1 = Pan left
+                        \   * 1 = pan left
                         \
-                        \   * 2 = Pan up
+                        \   * 2 = pan up
                         \
-                        \   * 3 = Pan down
+                        \   * 3 = pan down
 
 .pkey10
 
@@ -4863,7 +4895,7 @@ L1145 = C1144+1
 \
 \       Name: sub_C1264
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -7619,7 +7651,7 @@ L1145 = C1144+1
 \
 \       Name: DrainObjectEnergy
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -9470,7 +9502,7 @@ L1145 = C1144+1
 .C1FD5
 
  LDY #0
- JSR sub_C38FB
+ JSR SetViewBufferAddr
  LDX L006E
  LDA #0
  STA L001F
@@ -9864,7 +9896,7 @@ L1145 = C1144+1
 \
 \       Name: UpdatePlayerEnergy
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: Update the player's energy levels by adding or subtracting the
 \             amount of energy in a specific object
 \
@@ -9980,7 +10012,7 @@ L1145 = C1144+1
 \
 \       Name: PerformHyperspace
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: Hyperspace the player to a brand new tile, ideally at the same
 \             altitude as the current tile
 \
@@ -16914,7 +16946,7 @@ L314A = C3148+2
  STA lastPanKeyPressed
 
  LDA #0
- STA L0CD1
+ STA numberOfScrolls
 
  STA L0C1E
 
@@ -16935,12 +16967,13 @@ L314A = C3148+2
                         \ to show the player's current energy level and redraw
                         \ the scanner box
 
- LDA L0CD1
- STA L0CC1
+ LDA numberOfScrolls    \ Set scrollCounter to the number of scrolls required,
+ STA scrollCounter      \ so the interrupt routine will scroll the screen by
+                        \ this many steps in the background
 
 .game14
 
- LDA L0CC1
+ LDA scrollCounter
  BNE game14
 
  BEQ game11
@@ -17314,8 +17347,8 @@ L314A = C3148+2
 \   * If a game is in progress and the Sentinel has not won and the game is not
 \     paused, then:
 \
-\     * If L0CC1 is non-zero then call ScrollPlayerView (which decrements L0CC1)
-\       and DisplayIconBuffer
+\     * If scrollCounter is non-zero then call ScrollPlayerView (which
+\       decrements scrollCounter) and DisplayIconBuffer
 \
 \     * If the Sentinel has been activated, call sub_C12EE and sub_C1623
 \
@@ -17383,15 +17416,24 @@ L314A = C3148+2
  BMI irqh5              \ so jump to irqh5 to scan for the unpause and volume
                         \ keys and return from the interrupt handler
 
- LDA L0CC1              \ If L0CC1 = 0, jump to irqh3 to skip the following ???
- BEQ irqh3
+ LDA scrollCounter      \ If scrollCounter = 0 then we do not need to scroll the
+ BEQ irqh3              \ player's landscape view, so jump to irqh3 to skip the
+                        \ scrolling process
+
+                        \ If we get here then we still have scrollCounter steps
+                        \ to complete in the current scrolling process, so we
+                        \ now do one scrolling step (ScrollPlayerView decrements
+                        \ the counter in scrollCounter)
 
  JSR ScrollPlayerView   \ Scroll the screen and copy data from the view screen
                         \ buffer into screen memory to implement the player's
                         \ scrolling landscape view
 
  JSR DisplayIconBuffer  \ Display the contents of the icon screen buffer by
-                        \ copying it into screen memory
+                        \ copying it into screen memory, as the scrolling
+                        \ process will have scrolled this part of the screen, so
+                        \ we need to redraw it to prevent the energy icons and
+                        \ scanner from moving
 
 .irqh3
 
@@ -17477,43 +17519,133 @@ L314A = C3148+2
                         \ pressed (which may still be being held down)
                         \
                         \ So this contains the direction of any scrolling that
-                        \ we still need to apply
+                        \ we still need to apply, as follows:
+                        \
+                        \   * 0 = pan right
+                        \
+                        \   * 1 = pan left
+                        \
+                        \   * 2 = pan up
+                        \
+                        \   * 3 = pan down
+                        \
+                        \ We use this as an index into various tables, to look
+                        \ up the correct values for the direction in which we
+                        \ want to scroll
 
- LDA viewScreenAddr
- CLC
- ADC scrollScreenLo,Y
- STA viewScreenAddr
- LDA viewScreenAddr+1
- ADC scrollScreenHi,Y
- CMP #&80
- BCC C37EC
- SBC #&20
- JMP C37F2
+                        \ We now scroll the screen in the correct direction to
+                        \ pan the player's scrolling landscape view
+                        \
+                        \ Note that we scroll the screen in the opposite
+                        \ direction to the pan direction, so if we are panning
+                        \ right we move the screen to the left, for example
+                        \
+                        \ The screen address of the player's scrolling landscape
+                        \ view is stored in viewScreenAddr(1 0), so this is the
+                        \ address of the screen just below the energy icon and
+                        \ scanner row
+                        \
+                        \ We therefore start the scrolling process by updating
+                        \ the screen address in viewScreenAddr(1 0) to point to
+                        \ the new address after scrolling
+                        \
+                        \ Scrolling is done in individual steps, as follows:
+                        \
+                        \   * When scrolling horizontally, we scroll by one
+                        \     column that's one character block wide (i.e. one
+                        \     byte, two pixels wide)
+                        \
+                        \   * When scrolling vertically, we scroll by one row
+                        \     that's one character block tall (i.e. eight bytes,
+                        \     eight pixels tall)
+                        \
+                        \ The amount of change that we need to apply to
+                        \ viewScreenAddr(1 0) for each of the four directions is
+                        \ given in the tables scrollScreenHi and scrollScreenLo,
+                        \ as 16-bit signed values, so we just need to look up
+                        \ the correct value and apply it to viewScreenAddr(1 0)
+                        \
+                        \ For example, we advance viewScreenAddr(1 0) by eight
+                        \ bytes when panning right, as we need to scroll the
+                        \ screen to the left, so the start of the screen in
+                        \ memory moves on by eight bytes (one character block)
+                        \
+                        \ This would scroll the screen to the left by two pixels
+                        \ as each character block is two pixels wide
+                        \
+                        \ Similarly, we reduce viewScreenAddr(1 0) by 320 bytes
+                        \ when panning up, as we need to scroll the screen down,
+                        \ so the start of the screen in memory moves on by eight
+                        \ bytes (one character row of 40 character blocks with
+                        \ eight bytes per character block)
+                        \
+                        \ This would scroll the screen to down by eight pixels
+                        \ as each character row is eight pixels wide
 
-.C37EC
+ LDA viewScreenAddr     \ Apply the change in (scrollScreenHi scrollScreenLo)
+ CLC                    \ for the current pan direction in Y to the screen
+ ADC scrollScreenLo,Y   \ address of the player's scrolling landscape, which is
+ STA viewScreenAddr     \ stored in viewScreenAddr(1 0)
+ LDA viewScreenAddr+1   \
+ ADC scrollScreenHi,Y   \ We start by calculating this:
+                        \
+                        \   (A viewScreenAddr) = viewScreenAddr(1 0)
+                        \                  + (scrollScreenHi+Y scrollScreenLo+Y)
 
- CMP #&60
- BCS C37F2
- ADC #&20
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC scro1              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
+                        \
+                        \ If the high byte is in range, jump to scro1 to check
+                        \ the high byte against the start of screen memory
 
-.C37F2
+ JMP scro2              \ Jump to scro2 to skip the next check, as we know it
+                        \ doesn't apply
 
- STA viewScreenAddr+1
+.scro1
+
+ CMP #&60               \ If the high byte in A < &60 then the new address is
+ BCS scro2              \ before the start of screen memory, so add &20 to the
+ ADC #&20               \ high byte so the address wraps around within the range
+                        \ of screen memory between &6000 and &8000
+
+.scro2
+
+ STA viewScreenAddr+1   \ Store the high byte of the result, so we now have:
+                        \
+                        \   viewScreenAddr(1 0) = viewScreenAddr(1 0)
+                        \                  + (scrollScreenHi+Y scrollScreenLo+Y)
+                        \
+                        \ with the address wrapped around as required
+
+                        \ We now reprogram the 6845 CRTC chip to scroll the
+                        \ screen in hardware (so-called "hardware scrolling")
+                        \ by setting 6845 registers R12 and R13 to the new
+                        \ address for the start of screen memory
+                        \
+                        \ The registers actually require the address to be set
+                        \ in terms of character rows, so we need to set R12 and
+                        \ R12 to the address divided by 8 (see below)
 
  JSR GetIconRowAddress  \ Set iconRowAddr(1 0) to the address in screen memory
                         \ of the icon and scanner row at the top of the screen
+                        \
+                        \ This calculates the address from viewScreenAddr(1 0),
+                        \ so the value returned will be the new start of screen
+                        \ memory, after the scroll is completed
+                        \
+                        \ It also sets A to the high byte of the address of
+                        \ screen memory in iconRowAddr(1 0)
 
- STA L006D
- LDA iconRowAddr
- LSR L006D
+ STA screenAddrHi       \ Set (screenAddrHi A) = iconRowAddr(1 0) / 8
+ LDA iconRowAddr        \
+ LSR screenAddrHi       \ So (screenAddrHi A) contains the new address of screen
+ ROR A                  \ memory, divided by 8, which is suitable for passing to
+ LSR screenAddrHi       \ the 6845 CRTC to change the address of screen memory
  ROR A
- LSR L006D
+ LSR screenAddrHi
  ROR A
- LSR L006D
- ROR A
-
-                        \ We now set the address of screen memory to
-                        \ (L006D A) * 8
 
  LDX #13                \ Set 6845 register R13 = A, for the low byte
  STX SHEILA+&00         \
@@ -17522,35 +17654,101 @@ L314A = C3148+2
 
  LDX #12                \ Set 6845 register R12 = &0F, for the high byte
  STX SHEILA+&00         \
- LDA L006D              \ We do this by writing the register number (12) to
- STA SHEILA+&01         \ SHEILA &00, and then the value (L006D) to SHEILA &01
+ LDA screenAddrHi       \ We do this by writing the register number (12) to
+ STA SHEILA+&01         \ SHEILA &00, and then the value (screenAddrHi) to SHEILA &01
 
-
-                        \ This sets 6845 registers (R12 R13) = (L006D A) to
+                        \ This sets 6845 registers (R12 R13) = (screenAddrHi A) to
                         \ point to the start of screen memory in terms of
                         \ character rows. There are 8 pixel lines in each
                         \ character row, so to get the actual address of the
                         \ start of screen memory, we multiply by 8:
                         \
-                        \   (L006D A) * 8
+                        \   (screenAddrHi A) * 8
                         \
-                        \ So this sets the start of screen memory to
-                        \ (L006D A) * 8
+                        \ which is iconRowAddr(1 0), as set above
+                        \
+                        \ So this whole thing sets the start of screen memory to
+                        \ the address of iconRowAddr(1 0), which scrolls the
+                        \ screen by the required amount
 
- DEC L0CC1
- LDA viewScreenAddr
- CLC
- ADC L38DC,Y
- STA toAddr
- LDA viewScreenAddr+1
- ADC L38E0,Y
- CMP #&80
- BCC C3830
- SBC #&20
+ DEC scrollCounter      \ Decrement the scroll counter, as we have just scrolled
+                        \ the screen by one more step
 
-.C3830
+                        \ We now set viewScreenAddr(1 0) to the new address of
+                        \ the start of the player's landscape view, so that's
+                        \ the address of the top-left corner of the view, just
+                        \ below the energy icon and scanner bar at the top of
+                        \ the screen
+                        \
+                        \ We now need to set toAddr(1 0) to the address in
+                        \ screen memory that we need to update now that the
+                        \ screen has been scrolled
+                        \
+                        \ Scrolling the screen leads to the following update
+                        \ requirements:
+                        \
+                        \   * When scrolling the screen to the left, we need to
+                        \     update the column on the right
+                        \
+                        \   * When scrolling the screen to the right, we need to
+                        \     update the column on the left
+                        \
+                        \   * When scrolling the screen down, we need to update
+                        \     the row along the top
+                        \
+                        \   * When scrolling the screen up, we need to update
+                        \     the row along the bottom
+                        \
+                        \ We want to set toAddr(1 0) to the address of the area
+                        \ in screen memory that we need to update, and the
+                        \ offset within screen memory of this area for each of
+                        \ the four directions is given in the tables at
+                        \ updateOffsetHi and updateOffsetLo, as 16-bit signed
+                        \ values, so we just need to look up the correct offset
+                        \ and apply it to viewScreenAddr(1 0) to get the address
+                        \ of the area of screen memory we need to update
 
- STA toAddr+1
+ LDA viewScreenAddr     \ Set toAddr(1 0) to the screen address of the player's
+ CLC                    \ scrolling landscape, plus the offset for the current
+ ADC updateOffsetLo,Y   \ pan direction from (updateOffsetHi updateOffsetLo)
+ STA toAddr             \
+ LDA viewScreenAddr+1   \ We start by calculating this:
+ ADC updateOffsetHi,Y   \
+                        \   (A toAddr) = viewScreenAddr(1 0)
+                        \                  + (updateOffsetHi+Y updateOffsetLo+Y)
+
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC scro3              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
+
+.scro3
+
+ STA toAddr+1           \ Store the high byte of the result, so we now have:
+                        \
+                        \   toAddr(1 0) = viewScreenAddr(1 0)
+                        \                  + (updateOffsetHi+Y updateOffsetLo+Y)
+                        \
+                        \ with the address wrapped around as required
+
+                        \ By this point we now done the following to implement
+                        \ the required screen scrolling:
+                        \
+                        \  * Updated viewScreenAddr(1 0) to the new address of
+                        \    the player's scrolling landscape
+                        \
+                        \  * Updated the 6845 to scroll the screen by changing
+                        \    the address of screen memory
+                        \
+                        \  * Decremented the counter in scrollCounter
+                        \
+                        \  * Set toAddr(1 0) to the address of the area in
+                        \    screen memory that we now need to update
+                        \
+                        \ We can now fall through into DisplayViewBuffer to
+                        \ copy the contents of the view screen buffer into the
+                        \ area we need to update, so that the scroll reveals the
+                        \ correct part of the view
 
 \ ******************************************************************************
 \
@@ -17564,23 +17762,60 @@ L314A = C3148+2
 \
 \ Arguments:
 \
-\   Y                   ???
+\   Y                   The direction of scrolling that we just applied:
+\
+\                         * 0 = pan right
+\                        
+\                         * 1 = pan left
+\                        
+\                         * 2 = pan up
+\                        
+\                         * 3 = pan down
+\
+\   toAddr(1 0)         The address of the area in screen memory that we need to
+\                       update with the contents of the view screen buffer
 \
 \ ******************************************************************************
 
 .DisplayViewBuffer
 
- LDA viewBufferAddr
- CLC
- ADC scrollScreenLo,Y
+                        \ We start by setting both viewBufferAddr(1 0) and
+                        \ fromAddr(1 0) to the address in the view screen
+                        \ buffer of the content that we need to copy into the
+                        \ screen area following the scroll ???
+                        \
+                        \ We do this by taking the current value of the address
+                        \ in viewBufferAddr(1 0) and applying the change in
+                        \ (scrollScreenHi scrollScreenLo) for the current pan
+                        \ direction in Y, just as we did when we updated the
+                        \ screen address in viewScreenAddr(1 0) in the
+                        \ ScrollPlayerView routine
+
+ LDA viewBufferAddr     \ Add (scrollScreenHi scrollScreenLo) for this pan
+ CLC                    \ direction to the address in viewBufferAddr(1 0),
+ ADC scrollScreenLo,Y   \ starting with the low bytes
  STA viewBufferAddr
- STA fromAddr
- LDA viewBufferAddr+1
+
+ STA fromAddr           \ Store the low byte of the result in fromAddr(1 0)
+
+ LDA viewBufferAddr+1   \ And then add the high bytes
  ADC scrollScreenHi,Y
  STA viewBufferAddr+1
- STA fromAddr+1
- CPY #&02
- BCS DisplayBufferRow
+
+ STA fromAddr+1         \ Store the high byte of the result in fromAddr(1 0), so
+                        \ fromAddr(1 0) = viewBufferAddr(1 0) ???
+
+ CPY #2                 \ If Y >= 2 then we are panning up or down, and we are
+ BCS DisplayBufferRow   \ scrolling down or up, so jump to DisplayBufferRow to
+                        \ update the player's scrolling landscape view by
+                        \ copying an eight-pixel high character row from the
+                        \ view screen buffer into screen memory
+
+                        \ Otherwise we are panning left or right, and we are
+                        \ scrolling right or left or up, so fall througn into
+                        \ DisplayBufferColumn update the player's scrolling
+                        \ landscape view by copying a two-pixel wide column from
+                        \ the view screen buffer into screen memory
 
 \ ******************************************************************************
 \
@@ -17629,15 +17864,22 @@ L314A = C3148+2
  BNE dcol2              \ we have not reached the end of the view screen buffer,
                         \ so jump to dcol2 to skip the following
 
- LDA viewBufferAddr     \ The address in (A fromAddr) is now greater than &5300,
- CLC                    \ so it has gone past the end of the view screen buffer,
- ADC #&A0               \ so set the following:
- STA fromAddr           \
- LDA viewBufferAddr+1   \   (A fromAddr) = viewBufferAddr(1 0) + &A0
- ADC #&00               \
+                        \ The address in (A fromAddr) is now greater than &5300,
+                        \ so it has gone past the end of the view screen buffer,
+                        \ so we now set the following:
+                        \
+                        \   (A fromAddr) = viewBufferAddr(1 0) + 160
+                        \
                         \ So this wraps the address around to the start of the
                         \ view screen buffer for when we go past the end of the
                         \ buffer ???
+
+ LDA viewBufferAddr     \ Calculate the following:
+ CLC                    \
+ ADC #&A0               \   (A fromAddr) = viewBufferAddr(1 0) + &A0
+ STA fromAddr           \                = viewBufferAddr(1 0) + 160
+ LDA viewBufferAddr+1    
+ ADC #&00
 
 .dcol2
 
@@ -17809,29 +18051,37 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L38DC
+\       Name: updateOffsetLo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: The offset within the screen memory for the player's landscape
+\             view of the area to update following a scroll (low byte)
 \
 \ ******************************************************************************
 
-.L38DC
+.updateOffsetLo
 
- EQUB &38, &00, &00, &C0
+ EQUB LO(320 - 8)       \ Direction 0 = 320 - 8 (pan right, scroll left)
+ EQUB LO(0)             \ Direction 1 = 0 (pan left, scroll right)
+ EQUB LO(0)             \ Direction 2 = 0 (pan up, scroll down)
+ EQUB LO(320 * 23)      \ Direction 3 = 320 * 23 (pan down, scroll up)
 
 \ ******************************************************************************
 \
-\       Name: L38E0
+\       Name: updateOffsetHi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: The offset within the screen memory for the player's landscape
+\             view of the area to update following a scroll (high byte)
 \
 \ ******************************************************************************
 
-.L38E0
+.updateOffsetHi
 
- EQUB &01, &00, &00, &1C
+ EQUB HI(320 - 8)       \ Direction 0 = 320 - 8 (pan right, scroll left)
+ EQUB HI(0)             \ Direction 1 = 0 (pan left, scroll right)
+ EQUB HI(0)             \ Direction 2 = 0 (pan up, scroll down)
+ EQUB HI(320 * 23)      \ Direction 3 = 320 * 23 (pan down, scroll up)
 
 \ ******************************************************************************
 \
@@ -17845,10 +18095,10 @@ L314A = C3148+2
 
 .scrollScreenLo
 
- EQUB &08               \ 0 = &0008 =   +8 (scroll right)
- EQUB &F8               \ 1 = &FFF8 =   -8 (scroll left)
- EQUB &C0               \ 2 = &FEC0 = -320 (scroll up)
- EQUB &40               \ 4 = &0140 = +320 (scroll down)
+ EQUB LO(+8)            \ Direction 0 = +8 (pan right, scroll left)
+ EQUB LO(-8)            \ Direction 1 = -8 (pan left, scroll right)
+ EQUB LO(-320)          \ Direction 2 = -320 (pan up, scroll down)
+ EQUB LO(+320)          \ Direction 3 = +320 (pan down, scroll up)
 
 \ ******************************************************************************
 \
@@ -17862,42 +18112,44 @@ L314A = C3148+2
 
 .scrollScreenHi
 
- EQUB &00               \ 0 = &0008 =   +8 (scroll right)
- EQUB &FF               \ 1 = &FFF8 =   -8 (scroll left)
- EQUB &FE               \ 2 = &FEC0 = -320 (scroll up)
- EQUB &01               \ 4 = &0140 = +320 (scroll down)
+ EQUB HI(+8)            \ Direction 0 = +8 (pan right, scroll left)
+ EQUB HI(-8)            \ Direction 1 = -8 (pan left, scroll right)
+ EQUB HI(-320)          \ Direction 2 = -320 (pan up, scroll down)
+ EQUB HI(+320)          \ Direction 3 = +320 (pan down, scroll up)
 
 \ ******************************************************************************
 \
 \       Name: viewBufferAddrHi
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: The starting address for viewBufferAddr(1 0) for each panning
+\             direction (high byte) ???
 \
 \ ******************************************************************************
 
 .viewBufferAddrHi
 
- EQUB &3E               \ 0 = &3EF8 (scroll right)
- EQUB &3F               \ 1 = &3F80 (scroll left)
- EQUB &49               \ 2 = &4900 (scroll up)
- EQUB &3D               \ 4 = &3DC0 (scroll down)
+ EQUB HI(viewBuffer-8)      \ Direction 0 = -8 (pan right, scroll left)
+ EQUB HI(viewBuffer+&80)    \ Direction 1 = +&80 (pan left, scroll right)
+ EQUB HI(viewBuffer+&A00)   \ Direction 2 = &A00 (pan up, scroll down)
+ EQUB HI(viewBuffer-320)    \ Direction 3 = -320 (pan down, scroll up)
 
 \ ******************************************************************************
 \
 \       Name: viewBufferAddrLo
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: The starting address for viewBufferAddr(1 0) for each panning
+\             direction (low byte) ???
 \
 \ ******************************************************************************
 
 .viewBufferAddrLo
 
- EQUB &F8               \ 0 = &3EF8 (scroll right)
- EQUB &80               \ 1 = &3F80 (scroll left)
- EQUB &00               \ 2 = &4900 (scroll up)
- EQUB &C0               \ 4 = &3DC0 (scroll down)
+ EQUB LO(viewBuffer-8)      \ Direction 0 = -8 (pan right, scroll left)
+ EQUB LO(viewBuffer+&80)    \ Direction 1 = +&80 (pan left, scroll right)
+ EQUB LO(viewBuffer+&A00)   \ Direction 2 = &A00 (pan up, scroll down)
+ EQUB LO(viewBuffer-320)    \ Direction 3 = -320 (pan down, scroll up)
 
 \ ******************************************************************************
 \
@@ -17914,33 +18166,57 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C38F8
+\       Name: SetNumberOfScrolls
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Start a scroll process by setting the number of scroll steps and
+\             the address in viewBufferAddr(1 0) ???
 \
 \ ******************************************************************************
 
-.sub_C38F8
+.SetNumberOfScrolls
 
- STA L0CD1
+ STA numberOfScrolls    \ Store the number of scroll steps required in the
+                        \ variable
+                        \
+                        \ When this variable is non-zero, the interrupt routine
+                        \ will scroll the screen by this many steps in the
+                        \ background
+
+                        \ Fall through into SetViewBufferAddr to set the address
+                        \ in viewBufferAddr(1 0) ???
 
 \ ******************************************************************************
 \
-\       Name: sub_C38FB
+\       Name: SetViewBufferAddr
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Set the address in viewBufferAddr(1 0) ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   The direction of scrolling that we are applying:
+\
+\                         * 0 = pan right
+\                        
+\                         * 1 = pan left
+\                        
+\                         * 2 = pan up
+\                        
+\                         * 3 = pan down
 \
 \ ******************************************************************************
 
-.sub_C38FB
+.SetViewBufferAddr
 
- LDA viewBufferAddrLo,Y
- STA viewBufferAddr
- LDA viewBufferAddrHi,Y
+ LDA viewBufferAddrLo,Y \ Set viewBufferAddr(1 0) to the Y-th entry from the
+ STA viewBufferAddr     \ viewBufferAddrHi and viewBufferAddrLo lookup tables
+ LDA viewBufferAddrHi,Y \ ???
  STA viewBufferAddr+1
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -18445,6 +18721,12 @@ L314A = C3148+2
 \   Category: Graphics
 \    Summary: Calculate the address in screen memory of the icon and scanner row
 \             at the top of the screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The high byte of the address in iconRowAddr(1 0)
 \
 \ ******************************************************************************
 
