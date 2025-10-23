@@ -2458,7 +2458,7 @@
      0C4F   00
 .L0C50
      0C50   00
-.L0C51
+.uTurnStatus
      0C51   00
 .landscapeZero
      0C52   00

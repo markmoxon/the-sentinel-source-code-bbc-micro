@@ -1478,9 +1478,33 @@
 
  EQUB 0                 \ ???
 
-.L0C51
+.uTurnStatus
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether we are performing or have
+                        \ just performed a U-turn
+                        \
+                        \   * Bit 6 clear = do not perform a U-turn if "U" is
+                        \                   pressed
+                        \
+                        \   * Bit 6 set = do a U-turn if "U" is pressed
+                        \
+                        \ Bit 6 is set in CheckForKeyPresses (which is called by
+                        \ the interrupt handler) if "U" is not being pressed, so
+                        \ this flag ensures that pressing and holding the "U"
+                        \ key does not continuously perform U-turns, and instead
+                        \ only performs a single U-turn
+                        \
+                        \ When a "U" key press is detected in ProcessActionKeys,
+                        \ uTurnStatus is shifted left, so for the first
+                        \ iteration of the main game loop after "U" is pressed,
+                        \ bit 7 is set to indicate that we just performed a
+                        \ U-turn
+
+                        \   * CheckForKeyPresses sets 01 if U is not being pressed
+                        \
+                        \   * sub_C1264 sets 00
+                        \
+                        \   * ProcessActionKeys ASLs and if bit 7 is 0, does not do a U-turn
 
 .landscapeZero
 
@@ -4583,11 +4607,24 @@ L1145 = C1144+1
                         \ using a tail call
 
                         \ If we get here then the player is not pressing "A",
-                        \ "Q", "R", "T", "B" or "H" (absorb, transfer, create
-                        \ robot, create tree, create boulder, hyperspace)
+                        \ "Q", "R", "T", "B", "H", or "U" (absorb, transfer,
+                        \ create robot, create tree, create boulder, hyperspace,
+                        \ U-turn)
 
- LDA #%01000000         \ Set bit 6 of L0C51 ???
- STA L0C51
+ LDA #%01000000         \ Set bit 6 of uTurnStatus so that when the "U" key is
+ STA uTurnStatus        \ next pressed, this will trigger a U-turn in the
+                        \ ProcessActionKeys routine
+                        \
+                        \ This implements debounce so that holding down "U" will
+                        \ not continuously perform U-turns, and instead the
+                        \ player has to release "U" before they can do a second
+                        \ U-turn
+                        \
+                        \ A U-turn is only performed in ProcessActionKeys when
+                        \ bit 6 of uTurnStatus is set, at which point bit 6 is
+                        \ cleared, and this is the only place where bit 6 is
+                        \ set, so this ensures only one U-turn is performed
+                        \ until we get here again, when "U" has been released
 
  BNE C1208              \ Jump to C1208 to finish off and return from the
                         \ subroutine (this BNE is effectively a JMP as A is
@@ -4934,7 +4971,10 @@ L1145 = C1144+1
  LDA #0                 \ Clear bit 7 of doNotScanKeyboard to enable keyboard
  STA doNotScanKeyboard  \ scans ???
 
- STA L0C51              \ Set L0C51 = 0 ???
+ STA uTurnStatus        \ Clear bit 6 of uTurnStatus to prevent the "U" key
+                        \ from performing a U-turn, so that the "U" key has to
+                        \ be released before a second U-turn can be performed
+                        \ ???
 
 .C126C
 
@@ -8074,8 +8114,30 @@ L1145 = C1144+1
 
                         \ If we get here then "U" (U-turn) is being pressed
 
- ASL L0C51              \ ???
- BPL P1B1A
+                        \ If we get here with bit 6 of uTurnStatus set, then
+                        \ this is the first time we have reached this point
+                        \ since the key was pressed (as we are about to clear
+                        \ bit 6), so we can perform the requested U-turn
+                        \
+                        \ If we get here with bit 6 of uTurnStatus clear, then
+                        \ this isn't the first time we've reached this point
+                        \ since the key was pressed, so in this case we don't
+                        \ do another U-turn, as we're already done one
+
+ ASL uTurnStatus        \ Clear bit 6 uTurnStatus to prevent the "U" key from
+                        \ performing a U-turn, so that the "U" key has to be
+                        \ released before a second U-turn can be performed
+
+ BPL P1B1A              \ If bit 7 of uTurnStatus is now clear, then that means
+                        \ that bit 6 was clear before the above shift, which
+                        \ means we are currently ignoring the "U" key to prevent
+                        \ doing a second U-turn, so jump to P1B1A to skip doing
+                        \ another U-turn and instead return from the subroutine
+                        \ with the C flag set to indicate ???
+
+                        \ If we get here then "U" is being pressed and bit 6 of
+                        \ uTurnStatus was set before being cleared above, so we
+                        \ now perform a U-turn
 
  LDA objectYawAngle,X   \ Rotate the player's yaw angle through 180 degrees by
  EOR #%10000000         \ flipping bit 7, which turns the player around
@@ -16835,8 +16897,9 @@ L314A = C3148+2
 
 .game2
 
- LDA L0C51
- BMI game3
+ LDA uTurnStatus        \ If bit 7 of uTurnStatus is set then we just performed
+ BMI game3              \ a U-turn in the ProcessActionKeys routine, so jump to
+                        \ game3 to skip the following ???
 
  JSR sub_C2463
 
