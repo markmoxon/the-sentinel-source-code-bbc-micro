@@ -2360,7 +2360,7 @@
      0C0A   00
      0C0B   00
 .J
-     0C0C   00
+     0C0C
 .L0C0D
      0C0D   00
 .L0C0E
@@ -2495,7 +2495,7 @@
      0C61   00
 .L0C62
      0C62   00
-.L0C63
+.playerHasMovedTile
      0C63   00
 .quitGame
      0C64   00
@@ -3363,7 +3363,7 @@
      1194   D0 04      BNE &119A
      1196   38         SEC
      1197   6E 64 0C   ROR &0C64
-.pkey1
+.ckey1
      119A   A2 9D      LDX #&9D
      119C   20 62 0F   JSR &0F62
      119F   D0 1F      BNE &11C0
@@ -3376,16 +3376,16 @@
      11B0   20 31 13   JSR &1331
      11B3   20 D9 39   JSR &39D9
      11B6   4C BC 11   JMP &11BC
-.pkey2
+.ckey2
      11B9   20 A7 3A   JSR &3AA7
-.pkey3
+.ckey3
      11BC   A9 80      LDA #&80
      11BE   D0 02      BNE &11C2
-.pkey4
+.ckey4
      11C0   A9 00      LDA #&00
-.pkey5
+.ckey5
      11C2   8D 22 12   STA &1222
-.pkey6
+.ckey6
      11C5   A0 0E      LDY #&0E
      11C7   20 53 13   JSR &1353
      11CA   10 11      BPL &11DD
@@ -3396,21 +3396,21 @@
      11D6   A9 40      LDA #&40
      11D8   8D 51 0C   STA &0C51
      11DB   D0 2B      BNE &1208
-.pkey7
+.ckey7
      11DD   AE 5F 0C   LDX &0C5F
      11E0   10 0B      BPL &11ED
      11E2   0E C8 0C   ASL &0CC8
      11E5   B0 21      BCS &1208
      11E7   20 27 39   JSR &3927
      11EA   4C F9 11   JMP &11F9
-.pkey8
+.ckey8
      11ED   AD E8 0C   LDA &0CE8
      11F0   10 05      BPL &11F7
      11F2   AD EA 0C   LDA &0CEA
      11F5   30 11      BMI &1208
-.pkey9
+.ckey9
      11F7   85 09      STA &09
-.pkey10
+.ckey10
      11F9   A5 09      LDA &09
      11FB   30 0B      BMI &1208
      11FD   8D 1D 0C   STA &0C1D
@@ -4682,10 +4682,10 @@
      1B12   20 47 21   JSR &2147
      1B15   A9 00      LDA #&00
      1B17   8D 1C 0C   STA &0C1C
-.P1B1A
+.pkey1
      1B1A   38         SEC
      1B1B   60         RTS
-.C1B1C
+.pkey2
      1B1C   A6 6E      LDX &6E
      1B1E   C9 23      CMP #&23
      1B20   D0 11      BNE &1B33
@@ -4696,7 +4696,7 @@
      1B2C   9D C0 09   STA &09C0,X
      1B2F   A9 28      LDA #&28
      1B31   D0 40      BNE &1B73
-.C1B33
+.pkey3
      1B33   4E 6E 0C   LSR &0C6E
      1B36   20 FF 1B   JSR &1BFF
      1B39   20 CC 1C   JSR &1CCC
@@ -4715,7 +4715,7 @@
      1B56   D0 40      BNE &1B98
      1B58   20 00 12   JSR &1200
      1B5B   86 0B      STX &0B
-.P1B5D
+.pkey4
      1B5D   BD 00 01   LDA &0100,X
      1B60   C9 40      CMP #&40
      1B62   90 0D      BCC &1B71
@@ -4725,15 +4725,15 @@
      1B69   D0 F2      BNE &1B5D
      1B6B   BD 40 0A   LDA &0A40,X
      1B6E   8D E6 0C   STA &0CE6
-.C1B71
+.pkey5
      1B71   A9 19      LDA #&19
-.C1B73
+.pkey6
      1B73   20 F6 5F   JSR &5FF6
      1B76   A9 80      LDA #&80
      1B78   8D 63 0C   STA &0C63
      1B7B   38         SEC
      1B7C   60         RTS
-.C1B7D
+.pkey7
      1B7D   AD 00 01   LDA &0100
      1B80   30 16      BMI &1B98
      1B82   BD 40 0A   LDA &0A40,X
@@ -4741,14 +4741,14 @@
      1B87   F0 52      BEQ &1BDB
      1B89   C9 06      CMP #&06
      1B8B   F0 0B      BEQ &1B98
-.C1B8D
+.pkey8
      1B8D   20 D8 1E   JSR &1ED8
      1B90   86 01      STX &01
      1B92   18         CLC
      1B93   20 27 21   JSR &2127
      1B96   18         CLC
      1B97   60         RTS
-.C1B98
+.pkey9
      1B98   A9 AA      LDA #&AA
      1B9A   8D 1C 59   STA &591C
      1B9D   A9 05      LDA #&05
@@ -4757,7 +4757,7 @@
      1BA4   8D 1C 59   STA &591C
      1BA7   38         SEC
      1BA8   60         RTS
-.C1BA9
+.pkey10
      1BA9   20 11 21   JSR &2111
      1BAC   B0 EA      BCS &1B98
      1BAE   38         SEC
@@ -4773,19 +4773,19 @@
      1BC3   18         CLC
      1BC4   20 27 21   JSR &2127
      1BC7   4C 98 1B   JMP &1B98
-.C1BCA
+.pkey11
      1BCA   BD 40 0A   LDA &0A40,X
      1BCD   D0 0A      BNE &1BD9
      1BCF   A4 0B      LDY &0B
      1BD1   B9 C0 09   LDA &09C0,Y
      1BD4   49 80      EOR #&80
      1BD6   9D C0 09   STA &09C0,X
-.C1BD9
+.pkey12
      1BD9   18         CLC
      1BDA   60         RTS
-.C1BDB
+.pkey13
      1BDB   A0 07      LDY #&07
-.P1BDD
+.pkey14
      1BDD   B9 00 01   LDA &0100,Y
      1BE0   30 18      BMI &1BFA
      1BE2   B9 40 0A   LDA &0A40,Y
@@ -4793,14 +4793,14 @@
      1BE7   F0 04      BEQ &1BED
      1BE9   C9 05      CMP #&05
      1BEB   D0 0D      BNE &1BFA
-.C1BED
+.pkey15
      1BED   8A         TXA
      1BEE   D9 A0 0C   CMP &0CA0,Y
      1BF1   D0 07      BNE &1BFA
      1BF3   A9 80      LDA #&80
      1BF5   99 A0 0C   STA &0CA0,Y
      1BF8   D0 93      BNE &1B8D
-.C1BFA
+.pkey16
      1BFA   88         DEY
      1BFB   10 E0      BPL &1BDD
      1BFD   30 8E      BMI &1B8D
@@ -15833,7 +15833,7 @@
      5F20   4C 7E 5E   JMP &5E7E
 .CRE41
      5F23   60         RTS
-.sub_C5F24
+.DisplayGameOver
      5F24   48         PHA
      5F25   20 48 35   JSR &3548
      5F28   20 99 36   JSR &3699

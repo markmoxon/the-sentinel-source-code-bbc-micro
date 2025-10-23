@@ -1316,11 +1316,12 @@
 
  EQUB 0                 \ The player's energy level (in the range 0 to 63)
 
- EQUB 0                 \ ???
+ EQUB 0                 \ This byte appears to be unused
 
 .J
 
- EQUB 0                 \ ???
+ SKIP 1                 \ Temporary storage, used in the maths routines from
+                        \ Revs
 
 .L0C0D
 
@@ -1424,7 +1425,9 @@
 
 .L0C44
 
- EQUB 0, 0, 0
+ EQUB 0
+
+ EQUB 0, 0              \ These bytes appear to be unused
 
 .L0C47
 
@@ -1500,12 +1503,6 @@
                         \ bit 7 is set to indicate that we just performed a
                         \ U-turn
 
-                        \   * CheckForKeyPresses sets 01 if U is not being pressed
-                        \
-                        \   * sub_C1264 sets 00
-                        \
-                        \   * ProcessActionKeys ASLs and if bit 7 is 0, does not do a U-turn
-
 .landscapeZero
 
  EQUB 0                 \ A flag that is set depending on whether we are playing
@@ -1517,11 +1514,17 @@
 
 .G2
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Temporary storage, used in the maths routines from
+                        \ Revs, where the original variable name was G (this
+                        \ variable has been renamed to G2 to prevent a clash
+                        \ with the G variable that is used by The Sentinel)
 
 .H2
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Temporary storage, used in the maths routines from
+                        \ Revs, where the original variable name was H (this
+                        \ variable has been renamed to H2 to prevent a clash
+                        \ with the H variable that is used by The Sentinel)
 
 .stashOffset
 
@@ -1552,7 +1555,9 @@
 
 .L0C59
 
- EQUB &16, 0            \ ???
+ EQUB &16               \ ???
+
+ EQUB 0                 \ This byte appears to be unused
 
 .L0C5B
 
@@ -1590,6 +1595,8 @@
 .objectType
 
  SKIP 0                 \ Storage for the type of object that we are spawning
+                        \
+                        \ This shares the same memory location as keyPress
 
 .keyPress
 
@@ -1610,9 +1617,15 @@
 
  EQUB 0                 \ ???
 
-.L0C63
+.playerHasMovedTile
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether the player has moved to a new
+                        \ tile by transferring or hyperspacing, so we can decide
+                        \ whether to regenerate the player's landscape view
+                        \
+                        \   * Bit 7 clear = player has not moved to a new tile
+                        \
+                        \   * Bit 7 set = player has moved to a new tile
 
 .quitGame
 
@@ -1632,7 +1645,7 @@
                         \ A set bit indicates a match while a clear bit
                         \ indicates a failure
 
- EQUB 0                 \ ???
+ EQUB 0                 \ This byte appears to be unused
 
 .L0C67
 
@@ -1724,11 +1737,15 @@
 
 .L0C76
 
- EQUB 0, 0              \ ???
+ EQUB 0                 \ ???
+
+ EQUB 0                 \ This byte appears to be unused
 
 .L0C78
 
- EQUB &EF, 0            \ ???
+ EQUB &EF               \ ???
+
+ EQUB 0                 \ This byte appears to be unused
 
 .L0C7A
 
@@ -1920,7 +1937,9 @@
                         \ keyboard scans:
                         \
                         \   * Volume keys in ProcessVolumeKeys
+                        \
                         \   * Game key presses in IRQHandler
+                        \
                         \   * Game key presses in sub_C1264
 
 .activateSentinel
@@ -1949,7 +1968,7 @@
  EQUB &80, &80          \ The four-byte key logger for logging game key presses
  EQUB &80, &80
 
- EQUB &80, &80          \ These bytes appear to be unused ???
+ EQUB &80, &80          \ These bytes appear to be unused
  EQUB &80, &80
 
 .inputBuffer
@@ -4486,7 +4505,7 @@ L1145 = C1144+1
  LDX #&8E               \ Scan the keyboard to see if function key f1 is being
  JSR ScanKeyboard       \ pressed ("Quit game")
 
- BNE pkey1              \ If function key f1 is not being pressed, jump to pkey1
+ BNE ckey1              \ If function key f1 is not being pressed, jump to ckey1
                         \ to skip the following
 
  SEC                    \ Function key f1 is not being pressed, which quits the
@@ -4494,28 +4513,28 @@ L1145 = C1144+1
                         \ to the start of the main game loop it jumps to the
                         \ main title loop to restart the game
 
-.pkey1
+.ckey1
 
  LDX #&9D               \ Scan the keyboard to see if SPACE is being pressed
  JSR ScanKeyboard       \ ("Toggle sights on/off")
 
- BNE pkey4              \ If SPACE is not being pressed, jump to pkey4 to reset
+ BNE ckey4              \ If SPACE is not being pressed, jump to ckey4 to reset
                         \ the value of spaceKeyDebounce to flag that SPACE is
                         \ not being pressed
 
                         \ If we get here then SPACE is being pressed
 
  LDA spaceKeyDebounce   \ If spaceKeyDebounce is non-zero then we have already
- BNE pkey6              \ toggled the sights but the player is still holding
-                        \ down SPACE, so jump to pkey6 to avoid toggling the
+ BNE ckey6              \ toggled the sights but the player is still holding
+                        \ down SPACE, so jump to ckey6 to avoid toggling the
                         \ sights again
 
  LDA sightsAreVisible   \ Flip bit 7 of sightsAreVisible to toggle the sights on
  EOR #%10000000         \ and off
  STA sightsAreVisible
 
- BPL pkey2              \ If bit 7 is now clear then we just turned the sights
-                        \ off, so jump to pkey2 to remove them from the screen
+ BPL ckey2              \ If bit 7 is now clear then we just turned the sights
+                        \ off, so jump to ckey2 to remove them from the screen
 
                         \ Otherwise bit 7 is now set, so we need to show the
                         \ sights
@@ -4524,45 +4543,45 @@ L1145 = C1144+1
 
  JSR ShowSights         \ Draw the sights on the screen
 
- JMP pkey3              \ Jump to pkey3 to skip the following
+ JMP ckey3              \ Jump to ckey3 to skip the following
 
-.pkey2
+.ckey2
 
  JSR HideSights         \ Remove the sights from the screen
 
-.pkey3
+.ckey3
 
  LDA #%10000000         \ Set bit 7 of A to store in spaceKeyDebounce, to flag
                         \ that we have toggled the sights (so we can make sure
                         \ we don't keep toggling the sights if SPACE is being
                         \ held down)
 
- BNE pkey5              \ Jump to pkey5 to set spaceKeyDebounce to the value of
+ BNE ckey5              \ Jump to ckey5 to set spaceKeyDebounce to the value of
                         \ A in (this BNE is effectively a JMP as A is never
                         \ zero)
 
-.pkey4
+.ckey4
 
                         \ If we get here then SPACE is not being pressed
 
  LDA #0                 \ Clear bit 7 of spaceKeyDebounce to record that SPACE
                         \ is not being pressed
 
-.pkey5
+.ckey5
 
  STA spaceKeyDebounce   \ Set spaceKeyDebounce to the value of A, so we record
                         \ whether or not SPACE is being pressed to make sure
                         \ we don't keep toggling the sights if SPACE is held
                         \ down
 
-.pkey6
+.ckey6
 
  LDY #14                \ Scan the keyboard for all 14 game keys in the gameKeys
  JSR ScanForGameKeys    \ table
 
- BPL pkey7              \ ScanForGameKeys will clear bit 7 of the result if at
+ BPL ckey7              \ ScanForGameKeys will clear bit 7 of the result if at
                         \ least one pan key is being pressed, in which case jump
-                        \ to pkey7 to skip the following, so pan keys take
+                        \ to ckey7 to skip the following, so pan keys take
                         \ precedence over the other game keys (which are ignored
                         \ while panning is taking place)
 
@@ -4630,13 +4649,13 @@ L1145 = C1144+1
                         \ subroutine (this BNE is effectively a JMP as A is
                         \ never zero)
 
-.pkey7
+.ckey7
 
                         \ If we get here then at least one pan key is being
                         \ pressed
 
  LDX sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
- BPL pkey8              \ are not being shown, so jump to pkey8 to skip the
+ BPL ckey8              \ are not being shown, so jump to ckey8 to skip the
                         \ following, as we don't need to move the sights when
                         \ they aren't on-screen
 
@@ -4655,18 +4674,18 @@ L1145 = C1144+1
  JSR MoveSights         \ Move the sights according to the pan key presses in
                         \ the key logger
 
- JMP pkey10             \ Jump to pkey10 to skip the following (where we will
+ JMP ckey10             \ Jump to ckey10 to skip the following (where we will
                         \ then jump to C1208 to finish off and return from the
                         \ subroutine, as we set bit 7 of panKeyBeingPressed at
                         \ the start of the routine)
 
-.pkey8
+.ckey8
 
  LDA keyLogger          \ Set A to the key logger entry for "S" and "D" (pan
                         \ left, pan right), which are used to move the sights
 
- BPL pkey9              \ If there is a key press in the key logger entry, jump
-                        \ to pkey9 to store this value in panKeyBeingPressed (so
+ BPL ckey9              \ If there is a key press in the key logger entry, jump
+                        \ to ckey9 to store this value in panKeyBeingPressed (so
                         \ panning left or right takes precedence over panning up
                         \ or down)
 
@@ -4678,7 +4697,7 @@ L1145 = C1144+1
                         \ finish off and return from the subroutine without
                         \ recording a pan key press in panKeyBeingPressed
 
-.pkey9
+.ckey9
 
  STA panKeyBeingPressed \ Set panKeyBeingPressed to the key logger value of the
                         \ pan key that's being pressed, as follows:
@@ -4691,7 +4710,7 @@ L1145 = C1144+1
                         \
                         \   * 3 = pan down
 
-.pkey10
+.ckey10
 
  LDA panKeyBeingPressed \ If bit 7 of panKeyBeingPressed is set then no pan keys
  BMI C1208              \ are being pressed, so jump to C1208 to finish off and
@@ -4958,11 +4977,21 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   C flag              Success flag:
+\   C flag              Status flag:
 \
-\                         * Clear if ???
+\                         * Clear if any of the following are true:
 \
-\                         * Set if ???
+\                           * Keyboard scans are disabled (bit 7 of
+\                             doNotScanKeyboard is set) and a pan key is being
+\                             pressed (bit 7 of panKeyBeingPressed is clear)
+\
+\                         * Set if any of the following are true:
+\
+\                           * The Sentinel has won
+\
+\                           * The player has moved to a new tile
+\
+\                           * The player has pressed the quit game key
 \
 \ ******************************************************************************
 
@@ -4979,16 +5008,21 @@ L1145 = C1144+1
 .C126C
 
  LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
- BMI C12AD              \ scans are disabled, so jump to 12AD to skip the
+ BMI C12AD              \ scans are disabled, so jump to C12AD to skip the
                         \ following
 
- LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress ???
+ LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress to record that the same
+                        \ pan key is not being held down, which we will change
+                        \ below if this is not the case
 
  LDA previousDoNotScan  \ If bit 7 of previousDoNotScan is clear then it matches
  BPL C1282              \ the current value of doNotScanKeyboard (so the value
                         \ of previousDoNotScan has not changed since the last
-                        \ time we were in the sub_C1200 routine), so jump to
-                        \ C1282 to skip the following
+                        \ time we were in the sub_C1200 routine, and at both
+                        \ points key scanning was enabled), so jump to C1282 to
+                        \ skip the following and leave samePanKeyPress with bit
+                        \ 7 clear, to record that the same pan key is not being
+                        \ held down ???
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -5001,11 +5035,14 @@ L1145 = C1144+1
 
 .C1282
 
- JSR sub_C16A8
- LDA sentinelHasWon
- BEQ C1294
- LDA #&1E
- JSR sub_C5F24
+ JSR sub_C16A8          \ Something to do with enemies ???
+
+ LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is clear then the player
+ BEQ C1294              \ has not been absorbed by the Sentinel, so jump to
+                        \ C1294 to progress the game
+
+ LDA #30                \ The Sentinel has won, so display the game over screen
+ JSR DisplayGameOver    \ with A = 30 ???
 
 .C128F
 
@@ -5017,17 +5054,32 @@ L1145 = C1144+1
 
 .C1294
 
- ASL L0C63
- BCS C128F
+ ASL playerHasMovedTile \ Shift bit 7 of playerHasMovedTile into the C flag so
+                        \ we can check it in the next instruction, and clear bit
+                        \ 7 to clear the flag as we are about to process any
+                        \ tile move that has occurred
 
- BIT quitGame
- BMI C128F
+ BCS C128F              \ If the C flag is set then bit 7 of playerHasMovedTile
+                        \ was set before we cleared it, which indicates that the
+                        \ player has moved to a new tile, so jump to C128F to
+                        \ return from the subroutine with the C flag set ???
 
- JSR sub_C191A
- JSR ProcessPauseKeys
- JSR sub_C355A
- JSR ProcessVolumeKeys
- JMP C126C
+ BIT quitGame           \ If bit 7 of quitGame is set then the player has
+ BMI C128F              \ pressed function key f1 to quit the game, so jump to
+                        \ C128F to finish up and return from the subroutine with
+                        \ the C flag set ???
+
+ JSR sub_C191A          \ Something to do with player and enemy objects ???
+
+ JSR ProcessPauseKeys   \ Pause or unpause the game when COPY or DELETE are
+                        \ pressed
+
+ JSR sub_C355A          \ Sound related ???
+
+ JSR ProcessVolumeKeys  \ Adjust the volume of the sound envelopes when the
+                        \ volume keys are pressed
+
+ JMP C126C              \ Jump back to C126C to repeat the main game loop
 
 .C12AD
 
@@ -5088,7 +5140,7 @@ L1145 = C1144+1
                         \ the Sentinal is activated and the game has started
 
  JSR ProcessActionKeys  \ Process any key presses in key logger entry 1, which
-                        \ is where action key pressess are stored (absorb,
+                        \ is where action key presses are stored (absorb,
                         \ transfer, create, hyperspace, U-turn)
 
  BCS C12E5
@@ -5098,9 +5150,11 @@ L1145 = C1144+1
  LDA #2                 \ Make sound #2 (???)
  JSR MakeSound
 
- LDA #&C0
+ LDA #%11000000
  STA L0C6D
+
  LSR L0C1E
+
  JSR sub_C1F84
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
@@ -5111,13 +5165,22 @@ L1145 = C1144+1
 
 .C12E5
 
- ASL L0C63
+ ASL playerHasMovedTile \ Shift bit 7 of playerHasMovedTile into the C flag so
+                        \ we can check it in the next instruction, and clear bit
+                        \ 7 to clear the flag as we are about to process any
+                        \ tile move that has occurred
 
- BCC C12EB              \ If bit 7 of L0C63 was clear, jump back to the start of
-                        \ the routine via C12EB to ???
+ BCC C12EB              \ If bit 7 of playerHasMovedTile was clear before we
+                        \ cleared it, then the plater has not moved to a new
+                        \ tile, so jump back to the start of the routine via
+                        \ C12EB to continue progressing the game ???
 
- RTS                    \ Return from the subroutine with the C flag set to
-                        \ indicate that ???
+                        \ If we get here then bit 7 of playerHasMovedTile was
+                        \ set before we cleared it, which indicates that the
+                        \ player has moved to a new tile, so return from the
+                        \ subroutine with the C flag set ???
+
+ RTS                    \ Return from the subroutine
 
 .C12EB
 
@@ -8089,7 +8152,7 @@ L1145 = C1144+1
                         \ in A
 
  CMP #34                \ If A <> 34 then the "H" key (hyperspace) is not being
- BNE C1B1C              \ pressed, so jump to C1B1C to move on to the next check
+ BNE pkey2              \ pressed, so jump to pkey2 to move on to the next check
 
                         \ If we get here then "H" (hyperspace) is being pressed
 
@@ -8098,19 +8161,19 @@ L1145 = C1144+1
  LDA #0                 \ Set titleObjectToDraw to the object type for a robot
  STA titleObjectToDraw  \ ???
 
-.P1B1A
+.pkey1
 
  SEC                    \ Set the C flag to denote ???
 
  RTS                    \ Return from the subroutine
 
-.C1B1C
+.pkey2
 
  LDX L006E              \ ??? This is value passed to sub_C1BFF, is it the
                         \ player object number ???
 
  CMP #35                \ If A <> 35 then the "U" key (U-turn) is not being
- BNE C1B33              \ pressed, so jump to C1B33 to move on to the next check
+ BNE pkey3              \ pressed, so jump to pkey3 to move on to the next check
 
                         \ If we get here then "U" (U-turn) is being pressed
 
@@ -8128,10 +8191,10 @@ L1145 = C1144+1
                         \ performing a U-turn, so that the "U" key has to be
                         \ released before a second U-turn can be performed
 
- BPL P1B1A              \ If bit 7 of uTurnStatus is now clear, then that means
+ BPL pkey1              \ If bit 7 of uTurnStatus is now clear, then that means
                         \ that bit 6 was clear before the above shift, which
                         \ means we are currently ignoring the "U" key to prevent
-                        \ doing a second U-turn, so jump to P1B1A to skip doing
+                        \ doing a second U-turn, so jump to pkey1 to skip doing
                         \ another U-turn and instead return from the subroutine
                         \ with the C flag set to indicate ???
 
@@ -8145,11 +8208,11 @@ L1145 = C1144+1
 
  LDA #&28               \ Set A = &28 to set as the value of L0CE7 ???
 
- BNE C1B73              \ Jump to C1B73 to set L0CE7, L0C63 and C flag and
-                        \ return from the subroutine (this BNE is effectively a
-                        \ JMP as A is never zero) ???
+ BNE pkey6              \ Jump to pkey6 to set L0CE7, playerHasMovedTile and C
+                        \ flag and return from the subroutine (this BNE is
+                        \ effectively a JMP as A is never zero) ???
 
-.C1B33
+.pkey3
 
                         \ If we get here then the key press is either create,
                         \ absorb or transfer
@@ -8158,71 +8221,76 @@ L1145 = C1144+1
 
  JSR sub_C1BFF
  JSR sub_C1CCC
- BCS C1B98
+ BCS pkey9
 
  LDA keyPress           \ If bit 5 of keypress is clear then A is not 32 or 33,
- AND #%00100000         \ so A must be 0, 2 or 3, so jump to C1BA9 to spawn a
- BEQ C1BA9              \ robot, tree or boulder
+ AND #%00100000         \ so A must be 0, 2 or 3, so jump to pkey10 to spawn a
+ BEQ pkey10             \ robot, tree or boulder
 
-                        \ If we get here then A must be 32 or 33
+                        \ If we get here then A must be 32 or 33 (absorb or
+                        \ transfer)
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCC C1B98
+ BCC pkey9
  AND #&3F
  TAX
- LDA keyPress
+
+ LDA keyPress           \ Jump to pkey7 if key press is 32, absorb
  LSR A
- BCC C1B7D
+ BCC pkey7
+
+                        \ Only get here for transfer
+
  LDY objectTypes,X
- BNE C1B98
+ BNE pkey9
 
  JSR sub_C1200          \ Sets variables that control key scans etc. ???
 
  STX playerObject
 
-.P1B5D
+.pkey4
 
  LDA objectFlags,X      \ Set A to the object flags for object #X
 
  CMP #&40
 
- BCC C1B71
+ BCC pkey5
  AND #&3F
  TAX
  EOR #&3F
- BNE P1B5D
+ BNE pkey4
  LDA objectTypes,X
  STA L0CE6
 
-.C1B71
+.pkey5
 
  LDA #&19
 
-.C1B73
+.pkey6
 
  JSR sub_C5FF6
 
  LDA #%10000000
- STA L0C63
+ STA playerHasMovedTile
 
  SEC                    \ Set the C flag to denote ???
 
  RTS                    \ Return from the subroutine
 
-.C1B7D
+.pkey7
 
  LDA objectFlags
- BMI C1B98
+ BMI pkey9
  LDA objectTypes,X
  CMP #&04
- BEQ C1BDB
+ BEQ pkey13
  CMP #&06
- BEQ C1B98
+ BEQ pkey9
 
-.C1B8D
+.pkey8
 
  JSR DeleteObject       \ Delete object #X and remove it from the landscape
 
@@ -8234,7 +8302,7 @@ L1145 = C1144+1
 
  RTS                    \ Return from the subroutine
 
-.C1B98
+.pkey9
 
  LDA #&AA
  STA soundData+28       \ Third parameter of sound data block #3 (pitch)
@@ -8249,15 +8317,15 @@ L1145 = C1144+1
 
  RTS                    \ Return from the subroutine
 
-.C1BA9
+.pkey10
 
  JSR SpawnObject+3      \ Spawn an object of type keyPress, returning the object
                         \ number of the new object in X and currentObject
 
- BCS C1B98
+ BCS pkey9
  SEC
  JSR UpdatePlayerEnergy
- BCS C1B98
+ BCS pkey9
  LDX currentObject
  LDA L003A
  STA xTile
@@ -8266,54 +8334,54 @@ L1145 = C1144+1
 
  JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
 
- BCC C1BCA
+ BCC pkey11
  CLC
  JSR UpdatePlayerEnergy
- JMP C1B98
+ JMP pkey9
 
-.C1BCA
+.pkey11
 
  LDA objectTypes,X
- BNE C1BD9
+ BNE pkey12
  LDY playerObject
  LDA objectYawAngle,Y
  EOR #&80
  STA objectYawAngle,X
 
-.C1BD9
+.pkey12
 
  CLC                    \ Clear the C flag to denote ???
 
  RTS                    \ Return from the subroutine
 
-.C1BDB
+.pkey13
 
  LDY #&07
 
-.P1BDD
+.pkey14
 
  LDA objectFlags,Y
- BMI C1BFA
+ BMI pkey16
  LDA objectTypes,Y
  CMP #&01
- BEQ C1BED
+ BEQ pkey15
  CMP #&05
- BNE C1BFA
+ BNE pkey16
 
-.C1BED
+.pkey15
 
  TXA
  CMP enemyData5,Y
- BNE C1BFA
+ BNE pkey16
  LDA #&80
  STA enemyData5,Y
- BNE C1B8D
+ BNE pkey8
 
-.C1BFA
+.pkey16
 
  DEY
- BPL P1BDD
- BMI C1B8D
+ BPL pkey14
+ BMI pkey8
 
 \ ******************************************************************************
 \
@@ -10210,8 +10278,8 @@ L1145 = C1144+1
 
 .hypr3
 
- LDA #%10000000         \ Set bit 7 of L0C63 ???
- STA L0C63
+ LDA #%10000000         \ Set bit 7 of playerHasMovedTile ???
+ STA playerHasMovedTile
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ hyperspaced the player
@@ -16941,9 +17009,8 @@ L314A = C3148+2
  LDA #&06
  STA L0C73
 
- LDA #&05
-
- JSR sub_C5F24
+ LDA #5                 \ The Sentinel has won, so display the game over screen
+ JSR DisplayGameOver    \ with A = 5 ???
 
 .game6
 
@@ -22493,14 +22560,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5F24
+\       Name: DisplayGameOver
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C5F24
+.DisplayGameOver
 
  PHA
 
