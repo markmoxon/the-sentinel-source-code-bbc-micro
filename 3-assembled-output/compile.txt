@@ -2663,7 +2663,7 @@
      0CD9   00
      0CDA   00
      0CDB   00
-.L0CDC
+.previousDoNotScan
      0CDC   00
 .L0CDD
      0CDD   00
@@ -2675,7 +2675,7 @@
      0CE1   00
      0CE2   00
      0CE3   00
-.L0CE4
+.doNotScanKeyboard
      0CE4   80
 .activateSentinel
      0CE5   80

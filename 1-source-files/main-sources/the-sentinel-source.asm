@@ -1859,9 +1859,11 @@
 
  EQUB 0, 0, 0, 0, 0     \ ???
 
-.L0CDC
+.previousDoNotScan
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Storage for the current setting of doNotScanKeyboard
+                        \ in the sub_C1200 routine, so we can check whether
+                        \ doNotScanKeyboard has changed in sub_C1264 ???
 
 .L0CDD
 
@@ -1882,12 +1884,20 @@
 
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
-.L0CE4
+.doNotScanKeyboard
 
- EQUB %10000000         \ ??? Skips various aspects if bit 7 is set:
-                        \ volume keys, key presses in IRQHandler ???
+ EQUB %10000000         \ A flag that controls whether we scan the keyboard
                         \
-                        \ Bit 7 set in sub_C1200, cleared in sub_C1264
+                        \   * Bit 7 clear = scan the keyboard
+                        \
+                        \   * Bit 7 set = do not scan the keyboard
+                        \
+                        \ Specifically, setting bit 7 disables the following
+                        \ keyboard scans:
+                        \
+                        \   * Volume keys in ProcessVolumeKeys
+                        \   * Game key presses in IRQHandler
+                        \   * Game key presses in sub_C1264
 
 .activateSentinel
 
@@ -4330,19 +4340,19 @@ L1145 = C1144+1
 
                         \ We now zero the following variable blocks:
                         \
-                        \   * &0000 to &008F
+                        \   * &0000 to &008F (Zero page workspace)
                         \
-                        \   * &0100 to &01BF
+                        \   * &0100 to &01BF (Stack variables workspace)
                         \
-                        \   * &0900 to &09EF
+                        \   * &0900 to &09EF (xObject)
                         \
-                        \   * &0A00 to &0AEF
+                        \   * &0A00 to &0AEF (yObjectLo)
                         \
-                        \   * &0C00 to &0CE3
+                        \   * &0C00 to &0CE3 (Main variable workspace)
                         \
                         \ and set the following variable block to %10000000:
                         \
-                        \   * &0CE4 to &0CEF
+                        \   * &0CE4 to &0CEF (Main variable workspace)
 
  LDX #0                 \ Set X to use as a byte counter to run from 0 to &EF
 
@@ -4372,16 +4382,16 @@ L1145 = C1144+1
  BCC rese4              \ leaving A = 0, so we zero &0C00 to &0CE3
 
  LDA #%10000000         \ If we get here then X >= &E4, so set A = %10000000 to
-                        \ set bit 7 of L0CE4 to L0CEF
+                        \ set bit 7 of &0CE4 to &0CEF
 
 .rese4
 
- STA L0CE4-&E4,X        \ Set the X-th byte of L0CE4 to A
+ STA &0C00,X            \ Set the X-th byte of &0CE4 to A
 
  INX                    \ Increment the byte counter
 
  CPX #&F0               \ Loop back until we have processed X from &E4 to &EF
- BCC rese1              \ to set L0CE4 to L0CEF to &80
+ BCC rese1              \ to set &0CE4 to &0CEF to &80
 
                         \ Fall through into ResetVariables2 to ???
 
@@ -4673,15 +4683,16 @@ L1145 = C1144+1
 
 .sub_C1200
 
- LDA #%10000000         \ Set bit 7 of L0CE4 ??? So we skip part of the IRQ and
- STA L0CE4              \ sub_C1264
+ LDA #%10000000         \ Set bit 7 of doNotScanKeyboard to disable keyboard
+ STA doNotScanKeyboard  \ scans ???
 
  STA L0C1E              \ Set bit 7 of L0C1E ???
 
 .C1208
 
- LDA L0CE4              \ Set L0CDC = L0CE4 ???
- STA L0CDC
+ LDA doNotScanKeyboard  \ Set previousDoNotScan = doNotScanKeyboard so we can
+ STA previousDoNotScan  \ work out whether the value of doNotScanKeyboard has
+                        \ changed in the sub_C1264 routine ???
 
  RTS                    \ Return from the subroutine
 
@@ -4920,20 +4931,24 @@ L1145 = C1144+1
 
 .sub_C1264
 
- LDA #0                 \ Clear bit 7 of L0CE4 ??? So we do more in the IRQ and
- STA L0CE4              \ sub_C1264
+ LDA #0                 \ Clear bit 7 of doNotScanKeyboard to enable keyboard
+ STA doNotScanKeyboard  \ scans ???
 
  STA L0C51              \ Set L0C51 = 0 ???
 
 .C126C
 
- LDA L0CE4              \ If bit 7 of L0CE4 is set, jump to 12AD to skip the
- BMI C12AD              \ following ???
+ LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
+ BMI C12AD              \ scans are disabled, so jump to 12AD to skip the
+                        \ following
 
  LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress ???
 
- LDA L0CDC              \ If bit 7 of L0CDC is clear then jump to C1282 to skip
- BPL C1282              \ the following
+ LDA previousDoNotScan  \ If bit 7 of previousDoNotScan is clear then it matches
+ BPL C1282              \ the current value of doNotScanKeyboard (so the value
+                        \ of previousDoNotScan has not changed since the last
+                        \ time we were in the sub_C1200 routine), so jump to
+                        \ C1282 to skip the following
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -4954,7 +4969,7 @@ L1145 = C1144+1
 
 .C128F
 
- JSR sub_C1200          \ ??? Sets L0CE4, L0C1E, L0CDC
+ JSR sub_C1200          \ Sets variables that control key scans etc. ???
 
  SEC                    \ Set the C flag to indicate that ???
 
@@ -8102,7 +8117,7 @@ L1145 = C1144+1
  LDY objectTypes,X
  BNE C1B98
 
- JSR sub_C1200          \ ??? Sets L0CE4, L0C1E, L0CDC
+ JSR sub_C1200          \ Sets variables that control key scans etc. ???
 
  STX playerObject
 
@@ -10125,7 +10140,7 @@ L1145 = C1144+1
 
 .hypr2
 
- JSR sub_C1200          \ ??? Sets L0CE4, L0C1E, L0CDC
+ JSR sub_C1200          \ Sets variables that control key scans etc. ???
 
  LDX currentObject      \ Set the player's object number to that of the new
  STX playerObject       \ robot that we spawned above, so this effectively
@@ -16302,9 +16317,10 @@ L314A = C3148+2
 
 .ProcessVolumeKeys
 
- LDA L0CE4              \ If bit 7 of L0CE4 is set, jump to volk6 to return from
- BMI volk6              \ the subroutine without chcking for volume key presses
-                        \ ???
+ LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
+ BMI volk6              \ scans are disabled, so jump to volk6 to return from
+                        \ the subroutine without checking for volume-related
+                        \ key presses
 
  LDA volumeLevel        \ Set A to the current volume level
 
@@ -17363,7 +17379,8 @@ L314A = C3148+2
 \
 \     * If the Sentinel has been activated, call sub_C12EE and sub_C1623
 \
-\     * If bit 7 of L0CE4 is clear, scan for and process all the game keys
+\     * If bit 7 of doNotScanKeyboard is clear then keyboard scans are enabled,
+\       so scan for and process all the game keys
 \
 \ ******************************************************************************
 
@@ -17458,8 +17475,9 @@ L314A = C3148+2
 
 .irqh4
 
- LDA L0CE4              \ If bit 7 of L0CE4 is set, jump to irqh8 to return from
- BMI irqh8              \ the interrupt handler ???
+ LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
+ BMI irqh8              \ scans are disabled, so jump to irqh8 to skip the
+                        \ following
 
  JSR CheckForKeyPresses \ Check for various game key presses and update the key
                         \ logger and relevant variables
