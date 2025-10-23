@@ -5083,8 +5083,8 @@ L1145 = C1144+1
 
 .C12AD
 
- LDA panKeyBeingPressed
- BMI C12B3
+ LDA panKeyBeingPressed \ If no pan key is currently being pressed, jump to
+ BMI C12B3              \ C12B3 to process any action key presses
 
  CLC                    \ Clear the C flag to indicate that ???
 
@@ -8123,11 +8123,19 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   C flag              ??? flag:
+\   C flag              Status flag:
 \
 \                         * Clear if ???
 \
-\                         * Set if ???
+\                         * Set if:
+\
+\                           * Player has hyperspaced
+\
+\                           * Player has done a U-turn
+\
+\                           * Player tries to absorb an empty tile
+\
+\                           * Player tries to transfer to an empty tile
 \
 \ ******************************************************************************
 
@@ -8220,48 +8228,75 @@ L1145 = C1144+1
  LSR L0C6E              \ ???
 
  JSR sub_C1BFF
+
  JSR sub_C1CCC
  BCS pkey9
 
  LDA keyPress           \ If bit 5 of keypress is clear then A is not 32 or 33,
- AND #%00100000         \ so A must be 0, 2 or 3, so jump to pkey10 to spawn a
- BEQ pkey10             \ robot, tree or boulder
+ AND #%00100000         \ so A must be 0, 2 or 3 (one of the create keys), so
+ BEQ pkey10             \ jump to pkey10 to spawn a robot, tree or boulder
 
-                        \ If we get here then A must be 32 or 33 (absorb or
-                        \ transfer)
+                        \ If we get here then A must be 32 or 33, so the key
+                        \ press is either absorb or transfer
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCC pkey9
- AND #&3F
- TAX
+ BCC pkey9              \ The tile does not contain an object, so jump to pkey9
+                        \ to make an error sound as we can't absorb or transfer
+                        \ to an empty tile
 
- LDA keyPress           \ Jump to pkey7 if key press is 32, absorb
- LSR A
- BCC pkey7
+ AND #%00111111         \ The number of the object on the tile is in bits 0 to 5
+ TAX                    \ of the tile data, so extract this into X
 
-                        \ Only get here for transfer
+ LDA keyPress           \ If bit 0 of keypress is clear then A must be 32, which
+ LSR A                  \ is absorb, so jump to pkey7 to absorb the object on
+ BCC pkey7              \ the tile anchored at (xTile, zTile)
 
- LDY objectTypes,X
- BNE pkey9
+                        \ If we get here then A must be 33, so the key press is
+                        \ transfer and the player is trying to transfer to the
+                        \ tile anchored at (xTile, zTile), which contains
+                        \ object #X
+
+ LDY objectTypes,X      \ Set Y to the type of object #X
+
+ BNE pkey9              \ If object #X is not a robot (i.e. not an object of
+                        \ type 0), jump to pkey9 to make an error sound as the
+                        \ player can only transfer into other robots
 
  JSR sub_C1200          \ Sets variables that control key scans etc. ???
 
- STX playerObject
+ STX playerObject       \ Set the player's object number to that of the robot
+                        \ on the tile anchored at (xTile, zTile), so this
+                        \ effectively performs the transfer across to the new
+                        \ robot
+
+                        \ We now start at object #X, the robot that the player
+                        \ just transferred into, and if it's on top of another
+                        \ object or stack of objects, we work our way down the
+                        \ stack until we get to the tile itself
 
 .pkey4
 
  LDA objectFlags,X      \ Set A to the object flags for object #X
 
- CMP #&40
+ CMP #%01000000         \ If both bits 6 and 7 of the object flags for object #X
+ BCC pkey5              \ are clear then object #X is not stacked on top of
+                        \ another object, so jump to pkey5 to skip the following
 
- BCC pkey5
- AND #&3F
- TAX
+                        \ If we get here then object #X is stacked on top of
+                        \ another object, and the number of that object is in
+                        \ bits 0 to 5 of the object flags for object #X, which
+                        \ is currently in A
+
+ AND #%00111111         \ Extract bits 0 to 5 of the object flags into X, so X
+ TAX                    \ contains the object number of the next object down in
+                        \ the stack ???
+
  EOR #&3F
  BNE pkey4
+
  LDA objectTypes,X
  STA L0CE6
 
@@ -8273,14 +8308,17 @@ L1145 = C1144+1
 
  JSR sub_C5FF6
 
- LDA #%10000000
- STA playerHasMovedTile
+ LDA #%10000000         \ Set bit 7 of playerHasMovedTile to indicate that the
+ STA playerHasMovedTile \ player has moved to a new tile
 
  SEC                    \ Set the C flag to denote ???
 
  RTS                    \ Return from the subroutine
 
 .pkey7
+
+                        \ If we get here then we are absorbing an object of type
+                        \ X from the tile anchored at (xTile, zTile)
 
  LDA objectFlags
  BMI pkey9
@@ -8303,6 +8341,11 @@ L1145 = C1144+1
  RTS                    \ Return from the subroutine
 
 .pkey9
+
+                        \ If we get here then the player has tried to absorb or
+                        \ transfer to an empty tile, or they have tried to
+                        \ transfer to an object that is not a robot, so we make
+                        \ an error sound
 
  LDA #&AA
  STA soundData+28       \ Third parameter of sound data block #3 (pitch)
@@ -10278,8 +10321,8 @@ L1145 = C1144+1
 
 .hypr3
 
- LDA #%10000000         \ Set bit 7 of playerHasMovedTile ???
- STA playerHasMovedTile
+ LDA #%10000000         \ Set bit 7 of playerHasMovedTile to indicate that the
+ STA playerHasMovedTile \ player has moved to a new tile
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ hyperspaced the player
