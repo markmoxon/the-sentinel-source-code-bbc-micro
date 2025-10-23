@@ -8714,10 +8714,10 @@
      3692   AD C1 0C   LDA &0CC1
      3695   D0 FB      BNE &3692
      3697   F0 CD      BEQ &3666
-.sub_C3699
+.ClearIconsScanner
      3699   A9 00      LDA #&00
      369B   8D 05 0C   STA &0C05
-.P369E
+.enec1
      369E   A9 00      LDA #&00
      36A0   20 3A 37   JSR &373A
      36A3   AD 05 0C   LDA &0C05

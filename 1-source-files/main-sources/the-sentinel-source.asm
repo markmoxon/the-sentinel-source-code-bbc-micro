@@ -4154,24 +4154,32 @@
 
 .sub_C1090
 
- JSR ResetScreenAddress 
- JSR sub_C3699
+ JSR ResetScreenAddress \ Reset the address of the start of screen memory
+
+ JSR ClearIconsScanner  \ Clear the energy icon and scanner row at the top of
+                        \ the screen
+
  LDA #0
  JSR sub_C2963
+
  LDA #0
  LDY #&18
  LDX #&28
  JSR sub_C2202
+
  LDA L0C4C
- CMP #&03
+ CMP #3
  BNE CRE04
- LDA #&03
+
+ LDA #3
  STA loopCounter
 
 .P10AF
 
  JSR sub_C56D5
+
  DEC loopCounter
+
  BNE P10AF
 
 .CRE04
@@ -16980,29 +16988,32 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3699
+\       Name: ClearIconsScanner
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Clear the energy icon and scanner row at the top of the screen
 \
 \ ******************************************************************************
 
-.sub_C3699
+.ClearIconsScanner
 
- LDA #0
- STA xIconCounter
+ LDA #0                 \ Set xIconCounter = 0 so we start drawing from the left
+ STA xIconCounter       \ edge of the screen
 
-.P369E
+.enec1
 
- LDA #0
- JSR DrawIcon
- LDA xIconCounter
- CMP #&28
- BCC P369E
+ LDA #0                 \ Draw a blank icon into the top part of the screen (via
+ JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
+                        \ to the right, incrementing xIconCounter as we do
+
+ LDA xIconCounter       \ Loop back to keep drawing blank icons until we have
+ CMP #40                \ cleared column 39, at which point we have cleared the
+ BCC enec1              \ entire row
 
  JMP DisplayIconBuffer  \ Display the contents of the icon screen buffer by
-                        \ copying it into screen memory, returning from the
-                        \ subroutine using a tail call
+                        \ copying it into screen memory, which will clear the
+                        \ row on-screen, and return from the subroutine using a
+                        \ tail call
 
 \ ******************************************************************************
 \
@@ -17655,10 +17666,11 @@ L314A = C3148+2
  LDX #12                \ Set 6845 register R12 = &0F, for the high byte
  STX SHEILA+&00         \
  LDA screenAddrHi       \ We do this by writing the register number (12) to
- STA SHEILA+&01         \ SHEILA &00, and then the value (screenAddrHi) to SHEILA &01
+ STA SHEILA+&01         \ SHEILA &00, and then the value (screenAddrHi) to
+                        \ SHEILA &01
 
-                        \ This sets 6845 registers (R12 R13) = (screenAddrHi A) to
-                        \ point to the start of screen memory in terms of
+                        \ This sets 6845 registers (R12 R13) = (screenAddrHi A)
+                        \ to point to the start of screen memory in terms of
                         \ character rows. There are 8 pixel lines in each
                         \ character row, so to get the actual address of the
                         \ start of screen memory, we multiply by 8:
@@ -22413,7 +22425,9 @@ L314A = C3148+2
 
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
- JSR sub_C3699
+ JSR ClearIconsScanner  \ Clear the energy icon and scanner row at the top of
+                        \ the screen
+
  LDA #&06
  STA L0C73
  LDA #&FA
