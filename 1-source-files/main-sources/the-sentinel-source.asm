@@ -8411,8 +8411,8 @@ L1145 = C1144+1
                         \ to pkey9 to make an error sound and return from the
                         \ subroutine
 
- LDA objectTypes,X      \ If the player is absorbing a robot (an object of type
- CMP #4                 \ 4), jump to pkey13 to implement this
+ LDA objectTypes,X      \ If the player is trying to absorb a meanie (an object
+ CMP #4                 \ of type 4), jump to pkey13 to implement this
  BEQ pkey13
 
  CMP #6                 \ If the player is trying to absorb the Sentinel's tower
@@ -8568,34 +8568,64 @@ L1145 = C1144+1
 
 .pkey13
 
-                        \ If we get here then the player is absorbing a robot
+                        \ If we get here then the player is trying to absorb a
+                        \ meanie in object #X
 
- LDY #7
+                        \ We now loop through all the enemy objects, of which
+                        \ there are up to eight, looking for the object whose
+                        \ enemyData5 entry is X (i.e. the object number of the
+                        \ meanie) ???
+
+ LDY #7                 \ The enemies have object numbers 0 (for the Sentinel)
+                        \ or 1 to 7 (for any meanies in the landscape), so set
+                        \ a counter in Y to work through the enemy object
+                        \ numbers
 
 .pkey14
 
- LDA objectFlags,Y
- BMI pkey16
- LDA objectTypes,Y
- CMP #&01
- BEQ pkey15
- CMP #&05
- BNE pkey16
+ LDA objectFlags,Y      \ If bit 7 is set for object #Y then this object number
+ BMI pkey16             \ is not allocated to an object, so jump to pkey16 to
+                        \ move on to the next enemy object
+
+ LDA objectTypes,Y      \ Set A to the object type for object #Y
+
+ CMP #1                 \ If object #Y is a sentry (object type 1), jump to
+ BEQ pkey15             \ pkey15
+
+ CMP #5                 \ If object #Y is not the Sentinel, jump to pkey16 to
+ BNE pkey16             \ move on to the next enemy object
+
 
 .pkey15
 
- TXA
- CMP enemyData5,Y
- BNE pkey16
- LDA #&80
- STA enemyData5,Y
- BNE pkey8
+                        \ If we get here then object #Y is the Sentinel or a
+                        \ sentry
+
+ TXA                    \ Set A to the object number of the meanie that the
+                        \ player is trying to absorb
+
+ CMP enemyData5,Y       \ If A <> enemyData5 for object #Y, jump to pkey16 to
+ BNE pkey16             \ move on to the next enemy object ???
+
+ LDA #%10000000         \ Set bit 7 of enemyData5 for object #Y (the sentry or
+ STA enemyData5,Y       \ Sentinel) ???
+
+ BNE pkey8              \ Jump to pkey8 to delete the meanie in object #X, add
+                        \ the meanie's energy to the player's energy, and return
+                        \ from the subroutine with the C flag clear (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .pkey16
 
- DEY
- BPL pkey14
- BMI pkey8
+ DEY                    \ Decrement the counter in Y to move on to the next
+                        \ enemy object number
+
+ BPL pkey14             \ Loop back until we have processed all eight possible
+                        \ enemy objects
+
+ BMI pkey8              \ Jump to pkey8 to delete the meanie in object #X, add
+                        \ the meanie's energy to the player's energy, and return
+                        \ from the subroutine with the C flag clear
 
 \ ******************************************************************************
 \
