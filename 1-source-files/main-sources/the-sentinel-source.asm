@@ -18494,8 +18494,8 @@ L314A = C3148+2
 \       Name: updateOffsetLo
 \       Type: Variable
 \   Category: Graphics
-\    Summary: The offset within the screen memory for the player's landscape
-\             view of the area to update following a scroll (low byte)
+\    Summary: The offset within screen memory for the player's landscape view
+\             of the area to update following a scroll (low byte)
 \
 \ ******************************************************************************
 
@@ -18511,8 +18511,8 @@ L314A = C3148+2
 \       Name: updateOffsetHi
 \       Type: Variable
 \   Category: Graphics
-\    Summary: The offset within the screen memory for the player's landscape
-\             view of the area to update following a scroll (high byte)
+\    Summary: The offset within screen memory for the player's landscape view
+\             of the area to update following a scroll (high byte)
 \
 \ ******************************************************************************
 
@@ -18562,34 +18562,34 @@ L314A = C3148+2
 \       Name: viewBufferAddrHi
 \       Type: Variable
 \   Category: Graphics
-\    Summary: The starting address for viewBufferAddr(1 0) for each panning
-\             direction (high byte) ???
+\    Summary: The value to add to updateOffsetHi for each direction to get the
+\             high byte of the view screen buffer address in viewBufferAddr(1 0)
 \
 \ ******************************************************************************
 
 .viewBufferAddrHi
 
- EQUB HI(viewBuffer-8)      \ Direction 0 = -8 (pan right, scroll left)
- EQUB HI(viewBuffer+&80)    \ Direction 1 = +&80 (pan left, scroll right)
- EQUB HI(viewBuffer+&A00)   \ Direction 2 = &A00 (pan up, scroll down)
- EQUB HI(viewBuffer-320)    \ Direction 3 = -320 (pan down, scroll up)
+ EQUB HI(viewBufferRight - (320 - 8))   \ Direction 0 (pan right, scroll left)
+ EQUB HI(viewBufferLeft)                \ Direction 1 (pan left, scroll right)
+ EQUB HI(viewBufferUp)                  \ Direction 2 (pan up, scroll down)
+ EQUB HI(viewBufferDown - (320 * 23))   \ Direction 3 (pan down, scroll up)
 
 \ ******************************************************************************
 \
 \       Name: viewBufferAddrLo
 \       Type: Variable
 \   Category: Graphics
-\    Summary: The starting address for viewBufferAddr(1 0) for each panning
-\             direction (low byte) ???
+\    Summary: The value to add to updateOffsetLo for each direction to get the
+\             low byte of the view screen buffer address in viewBufferAddr(1 0)
 \
 \ ******************************************************************************
 
 .viewBufferAddrLo
 
- EQUB LO(viewBuffer-8)      \ Direction 0 = -8 (pan right, scroll left)
- EQUB LO(viewBuffer+&80)    \ Direction 1 = +&80 (pan left, scroll right)
- EQUB LO(viewBuffer+&A00)   \ Direction 2 = &A00 (pan up, scroll down)
- EQUB LO(viewBuffer-320)    \ Direction 3 = -320 (pan down, scroll up)
+ EQUB LO(viewBufferRight - (320 - 8))   \ Direction 0 (pan right, scroll left)
+ EQUB LO(viewBufferLeft)                \ Direction 1 (pan left, scroll right)
+ EQUB LO(viewBufferUp)                  \ Direction 2 (pan up, scroll down)
+ EQUB LO(viewBufferDown - (320 * 23))   \ Direction 3 (pan down, scroll up)
 
 \ ******************************************************************************
 \
@@ -19412,25 +19412,28 @@ L314A = C3148+2
 
 .secretCodeStash
 
- SKIP 0                 \ This variable overwrites the startup routines as they
+ SKIP 128               \ This variable overwrites the startup routines as they
                         \ aren't needed again, and it shares memory with the
                         \ view screen buffer
 
 \ ******************************************************************************
 \
-\       Name: viewBuffer
+\       Name: viewBufferLeft
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: The view screen buffer, which is used to buffer the player's
-\             scrolling landscape view before writing to screen memory
+\    Summary: The view screen buffer for buffering the new part of the player's
+\             scrolling landscape view when panning right (scrolling left)
 \
 \ ******************************************************************************
 
-.viewBuffer
+.viewBufferLeft
 
  SKIP 0                 \ This variable overwrites the startup routines as they
                         \ aren't needed again, and it shares memory with the
                         \ secret code stash
+
+ CLEAR secretCodeStash, P%
+ ORG secretCodeStash
 
 \ ******************************************************************************
 \
@@ -19794,36 +19797,71 @@ L314A = C3148+2
  EQUB &19, &20, &20, &20, &20, &20, &20, &4C    \ the game is in progress, at
  EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
  EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
- EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
- EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial contents is just
- EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored
- EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
- EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
- EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
- EQUB &24, &05, &20, &0D, &13, &2E, &2A, &2E
- EQUB &4D, &49, &4E, &49, &20, &4C, &44, &41
- EQUB &23, &31, &32, &38, &3A, &53, &54, &41
- EQUB &20, &4D, &45, &41, &4E, &59, &2C, &58
- EQUB &3A, &53, &54, &41, &20, &4D, &45, &4D
- EQUB &4F, &52, &59, &2C, &58, &0D, &13, &38
- EQUB &1F, &20, &20, &20, &20, &20, &20, &4C
- EQUB &44, &41, &23, &30, &3A, &53, &54, &41
- EQUB &20, &4D, &45, &41, &4E, &59, &53, &43
- EQUB &41, &4E, &2C, &58, &0D, &13, &42, &22
- EQUB &20, &20, &20, &20, &20, &20, &4C, &44
- EQUB &41, &23, &36, &34, &3A, &53, &54, &41
- EQUB &20, &4D, &54, &52, &59, &43, &4E, &54
- EQUB &2C, &58, &3A, &72, &74, &73, &0D, &13
- EQUB &4C, &05, &20, &0D, &13, &56, &1A, &2E
- EQUB &4D, &45, &41, &4E, &20, &4C, &44, &41
- EQUB &23, &34, &30, &3A, &53, &54, &41, &20
- EQUB &43, &4F, &56, &45, &52, &0D, &13, &60
- EQUB &1B, &20, &20, &20, &20, &20, &20, &4C
- EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
- EQUB &53, &54, &58, &20, &58, &54
+ EQUB &D4, &05, &20, &0D, &12, &DE              \
+                                                \ The initial contents is just
+                                                \ workspace noise and is ignored
+                                                \
+                                                \ It actually contains snippets
+                                                \ of the original source code
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRight
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: The view screen buffer for buffering the new part of the player's
+\             scrolling landscape view when panning left (scrolling right)
+\
+\ ------------------------------------------------------------------------------
+\
+\ The initial contents of the variable is just workspace noise and is ignored.
+\ It actually contains snippets of the original source code.
+\
+\ ******************************************************************************
+
+.viewBufferRight
+
+ EQUB &0D, &2E, &65, &74, &73, &36, &20, &72
+ EQUB &74, &73, &0D, &12, &E8, &05, &20, &0D
+ EQUB &12, &F2, &05, &20, &0D, &12, &FC, &05
+ EQUB &20, &0D, &13, &06, &05, &20, &0D, &13
+ EQUB &10, &05, &20, &0D, &13, &1A, &05, &20
+ EQUB &0D, &13, &24, &05, &20, &0D, &13, &2E
+ EQUB &2A, &2E, &4D, &49, &4E, &49, &20, &4C
+ EQUB &44, &41, &23, &31, &32, &38, &3A, &53
+ EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
+ EQUB &2C, &58, &3A, &53, &54, &41, &20, &4D
+ EQUB &45, &4D, &4F, &52, &59, &2C, &58, &0D
+ EQUB &13, &38, &1F, &20, &20, &20, &20, &20
+ EQUB &20, &4C, &44, &41, &23, &30, &3A, &53
+ EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
+ EQUB &53, &43, &41, &4E, &2C, &58, &0D, &13
+ EQUB &42, &22, &20, &20, &20, &20, &20, &20
+ EQUB &4C, &44, &41, &23, &36, &34, &3A, &53
+ EQUB &54, &41, &20, &4D, &54, &52, &59, &43
+ EQUB &4E, &54, &2C, &58, &3A, &72, &74, &73
+ EQUB &0D, &13, &4C, &05, &20, &0D, &13, &56
+ EQUB &1A, &2E, &4D, &45, &41, &4E, &20, &4C
+ EQUB &44, &41, &23, &34, &30, &3A, &53, &54
+ EQUB &41, &20, &43, &4F, &56, &45, &52, &0D
+ EQUB &13, &60, &1B, &20, &20, &20, &20, &20
+ EQUB &20, &4C, &44, &58, &20, &45, &54, &45
+ EQUB &4D, &3A, &53, &54, &58, &20, &58, &54
 
  SKIPTO &4900           \ All bytes from &4100 to &48FF are zeroes and appear
                         \ to be unused
+
+\ ******************************************************************************
+\
+\       Name: viewBufferUp
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: The view screen buffer for buffering the new part of the player's
+\             scrolling landscape view when panning up (scrolling down)
+\
+\ ******************************************************************************
+
+.viewBufferUp
 
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
@@ -21866,7 +21904,21 @@ L314A = C3148+2
 
 .L5A00
 
- SKIP 256
+ SKIP 128
+
+\ ******************************************************************************
+\
+\       Name: viewBufferDown
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: The view screen buffer for buffering the new part of the player's
+\             scrolling landscape view when panning down (scrolling up)
+\
+\ ******************************************************************************
+
+.viewBufferDown
+
+ SKIP 128
 
 \ ******************************************************************************
 \
@@ -21902,8 +21954,8 @@ L314A = C3148+2
                         \ for storing tile data that can be discarded once the
                         \ landscape is generated
                         \
-                        \ During gameplay it is used to store the L5A00 and
-                        \ L5B00 variables
+                        \ During gameplay it is used to store the L5A00,
+                        \ viewBufferDown and L5B00 variables
                         \
                         \ These lines rewind BeebAsm's assembly back to L5A00
                         \ (which is at address &5A00), and clear the block

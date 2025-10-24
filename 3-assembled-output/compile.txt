@@ -10416,8 +10416,8 @@
      3EFF   FF
 .secretCodeStash
      3F00
-.viewBuffer
-     3F00
+.viewBufferLeft
+     3F80
      3F00   38         SEC
      3F01   6E FC 0C   ROR &0CFC
 .ConfigureMachine
@@ -10585,6 +10585,7 @@
      402D   0D
      402E   12
      402F   DE
+.viewBufferRight
      4030   0D
      4031   2E
      4032   65
@@ -10793,6 +10794,7 @@
      40FD   20
      40FE   58
      40FF   54
+.viewBufferUp
      4900   FE
      4901   FE
      4902   FF
@@ -14890,6 +14892,8 @@
      5A00
 .L5A00
      5A00
+.viewBufferDown
+     5A80
 .L5B00
      5B00
 .stripData
