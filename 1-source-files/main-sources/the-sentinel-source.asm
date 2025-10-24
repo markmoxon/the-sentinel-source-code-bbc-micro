@@ -19412,9 +19412,9 @@ L314A = C3148+2
 
 .secretCodeStash
 
- SKIP 128               \ This variable overwrites the startup routines as they
-                        \ aren't needed again, and it shares memory with the
-                        \ view screen buffer
+ SKIP 128               \ This variable shares the same memory as the startup
+                        \ routines as they aren't needed again once the game
+                        \ has started
 
 \ ******************************************************************************
 \
@@ -19428,12 +19428,24 @@ L314A = C3148+2
 
 .viewBufferLeft
 
- SKIP 0                 \ This variable overwrites the startup routines as they
-                        \ aren't needed again, and it shares memory with the
-                        \ secret code stash
+ SKIP 0                 \ This variable shares the same memory as the startup
+                        \ routines as they aren't needed again once the game
+                        \ has started
 
- CLEAR secretCodeStash, P%
- ORG secretCodeStash
+ CLEAR &3F00, &3F80     \ Memory from &3F00 to &3F80 has two separate uses
+ ORG &3F00              \
+                        \ During startup it is used to store the startup
+                        \ routines ConfigureMachine and ClearMemory, which
+                        \ aren't needed again once the game has started
+                        \
+                        \ While the game is running it is used to store the
+                        \ secretCodeStash and viewBufferLeft variables
+                        \
+                        \ These lines rewind BeebAsm's assembly back to
+                        \ secretCodeStash (which is at address &3F00), and
+                        \ clear the block from that point to viewBufferLeft
+                        \ (which is at address &3F80), so we can assemble the
+                        \ startup routines
 
 \ ******************************************************************************
 \
@@ -19863,8 +19875,8 @@ L314A = C3148+2
 
 .viewBufferUp
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
