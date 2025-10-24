@@ -204,7 +204,8 @@
      006C
 .screenAddrHi
      006D
-.L006E
+.anotherObject
+     006E
 .enemyCounter
      006E
 .L006F
@@ -2679,7 +2680,7 @@
      0CE4   80
 .activateSentinel
      0CE5   80
-.L0CE6
+.playerIsOnTower
      0CE6   80
 .L0CE7
      0CE7   80

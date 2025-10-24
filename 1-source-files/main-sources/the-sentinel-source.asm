@@ -126,7 +126,7 @@
 
 .panKeyBeingPressed
 
- SKIP 1                 \ The direction in which we are currently panning
+ SKIP 1                 \ The direction in which the player is currently panning
                         \
                         \   * Bit 7 set = not currently panning
                         \
@@ -570,7 +570,16 @@
  SKIP 1                 \ Storage for the high byte of the screen memory address
                         \ in the ScrollPlayerView routine
 
-.L006E
+.anotherObject
+
+ SKIP 0                 \ Another object number, to go along with currentObject
+                        \
+                        \ Set to object #16 in DrawTitleObject
+                        \ Set to enemyData5,X in sub_C16A8
+                        \ Set to enemyObject in sub_C197D
+                        \ Set to playerObject in sub_C16A8, sub_C1AF3, MainGameLoop
+                        \ Set to object #2 in sub_C5F80
+
 .enemyCounter
 
  SKIP 1                 \ Used as a loop counter when adding enemies to the
@@ -1677,7 +1686,7 @@
 
 .L0C6E
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Another bit 7 flag ???
 
 .numberOfEnemies
 
@@ -1948,16 +1957,27 @@
                         \ start of the game (by the player pressing a key that
                         \ expends or absorbs energy
                         \
-                        \   * Bit 7 clear = the Sentinel is actvated
+                        \   * Bit 7 clear = the Sentinel is activated
                         \
                         \   * Bit 7 set = the Sentinel is not yet activated
                         \
                         \ This gives the player time to get their bearings when
                         \ they first start a landscape
 
-.L0CE6
+.playerIsOnTower
 
- EQUB %10000000         \ ???
+ EQUB 128               \ A flag to record whether the player is on top of the
+                        \ the Sentinel's tower
+                        \
+                        \   * 6 = the player is on top of the Sentinel's tower
+                        \
+                        \   * Any other value = the player is not on top of the
+                        \                       Sentinel's tower
+                        \
+                        \ This value is used when generating the secret code on
+                        \ completion of a level, where an incorrect value will
+                        \ corrupt the code (so this forms part of the cracker
+                        \ protection code)
 
 .L0CE7
 
@@ -4251,7 +4271,7 @@
 .sub_C10B7
 
  LDY lastPanKeyPressed
- LDX L006E
+ LDX anotherObject
  CPY #&02
  BCS C10FD
  LDA objectYawAngle,X
@@ -4265,7 +4285,7 @@
  JSR sub_C2202
  JSR sub_C391E
  JSR sub_C2624
- LDX L006E
+ LDX anotherObject
  LDY lastPanKeyPressed
  BCS C10F2
  BNE C10EC
@@ -4840,7 +4860,7 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   C flag              Success flag:
+\   C flag              Status flag:
 \
 \                         * Clear if the object was successfully placed on a
 \                           tile
@@ -4972,6 +4992,13 @@ L1145 = C1144+1
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   anotherObject       This is always set to the object number of the player
+\                       (it is set in MainGameLoop before it calls this routine)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5143,7 +5170,8 @@ L1145 = C1144+1
                         \ is where action key presses are stored (absorb,
                         \ transfer, create, hyperspace, U-turn)
 
- BCS C12E5
+ BCS C12E5              \ If the C flag is set, jump to C12E5 to skip the
+                        \ following ???
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
@@ -5578,7 +5606,7 @@ L1145 = C1144+1
  PLA
  STA L0C78
  LDX #&10
- STX L006E
+ STX anotherObject
  JSR sub_C2624
  LDA L140F
  BNE C13FA
@@ -6663,7 +6691,7 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   C flag              Success flag:
+\   C flag              Status flag:
 \
 \                         * Clear if at least one tile block is at an altitude
 \                           of tileAltitude
@@ -7208,8 +7236,9 @@ L1145 = C1144+1
 
 .C16D4
 
- LDA playerObject
- STA L006E
+ LDA playerObject       \ Set anotherObject to the object number of the player
+ STA anotherObject
+
  RTS
 
 .C16D9
@@ -7227,7 +7256,7 @@ L1145 = C1144+1
 
 .C16F2
 
- STA L006E
+ STA anotherObject
  LDY enemyData6,X
  LDA objectFlags,Y
  BMI C174F
@@ -7299,7 +7328,7 @@ L1145 = C1144+1
 
 .C176A
 
- STX L006E
+ STX anotherObject
  JSR sub_C1A54
  BCS C1774
  JMP C1871
@@ -7476,8 +7505,10 @@ L1145 = C1144+1
 .C1876
 
  STX currentObject
- LDA playerObject
- STA L006E
+
+ LDA playerObject       \ Set anotherObject to the object number of the player
+ STA anotherObject
+
  JSR sub_C1F84
 
 .C187F
@@ -7538,8 +7569,10 @@ L1145 = C1144+1
  STA L001E
  LDA L004C
  BNE C18FF
- SEC
+
+ SEC                    \ Set bit 7 of L0C6E ???
  ROR L0C6E
+
  LDA L0081
  STA L0080
  LDA L0084
@@ -7561,7 +7594,8 @@ L1145 = C1144+1
 
 .C18FF
 
- LSR L0C6E
+ LSR L0C6E              \ Clear bit 7 of L0C6E ???
+
  LDA L0081
  SEC
  SBC #&E0
@@ -7703,7 +7737,7 @@ L1145 = C1144+1
  LDA #&28
  STA L0C68
  LDX enemyObject
- STX L006E
+ STX anotherObject
 
 .C1986
 
@@ -8095,8 +8129,10 @@ L1145 = C1144+1
  BPL CRE10
 
  STA currentObject
- LDA playerObject
- STA L006E
+
+ LDA playerObject       \ Set anotherObject to the object number of the player
+ STA anotherObject
+
  TXA
  PHA
  TYA
@@ -8121,11 +8157,24 @@ L1145 = C1144+1
 \
 \ ------------------------------------------------------------------------------
 \
+\ Arguments:
+\
+\   anotherObject       This is always set to the object number of the player
+\                       (it is set in MainGameLoop before it calls sub_C1264 and
+\                       this routine)
+\                       
+\
+\ ------------------------------------------------------------------------------
+\
 \ Returns:
 \
 \   C flag              Status flag:
 \
-\                         * Clear if ???
+\                         * Clear if:
+\
+\                           * Player has absorbed an object
+\
+\                           * Player has created an object
 \
 \                         * Set if:
 \
@@ -8133,9 +8182,8 @@ L1145 = C1144+1
 \
 \                           * Player has done a U-turn
 \
-\                           * Player tries to absorb an empty tile
-\
-\                           * Player tries to transfer to an empty tile
+\                           * Player tries to do something that results in an
+\                             error sound
 \
 \ ******************************************************************************
 
@@ -8177,8 +8225,8 @@ L1145 = C1144+1
 
 .pkey2
 
- LDX L006E              \ ??? This is value passed to sub_C1BFF, is it the
-                        \ player object number ???
+ LDX anotherObject      \ Set X to the object number of the player, which we set
+                        \ in MainGameLoop before getting here via sub_C1264
 
  CMP #35                \ If A <> 35 then the "U" key (U-turn) is not being
  BNE pkey3              \ pressed, so jump to pkey3 to move on to the next check
@@ -8214,23 +8262,28 @@ L1145 = C1144+1
  EOR #%10000000         \ flipping bit 7, which turns the player around
  STA objectYawAngle,X
 
- LDA #&28               \ Set A = &28 to set as the value of L0CE7 ???
+ LDA #40                \ Set A = 40 to set as the value of L0CE7 ???
 
- BNE pkey6              \ Jump to pkey6 to set L0CE7, playerHasMovedTile and C
-                        \ flag and return from the subroutine (this BNE is
-                        \ effectively a JMP as A is never zero) ???
+ BNE pkey6              \ Jump to pkey6 to set L0CE7 = 40, L0C73 = 3,
+                        \ playerHasMovedTile bit 7 set and the C flag and return
+                        \ from the subroutine (this BNE is effectively a JMP as
+                        \ A is never zero) ???
 
 .pkey3
 
                         \ If we get here then the key press is either create,
                         \ absorb or transfer
 
- LSR L0C6E              \ ???
+ LSR L0C6E              \ Clear bit 7 of L0C6E ???
 
- JSR sub_C1BFF
+ JSR sub_C1BFF          \ ??? Called with X = player object
 
- JSR sub_C1CCC
- BCS pkey9
+ JSR sub_C1CCC          \ Something to do with vectors? (secondAxis is involved)
+                        \ Is it working out if we are able to see the tile ???
+
+ BCS pkey9              \ If the C flag is set then this means ???, so jump to
+                        \ pkey9 to make an error sound and return from the
+                        \ subroutine as we can't ???
 
  LDA keyPress           \ If bit 5 of keypress is clear then A is not 32 or 33,
  AND #%00100000         \ so A must be 0, 2 or 3 (one of the create keys), so
@@ -8244,8 +8297,8 @@ L1145 = C1144+1
                         \ contains an object
 
  BCC pkey9              \ The tile does not contain an object, so jump to pkey9
-                        \ to make an error sound as we can't absorb or transfer
-                        \ to an empty tile
+                        \ to make an error sound and return from the subroutine
+                        \ as we can't absorb or transfer to an empty tile
 
  AND #%00111111         \ The number of the object on the tile is in bits 0 to 5
  TAX                    \ of the tile data, so extract this into X
@@ -8262,8 +8315,9 @@ L1145 = C1144+1
  LDY objectTypes,X      \ Set Y to the type of object #X
 
  BNE pkey9              \ If object #X is not a robot (i.e. not an object of
-                        \ type 0), jump to pkey9 to make an error sound as the
-                        \ player can only transfer into other robots
+                        \ type 0), jump to pkey9 to make an error sound and
+                        \ return from the subroutine as the player can only
+                        \ transfer into other robots
 
  JSR sub_C1200          \ Sets variables that control key scans etc. ???
 
@@ -8272,10 +8326,29 @@ L1145 = C1144+1
                         \ effectively performs the transfer across to the new
                         \ robot
 
-                        \ We now start at object #X, the robot that the player
-                        \ just transferred into, and if it's on top of another
-                        \ object or stack of objects, we work our way down the
-                        \ stack until we get to the tile itself
+                        \ We now work out whether the player just transferred
+                        \ into a robot on the Sentinel's tower
+                        \
+                        \ We do this by starting at object #X, which is the
+                        \ robot that the player just transferred into, and if
+                        \ it's on top of another object or stack of objects, we
+                        \ work our way down the stack, checking to see if the
+                        \ stack contains the Sentinel's tower
+                        \
+                        \ The Sentinel's tower is always the first object to be
+                        \ spawned, and object numbers are allocated from 63 and
+                        \ down, so this means the tower is always object #63, or
+                        \ %111111, so that's what we look for while working
+                        \ through the object stack
+                        \
+                        \ This forms part of the code to protect the game from
+                        \ crackers, as all we do with this information is to set
+                        \ playerIsOnTower to the object type of the tower (which
+                        \ is 6). This value is then used to generate the secret
+                        \ code for the completed landscape, so if crackers have
+                        \ jumped straight to the end of the level without
+                        \ setting playerIsOnTower to 6, then the wrong code will
+                        \ be generated in the DrawSecretCode routine
 
 .pkey4
 
@@ -8283,30 +8356,37 @@ L1145 = C1144+1
 
  CMP #%01000000         \ If both bits 6 and 7 of the object flags for object #X
  BCC pkey5              \ are clear then object #X is not stacked on top of
-                        \ another object, so jump to pkey5 to skip the following
+                        \ another object (so if we have looped back here from
+                        \ below, we have reached the bottom of the stack), so
+                        \ jump to pkey5 to stop looping through the object stack
+                        \ and move on to the next task
 
                         \ If we get here then object #X is stacked on top of
-                        \ another object, and the number of that object is in
-                        \ bits 0 to 5 of the object flags for object #X, which
-                        \ is currently in A
+                        \ another object, and the number of the object below
+                        \ object #X is in bits 0 to 5 of the object flags for
+                        \ object #X, which is currently in A
 
- AND #%00111111         \ Extract bits 0 to 5 of the object flags into X, so X
- TAX                    \ contains the object number of the next object down in
-                        \ the stack ???
+ AND #%00111111         \ Extract bits 0 to 5 of the object flags into A and X,
+ TAX                    \ so X now contains the object number of the next object
+                        \ down in the stack
 
- EOR #&3F
- BNE pkey4
+ EOR #%00111111         \ If the object number in A is not the Sentinel's tower
+ BNE pkey4              \ (i.e. it is not 63, or %111111), then loop back to
+                        \ check the next object down in the stack
 
- LDA objectTypes,X
- STA L0CE6
+                        \ If we get here then the player has just transferred
+                        \ into a robot on the Sentinel's tower
+
+ LDA objectTypes,X      \ Set playerIsOnTower = 6 (which is the object type of
+ STA playerIsOnTower    \ the Sentinel's tower, whose object number is in X)
 
 .pkey5
 
- LDA #&19
+ LDA #25                \ Set A = 25 to set as the value of L0CE7 ???
 
 .pkey6
 
- JSR sub_C5FF6
+ JSR sub_C5FF6          \ Set L0CE7 = A, L0C73 = 3 ???
 
  LDA #%10000000         \ Set bit 7 of playerHasMovedTile to indicate that the
  STA playerHasMovedTile \ player has moved to a new tile
@@ -8320,21 +8400,34 @@ L1145 = C1144+1
                         \ If we get here then we are absorbing an object of type
                         \ X from the tile anchored at (xTile, zTile)
 
- LDA objectFlags
- BMI pkey9
- LDA objectTypes,X
- CMP #&04
+ LDA objectFlags        \ The Sentinel is always object #0, so this checks
+ BMI pkey9              \ whether bit 7 of the Sentinel's object is set, which
+                        \ indicates that the Sentinel's object number is not
+                        \ allocated
+                        \
+                        \ This means that the Sentinel no longer exists and has
+                        \ been absorbed by the player, at which point the player
+                        \ is no longer allowed to absorb other objects, so jump
+                        \ to pkey9 to make an error sound and return from the
+                        \ subroutine
+
+ LDA objectTypes,X      \ If the player is absorbing a robot (an object of type
+ CMP #4                 \ 4), jump to pkey13 to implement this
  BEQ pkey13
- CMP #&06
- BEQ pkey9
+
+ CMP #6                 \ If the player is trying to absorb the Sentinel's tower
+ BEQ pkey9              \ (an object of type 6), jump to pkey9 to make an error
+                        \ sound and return from the subroutine
 
 .pkey8
 
  JSR DeleteObject       \ Delete object #X and remove it from the landscape
 
- STX currentObject
- CLC
- JSR UpdatePlayerEnergy
+ STX currentObject      \ Set currentObject to the number of the deleted object
+
+ CLC                    \ Call UpdatePlayerEnergy with the C flag clear to add
+ JSR UpdatePlayerEnergy \ the amount of energy in the now-deleted object #X to
+                        \ the player's energy
 
  CLC                    \ Clear the C flag to denote ???
 
@@ -8342,19 +8435,42 @@ L1145 = C1144+1
 
 .pkey9
 
-                        \ If we get here then the player has tried to absorb or
-                        \ transfer to an empty tile, or they have tried to
-                        \ transfer to an object that is not a robot, so we make
-                        \ an error sound
+                        \ If we get here then the player has tried to:
+                        \
+                        \   * Absorb or transfer to an empty tile
+                        \
+                        \   * Create, absorb or transfer to a tile that they
+                        \     can't see directly (sub_C1CCC returns with C flag
+                        \     set, this explanation is a total guess) ???
+                        \
+                        \   * Transfer to an object that is not a robot
+                        \
+                        \   * Absorb an object after the Sentinel has been
+                        \     absorbed
+                        \
+                        \   * Absorb the Sentinel's tower
+                        \
+                        \   * Create an object when there are no unallocated
+                        \     object numbers
+                        \
+                        \   * Create an object that takes their energy level
+                        \     below zero
+                        \
+                        \   * Create an object that can't be added to the tile
+                        \     (if the tile is occupied by an object that is not
+                        \     a boulder or tower, for example)
+                        \
+                        \ In each case we make an error sound and return from
+                        \ the subroutine
 
- LDA #&AA
- STA soundData+28       \ Third parameter of sound data block #3 (pitch)
+ LDA #170               \ Set the third parameter of sound data block #3 (the
+ STA soundData+28       \ pitch) to 170
 
  LDA #5                 \ Make sound #5 (ping)
  JSR MakeSound
 
- LDA #&90
- STA soundData+28       \ Third parameter of sound data block #3 (pitch)
+ LDA #144               \ Set the third parameter of sound data block #3 (the
+ STA soundData+28       \ pitch) to 144
 
  SEC                    \ Set the C flag to denote ???
 
@@ -8362,34 +8478,87 @@ L1145 = C1144+1
 
 .pkey10
 
+                        \ If we get here then the player is trying to create an
+                        \ object of the type given in keyPress
+
  JSR SpawnObject+3      \ Spawn an object of type keyPress, returning the object
                         \ number of the new object in X and currentObject
 
- BCS pkey9
- SEC
- JSR UpdatePlayerEnergy
- BCS pkey9
- LDX currentObject
- LDA L003A
+ BCS pkey9              \ If there are no free object numbers then the call to
+                        \ SpawnObject will return with the C flag set and the
+                        \ object will not have been created, so jump to pkey9 to
+                        \ make an error sound and return from the subroutine
+
+ SEC                    \ Call UpdatePlayerEnergy with the C flag set to
+ JSR UpdatePlayerEnergy \ subtract the amount of energy in object #X from the
+                        \ player's energy, so this subtracts the energy required
+                        \ to create the object from the player
+
+ BCS pkey9              \ If the creation of object #X reduces the player's
+                        \ energy below zero, then the call to UpdatePlayerEnergy
+                        \ will return with the C flag set, so jump to pkey9 to
+                        \ make an error sound and return from the subroutine
+
+ LDX currentObject      \ Set X to the object number of the object we just
+                        \ created
+
+ LDA L003A              \ Set (xTile, zTile) = (L003A, L003C) ???
  STA xTile
  LDA L003C
  STA zTile
 
  JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
 
- BCC pkey11
- CLC
- JSR UpdatePlayerEnergy
- JMP pkey9
+ BCC pkey11             \ If the object was successfully placed on the tile then
+                        \ the call to PlaceObjectOnTile will return with the C
+                        \ flag clear, so jump to pkey11 to keep going
+
+ CLC                    \ Otherwise we failed to add the object to the tile, so
+ JSR UpdatePlayerEnergy \ call UpdatePlayerEnergy with the C flag clear to
+                        \ refund the energy that we used to create the object
+                        \ back to the player
+
+ JMP pkey9              \ We failed to place the object on the tile, so jump to
+                        \ pkey9 to make an error sound and return from the
+                        \ subroutine
 
 .pkey11
 
- LDA objectTypes,X
- BNE pkey12
- LDY playerObject
+                        \ If we get here then a new object has been successfully
+                        \ created and added to a tile, as object #X
+
+ LDA objectTypes,X      \ If the type of object that was added is not a robot
+ BNE pkey12             \ (type 0), jump to pkey12 to return from the subroutine
+
+                        \ We just created a robot, so we now rotate it so that
+                        \ it faces the player
+
+ LDY playerObject       \ Set A to the yaw angle of the player object
  LDA objectYawAngle,Y
- EOR #&80
- STA objectYawAngle,X
+
+ EOR #%10000000         \ Flip bit 7 to rotate the angle through 180 degrees
+                        \
+                        \ The degree system in the Sentinel looks like this:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of object
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ Flipping bit 7 changes 0 into 128, +32 into -96, +64
+                        \ into -64 and so on, so it's the same as rotating by
+                        \ 180 degrees
+
+ STA objectYawAngle,X   \ Set the yaw angle for the newly created robot to the
+                        \ player's yaw angle rotated through 180 degrees, so the
+                        \ new robot faces the player
 
 .pkey12
 
@@ -8399,7 +8568,9 @@ L1145 = C1144+1
 
 .pkey13
 
- LDY #&07
+                        \ If we get here then the player is absorbing a robot
+
+ LDY #7
 
 .pkey14
 
@@ -8437,7 +8608,9 @@ L1145 = C1144+1
 \
 \ Arguments:
 \
-\   X                   The object number ??? Is this the player?
+\   X                   This is always set to the object number of the player
+\                       (it is set in ProcessActionKeys before it calls this
+\                       routine)
 \
 \ ******************************************************************************
 
@@ -8790,7 +8963,7 @@ L1145 = C1144+1
 
 .sub_C1CCC
 
- LDX L006E
+ LDX anotherObject
  LSR L0C56
  LSR L0CDD
  JSR sub_C1EB5
@@ -8828,15 +9001,17 @@ L1145 = C1144+1
  BCS C1D33
  BIT secondAxis
  BVS C1D33
- LDA L0C6E
- ORA L0C67
+
+ LDA L0C6E              \ If bit 7 is set in one or both of L0C6E and L0C67,
+ ORA L0C67              \ skip the following test ???
  BMI C1D21
+
  LDA ySightsVectorHi
  BPL C1D33
 
 .C1D21
 
- LDX L006E
+ LDX anotherObject
  LDA xTile
  CMP xObject,X
  BNE C1D31
@@ -9346,12 +9521,14 @@ L1145 = C1144+1
 \
 \ Returns:
 \
-\   C flag              Success flag:
+\   C flag              Status flag:
 \
 \                         * Clear if we successfully added the object to the
 \                           tile
 \
-\                         * Set if we failed to add the object to the tile
+\                         * Set if we failed to add the object to the tile (if
+\                           the tile is occupied by an object that is not a
+\                           a boulder or tower, for example)
 \
 \ ******************************************************************************
 
@@ -9614,8 +9791,9 @@ L1145 = C1144+1
 .objt6
 
                         \ If we get here then the tile already contains an
-                        \ object and that object is not of type 3 or 6, so we
-                        \ can't add the new object to the tile
+                        \ object and that object is not a boulder (type 3) or
+                        \ tower (type 6), so we can't add the new object to the
+                        \ tile
 
  SEC                    \ Set the C flag to indicate that we have failed to add
                         \ the object to the tile
@@ -9667,7 +9845,7 @@ L1145 = C1144+1
 
 .C1F98
 
- LDX L006E
+ LDX anotherObject
  LDA L0C62
  STA L2095
  LDA #0
@@ -9699,7 +9877,7 @@ L1145 = C1144+1
 
  LDY #0
  JSR SetViewBufferAddr
- LDX L006E
+ LDX anotherObject
  LDA #0
  STA L001F
  SEC
@@ -10018,7 +10196,7 @@ L1145 = C1144+1
 \
 \   currentObject       The number of the new object (if successful)
 \
-\   C flag              Success flag:
+\   C flag              Status flag:
 \
 \                         * Clear if the object was successfully spawned
 \
@@ -10281,7 +10459,7 @@ L1145 = C1144+1
 
 .hypr1
 
- LDA #0                 \ ???
+ LDA #0                 \ Set L0CE7 = 0, L0C73 = 3 ???
  JSR sub_C5FF6
 
  LDX playerObject       \ If the player is not on the Sentinel's tile in terms
@@ -11430,7 +11608,7 @@ L23E3 = C23E2+1
 
 .sub_C2624
 
- LDX L006E
+ LDX anotherObject
  LDA #&40
  STA L003C
  LDA #&0C
@@ -11838,7 +12016,7 @@ L23E3 = C23E2+1
  STA L0021
  LDA #0
  STA L007F
- LDX L006E
+ LDX anotherObject
  LDA #&80
  STA L0080
  CLC
@@ -12017,7 +12195,7 @@ L23E3 = C23E2+1
 
 .C28EE
 
- LDX L006E
+ LDX anotherObject
  LDA #0
  SEC
  SBC yObjectLo,X
@@ -15890,28 +16068,51 @@ L314A = C3148+2
 \
 \       Name: DrawSecretCode
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: Draw the landscape's secret code in 3D text
 \
 \ ******************************************************************************
 
 .DrawSecretCode
 
- LDA #&80
- STA printTextIn3D
+ LDA #%10000000         \ Set bit 7 of printTextIn3D so we print the landscape's
+ STA printTextIn3D      \ secret code in 3D text when we call Print2DigitBCD
+                        \ below
 
+ JSR DrawLetter3D       \ ???
+
+ LDA #&C7               \ ???
  JSR DrawLetter3D
 
- LDA #&C7
- JSR DrawLetter3D
+ LSR playerIsOnTower    \ If we got here legally (i.e. without crackers getting
+                        \ involved, then the ProcessActionKeys will have set
+                        \ playerIsOnTower to 6 when the player transferred into
+                        \ the robot on the Sentinel's tower, so this sets the
+                        \ value of playerIsOnTower to 3
 
- LSR L0CE6
- LDX L0CE6
-
-                        \ This picks up where CheckSecretCode ends (when bit 7
-                        \ of doNotPlayLandscape is set and CheckSecretCode
-                        \ iterates up to the point where the secret code is
-                        \ generated)
+ LDX playerIsOnTower    \ Set X = 3 to use as a loop in the following code
+                        \
+                        \ If crackers have jumped straight here instead of
+                        \ playing the game properly, then X will not be 3 (it
+                        \ will probably be 64, as playerIsOnTower is initialised
+                        \ to 128 at the start of each level)
+                        \
+                        \ The following code picks up where the CheckSecretCode
+                        \ routine ends, for when bit 7 of doNotPlayLandscape is
+                        \ set
+                        \
+                        \ In this case, CheckSecretCode only iterates up to the
+                        \ point where the secret code is about to be generated,
+                        \ and then it stops, so we can finish the generation
+                        \ process here
+                        \
+                        \ For this to work, we need to set X = 3 so we can
+                        \ generate the next four BCD numbers in the landscape's
+                        \ sequence of seed numbers, as these will give us the
+                        \ secret code
+                        \
+                        \ If X is 64, then the secret code that is generated
+                        \ will be incorrect
 
 .dsec1
 
@@ -15919,24 +16120,30 @@ L314A = C3148+2
                         \ of seed numbers, converted to a binary coded decimal
                         \ (BCD) number
 
- CPX #4
- BCS dsec2
+ CPX #4                 \ If X >= 4, skip printing the BCD number, so that we
+ BCS dsec2              \ skip printing the four correct secret code numbers if
+                        \ X starts the loop at 64
 
  JSR Print2DigitBCD     \ Print the binary coded decimal (BCD) number in A
 
 .dsec2
 
- DEX
- BPL dsec1
+ DEX                    \ Decrement the loop counter
 
- STX L0CE6
+ BPL dsec1              \ Loop back until we have printed the four BCD numbers
+                        \ in the landscape's secret code
+
+ STX playerIsOnTower    \ Set playerIsOnTower = &FF to overwrite the correct
+                        \ value, to make it harder for crackers to work out why
+                        \ their secret codes aren't valid
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
 
- LSR printTextIn3D
+ LSR printTextIn3D      \ Clear bit 7 of printTextIn3D to return to printing
+                        \ normal text
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -16994,8 +17201,8 @@ L314A = C3148+2
 
  JSR sub_C5734
 
- LDA playerObject
- STA L006E
+ LDA playerObject       \ Set anotherObject to the object number of the player
+ STA anotherObject
 
  BIT L0CDE              \ If bit 7 of L0CDE is clear, jump to game2
  BPL game2
@@ -19344,8 +19551,8 @@ L314A = C3148+2
                         \
                         \ In MOS 0.10, OSBYTE 200 does not let you set the BREAK
                         \ key to clear memory, so we need to set this up by hand
-                        \ (otherwise hackers could load the game on MOS 0.10 and
-                        \ simply press BREAK to access the loaded game code).
+                        \ (otherwise crackers could load the game on MOS 0.10
+                        \ and simply press BREAK to access the loaded game code)
                         \
                         \ The Electron and MOS 1.00 do not need this code, as
                         \ OSBYTE 200 is supported in these versions of the
@@ -21895,11 +22102,11 @@ L314A = C3148+2
  STY L006F
  LDA objectTypes,Y
  STA L004C
- LDX L006E
+ LDX anotherObject
  JSR sub_C5DC4
  JSR sub_C5DF5
  JSR sub_C5567
- LDX L006E
+ LDX anotherObject
  LDA angleLo
  SEC
  SBC L001F
@@ -22057,7 +22264,7 @@ L314A = C3148+2
  STA L0080
  LDA U
  ADC L0C5C
- LDX L006E
+ LDX anotherObject
  JSR sub_C561D
  LDY L0021
  LDA L008D
@@ -22746,7 +22953,7 @@ L314A = C3148+2
  LDA L5FDF,Y
  STA objectYawAngle+1
  LDX #&02
- STX L006E
+ STX anotherObject
  RTS
 
 \ ******************************************************************************
@@ -22877,7 +23084,7 @@ L314A = C3148+2
 .sub_C5FF6
 
  STA L0CE7
- LDA #&03
+ LDA #3
  STA L0C73
  RTS
 
