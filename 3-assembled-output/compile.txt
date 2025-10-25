@@ -3476,11 +3476,11 @@
      125F   C9 1F      CMP #&1F
      1261   B0 F7      BCS &125A
      1263   60         RTS
-.sub_C1264
+.ProcessGameplay
      1264   A9 00      LDA #&00
      1266   8D E4 0C   STA &0CE4
      1269   8D 51 0C   STA &0C51
-.C126C
+.play1
      126C   AD E4 0C   LDA &0CE4
      126F   30 3C      BMI &12AD
      1271   4E 1F 0C   LSR &0C1F
@@ -3490,17 +3490,17 @@
      127C   D0 04      BNE &1282
      127E   38         SEC
      127F   6E 1F 0C   ROR &0C1F
-.C1282
+.play2
      1282   20 A8 16   JSR &16A8
      1285   AD 4E 0C   LDA &0C4E
      1288   F0 0A      BEQ &1294
      128A   A9 1E      LDA #&1E
      128C   20 24 5F   JSR &5F24
-.C128F
+.play3
      128F   20 00 12   JSR &1200
      1292   38         SEC
      1293   60         RTS
-.C1294
+.play4
      1294   0E 63 0C   ASL &0C63
      1297   B0 F6      BCS &128F
      1299   2C 64 0C   BIT &0C64
@@ -3510,19 +3510,19 @@
      12A4   20 5A 35   JSR &355A
      12A7   20 80 34   JSR &3480
      12AA   4C 6C 12   JMP &126C
-.C12AD
+.play5
      12AD   A5 09      LDA &09
      12AF   30 02      BMI &12B3
      12B1   18         CLC
      12B2   60         RTS
-.C12B3
+.play6
      12B3   AD E9 0C   LDA &0CE9
      12B6   30 33      BMI &12EB
      12B8   C9 22      CMP #&22
      12BA   B0 05      BCS &12C1
      12BC   2C 5F 0C   BIT &0C5F
      12BF   10 2A      BPL &12EB
-.C12C1
+.play7
      12C1   8D 61 0C   STA &0C61
      12C4   4E E5 0C   LSR &0CE5
      12C7   20 0B 1B   JSR &1B0B
@@ -3536,11 +3536,11 @@
      12DC   20 84 1F   JSR &1F84
      12DF   20 53 35   JSR &3553
      12E2   20 C7 36   JSR &36C7
-.C12E5
+.play8
      12E5   0E 63 0C   ASL &0C63
      12E8   90 01      BCC &12EB
      12EA   60         RTS
-.C12EB
+.play9
      12EB   4C 64 12   JMP &1264
 .sub_C12EE
      12EE   AD 50 0C   LDA &0C50
