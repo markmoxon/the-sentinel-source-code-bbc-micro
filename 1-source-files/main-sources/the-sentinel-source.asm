@@ -1912,16 +1912,34 @@
 .previousDoNotScan
 
  EQUB 0                 \ Storage for the current setting of doNotScanKeyboard
-                        \ in the sub_C1200 routine, so we can check whether
-                        \ doNotScanKeyboard has changed in ProcessGameplay ???
+                        \ in the PauseKeyboardScan routine, so we can check
+                        \ whether doNotScanKeyboard has changed during the
+                        \ ProcessGameplay loop ???
 
 .L0CDD
 
  EQUB 0                 \ ???
 
-.L0CDE
+.hyperspaceEndsGame
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Records whether the player performing a hyperspace has
+                        \ just ended the game
+                        \
+                        \   * Bit 7 set = the player has hyperspaced and has
+                        \                 ended the game (see bit 6 for the
+                        \                 details)
+                        \
+                        \     Bit 7 clear = the game has not been ended by a
+                        \                   hyperspace action
+                        \
+                        \   * Bit 6 set = the player has won by hyperspacing
+                        \                 from the Sentinel's tower
+                        \
+                        \     Bit 6 clear = the player has run out of energy by
+                        \                   trying to hyperspace without being
+                        \                   able to create a robot into which
+                        \                   they can hyperspace
+
 
 .soundCounter
 
@@ -4641,9 +4659,9 @@ L1145 = C1144+1
                         \ "B", "H", or "U" (absorb, transfer, create robot,
                         \ create tree, create boulder, hyperspace, U-turn)
 
- BPL sub_C1200          \ If there is a key press in the key logger entry, jump
-                        \ to sub_C1200 to ??? and return from the subroutine
-                        \ using a tail call
+ BPL PauseKeyboardScan  \ If there is a key press in the key logger entry, jump
+                        \ to PauseKeyboardScan to pause keyboard scanning and
+                        \ return from the subroutine using a tail call
 
                         \ If we get here then the player is not pressing "A",
                         \ "Q", "R", "T", "B", "H", or "U" (absorb, transfer,
@@ -4740,14 +4758,15 @@ L1145 = C1144+1
                         \ pan key that's being pressed, so it contains the most
                         \ recent pan key press (i.e. the current one)
 
-                        \ Fall through into sub_C1200 to ???
+                        \ Fall through into PauseKeyboardScan to pause keyboard
+                        \ scanning
 
 \ ******************************************************************************
 \
-\       Name: sub_C1200
+\       Name: PauseKeyboardScan
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Keyboard
+\    Summary: Pause keyboard scanning
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4757,7 +4776,7 @@ L1145 = C1144+1
 \
 \ ******************************************************************************
 
-.sub_C1200
+.PauseKeyboardScan
 
  LDA #%10000000         \ Set bit 7 of doNotScanKeyboard to disable keyboard
  STA doNotScanKeyboard  \ scans ???
@@ -5038,7 +5057,7 @@ L1145 = C1144+1
  LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
  BMI play5              \ scans have been disabled in the interrupt routine
                         \ since we called ProcessGameplay, so jump to play5 to
-                        \ skip the following and process any action key presses
+                        \ move on to processing action key presses
 
  LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress to record that the same
                         \ pan key is not being held down, which we will change
@@ -5047,11 +5066,13 @@ L1145 = C1144+1
  LDA previousDoNotScan  \ If bit 7 of previousDoNotScan is clear then it matches
  BPL play2              \ the current value of doNotScanKeyboard (so the value
                         \ of previousDoNotScan has not changed since the last
-                        \ time we were in the sub_C1200 routine, and at both
-                        \ points key scanning was enabled), so jump to play2 to
-                        \ skip the following and leave samePanKeyPress with bit
-                        \ 7 clear, to record that the same pan key is not being
-                        \ held down ???
+                        \ time we were in the PauseKeyboardScan routine, and at
+                        \ both points key scanning was enabled), so jump to
+                        \ play2 to skip the following check for for pan keys
+
+                        \ If we get here then bit 7 of is doNotScanKeyboard
+                        \ clear and bit 7 of previousDoNotScan is set, so
+                        \ keyboard scans have been re-enabled ???
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -5075,7 +5096,7 @@ L1145 = C1144+1
 
 .play3
 
- JSR sub_C1200          \ Sets variables that control key scans etc. ???
+ JSR PauseKeyboardScan  \ Pause keyboard scans
 
  SEC                    \ Set the C flag to indicate that ???
 
@@ -8338,7 +8359,7 @@ L1145 = C1144+1
                         \ return from the subroutine as the player can only
                         \ transfer into other robots
 
- JSR sub_C1200          \ Sets variables that control key scans etc. ???
+ JSR PauseKeyboardScan  \ Pause keyboard scans
 
  STX playerObject       \ Set the player's object number to that of the robot
                         \ on the tile anchored at (xTile, zTile), so this
@@ -10505,8 +10526,10 @@ L1145 = C1144+1
  LDA #3                 \ Set L0C4C = 3 ???
  STA L0C4C
 
- LDA #%10000000         \ Set bit 7 and clear bit 6 of L0CDE ???
- STA L0CDE
+ LDA #%10000000         \ Set bit 7 of hyperspaceEndsGame to indicate that the
+ STA hyperspaceEndsGame \ game has ended with a hyperspace, and clear bit 6 to
+                        \ indicate that the game has ended because the player
+                        \ has run out of energy
 
  BNE hypr3              \ Jump to hypr3 to return from the subroutine (this BNE
                         \ is effectively a JMP as A is never zero)
@@ -10530,8 +10553,10 @@ L1145 = C1144+1
                         \ the Sentinel's tower, so they have just completed this
                         \ landscape
 
- LDA #%11000000         \ Set bits 6 and 7 of L0CDE ???
- STA L0CDE
+ LDA #%11000000         \ Set bit 7 of hyperspaceEndsGame to indicate that the
+ STA hyperspaceEndsGame \ game has ended with a hyperspace, and set bit 6 to
+                        \ indicate that the game has ended because the player
+                        \ has won by hyperspacing from the Sentinel's tower
 
  LDA #%10000000         \ Set bit 7 of doNotPlayLandscape so that when we finish
  STA doNotPlayLandscape \ the landscape, the landscape generation process will
@@ -10545,7 +10570,7 @@ L1145 = C1144+1
 
 .hypr2
 
- JSR sub_C1200          \ Sets variables that control key scans etc. ???
+ JSR PauseKeyboardScan  \ Pause keyboard scans
 
  LDX currentObject      \ Set the player's object number to that of the new
  STX playerObject       \ robot that we spawned above, so this effectively
@@ -11186,8 +11211,10 @@ L23E3 = C23E2+1
 
 .sub_C2463
 
- LDA L0CDE
- BMI CRE14
+ LDA hyperspaceEndsGame \ If bit 7 of hyperspaceEndsGame is set then the game
+ BMI CRE14              \ has ended because of a hyperspace, so jump to CRE14
+                        \ to return from the subroutine
+
  LDA #0
  STA L0005
  LDX #&7F
@@ -17258,10 +17285,22 @@ L314A = C3148+2
  LDA playerObject       \ Set anotherObject to the object number of the player
  STA anotherObject
 
- BIT L0CDE              \ If bit 7 of L0CDE is clear, jump to game2
- BPL game2
+ BIT hyperspaceEndsGame \ If bit 7 of hyperspaceEndsGame is clear then the game
+ BPL game2              \ has not ended because of a hyperspace, so jump to
+                        \ game2 to keep going
 
- BVS game7              \ If bit 6 of L0CDE is set, jump to game7 to ???
+                        \ If we get here then the game has ended because the
+                        \ player performed a hyperspace
+
+ BVS game7              \ If bit 6 of hyperspaceEndsGame is set then the game
+                        \ has ended because the player has hyperspaced from the
+                        \ Sentinel's tower, thus winning the game, so jump to
+                        \ game7 to process winning the landscape
+
+                        \ If we get here then bit 6 of hyperspaceEndsGame is
+                        \ clear and the player has run out of energy by trying
+                        \ to hyperspace without being able to create a robot
+                        \ into which they can hyperspace
 
  JSR sub_C1090
 
@@ -17290,7 +17329,7 @@ L314A = C3148+2
  LDA #&19
  STA L0055
 
- LDA #&02
+ LDA #2
 
  JSR sub_C2963
 
@@ -17304,13 +17343,21 @@ L314A = C3148+2
  LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
 
- LDA L0CDE
+ LDA hyperspaceEndsGame \ Set A to the hyperspace status flag
 
- BPL game11
+ BPL game11             \ If bit 7 of hyperspaceEndsGame is clear then the game
+                        \ has not ended because of a hyperspace, so jump to
+                        \ game11 to keep going
 
- STA sentinelHasWon
+                        \ If we get here then the game has ended because of a
+                        \ hyperspace, and it must be because the player ran out
+                        \ of energy, as otherwise we would have taken the branch
+                        \ to game7 above
 
- LDA #&06
+ STA sentinelHasWon     \ Set bit 7 of sentinelHasWon to indicate that the
+                        \ player has run out of energy and the Sentinel has won
+
+ LDA #6
  STA L0C73
 
  LDA #5                 \ The Sentinel has won, so display the game over screen

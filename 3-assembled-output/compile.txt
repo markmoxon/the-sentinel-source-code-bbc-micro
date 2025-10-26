@@ -2668,7 +2668,7 @@
      0CDC   00
 .L0CDD
      0CDD   00
-.L0CDE
+.hyperspaceEndsGame
      0CDE   00
 .soundCounter
      0CDF   00
@@ -3415,7 +3415,7 @@
      11F9   A5 09      LDA &09
      11FB   30 0B      BMI &1208
      11FD   8D 1D 0C   STA &0C1D
-.sub_C1200
+.PauseKeyboardScan
      1200   A9 80      LDA #&80
      1202   8D E4 0C   STA &0CE4
      1205   8D 1E 0C   STA &0C1E
