@@ -3315,9 +3315,9 @@
      1141   9D 40 01   STA &0140,X
 .C1144
      1144   4C 36 11   JMP &1136
-.L1147
+.highestPitchAngle
      1147   35
-.L1148
+.lowestPitchAngle
      1148   CD
 .ResetVariables
      1149   38         SEC
@@ -9175,7 +9175,7 @@
 .siud4
      39B4   E8         INX
      39B5   E8         INX
-.siud5
+.SetSightsAddress
      39B6   AD C4 0C   LDA &0CC4
      39B9   18         CLC
      39BA   7D C7 3A   ADC &3AC7,X

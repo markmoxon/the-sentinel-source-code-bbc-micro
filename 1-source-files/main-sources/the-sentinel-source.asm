@@ -4400,29 +4400,31 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L1147
+\       Name: highestPitchAngle
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Sights
+\    Summary: The pitch angle of the highest angle that the player can look at
+\             with the sights
 \
 \ ******************************************************************************
 
-.L1147
+.highestPitchAngle
 
- EQUB &35
+ EQUB 53
 
 \ ******************************************************************************
 \
-\       Name: L1148
+\       Name: lowestPitchAngle
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\    Summary: The pitch angle of the highest angle that the player can look at
+\    Summary: The pitch angle of the lowest angle that the player can look at
+\             with the sights
 \
 \ ******************************************************************************
 
-.L1148
+.lowestPitchAngle
 
- EQUB &CD
+ EQUB 205
 
 \ ******************************************************************************
 \
@@ -4732,11 +4734,15 @@ L1145 = C1144+1
 
  JSR MoveSights         \ Move the sights according to the pan key presses in
                         \ the key logger
+                        \
+                        \ If the player moves the sights off the edge of the
+                        \ screen, this routine will set panKeyBeingPressed to
+                        \ "press" the relevant pan key so that the screen
+                        \ scrolls in the same direction to bring the sights
+                        \ back into view
 
- JMP ckey10             \ Jump to ckey10 to skip the following (where we will
-                        \ then jump to C1208 to finish off and return from the
-                        \ subroutine, as we set bit 7 of panKeyBeingPressed at
-                        \ the start of the routine)
+ JMP ckey10             \ Jump to ckey10 to process any pan "key press" from the
+                        \ call to MoveSights
 
 .ckey8
 
@@ -19181,29 +19187,39 @@ L314A = C3148+2
 \       Name: MoveSights
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: ???
+\    Summary: Check for up/down/left/right key presses and move the sights
+\             accordingly, pannign the screen if they go past the screen edges
 \
 \ ******************************************************************************
 
 .MoveSights
 
- JSR MoveSightsSideways
+ JSR MoveSightsSideways \ Check for the left/right keys and move the sights
+                        \ accordingly, panning to the left or right if they go
+                        \ past the screen edges
 
- LDA panKeyBeingPressed
- BPL sigh1
+ LDA panKeyBeingPressed \ If panKeyBeingPressed contains a key press then one
+ BPL sigh1              \ of the left and right keys is being pressed, so jump
+                        \ to sigh1 to skip scanning the up and down keys as we
+                        \ can only move the sights in one direction at a time
 
- JSR MoveSightsUpDown
+ JSR MoveSightsUpDown   \ Check for the up/down keys and move the sights
+                        \ accordingly, panning up or down if they go past the
+                        \ screen edges
 
 .sigh1
 
- JMP ShowSights
+ JMP ShowSights         \ Jump to ShowSights to draw the sights in their new
+                        \ position, returning from the subroutine using a tail
+                        \ call
 
 \ ******************************************************************************
 \
 \       Name: MoveSightsSideways
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: ???
+\    Summary: Check for the left/right keys and move the sights accordingly,
+\             panning to the left or right if they go past the screen edges
 \
 \ ******************************************************************************
 
@@ -19212,8 +19228,14 @@ L314A = C3148+2
  LDX keyLogger          \ Set X to the key logger entry for "S" and "D" (pan
                         \ left, pan right), which are used to move the sights
 
- BMI sisd4
- BNE sisd2
+ BMI sisd4              \ If there is no key press in the key logger entry, jump
+                        \ to sisd4 to return from the subroutine
+
+                        \ If we get here then "S" or "D" is being pressed, which
+                        \ will put 1 or 0 into the key logger respectively
+
+ BNE sisd2              \ If X <> 0 then "D" is not being pressed, so jump to
+                        \ sisd2 as it must be "S" that is being pressed
 
                         \ If we get here then X = 0, so "D" is being pressed,
                         \ which is the key for moving the sights right
@@ -19222,49 +19244,92 @@ L314A = C3148+2
  CLC
  ADC #1
 
- CMP #&90
- BCC sisd1
- SBC #&40
- STX panKeyBeingPressed
+ CMP #144               \ If xSights < 144 then skip the following, as the
+ BCC sisd1              \ sights have not moved off the right edge of the screen
+
+                        \ If we get here then the sights have just moved off the
+                        \ right edge of the screen, so we need to pan the screen
+                        \ by moving the sights back towards the centre of the
+                        \ screen and starting a pan right by "pressing" the
+                        \ relevant pan key
+
+ SBC #64                \ Subtract 64 from A to move the sights to the left by
+                        \ 64, as we are about to pan the screen to the right
+                        \ (the subtraction works because we passed through a
+                        \ BCC so we know the C flag is set)
+
+ STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "S"
+                        \ to pretend that the "S" key is being pressed to pan
+                        \ the screen as well as move the sights
+                        \
+                        \ This will pan to the right by scrolling the screen to
+                        \ the left
 
 .sisd1
 
- STA xSights
- AND #&03
- BEQ siud5
- JMP sisd4
+ STA xSights            \ Update the x-coordinate of the sights to the updated
+                        \ value in A
+
+ AND #%00000011         \ If the x-coordinate is now a multiple of four then the
+ BEQ SetSightsAddress   \ sights just moved right into the next screen byte (as
+                        \ each screen byte contains four pixels), so jump to
+                        \ SetSightsAddress to update the screen variables for
+                        \ the sights
+
+ JMP sisd4              \ Jump to sisd4 to return from the subroutine
 
 .sisd2
 
-                        \ If we get here then X = 1, so "S" is being pressed,
+                        \ If we get here then X <> 0, so "S" is being pressed,
                         \ which is the key for moving the sights left
 
- LDA xSights            \ Increment xSights to move the sights left
+ LDA xSights            \ Decrement xSights to move the sights left
  SEC
  SBC #1
 
- CMP #&10
- BCS sisd3
- ADC #&40
- STX panKeyBeingPressed
+ CMP #16                \ If xSights >= 16 then skip the following, as the
+ BCS sisd3              \ sights have not moved off the left edge of the screen
+
+                        \ If we get here then the sights have just moved off the
+                        \ left edge of the screen, so we need to pan the screen
+                        \ by moving the sights back towards the centre of the
+                        \ screen and starting a pan left by "pressing" the
+                        \ relevant pan key
+
+ ADC #64                \ Add 64 to A to move the sights to the right by 64, as
+                        \ we are about to pan the screen to the left (the
+                        \ addition works because we passed through a BCS so we
+                        \ know the C flag is clear)
+
+ STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "D"
+                        \ to pretend that the "F" key is being pressed to pan
+                        \ the screen as well as move the sights
+                        \
+                        \ This will pan to the left by scrolling the screen to
+                        \ the right
 
 .sisd3
 
- STA xSights
- AND #&03
- CMP #&03
- BEQ siud5
+ STA xSights            \ Update the x-coordinate of the sights to the updated
+                        \ value in A
+
+ AND #%00000011         \ If the x-coordinate is now one less than a multiple of
+ CMP #%00000011         \ four then the sights just moved left into the previous
+ BEQ SetSightsAddress   \ screen byte (as each screen byte contains four
+                        \ pixels), so jump to SetSightsAddress to update the
+                        \ screen variables for the sights
 
 .sisd4
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: MoveSightsUpDown
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: ???
+\    Summary: Check for the up/down keys and move the sights accordingly,
+\             panning up or down if they go past the screen edges
 \
 \ ******************************************************************************
 
@@ -19277,13 +19342,13 @@ L314A = C3148+2
                         \ up, pan down), which are used to move the sights
 
  BMI siud8              \ If there is no key press in the key logger entry, jump
-                        \ to siud8 to ???
+                        \ to siud8 to return from the subroutine
 
                         \ If we get here then "L" or "," is being pressed, which
                         \ will put 2 or 3 into the key logger respectively
 
- CPX #2                 \ If X <> 2 then "," is being pressed (pan down), so
- BNE siud2              \ jump to siud2 to move the sights down
+ CPX #2                 \ If X <> 2 then "L" is not being pressed, so jump to
+ BNE siud2              \ siud2 as it must be "," that is being pressed
 
                         \ If we get here then X = 2, so "L" is being pressed,
                         \ which is the key for moving the sights up
@@ -19292,20 +19357,36 @@ L314A = C3148+2
  CLC
  ADC #1
 
- CMP #&A0
- BCC siud1
- CPY L1147
- BEQ siud8
- SEC
- SBC #&40
- STX panKeyBeingPressed
+ CMP #160               \ If ySights < 160 then skip the following, as the
+ BCC siud1              \ sights have not moved off the top edge of the screen
+
+ CPY highestPitchAngle  \ If the player's pitch angle is already equal to the
+ BEQ siud8              \ the pitch angle of the highest gaze allowed, then jump
+                        \ to siud8 to return from the subroutine without moving
+                        \ the sights, as we can't move them any higher
+
+ SEC                    \ Subtract 64 from A to move the sights down by 64, as
+ SBC #64                \ we are about to pan the screen up
+
+ STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "L"
+                        \ to pretend that the "L" key is being pressed to pan
+                        \ the screen as well as move the sights
+                        \
+                        \ This will pan up by scrolling the screen down
 
 .siud1
 
- STA ySights
- AND #&07
- BNE siud5
- JMP siud4
+ STA ySights            \ Update the y-coordinate of the sights to the updated
+                        \ value in A
+
+ AND #%00000111         \ If the y-coordinate is now one less than a multiple of
+ BNE SetSightsAddress   \ eight then the sights just moved up into the character
+                        \ row above, so jump to SetSightsAddress to update the
+                        \ address variables for the sights
+
+ JMP siud4              \ Otherwise jump to sisd4 to increment X to 4 before
+                        \ setting the address variables for the sights ???
+
 
 .siud2
 
@@ -19316,27 +19397,65 @@ L314A = C3148+2
  SEC
  SBC #1
 
- CMP #&20
- BCS siud3
- CPY L1148
- BEQ siud8
- CLC
- ADC #&40
- STX panKeyBeingPressed
+ CMP #32                \ If ySights >= 32 then skip the following, as the
+ BCS siud3              \ sights have not moved off the bottom edge of the
+                        \ screen
+
+ CPY lowestPitchAngle   \ If the player's pitch angle is already equal to the
+ BEQ siud8              \ the pitch angle of the lowest gaze allowed, then jump
+                        \ to siud8 to return from the subroutine without moving
+                        \ the sights, as we can't move them any lower
+
+ CLC                    \ Add 64 to A to move the sights up by 64, as we are
+ ADC #64                \ about to pan the screen up
+
+ STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for ","
+                        \ to pretend that the "," key is being pressed to pan
+                        \ the screen as well as move the sights
+                        \
+                        \ This will pan down by scrolling the screen up
 
 .siud3
 
- STA ySights
- AND #&07
- CMP #&07
- BNE siud5
+ STA ySights            \ Update the y-coordinate of the sights to the updated
+                        \ value in A
+
+ AND #%00000111         \ If the y-coordinate is not one less than a multiple of
+ CMP #%00000111         \ eight then the sights are still within the current
+ BNE SetSightsAddress   \ character row, so jump to SetSightsAddress to set the
+                        \ address variables for the sights
+
+                        \ Otherwise increment X to 5 before falling into
+                        \ SetSightsAddress to set the address variables for the
+                        \ sights ???
 
 .siud4
 
- INX
- INX
+ INX                    \ Increment X by 2, so:
+ INX                    \
+                        \   * X = 4 if "L" was pressed to move the sights up
+                        \
+                        \   * X = 5 if "," was pressed to move the sights down
 
-.siud5
+                        \ Fall into SetSightsAddress to set the address
+                        \ variables for the sights
+
+\ ******************************************************************************
+\
+\       Name: SetSightsAddress
+\       Type: Subroutine
+\   Category: Sights
+\    Summary: Update the address variables for the sights
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   siud8               Contains an RTS
+\
+\ ******************************************************************************
+
+.SetSightsAddress
 
  LDA L0CC4
  CLC
