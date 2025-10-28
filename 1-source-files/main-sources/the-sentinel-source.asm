@@ -1286,9 +1286,13 @@
  EQUB 0                 \ The high byte of the cosine of a pitch or yaw angle,
                         \ as calculated by the GetRotationMatrix routine
 
-.L0C04
+.scannerUpdate
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to control whether the scanner gets updated:
+                        \
+                        \   * Non-zero = update scanner
+                        \
+                        \   * Zero = do not update scanner
 
 .xIconCounter
 
@@ -1318,9 +1322,16 @@
                         \ tile corners to alter the steepness of the landscape
                         \ during landscape generation
 
-.L0C09
+.lastScannerState
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The state of the scanner the last time that it was
+                        \ upated:
+                        \
+                        \   * 0 = fill scanner with black
+                        \
+                        \   * ???
+                        \
+                        \   * 8 = fill scanner with green
 
 .playerEnergy
 
@@ -1917,7 +1928,7 @@
 
 .previousDoNotScan
 
- EQUB 0                 \ Storage for the current setting of doNotScanKeyboard
+ EQUB 0                 \ Storage for the previous setting of doNotScanKeyboard
                         \ in the PauseKeyboardScan routine, so we can check
                         \ whether doNotScanKeyboard has changed during the
                         \ ProcessGameplay loop ???
@@ -7069,45 +7080,62 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1623
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C1623
-
- LDA L0C04
- BNE UpdateScanner
- CMP L0C09
- BEQ CRE07
-
-\ ******************************************************************************
-\
 \       Name: UpdateScanner
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: ???
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   A                   The update action:
-\
-\                         * 0 = fill scanner with black
-\
-\                         * 8 = fill scanner with green
-\
-\                         * ???
+\    Summary: Update the scanner, if required
 \
 \ ******************************************************************************
 
 .UpdateScanner
 
- STA L0C09
+ LDA scannerUpdate      \ If scannerUpdate is non-zero then the scanner is
+ BNE UpdateScannerNow   \ configured to update, so jump to UpdateScannerNow to
+                        \ do just that, returning from the subroutine using a
+                        \ tail call
+
+ CMP lastScannerState   \ If the scanner state has not changed since the last
+ BEQ CRE07              \ time we updated the scanner, jump to CRE07 to return
+                        \ from the subroutine without updating the scanner
+
+                        \ Otherwise fall through into UpdateScannerNow to update
+                        \ the scanner
+
+\ ******************************************************************************
+\
+\       Name: UpdateScannerNow
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Update the scanner to a new state
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The new state of the scanner:
+\
+\                         * 0 = fill scanner with black
+\
+\                         * ???
+\
+\                         * 8 = fill scanner with green
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   CRE07               Contains an RTS
+\
+\ ******************************************************************************
+
+.UpdateScannerNow
+
+ STA lastScannerState   \ Store the new state of the scanner in lastScannerState
+                        \ so we can use this to check for when the scanner state
+                        \ changes in the future
+
  STA L169B
+
  LDA viewScreenAddr
  SEC
  SBC #&4F
@@ -7724,7 +7752,7 @@ L1145 = C1144+1
 
 .C1948
 
- STY L0C04
+ STY scannerUpdate
  LDA T
  STA L0C4F
  LDA L0C73
@@ -17254,7 +17282,9 @@ L314A = C3148+2
                         \ into bit 7 of gamePaused)
 
  LDA #8                 \ Update the scanner so it's filled with green, to show
- JSR UpdateScanner      \ that the game is paused
+ JSR UpdateScannerNow   \ that the game is paused (calling UpdateScannerNow
+                        \ ensures the scanner is updated irrespective of whether
+                        \ the scanner is currently enabled in-game)
 
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
@@ -17268,7 +17298,10 @@ L314A = C3148+2
                         \ is being pressed)
 
  LDA #0                 \ Update the scanner so it's filled with black, so the
- JSR UpdateScanner      \ game can resume with a blank scanner
+ JSR UpdateScannerNow   \ game can resume with a blank scanner (calling
+                        \ UpdateScannerNow ensures the scanner is updated
+                        \ irrespective of whether the scanner is currently
+                        \ enabled in-game)
 
  LSR gamePaused         \ Clear bit 7 of gamePaused to indicate that the game is
                         \ unpaused
@@ -17515,6 +17548,17 @@ L314A = C3148+2
 
 .game1
 
+
+                        \ If we get here then we have either started a brand new
+                        \ landscape or we jumped here from game11 below when one
+                        \ of the following occured:
+                        \
+                        \   * The Sentinel has won
+                        \
+                        \   * The player has moved to a new tile
+                        \
+                        \   * The player has pressed the quit game key
+
  LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is set then the player has
  BMI game6              \ run out of energy and has been absorbed by the
                         \ victorious Sentinel, so jump to game6 to restart the
@@ -17523,16 +17567,17 @@ L314A = C3148+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- LDA #0
+ LDA #0                 \ Set L0055 = 0 ???
  STA L0055
 
- STA lastPanKeyPressed
+ STA lastPanKeyPressed  \ Zero lastPanKeyPressed to indicate pan right ???
 
- STA L0CC9
+ STA L0CC9              \ Set L0CC9 = 0 ???
 
- STA sightsAreVisible
+ STA sightsAreVisible   \ Clear bit 7 of sightsAreVisible to indicate that the
+                        \ sights are not visible
 
- JSR sub_C5734
+ JSR SetScannerUpdate   \ Set scannerUpdate to zero to prevent scanner updates
 
  LDA playerObject       \ Set anotherObject to the object number of the player
  STA anotherObject
@@ -18132,7 +18177,7 @@ L314A = C3148+2
 \     * If scrollCounter is non-zero then call ScrollPlayerView (which
 \       decrements scrollCounter) and DisplayIconBuffer
 \
-\     * If the Sentinel has been activated, call sub_C12EE and sub_C1623
+\     * If the Sentinel has been activated, call sub_C12EE and UpdateScanner
 \
 \     * If bit 7 of doNotScanKeyboard is clear then keyboard scans are enabled,
 \       so scan for and process all the game keys
@@ -18226,7 +18271,7 @@ L314A = C3148+2
 
  JSR sub_C12EE          \ ???
 
- JSR sub_C1623          \ ???
+ JSR UpdateScanner      \ Update the scanner, if required
 
 .irqh4
 
@@ -21354,16 +21399,17 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5734
+\       Name: SetScannerUpdate
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C5734
+.SetScannerUpdate
 
- STA L0C04
+ STA scannerUpdate      
+
  LDX #&28
 
 .C5739

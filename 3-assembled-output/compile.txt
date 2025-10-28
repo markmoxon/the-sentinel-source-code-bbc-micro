@@ -2345,7 +2345,7 @@
      0C02   00
 .cosAngleHi
      0C03   00
-.L0C04
+.scannerUpdate
      0C04   00
 .xIconCounter
      0C05   28
@@ -2355,7 +2355,7 @@
      0C07   00
 .tileDataMultiplier
      0C08   00
-.L0C09
+.lastScannerState
      0C09   00
 .playerEnergy
      0C0A   00
@@ -4017,12 +4017,12 @@
      161E   E0 40      CPX #&40
      1620   90 9E      BCC &15C0
      1622   60         RTS
-.sub_C1623
+.UpdateScanner
      1623   AD 04 0C   LDA &0C04
      1626   D0 05      BNE &162D
      1628   CD 09 0C   CMP &0C09
      162B   F0 6B      BEQ &1698
-.UpdateScanner
+.UpdateScannerNow
      162D   8D 09 0C   STA &0C09
      1630   8D 9B 16   STA &169B
      1633   AD C2 0C   LDA &0CC2
@@ -14248,7 +14248,7 @@
      5731   04
      5732   02
      5733   01
-.sub_C5734
+.SetScannerUpdate
      5734   8D 04 0C   STA &0C04
      5737   A2 28      LDX #&28
 .C5739
