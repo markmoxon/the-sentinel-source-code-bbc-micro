@@ -2682,7 +2682,7 @@
      0CE5   80
 .playerIsOnTower
      0CE6   80
-.L0CE7
+.soundCounter2
      0CE7   80
 .keyLogger
      0CE8   80
@@ -3224,7 +3224,7 @@
      1089   4C 34 10   JMP &1034
 .secretCode0000
      108C   87 53 04 06
-.sub_C1090
+.ClearScreen
      1090   20 0C 13   JSR &130C
      1093   20 99 36   JSR &3699
      1096   A9 00      LDA #&00
@@ -6296,7 +6296,7 @@
      2620   CA         DEX
      2621   10 CF      BPL &25F2
      2623   60         RTS
-.sub_C2624
+.DrawLandscapeView
      2624   A6 6E      LDX &6E
      2626   A9 40      LDA #&40
      2628   85 3C      STA &3C
@@ -15946,7 +15946,7 @@
      5FEE   20 80 5F   JSR &5F80
      5FF1   A0 01      LDY #&01
      5FF3   4C 33 5D   JMP &5D33
-.sub_C5FF6
+.SetSoundCounter2
      5FF6   8D E7 0C   STA &0CE7
      5FF9   A9 03      LDA #&03
      5FFB   8D 73 0C   STA &0C73

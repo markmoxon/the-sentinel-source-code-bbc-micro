@@ -480,7 +480,7 @@
 
 .L0055
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Either 0 or 25 ???
 
 .L0056
 
@@ -2014,7 +2014,7 @@
                         \ corrupt the code (so this forms part of the cracker
                         \ protection code)
 
-.L0CE7
+.soundCounter2
 
  EQUB %10000000         \ ???
 
@@ -4253,14 +4253,14 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1090
+\       Name: ClearScreen
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C1090
+.ClearScreen
 
  JSR ResetScreenAddress \ Reset the address of the start of screen memory
 
@@ -4319,7 +4319,9 @@
  STX L0C69
  JSR sub_C2202
  JSR sub_C391E
- JSR sub_C2624
+
+ JSR DrawLandscapeView  \ Draw the landscape view
+
  LDX anotherObject
  LDY lastPanKeyPressed
  BCS C10F2
@@ -4357,7 +4359,9 @@
  STX L0C69
  JSR sub_C2202
  JSR sub_C3908
- JSR sub_C2624
+
+ JSR DrawLandscapeView  \ Draw the landscape view
+
  LDX playerObject
  LDY lastPanKeyPressed
  BCS C113A
@@ -5045,9 +5049,9 @@ L1145 = C1144+1
 \
 \                         * Clear if any of the following are true:
 \
-\                           * Keyboard scans have been disabled in the interrupt
-\                             routine since we first called ProcessGameplay and
-\                             a pan key is being pressed
+\                           * Keyboard scans have been disabled by a call to
+\                             PauseKeyboardScan since we first called
+\                             ProcessGameplay and a pan key is being pressed
 \
 \                         * Set if any of the following are true:
 \
@@ -5642,7 +5646,9 @@ L1145 = C1144+1
  STA objectYawAngle+16
  LDA L1409,Y
  PHA
- JSR sub_C1090
+
+ JSR ClearScreen        \ Clear the screen
+
  LDA titleObjectToDraw
  BMI C13DF
  JSR sub_C5FE5
@@ -5653,7 +5659,9 @@ L1145 = C1144+1
  STA L0C78
  LDX #&10
  STX anotherObject
- JSR sub_C2624
+
+ JSR DrawLandscapeView  \ Draw the landscape view
+
  LDA L140F
  BNE C13FA
  LDX #&7F
@@ -8399,7 +8407,7 @@ L1145 = C1144+1
  EOR #%10000000         \ flipping bit 7, which turns the player around
  STA objectYawAngle,X
 
- LDA #40                \ Set A = 40 to set as the value of L0CE7 ???
+ LDA #40                \ Set A = 40 to set as the value of soundCounter2 ???
 
  BNE pkey6              \ Jump to pkey6 to return from the subroutine with the
                         \ C flag set (this BNE is effectively a JMP as A is
@@ -8534,11 +8542,11 @@ L1145 = C1144+1
 
 .pkey5
 
- LDA #25                \ Set A = 25 to set as the value of L0CE7 ???
+ LDA #25                \ Set A = 25 to set as the value of soundCounter2 ???
 
 .pkey6
 
- JSR sub_C5FF6          \ Set L0CE7 = A, L0C73 = 3 ???
+ JSR SetSoundCounter2   \ Set soundCounter2 = A and L0C73 = 3 ???
 
  LDA #%10000000         \ Set bit 7 of playerHasMovedTile to indicate that the
  STA playerHasMovedTile \ player has moved to a new tile
@@ -10226,7 +10234,7 @@ L1145 = C1144+1
 
 .C1FD2
 
- JSR sub_C2624
+ JSR DrawLandscapeView  \ Draw the landscape view
 
 .C1FD5
 
@@ -10816,8 +10824,8 @@ L1145 = C1144+1
 
 .hypr1
 
- LDA #0                 \ Set L0CE7 = 0, L0C73 = 3 ???
- JSR sub_C5FF6
+ LDA #0                 \ Set soundCounter2 = 0 and L0C73 = 3 ???
+ JSR SetSoundCounter2
 
  LDX playerObject       \ If the player is not on the Sentinel's tile in terms
  LDA xObject,X          \ of the x-coordinate, jump to hypr2
@@ -11186,8 +11194,10 @@ L1145 = C1144+1
  LSR A
  LSR A
  LSR A
+
  CLC
- ADC L0055
+ ADC L0055              \ Adds either 0 or 25
+
  TAX
  LDA T
  AND #&07
@@ -11960,14 +11970,14 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2624
+\       Name: DrawLandscapeView
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2624
+.DrawLandscapeView
 
  LDX anotherObject
  LDA #&40
@@ -12151,8 +12161,10 @@ L23E3 = C23E2+1
 .C2735
 
  JSR sub_C292D
- BIT L0C1B
- BPL C2742
+
+ BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to C2742
+ BPL C2742              \ to jump back to C26B6 ??? (i.e. pretend that the same
+                        \ pan key is being held down)
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -17321,9 +17333,9 @@ L314A = C3148+2
 
 .sub_C3505
 
- LDX L0CE7
+ LDX soundCounter2
  BMI CRE31
- INC L0CE7
+ INC soundCounter2
  LDA L5850,X
  CMP #&FF
  BEQ C3544
@@ -17358,7 +17370,7 @@ L314A = C3148+2
 
 .C3544
 
- STA L0CE7
+ STA soundCounter2
 
 .CRE31
 
@@ -17537,6 +17549,16 @@ L314A = C3148+2
 
 .MainGameLoop
 
+                        \ If we get here then we have either started a brand new
+                        \ game or we jumped here from game11 below when one of
+                        \ the following occured:
+                        \
+                        \   * The Sentinel has won
+                        \
+                        \   * The player has moved to a new tile
+                        \
+                        \   * The player has pressed the quit game key
+
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
  LDA quitGame           \ If bit 7 of quitGame is clear then the player has not
@@ -17548,21 +17570,25 @@ L314A = C3148+2
 
 .game1
 
-
                         \ If we get here then we have either started a brand new
-                        \ landscape or we jumped here from game11 below when one
-                        \ of the following occured:
+                        \ landscape or we jumped to MainGameLoop from game11
+                        \ below when one of the following occured:
                         \
                         \   * The Sentinel has won
                         \
                         \   * The player has moved to a new tile
-                        \
-                        \   * The player has pressed the quit game key
 
  LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is set then the player has
- BMI game6              \ run out of energy and has been absorbed by the
-                        \ victorious Sentinel, so jump to game6 to restart the
+ BMI game6              \ run out of energy either by trying to hyperspace or by
+                        \ being absorbed, so jump to game6 to restart the
                         \ landscape
+
+                        \ If we get here then we have either started a brand new
+                        \ landscape or we jumped to MainGameLoop from game11
+                        \ below when the player moved to a new tile
+                        \
+                        \ In both cases we need to generate a brand new
+                        \ landscape view
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
@@ -17584,7 +17610,7 @@ L314A = C3148+2
 
  BIT hyperspaceEndsGame \ If bit 7 of hyperspaceEndsGame is clear then the game
  BPL game2              \ has not ended because of a hyperspace, so jump to
-                        \ game2 to keep going
+                        \ game2 to draw the landscape
 
                         \ If we get here then the game has ended because the
                         \ player performed a hyperspace
@@ -17599,23 +17625,25 @@ L314A = C3148+2
                         \ to hyperspace without being able to create a robot
                         \ into which they can hyperspace
 
- JSR sub_C1090
+ JSR ClearScreen        \ Clear the screen
 
- JMP game4              \ Jump to game4 to skip the following ???
+ JMP game4              \ Jump to game4 to skip drawing the landscape view, as
+                        \ the game has ended
 
 .game2
 
  LDA uTurnStatus        \ If bit 7 of uTurnStatus is set then we just performed
  BMI game3              \ a U-turn in the ProcessActionKeys routine, so jump to
-                        \ game3 to skip the following ???
+                        \ game3 to skip the following instruction ???
 
- JSR sub_C2463
+ JSR sub_C2463          \ Prepare something for the landscape-drawing process
+                        \ that we don't need to repeat when U-turning ???
 
 .game3
 
- JSR sub_C1090
+ JSR ClearScreen        \ Clear the screen
 
- JSR sub_C2624
+ JSR DrawLandscapeView  \ Draw the landscape view
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw
@@ -17623,19 +17651,18 @@ L314A = C3148+2
 
 .game4
 
- LDA #&19
+ LDA #25                \ Set L0055 = 25 ???
  STA L0055
 
- LDA #2
-
+ LDA #2                 \ Call sub_C2963 with A = 2 ???
  JSR sub_C2963
 
 .game5
 
- JSR sub_C355A
+ JSR sub_C355A          \ Sound-related ???
 
- LDA L0CE7
- BPL game5
+ LDA soundCounter2      \ Loop back to keep calling sub_C355A until bit 7 of
+ BPL game5              \ soundCounter2 is clear ???
 
  LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
@@ -17654,7 +17681,7 @@ L314A = C3148+2
  STA sentinelHasWon     \ Set bit 7 of sentinelHasWon to indicate that the
                         \ player has run out of energy and the Sentinel has won
 
- LDA #6
+ LDA #6                 \ Set L0C73 = 6 ???
  STA L0C73
 
  LDA #5                 \ The Sentinel has won, so display the game over screen
@@ -17684,23 +17711,27 @@ L314A = C3148+2
 .game7
 
                         \ If we get here then we have successfully completed
-                        \ the landscape, so ???
+                        \ the landscape, so we display the secret code for the 
+                        \ next landscape and go back to the title screen
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- LDX #3
+ LDX #3                 \ We now zero bits 8 to 40 of the the five-byte linear
+                        \ feedback shift landscape register, so set a byte
+                        \ counter in X to count four bytes
 
- LDA #0
- STA L0C73
+ LDA #0                 \ Set A = 0 so we can zero the four bytes
+
+ STA L0C73              \ Set L0C73 = 0 ???
 
 .game8
 
- STA seedNumberLFSR+1,X
+ STA seedNumberLFSR+1,X \ Zero byte X+1 of seedNumberLFSR(4 3 2 1 0)
 
- DEX
+ DEX                    \ Decrement the byte counter
 
- BPL game8
+ BPL game8              \ Loop back until we have reset all four bytes
 
  JSR ResetVariables2    \ ???
 
@@ -17714,14 +17745,15 @@ L314A = C3148+2
  LDA #10                \ Set soundCounter = 10 to count down while the next
  STA soundCounter       \ sound is made
 
- LDA #&42
- JSR sub_C5FF6
+ LDA #66                \ Set soundCounter2 = 66 and L0C73 = 3 ???
+ JSR SetSoundCounter2
 
 .game9
 
- JSR sub_C355A
- LDA L0CE7
- BPL game9
+ JSR sub_C355A          \ Sound-related ???
+
+ LDA soundCounter2      \ Loop back to keep calling sub_C355A until bit 7 of
+ BPL game9              \ soundCounter2 is clear ???
 
  LDX #6                 \ Print text token 6: Print "PRESS ANY KEY" at (64, 100)
  JSR PrintTextToken
@@ -17732,22 +17764,33 @@ L314A = C3148+2
 
 .game10
 
- JMP MainTitleLoop
+ JMP MainTitleLoop      \ Jump to MainTitleLoop to restart the game from the
+                        \ title screen
 
 .game11
+
+                        \ If we get here then the game is still in progress, so
+                        \ we progress the gameplay
 
  JSR ProcessGameplay    \ Run the gameplay loop that processes all game key
                         \ presses, returning here when the player moves, quits,
                         \ loses or pans
 
  BCC game12             \ The ProcessGameplay routine will return with the C
-                        \ flag clear if keyboard scans have been disabled in
-                        \ the interrupt routine during the routine and a pan
+                        \ flag clear if keyboard scans have been disabled by a
+                        \ call to PauseKeyboardScan during the routine and a pan
                         \ key is being pressed
                         \
-                        \ In other words, the C flag is clear if the player has
-                        \ pressed a pan key and is still holding down the
-                        \ pan key, so jump to game12 to process the pan
+                        \ PauseKeyboardScan is called for a number of reasons,
+                        \ such as when the player jumps to a new tile, but the
+                        \ only time that it is triggered by holding down a pan
+                        \ key is when a pan key is being pressed for a scroll
+                        \ but not the sights in CheckForKeyPresses
+                        \
+                        \ So the C flag is clear if the keyboard has been
+                        \ disabled because the player is pressing and still
+                        \ holding down a pan key when they want to pan (rather
+                        \ than just moving the sights)
 
  JMP MainGameLoop       \ Otherwise the ProcessGameplay routine returned because
                         \ one of the following is true:
@@ -17762,30 +17805,33 @@ L314A = C3148+2
 
 .game12
 
-                        \ If we get here then the player has held down a pan key
-                        \ and is still holding down the pan key, so we need to
-                        \ process the pan
+                        \ If we get here then the player is holding down a pan
+                        \ key and wants to pan the screen, so we need to process
+                        \ the pan
 
- LDA panKeyBeingPressed
- STA lastPanKeyPressed
+ LDA panKeyBeingPressed \ Update lastPanKeyPressed with the details of the pan
+ STA lastPanKeyPressed  \ key being pressed, so we can check later on whether it
+                        \ is still being held down
 
- LDA #0
+ LDA #0                 \ Set numberOfScrolls = 0 ???
  STA numberOfScrolls
 
- STA L0C1E
+ STA L0C1E              \ Set L0C1E = 0 ???
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is set then the sights
  BMI game13             \ are being shown, so jump to game13 to skip the
                         \ following two instructions ???
 
- SEC                    \ Set bit 7 of L0C1B ???
- ROR L0C1B
+ SEC                    \ Set bit 7 of L0C1B ??? This makes DrawLandscapeView
+ ROR L0C1B              \ confirm that the pan key is still being held down
 
 .game13
 
- JSR sub_C10B7
+ JSR sub_C10B7          \ This draws the landscape view somehow, does it
+                        \ implement the pan and draw the new bits of the
+                        \ landscape screen ???
 
- LSR L0C1B
+ LSR L0C1B              \ Cleat bit 7 of L0C1B ???
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw
@@ -17797,10 +17843,13 @@ L314A = C3148+2
 
 .game14
 
- LDA scrollCounter
- BNE game14
+ LDA scrollCounter      \ Loop around until scrollCounter is zero, so this waits
+ BNE game14             \ until the interrupt handler has finished scrolling the
+                        \ landscape view, thus implementing the pan on-screen
 
- BEQ game11
+ BEQ game11             \ Jump to game11 to continue progressing the gameplay
+                        \ (this BEQ is effectively a JMP as we just passed
+                        \ through a BNE)
 
 \ ******************************************************************************
 \
@@ -23330,8 +23379,10 @@ L314A = C3148+2
  STA L0C4D
  STA L0C6D
  LSR L0C1E
- LDA #&32
- JSR sub_C5FF6
+
+ LDA #50                \ Set soundCounter2 = 50 and L0C73 = 3 ???
+ JSR SetSoundCounter2
+
  JSR sub_C1F84
  LDA #&1E
  JMP sub_C5F68
@@ -23559,16 +23610,16 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5FF6
+\       Name: SetSoundCounter2
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C5FF6
+.SetSoundCounter2
 
- STA L0CE7
+ STA soundCounter2
  LDA #3
  STA L0C73
  RTS
