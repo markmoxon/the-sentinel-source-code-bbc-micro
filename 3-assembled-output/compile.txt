@@ -4805,7 +4805,7 @@
      1BFA   88         DEY
      1BFB   10 E0      BPL &1BDD
      1BFD   30 8E      BMI &1B8D
-.sub_C1BFF
+.GetSightsVector
      1BFF   AD C6 0C   LDA &0CC6
      1C02   85 75      STA &75
      1C04   A9 00      LDA #&00
@@ -4844,7 +4844,7 @@
      1C3E   18         CLC
      1C3F   69 03      ADC #&03
      1C41   85 40      STA &40
-.sub_C1C43
+.GetVectorForAngles
      1C43   20 75 0E   JSR &0E75
      1C46   A0 01      LDY #&01
      1C48   20 8C 1C   JSR &1C8C

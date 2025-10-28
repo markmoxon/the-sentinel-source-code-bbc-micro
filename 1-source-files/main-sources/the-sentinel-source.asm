@@ -577,7 +577,8 @@
                         \ Set to object #16 in DrawTitleObject
                         \ Set to enemyData5,X in sub_C16A8
                         \ Set to enemyObject in sub_C197D
-                        \ Set to playerObject in sub_C16A8, sub_C1AF3, MainGameLoop
+                        \ Set to playerObject in sub_C16A8, sub_C1AF3,
+                        \                        MainGameLoop
                         \ Set to object #2 in sub_C5F80
 
 .enemyCounter
@@ -5029,8 +5030,8 @@ L1145 = C1144+1
 \                         * Clear if any of the following are true:
 \
 \                           * Keyboard scans have been disabled in the interrupt
-\                             routine since we first called ProcessGameplay and a
-\                             pan key is being pressed
+\                             routine since we first called ProcessGameplay and
+\                             a pan key is being pressed
 \
 \                         * Set if any of the following are true:
 \
@@ -7614,7 +7615,7 @@ L1145 = C1144+1
  STA T
  LDA angleHi
  STA sightsPitchAngleHi
- JSR sub_C1C43
+ JSR GetVectorForAngles
  JSR sub_C1CCC
  ROL L0C56
  ROR L0014
@@ -8311,7 +8312,18 @@ L1145 = C1144+1
 
  LSR L0C6E              \ Clear bit 7 of L0C6E ???
 
- JSR sub_C1BFF          \ Calculate vector from player to sights ???
+ JSR GetSightsVector    \ Calculate the vector from the player's eyes to the
+                        \ sights, returning it in both angle format:
+                        \
+                        \   (sightsYawAngleHi sightsYawAngleLo)
+                        \
+                        \   (sightsPitchAngleHi sightsPitchAngleLo)
+                        \
+                        \ and as a cartesian vector:
+                        \
+                        \   [ (xSightsVectorHi xSightsVectorLo) ]
+                        \   [ (ySightsVectorHi ySightsVectorLo) ]
+                        \   [ (zSightsVectorHi zSightsVectorLo) ]
 
  JSR sub_C1CCC          \ Something to do with vectors? (secondAxis is involved)
                         \ Is it working out if we are able to see the tile ???
@@ -8674,10 +8686,18 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1BFF
+\       Name: GetSightsVector
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate the vector from the player's eyes to the sights
+\
+\ ------------------------------------------------------------------------------
+\
+\ The vector from the player's eyes to the sights is calculated as follows:
+\
+\   sightsYawAngle = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+\
+\   sightsPitchAngle = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8689,7 +8709,7 @@ L1145 = C1144+1
 \
 \ ******************************************************************************
 
-.sub_C1BFF
+.GetSightsVector
 
  LDA xSights            \ Set (U A) = xSights * 256
  STA U
@@ -8759,46 +8779,130 @@ L1145 = C1144+1
 
                         \ So by this point we have the following:
                         \
-                        \ (sightsYawAngleHi sightsYawAngleLo)
+                        \   (sightsYawAngleHi sightsYawAngleLo)
                         \   = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
                         \
-                        \ (sightsPitchAngleHi sightsPitchAngleLo)
+                        \   (sightsPitchAngleHi sightsPitchAngleLo)
                         \   = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
                         \
-                        \ We now fall through into sub_C1C43 to convert these
-                        \ angles into an (x, y, z) vector in the 3D world ???
-
-\ ******************************************************************************
-\
-\       Name: sub_C1C43
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C1C43
-
-                        \ We start by rotating the pitch angle of the vector
-                        \ from the player's eyes to the sights into the global
-                        \ 3D coordinate system, storing the result in the 16-bit
-                        \ ySightsVector variable (as pitch angles map to the
-                        \ position on the up-down axis, which is the y-axis in
-                        \ the 3D world)
-
- JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
-                        \ pitch angle for the sights into the global 3D
-                        \ coordinate system, as follows:
+                        \ We now fall through into GetVectorForAngles to convert
+                        \ these two angles into a cartesian vector:
                         \
-                        \   [ cosSightsPitchAngle   0   -sinSightsPitchAngle ]
-                        \   [          0            1             0          ]
-                        \   [ sinSightsPitchAngle   0    cosSightsPitchAngle ]
+                        \   [ (xSightsVectorHi xSightsVectorLo) ]
+                        \   [ (ySightsVectorHi ySightsVectorLo) ]
+                        \   [ (zSightsVectorHi zSightsVectorLo) ]
+
+\ ******************************************************************************
+\
+\       Name: GetVectorForAngles
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Convert a vector from pitch and yaw angles into a 3D cartesian
+\             vector
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine uses the rotation matrix routine from Revs to convert a vector
+\ from a pair of pitch and yaw angles into a cartesian [x y z] vector.
+\
+\ The pitch and yaw angles are 16-bit numbers as follows:
+\
+\   (sightsPitchAngleHi sightsPitchAngleLo)
+\
+\   (sightsYawAngleHi sightsYawAngleLo)
+\
+\ The same vector, but expressed as a cartesian vector, is calculated as
+\ follows:
+\
+\   [ (xSightsVectorHi xSightsVectorLo) ]
+\   [ (ySightsVectorHi ySightsVectorLo) ]
+\   [ (zSightsVectorHi zSightsVectorLo) ]
+\
+\ The calculation is this:
+\
+\   ySightsVector = sinSightsPitchAngle / 16
+\
+\   zSightsVector = cosSightsPitchAngle * cosSightsYawAngle / 16
+\
+\   xSightsVector = cosSightsPitchAngle * sinSightsYawAngle / 16
+\
+\ ******************************************************************************
+
+.GetVectorForAngles
+
+                        \ We start by converting the pitch angle of the vector
+                        \ from the player's eyes to the sights into a cartesian
+                        \ y-coordinate in the global 3D coordinate system, where
+                        \ the y-axis is the up-down axis
+                        \
+                        \ We store the resulting y-coordinate in the 16-bit
+                        \ variable (ySightsVectorHi ySightsVectorLo)
+                        \
+                        \ We calculate ySightsVector by considering a triangle
+                        \ with the sights vector as the hypotenuse, and we drop
+                        \ the end point down onto the y = 0 plane (i.e. onto the
+                        \ ground)
+                        \
+                        \ Consider the case where the player is looking up at an
+                        \ angle of sightsPitchAngle, so the vector from the
+                        \ player's eye to the sights is from the bottom-left to
+                        \ the top-right in the following triangle:
+                        \
+                        \                                  sights
+                        \                              _.-+             ^
+                        \                          _.-´   |             |
+                        \             vector   _.-´       |         y-axis (up)
+                        \                  _.-´           |
+                        \              _.-´               |  y
+                        \          _.-´                   |
+                        \       .-´sightsPitchAngle       |
+                        \  eye +--------------------------+
+                        \                   p
+                        \
+                        \ To make the calculations easier, let's say the length
+                        \ of the vector is 1
+                        \
+                        \ Trigonometry gives us the following:
+                        \
+                        \   sin(sightsPitchAngle) = opposite / hypotenuse
+                        \                         = y / 1
+                        \
+                        \ So the y-coordinate is given by:
+                        \
+                        \   y = sin(sightsPitchAngle)
+                        \
+                        \ which is what we calculate now
+                        \
+                        \ Incidentally, the adjacent side p, which is the length
+                        \ of the vector projected down onto the y = 0 plane, is
+                        \ calculated in a similar way:
+                        \
+                        \   cos(sightsPitchAngle) = adjacent / hypotenuse
+                        \                         = p / 1
+                        \
+                        \ So p = cos(sightsPitchAngle), which we will use to
+                        \ calculate the x- and z-coordinates of the vector later
+
+ JSR GetRotationMatrix  \ This routine is taken from Revs, where it calculates a
+                        \ rotation matrix from an angle
+                        \
+                        \ We don't need a full rotation matrix here, but the
+                        \ Revs routine calculates the values that we do need
+                        \ here, specifically:
+                        \
+                        \   cosSightsPitchAngle = cos(sightsPitchAngle)
+                        \
+                        \   sinSightsPitchAngle = sin(sightsPitchAngle)
+                        \
+                        \ These calculations return 16-bit sign-magnitude
+                        \ numbers with the sign in bit 0, which the DivideBy16
+                        \ routine converts into normal 16-bit signed numbers
                         \
                         \ Note that because GetRotationMatrix is copied from
-                        \ Revs, where we only rotate through the yaw angle,
+                        \ Revs, where we only ever rotate through the yaw angle,
                         \ the matrix values are actually returned in the various
-                        \ yawAngle variables, but let's pretend they are
-                        \ returned as above
+                        \ yawAngle variables, but for simplicity let's pretend
+                        \ they are returned as above
 
  LDY #1                 \ Set (A X) = cosSightsPitchAngle / 16
  JSR DivideBy16
@@ -8811,26 +8915,102 @@ L1145 = C1144+1
 
  STA ySightsVectorHi    \ Set (ySightsVectorHi ySightsVectorLo)
  STX ySightsVectorLo    \                             = sinSightsPitchAngle / 16
+                        \
+                        \ So we now have the y-coordinate of the sights vector
+                        \ as follows:
+                        \
+                        \   y = sin(sightsPitchAngle)
 
-                        \ And now we rotate the yaw angle of the vector from the
-                        \ player's eyes to the sights into the global 3D
-                        \ coordinate system, storing the result in the 16-bit
-                        \ xSightsVector and zSightsVector variables (as yaw
-                        \ angles map to the position on the left-right and
-                        \ in-out axes, which are the x-axis and z-axis in the
-                        \ 3D world)
+                        \ Now we convert the yaw angle of the sights vector
+                        \ into cartesian x- and z-coordinates, where the x-axis
+                        \ is the left-right axis and the z-axis goes into the
+                        \ screen
+                        \
+                        \ We store the resulting x-coordinate in the 16-bit
+                        \ variable (xSightsVectorHi yxSightsVectorLo) and the
+                        \ z-coordinate in (zSightsVectorHi zxSightsVectorLo)
+                        \
+                        \ We calculate xSightsVector and zSightsVector by
+                        \ considering a triangle on the y = 0 plane, so that's a
+                        \ triangle on the ground
+                        \
+                        \ The hypotenuse of this triangle is side p from the
+                        \ first calculation, which is the sights vector
+                        \ projected down onto the ground - the shadow from a
+                        \ light source directly above, if you like
+                        \
+                        \ The opposite and adjacent sides of this tringle will
+                        \ give us the x- and z-coordinates of the vector
+                        \
+                        \ To see this, consider the same vector as before, with
+                        \ p as the vector projected down onto the ground, and
+                        \ where the player is looking sideways at a yaw angle of
+                        \ sightsYawAngle
+                        \
+                        \ This gives us a triangle like this, when viewed from
+                        \ above, so it's as if we are the light source directly
+                        \ above the sights vector, projecting the vector down
+                        \ onto p, and with the vector going from the top-left to
+                        \ the bottom-right, and the sights end of the vector
+                        \ higher than the eye end:
+                        \
+                        \                   z
+                        \   eye +--------------------------+       z-axis -->
+                        \        `-._ sightsYawAngle       |       into screen
+                        \            `-._                  |
+                        \                `-._              | x
+                        \                 p  `-._          |
+                        \                        `-._      |        x-axis left 
+                        \                            `-._  |          to right
+                        \                                `-+             |
+                        \                                    sights      v
+                        \
+                        \ Again, simple trigonometry gives us the following:
+                        \
+                        \   sin(sightsYawAngle) = opposite / hypotenuse
+                        \                       = x / p
+                        \
+                        \ So:
+                        \
+                        \   x = p * sin(sightsYawAngle)
+                        \
+                        \ And:
+                        \
+                        \   cos(sightsYawAngle) = adjacent / hypotenuse
+                        \                       = z / p
+                        \
+                        \ So:
+                        \
+                        \   z = p * cos(sightsYawAngle)
+                        \
+                        \ We calculated above that:
+                        \
+                        \   p = cos(sightsPitchAngle)
+                        \
+                        \ So substituting that into our result gives us:
+                        \
+                        \   x = p * sin(sightsYawAngle)
+                        \     = cos(sightsPitchAngle) * sin(sightsYawAngle)
+                        \
+                        \   z = p * cos(sightsYawAngle)
+                        \     = cos(sightsPitchAngle) * cos(sightsYawAngle)
+                        \
+                        \ which is what we calculate now
 
  LDA sightsYawAngleLo   \ Set (A T) = (sightsYawAngleHi sightsYawAngleLo)
  STA T
  LDA sightsYawAngleHi
 
- JSR GetRotationMatrix  \ Calculate the rotation matrix for rotating the
-                        \ player's yaw angle into the global 3D coordinate
-                        \ system, as follows:
+ JSR GetRotationMatrix  \ Calculate the following:
                         \
-                        \   [ cosSightsYawAngle   0   -sinSightsYawAngle ]
-                        \   [         0           1            0         ]
-                        \   [ sinSightsYawAngle   0    cosSightsYawAngle ]
+                        \   cosSightsYawAngle = cos(sightsYawAngle)
+                        \
+                        \   sinSightsYawAngle = sin(sightsYawAngle)
+                        \
+                        \ Again these are returned as 16-bit sign-magnitude
+                        \ numbers with the sign in bit 0, which the
+                        \ MultiplyCoords converts into normal 16-bit signed
+                        \ numbers
 
  LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
  LDX #2                 \ the following:
@@ -17387,7 +17567,7 @@ L314A = C3148+2
 .game7
 
                         \ If we get here then we have successfully completed
-                        \ the landascape, so ???
+                        \ the landscape, so ???
 
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
