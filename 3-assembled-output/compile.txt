@@ -2362,7 +2362,7 @@
      0C0B   00
 .J
      0C0C
-.L0C0D
+.gameplayStack
      0C0D   00
 .L0C0E
      0C0E   00
@@ -2473,7 +2473,7 @@
      0C56   00
 .L0C57
      0C57   0D
-.L0C58
+.targetObject
      0C58   00
 .L0C59
      0C59   16
@@ -2556,7 +2556,7 @@
      0C85   00
      0C86   00
      0C87   00
-.enemyData2
+.enemyEnergy
      0C88   00
      0C89   00
      0C8A   00
@@ -4114,7 +4114,7 @@
      16C1   20 54 1A   JSR &1A54
      16C4   B0 03      BCS &16C9
      16C6   4C 71 18   JMP &1871
-.C16C9
+.sub_C16C9
      16C9   20 94 31   JSR &3194
      16CC   C6 00      DEC &00
      16CE   10 04      BPL &16D4

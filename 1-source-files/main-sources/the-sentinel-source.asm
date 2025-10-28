@@ -1333,9 +1333,13 @@
  SKIP 1                 \ Temporary storage, used in the maths routines from
                         \ Revs
 
-.L0C0D
+.gameplayStack
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Storage for the stack pointer at the start of the
+                        \ sub_C16A8 routine, just after it is called from
+                        \ ProcessGameplay, so the return address at this point
+                        \ on the stack will take us back to ProcessGameplay
+                        \ when we next execute an RTS instruction
 
 .L0C0E
 
@@ -1559,9 +1563,10 @@
 
  EQUB 13                \ ???
 
-.L0C58
+.targetObject
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The number of the object that is being targeted in the
+                        \ DrainObjectEnergy routine
 
 .L0C59
 
@@ -1774,10 +1779,10 @@
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.enemyData2
+.enemyEnergy
 
- EQUB 0, 0, 0, 0        \ ???
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Energy levels for up to eight enemies (the Sentinel
+ EQUB 0, 0, 0, 0        \ and up to seven sentries)
 
 .enemyData3
 
@@ -7234,14 +7239,19 @@ L1145 = C1144+1
 
 .sub_C16A8
 
- TSX
- STX L0C0D
+ TSX                    \ Store the stack pointer in gameplayStack so we can
+ STX gameplayStack      \ restore the stack to this point in time (i.e. just
+                        \ after we call sub_C16A8 from the ProcessGameplay
+                        \ routine, so the return address at this point on the
+                        \ stack will take us back to ProcessGameplay when we
+                        \ next execute an RTS instruction)
+
  LDX enemyObject
  LDA objectTypes,X
  CMP #&01
  BEQ C16B9
  CMP #&05
- BNE C16C9
+ BNE sub_C16C9
 
 .C16B9
 
@@ -7251,10 +7261,19 @@ L1145 = C1144+1
 
  BPL C16D9
  JSR sub_C1A54
- BCS C16C9
+ BCS sub_C16C9
  JMP C1871
 
-.C16C9
+\ ******************************************************************************
+\
+\       Name: sub_C16C9
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C16C9
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
@@ -7275,7 +7294,7 @@ L1145 = C1144+1
 
  LDA objRotationTimer,X
  CMP #&02
- BCS C16C9
+ BCS sub_C16C9
  LDA #&04
  STA objRotationTimer,X
  LDA #&14
@@ -7305,7 +7324,7 @@ L1145 = C1144+1
  LDA #4
  STA titleObjectToDraw
 
- JMP C16C9
+ JMP sub_C16C9
 
 .C171B
 
@@ -7453,7 +7472,7 @@ L1145 = C1144+1
 
 .C17F9
 
- JMP C16C9
+ JMP sub_C16C9
 
 .C17FC
 
@@ -7489,7 +7508,7 @@ L1145 = C1144+1
 
 .P1835
 
- JMP C16C9
+ JMP sub_C16C9
 
 .C1838
 
@@ -7543,7 +7562,7 @@ L1145 = C1144+1
 
 .C187F
 
- JMP C16C9
+ JMP sub_C16C9
 
 \ ******************************************************************************
 \
@@ -7558,7 +7577,7 @@ L1145 = C1144+1
 
  STA T
  STX L1919
- STY L0C58
+ STY targetObject
  LDA #0
  STA L0014
  LDA objectFlags,Y
@@ -7642,7 +7661,7 @@ L1145 = C1144+1
 .C1912
 
  LDX L1919
- LDY L0C58
+ LDY targetObject
  RTS
 
 \ ******************************************************************************
@@ -7835,14 +7854,24 @@ L1145 = C1144+1
 .C19F1
 
  INC enemyData1,X
- JMP sub_C1AEC
+
+ JMP sub_C1AEC          \ Jump to sub_C16C9 via sub_C1AEC to ???
 
 \ ******************************************************************************
 \
 \       Name: DrainObjectEnergy
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Drain energy from an object, transforming it into an object with
+\             an energy level of one unit less (if applicable)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   targetObject        The number of the object being drained of energy
+\
+\   enemyObject         The number of the object doing the draining
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7850,11 +7879,17 @@ L1145 = C1144+1
 \
 \   C flag              Result flag:
 \
-\                         * Set if the player still has a positive energy
-\                           level after the update
+\                         * Set if the player object is being drained and they
+\                           still have a positive energy level after the
+\                           draining
 \
-\                         * Clear if the player now has a negative energy level,
-\                           which means the Sentinel has won
+\                         * Clear if one of the following is true:
+\
+\                           * The player object is being drained and they now
+\                             have a negative energy level, so the Sentinel has
+\                             won
+\
+\                           * The player object is not being drained
 \
 \ ******************************************************************************
 
@@ -7866,12 +7901,12 @@ L1145 = C1144+1
  LDA #%10000000         \ Set bit 7 of sentinelHasWon to indicate that the
  STA sentinelHasWon     \ player has run out of energy and the Sentinel has won
 
- JMP sub_C1AEC          \ This resets the stack - restart of some kind ??? and
-                        \ return from the subroutine using a tail call
+ JMP sub_C1AEC          \ Jump to sub_C16C9 via sub_C1AEC to ???
 
 .DrainObjectEnergy
 
- LDX L0C58              \ Set X to an object number ???
+ LDX targetObject       \ Set X to the object number that is being drained of
+                        \ energy
 
  CPX playerObject       \ If this is not the player object, jump to dobj2 to
  BNE dobj2              \ drain energy from object #X rather than the player
@@ -7904,49 +7939,76 @@ L1145 = C1144+1
                         \ If we get here then we need to drain energy from
                         \ object #X
 
- TXA
+ TXA                    \ Call sub_C1AE7 with the object number in A ???
  JSR sub_C1AE7
- LDA objectTypes,X
- BNE dobj3
- LDY enemyObject
+
+ LDA objectTypes,X      \ Set A to the type of object #X
+
+ BNE dobj3              \ If object #X is not a robot (i.e. not an object of
+                        \ type 0), jump to dobj3
+
+                        \ If we get here then we are draining energy from a
+                        \ robot in object #X
+
+ LDY enemyObject        \ Set L0C20 for the enemy object to zero ???
  LDA #0
  STA L0C20,Y
- LDA #&03
- BNE dobj5
+
+ LDA #3                 \ Set A = 3 so the robot loses one energy unit and
+                        \ changes into a boulder (i.e. an object of type 3)
+
+ BNE dobj5              \ Jump to dobj5 to set the new object type of object #X
+                        \ to the value in A, so the robot turns into a boulder
 
 .dobj3
 
- CMP #&02
- BNE dobj4
+ CMP #2                 \ If object #X is not a tree (i.e. not an object of
+ BNE dobj4              \ type 2), jump to dobj4
 
- JSR DeleteObject       \ Delete object #X and remove it from the landscape
+                        \ If we get here then we are draining energy from a
+                        \ tree in object #X
 
- JMP dobj6
+ JSR DeleteObject       \ Delete object #X and remove it from the landscape,
+                        \ as trees only have one energy unit, so draining one
+                        \ unit from a tree removes it altogether
+
+ JMP dobj6              \ Jump to dobj6 to skip updating the energy for object
+                        \ #X, as we just deleted it
 
 .dobj4
 
- LDA #&74
+                        \ If we get here then we must be draining energy from a
+                        \ boulder in object #X
+
+ LDA #116               \ Set L0CD4 = 116 ???
  STA L0CD4
- LDA #&02
+
+ LDA #2                 \ Set A = 2 so the boulder loses one energy unit and
+                        \ changes into a tree (i.e. an object of type 2)
 
 .dobj5
 
- STA objectTypes,X
+ STA objectTypes,X      \ Set the object type of object #X to the new type in A
 
 .dobj6
 
- CLC
+ CLC                    \ Clear the C flag to return from the subroutine
 
 .dobj7
 
- PHP
- LDY enemyObject
- LDA enemyData2,Y
- CLC
- ADC #&01
- STA enemyData2,Y
- PLP
- RTS
+ PHP                    \ Store the C flag on the stack so we can retrieve it
+                        \ below to return from the subroutine
+
+ LDY enemyObject        \ Increment the energy level for the enemy object by one
+ LDA enemyEnergy,Y      \ unit, as the enemy just absorbed one unit from the
+ CLC                    \ target object
+ ADC #1
+ STA enemyEnergy,Y
+
+ PLP                    \ Retrieve the C flag from the stack to return from the
+                        \ subroutine
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7960,8 +8022,10 @@ L1145 = C1144+1
 .sub_C1A54
 
  LDX enemyObject
+
  SEC
- LDA enemyData2,X
+
+ LDA enemyEnergy,X
  BEQ CRE09
 
  LDA #2                 \ Spawn a tree (an object of type 2), returning the
@@ -7980,10 +8044,14 @@ L1145 = C1144+1
 
  TXA
  JSR sub_C1AF3
+
  BCC C1A78
+
  LDX enemyObject
- DEC enemyData2,X
+ DEC enemyEnergy,X
+
  LDX currentObject
+
  CLC
 
 .CRE09
@@ -7994,7 +8062,7 @@ L1145 = C1144+1
 
  JSR DeleteObject       \ Delete object #X and remove it from the landscape
 
- JMP sub_C1AEC
+ JMP sub_C1AEC          \ Jump to sub_C16C9 via sub_C1AEC to ???
 
 \ ******************************************************************************
 \
@@ -8102,7 +8170,7 @@ L1145 = C1144+1
  JSR sub_C1882
  LDA L0014
  BPL C1AE2
- STY L0C58
+ STY targetObject
  CLC
  RTS
 
@@ -8138,9 +8206,13 @@ L1145 = C1144+1
 
 .sub_C1AEC
 
- LDX L0C0D
- TXS
- JMP C16C9
+ LDX gameplayStack      \ Restore the stack pointer to the position it was in
+ TXS                    \ when we called sub_C16A8 from ProcessGameplay, so the
+                        \ return address at this point on the stack will take
+                        \ us back to ProcessGameplay when we next execute an RTS
+                        \ instruction
+
+ JMP sub_C16C9          \ Jump to sub_C16C9 to ???
 
 \ ******************************************************************************
 \
@@ -9461,7 +9533,7 @@ L1145 = C1144+1
 
 .C1DF7
 
- CPY L0C58
+ CPY targetObject
  BNE C1DFF
  ROR L0C56
 
