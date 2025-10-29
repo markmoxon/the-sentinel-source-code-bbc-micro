@@ -7203,7 +7203,7 @@
      2C4A   CA         DEX
      2C4B   10 E9      BPL &2C36
      2C4D   60         RTS
-.SetTileShape
+.GetTileShape
      2C4E   20 78 2B   JSR &2B78
      2C51   29 0F      AND #&0F
      2C53   85 73      STA &73

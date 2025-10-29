@@ -819,7 +819,7 @@
 \ for tile corners along the furthest back and rightmost edges of the landscape,
 \ the shape data is ignored, as there is no landscape beyond the edges.
 \
-\ See the SetTileShape routine for information on the different types of tile
+\ See the GetTileShape routine for information on the different types of tile
 \ shape.
 \
 \ ******************************************************************************
@@ -2698,15 +2698,20 @@
 \   sinAngle = sin(sightsYawAngle)
 \   cosAngle = cos(sightsYawAngle)
 \
-\ We can use these to create a rotation matrix that rotates the pitch or yaw
-\ angle from the player's frame of reference into the global 3D coordinate
-\ system, so we can take the vector describing the direction of gaze from the
-\ player through the sights, and rotate it into a vector within the 3D world.
+\ We can use these to convert the pitch and yaw angles of the vector from the
+\ player's eyes to the sights into a cartesian vector within the 3D world.
 \
 \ This routine is from Revs, Geoff Crammond's previous game. There are only
 \ minor differences: the argument is (A T) instead of (A X), and the value of X
 \ is preserved. Note that to avoid clashing names, the variables G and H have
 \ been renamed to G2 and H2, but the routine is otherwise the same.
+\
+\ For the calculations in The Sentinel we don't need a full rotation matrix,
+\ but the Revs routine calculates the values that we do need, as mentioned
+\ above. I could have renamed this routine for The Sentinel to something like
+\ GetSinAndCos16, as all it does is calculate the sine and cosine to 16-bit
+\ accuracy, but I've left the Revs code alone as much as possible to show the
+\ influence of Geoff Crammond's previous game.
 \
 \ Also, because this routine comes from Revs, where it is only used to rotate
 \ through the driver's yaw angle, I have renamed the result variables from
@@ -4403,7 +4408,7 @@ L1145 = C1144+1
 \       Name: highestPitchAngle
 \       Type: Variable
 \   Category: Sights
-\    Summary: The pitch angle of the highest angle that the player can look at
+\    Summary: The pitch angle of the highest point that the player can look at
 \             with the sights
 \
 \ ******************************************************************************
@@ -4416,15 +4421,14 @@ L1145 = C1144+1
 \
 \       Name: lowestPitchAngle
 \       Type: Variable
-\    Summary: The pitch angle of the highest angle that the player can look at
-\    Summary: The pitch angle of the lowest angle that the player can look at
+\    Summary: The pitch angle of the lowest point that the player can look at
 \             with the sights
 \
 \ ******************************************************************************
 
 .lowestPitchAngle
 
- EQUB 205
+ EQUB -51
 
 \ ******************************************************************************
 \
@@ -8962,15 +8966,15 @@ L1145 = C1144+1
                         \ player's eye to the sights is from the bottom-left to
                         \ the top-right in the following triangle:
                         \
-                        \                                  sights
-                        \                              _.-+             ^
-                        \                          _.-´   |             |
-                        \             vector   _.-´       |         y-axis (up)
-                        \                  _.-´           |
-                        \              _.-´               |  y
-                        \          _.-´                   |
-                        \       .-´sightsPitchAngle       |
-                        \  eye +--------------------------+
+                        \                                   sights
+                        \                               _.-+             ^
+                        \                           _.-´   |             |
+                        \              vector   _.-´       |         y-axis (up)
+                        \                   _.-´           |
+                        \               _.-´               |  y
+                        \           _.-´                   |
+                        \        .-´sightsPitchAngle       |
+                        \   eye +--------------------------+
                         \                   p
                         \
                         \ To make the calculations easier, let's say the length
@@ -9074,7 +9078,7 @@ L1145 = C1144+1
                         \            `-._                  |
                         \                `-._              | x
                         \                 p  `-._          |
-                        \                        `-._      |        x-axis left 
+                        \                        `-._      |        x-axis left
                         \                            `-._  |          to right
                         \                                `-+             |
                         \                                    sights      v
@@ -12995,7 +12999,7 @@ L23E3 = C23E2+1
 \ for tile corners along the furthest back and rightmost edges of the landscape,
 \ the shape data is ignored, as there is no landscape beyond the edges.
 \
-\ See the SetTileShape routine for information on the different types of tile
+\ See the GetTileShape routine for information on the different types of tile
 \ shape.
 \
 \ ------------------------------------------------------------------------------
@@ -13142,7 +13146,7 @@ L23E3 = C23E2+1
 
 .land5
 
- JSR SetTileShape       \ Set X to the shape of the tile anchored at
+ JSR GetTileShape       \ Set X to the shape of the tile anchored at
                         \ (xTile, zTile)
                         \
                         \ This will be in the range 1 to 11 (so it fits into
@@ -14246,7 +14250,7 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SetTileShape
+\       Name: GetTileShape
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Calculate the shape of the tile anchored at (xTile, zTile)
@@ -14336,7 +14340,7 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.SetTileShape
+.GetTileShape
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
@@ -19258,8 +19262,8 @@ L314A = C3148+2
                         \ (the subtraction works because we passed through a
                         \ BCC so we know the C flag is set)
 
- STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "S"
-                        \ to pretend that the "S" key is being pressed to pan
+ STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "D"
+                        \ to pretend that the "D" key is being pressed to pan
                         \ the screen as well as move the sights
                         \
                         \ This will pan to the right by scrolling the screen to
@@ -19301,8 +19305,8 @@ L314A = C3148+2
                         \ addition works because we passed through a BCS so we
                         \ know the C flag is clear)
 
- STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "D"
-                        \ to pretend that the "F" key is being pressed to pan
+ STX panKeyBeingPressed \ Set panKeyBeingPressed to the key logger entry for "S"
+                        \ to pretend that the "S" key is being pressed to pan
                         \ the screen as well as move the sights
                         \
                         \ This will pan to the left by scrolling the screen to
