@@ -20474,16 +20474,25 @@ L314A = C3148+2
 
  RTS                    \ Return from the subroutine
 
- EQUB &20, &65, &74, &73, &36, &0D, &12, &CA    \ These bytes are unused until
- EQUB &19, &20, &20, &20, &20, &20, &20, &4C    \ the game is in progress, at
- EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
- EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
- EQUB &D4, &05, &20, &0D, &12, &DE              \
-                                                \ The initial contents is just
-                                                \ workspace noise and is ignored
-                                                \
-                                                \ It actually contains snippets
-                                                \ of the original source code
+ EQUB &20, &65          \ These bytes are unused until the game is in progress,
+ EQUB &74, &73          \ at which point this whole section of memory is reused
+ EQUB &36, &0D          \
+ EQUB &12, &CA          \ The initial contents is just workspace noise and is
+ EQUB &19, &20          \ ignored
+ EQUB &20, &20          \
+ EQUB &20, &20          \ It actually contains snippets of the original source
+ EQUB &20, &4C          \ code
+ EQUB &44, &58
+ EQUB &23, &36
+ EQUB &3A, &4A
+ EQUB &53, &52
+ EQUB &20, &43
+ EQUB &46, &4C
+ EQUB &53, &48
+ EQUB &0D, &12
+ EQUB &D4, &05
+ EQUB &20, &0D
+ EQUB &12, &DE
 
 \ ******************************************************************************
 \
