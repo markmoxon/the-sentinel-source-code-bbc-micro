@@ -2624,10 +2624,8 @@
      0CC1   00
 .viewScreenAddr
      0CC2   C0 60
-.L0CC4
-     0CC4   00
-.L0CC5
-     0CC5   00
+.sightsScreenAddr
+     0CC4   00 00
 .xSights
      0CC6   00
 .ySights
@@ -3579,7 +3577,7 @@
      132C   8D 01 FE   STA &FE01
      132F   58         CLI
      1330   60         RTS
-.SetupSights
+.InitialiseSights
      1331   AD C2 0C   LDA &0CC2
      1334   18         CLC
      1335   69 A0      ADC #&A0
@@ -3589,7 +3587,7 @@
      133F   C9 80      CMP #&80
      1341   90 02      BCC &1345
      1343   E9 20      SBC #&20
-.C1345
+.sesi1
      1345   8D C5 0C   STA &0CC5
      1348   A9 50      LDA #&50
      134A   8D C6 0C   STA &0CC6
@@ -9186,13 +9184,13 @@
      39C8   90 05      BCC &39CF
      39CA   E9 20      SBC #&20
      39CC   4C D5 39   JMP &39D5
-.siud6
+.sadr1
      39CF   C9 60      CMP #&60
      39D1   B0 02      BCS &39D5
      39D3   69 20      ADC #&20
-.siud7
+.sadr2
      39D5   8D C5 0C   STA &0CC5
-.siud8
+.sadr3
      39D8   60         RTS
 .ShowSights
      39D9   AD D7 0C   LDA &0CD7

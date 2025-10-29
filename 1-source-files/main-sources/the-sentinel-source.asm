@@ -1848,13 +1848,9 @@
                         \ view, which is just below the icon and scanner row at
                         \ the top of the screen
 
-.L0CC4
+.sightsScreenAddr
 
- EQUB 0                 \ ???
-
-.L0CC5
-
- EQUB 0                 \ ???
+ EQUW 0                 \ The screen address of the sights
 
 .xSights
 
@@ -4604,7 +4600,8 @@ L1145 = C1144+1
                         \ Otherwise bit 7 is now set, so we need to show the
                         \ sights
 
- JSR SetupSights        \ Calculate the position of the sights on the screen
+ JSR InitialiseSights   \ Initialise the variables used to manage the sights, so
+                        \ the sights appear in the middle of the screen
 
  JSR ShowSights         \ Draw the sights on the screen
 
@@ -5377,37 +5374,77 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: SetupSights
+\       Name: InitialiseSights
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: Calculate the position of the sights on the screen
+\    Summary: Initialise the variables used to manage the sights, so the sights
+\             appear in the middle of the screen
 \
 \ ******************************************************************************
 
-.SetupSights
+.InitialiseSights
 
- LDA viewScreenAddr
- CLC
- ADC #&A0
- STA L0CC4
+                        \ We start by calculating the screen address for the
+                        \ sights when they are in the middle of the screen,
+                        \ which is where we initialise them
+                        \
+                        \ The base screen address has already been set up in
+                        \ viewScreenAddr(1 0), and we want to place the sights
+                        \ halfway down and halfway across the screen
+                        \
+                        \ The custom screen mode 5 used by the game contains 25
+                        \ character rows, each of which is eight pixels high
+                        \
+                        \ The top character row is used for the energy icon and
+                        \ scanner, and viewScreenAddr(1 0) points to the start
+                        \ of screen memory just below this top row, so the
+                        \ player's view is 24 character rows high and row 12 is
+                        \ halfway down the screen
+                        \
+                        \ Each character row in screen mode 5 takes up 320 bytes
+                        \ (40 character blocks of eight bytes each), so the
+                        \ offset within screen memory of the start of row 12 is
+                        \ 12 * 320, and we can move halfway along that row by
+                        \ adding a further 160, so that's an offset of:
+                        \
+                        \   12 * 320 + 160 = 4000
+                        \
+                        \ So the address of the sights in screen memory is:
+                        \
+                        \   viewScreenAddr(1 0) + 4000
+                        \
+                        \ which is what we calculate now
 
- LDA viewScreenAddr+1
+ LDA viewScreenAddr     \ Calculate the following:
+ CLC                    \
+ ADC #&A0               \   (A sightsScreenAddr) = viewScreenAddr(1 0) + &0FA0
+ STA sightsScreenAddr   \                        = viewScreenAddr(1 0) + 4000
+                        \
+                        \ starting with the low bytes
+
+ LDA viewScreenAddr+1   \ And then the high bytes
  ADC #&0F
- CMP #&80
- BCC C1345
- SBC #&20
 
-.C1345
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC sesi1              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
- STA L0CC5
+.sesi1
 
- LDA #&50
- STA xSights
+ STA sightsScreenAddr+1 \ Store the high byte of the result, so we now have:
+                        \
+                        \   sightsScreenAddr(1 0) = viewScreenAddr(1 0) + 4000
 
- LDA #&5F
- STA ySights
+ LDA #80                \ Set the on-screen x-coordinate of the sights to 80,
+ STA xSights            \ which is in the middle of the 160-pixel wide screen
 
- RTS
+ LDA #95                \ Set the on-screen y-coordinate of the sights to 95,
+ STA ySights            \ which is in the middle of the 192-pixel high player's
+                        \ view (which is the whole screen apart from the energy
+                        \ icon and scanner row at the top)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -18745,9 +18782,9 @@ L314A = C3148+2
  CLC                    \                  = fromAddr(1 0) + 320
  ADC #&40               \
  STA fromAddr           \ Each character row in screen mode 5 takes up 320 bytes
- LDA fromAddr+1         \ (40 characters of eight bytes each), so this sets
- ADC #&01               \ fromAddr(1 0) to the address of the next row down in
-                        \ the view screen buffer
+ LDA fromAddr+1         \ (40 character blocks of eight bytes each), so this
+ ADC #&01               \ sets fromAddr(1 0) to the address of the next row down
+                        \ in the view screen buffer
 
  CMP #&53               \ If the result of the addition is less than &5300, then
  BNE dcol2              \ we have not reached the end of the view screen buffer,
@@ -19238,8 +19275,8 @@ L314A = C3148+2
                         \ If we get here then "S" or "D" is being pressed, which
                         \ will put 1 or 0 into the key logger respectively
 
- BNE sisd2              \ If X <> 0 then "D" is not being pressed, so jump to
-                        \ sisd2 as it must be "S" that is being pressed
+ BNE sisd2              \ If X = 1 then "S" is being pressed, so jump to sisd2
+                        \ to process moving the sights left
 
                         \ If we get here then X = 0, so "D" is being pressed,
                         \ which is the key for moving the sights right
@@ -19277,14 +19314,14 @@ L314A = C3148+2
  AND #%00000011         \ If the x-coordinate is now a multiple of four then the
  BEQ SetSightsAddress   \ sights just moved right into the next screen byte (as
                         \ each screen byte contains four pixels), so jump to
-                        \ SetSightsAddress to update the screen variables for
-                        \ the sights
+                        \ SetSightsAddress with X = 0 to update the screen
+                        \ variables for the sights
 
- JMP sisd4              \ Jump to sisd4 to return from the subroutine
+ JMP sisd4              \ Otherwise jump to sisd4 to return from the subroutine
 
 .sisd2
 
-                        \ If we get here then X <> 0, so "S" is being pressed,
+                        \ If we get here then X = 1, so "S" is being pressed,
                         \ which is the key for moving the sights left
 
  LDA xSights            \ Decrement xSights to move the sights left
@@ -19345,14 +19382,14 @@ L314A = C3148+2
  LDX keyLogger+2        \ Set X to the key logger entry for "L" and "," (pan
                         \ up, pan down), which are used to move the sights
 
- BMI siud8              \ If there is no key press in the key logger entry, jump
-                        \ to siud8 to return from the subroutine
+ BMI sadr3              \ If there is no key press in the key logger entry, jump
+                        \ to sadr3 to return from the subroutine
 
                         \ If we get here then "L" or "," is being pressed, which
                         \ will put 2 or 3 into the key logger respectively
 
- CPX #2                 \ If X <> 2 then "L" is not being pressed, so jump to
- BNE siud2              \ siud2 as it must be "," that is being pressed
+ CPX #2                 \ If X = 3 then "," is being pressed, so jump to siud2
+ BNE siud2              \ to process moving the sights down
 
                         \ If we get here then X = 2, so "L" is being pressed,
                         \ which is the key for moving the sights up
@@ -19365,8 +19402,8 @@ L314A = C3148+2
  BCC siud1              \ sights have not moved off the top edge of the screen
 
  CPY highestPitchAngle  \ If the player's pitch angle is already equal to the
- BEQ siud8              \ the pitch angle of the highest gaze allowed, then jump
-                        \ to siud8 to return from the subroutine without moving
+ BEQ sadr3              \ the pitch angle of the highest gaze allowed, then jump
+                        \ to sadr3 to return from the subroutine without moving
                         \ the sights, as we can't move them any higher
 
  SEC                    \ Subtract 64 from A to move the sights down by 64, as
@@ -19383,18 +19420,18 @@ L314A = C3148+2
  STA ySights            \ Update the y-coordinate of the sights to the updated
                         \ value in A
 
- AND #%00000111         \ If the y-coordinate is now one less than a multiple of
- BNE SetSightsAddress   \ eight then the sights just moved up into the character
-                        \ row above, so jump to SetSightsAddress to update the
+ AND #%00000111         \ If the y-coordinate is not a multiple of eight then
+ BNE SetSightsAddress   \ the sights are still within the same character row, so
+                        \ jump to SetSightsAddress with X = 2 to update the
                         \ address variables for the sights
 
  JMP siud4              \ Otherwise jump to sisd4 to increment X to 4 before
-                        \ setting the address variables for the sights ???
-
+                        \ falling into SetSightsAddress to set the address
+                        \ variables for the sights
 
 .siud2
 
-                        \ If we get here then X <> 2, so "," is being pressed,
+                        \ If we get here then X = 3, so "," is being pressed,
                         \ which is the key for moving the sights down
 
  LDA ySights            \ Decrement ySights to move the sights down
@@ -19406,8 +19443,8 @@ L314A = C3148+2
                         \ screen
 
  CPY lowestPitchAngle   \ If the player's pitch angle is already equal to the
- BEQ siud8              \ the pitch angle of the lowest gaze allowed, then jump
-                        \ to siud8 to return from the subroutine without moving
+ BEQ sadr3              \ the pitch angle of the lowest gaze allowed, then jump
+                        \ to sadr3 to return from the subroutine without moving
                         \ the sights, as we can't move them any lower
 
  CLC                    \ Add 64 to A to move the sights up by 64, as we are
@@ -19426,20 +19463,23 @@ L314A = C3148+2
 
  AND #%00000111         \ If the y-coordinate is not one less than a multiple of
  CMP #%00000111         \ eight then the sights are still within the current
- BNE SetSightsAddress   \ character row, so jump to SetSightsAddress to set the
-                        \ address variables for the sights
+ BNE SetSightsAddress   \ character row, so jump to SetSightsAddress with X = 3
+                        \ to update the address variables for the sights
 
                         \ Otherwise increment X to 5 before falling into
                         \ SetSightsAddress to set the address variables for the
-                        \ sights ???
+                        \ sights
 
 .siud4
 
  INX                    \ Increment X by 2, so:
  INX                    \
-                        \   * X = 4 if "L" was pressed to move the sights up
+                        \   * X = 4 if "L" was pressed to move the sights up and
+                        \     this moved the sights into the character row above
                         \
                         \   * X = 5 if "," was pressed to move the sights down
+                        \     and this moved the sights into the character row
+                        \     below
 
                         \ Fall into SetSightsAddress to set the address
                         \ variables for the sights
@@ -19453,36 +19493,55 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
+\ Arguments:
+\
+\   X                   Describes how the sights have moved, relative to pixel
+\                       bytes and character rows in screen memory:
+\
+\                         * 0 if the sights moved right into the next byte
+\
+\                         * 1 if the sights moved left into the previous byte
+\
+\                         * 2 if the sights moved up within the same row
+\
+\                         * 3 if the sights moved down within the same row
+\
+\                         * 4 if the sights moved up into the row above
+\
+\                         * 5 if the sights moved down into the row below
+\
+\ ------------------------------------------------------------------------------
+\
 \ Other entry points:
 \
-\   siud8               Contains an RTS
+\   sadr3               Contains an RTS
 \
 \ ******************************************************************************
 
 .SetSightsAddress
 
- LDA L0CC4
+ LDA sightsScreenAddr
  CLC
  ADC L3AC7,X
- STA L0CC4
- LDA L0CC5
+ STA sightsScreenAddr
+ LDA sightsScreenAddr+1
  ADC L3ACD,X
  CMP #&80
- BCC siud6
+ BCC sadr1
  SBC #&20
- JMP siud7
+ JMP sadr2
 
-.siud6
+.sadr1
 
  CMP #&60
- BCS siud7
+ BCS sadr2
  ADC #&20
 
-.siud7
+.sadr2
 
- STA L0CC5
+ STA sightsScreenAddr+1
 
-.siud8
+.sadr3
 
  RTS
 
@@ -19503,13 +19562,13 @@ L314A = C3148+2
  LDA xSights
  AND #&03
  STA L0CCC
- LDA L0CC4
+ LDA sightsScreenAddr
  AND #&07
  TAY
- LDA L0CC4
+ LDA sightsScreenAddr
  AND #&F8
  STA L002A
- LDA L0CC5
+ LDA sightsScreenAddr+1
  STA L002B
 
 .C39FB
@@ -19754,9 +19813,9 @@ L314A = C3148+2
                         \   iconRowAddr(1 0) = viewScreenAddr(1 0) - 320
                         \
                         \ Each character row in screen mode 5 takes up 320 bytes
-                        \ (40 characters of eight bytes each), so this sets
-                        \ iconRowAddr(1 0) to the address of the character row
-                        \ just above the player's scrolling landscape view,
+                        \ (40 character blocks of eight bytes each), so this
+                        \ sets iconRowAddr(1 0) to the address of the character
+                        \ row just above the player's scrolling landscape view,
                         \ which is in screen memory at viewScreenAddr(1 0)
 
  RTS                    \ Return from the subroutine
