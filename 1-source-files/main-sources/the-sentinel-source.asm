@@ -1916,11 +1916,20 @@
 
 .L0CD4
 
- EQUB 0, 0, 0           \ ???
+ EQUB 0                 \ ???
 
-.L0CD7
+ EQUB 0, 0              \ These bytes appear to be unused
 
- EQUB 0, 0, 0, 0, 0     \ ???
+.doNotDrawSights
+
+ EQUB 0                 \ A flag that controls whether we draw the sights in the
+                        \ DrawSights routine
+                        \
+                        \   * Bit 7 clear = draw the sights
+                        \
+                        \   * Bit 7 set = do not draw the sights
+
+ EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
 .previousDoNotScan
 
@@ -4603,7 +4612,7 @@ L1145 = C1144+1
  JSR InitialiseSights   \ Initialise the variables used to manage the sights, so
                         \ the sights appear in the middle of the screen
 
- JSR ShowSights         \ Draw the sights on the screen
+ JSR DrawSights         \ Draw the sights on the screen
 
  JMP ckey3              \ Jump to ckey3 to skip the following
 
@@ -10331,7 +10340,7 @@ L1145 = C1144+1
  SEI
  JSR HideSights
  SEC
- ROR L0CD7
+ ROR doNotDrawSights
  CLI
  LDA L2092
  STA toAddr
@@ -10387,11 +10396,11 @@ L1145 = C1144+1
 
 .C2080
 
- LSR L0CD7
+ LSR doNotDrawSights
  LDA sightsAreVisible
  BPL C208D
  SEI
- JSR ShowSights
+ JSR DrawSights
  CLI
 
 .C208D
@@ -19250,7 +19259,7 @@ L314A = C3148+2
 
 .sigh1
 
- JMP ShowSights         \ Jump to ShowSights to draw the sights in their new
+ JMP DrawSights         \ Jump to DrawSights to draw the sights in their new
                         \ position, returning from the subroutine using a tail
                         \ call
 
@@ -19569,17 +19578,18 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: ShowSights
+\       Name: DrawSights
 \       Type: Subroutine
 \   Category: Sights
 \    Summary: Draw the sights on the screen
 \
 \ ******************************************************************************
 
-.ShowSights
+.DrawSights
 
- LDA L0CD7
+ LDA doNotDrawSights
  BMI C3A05
+
  JSR HideSights
  LDA xSights
  AND #&03

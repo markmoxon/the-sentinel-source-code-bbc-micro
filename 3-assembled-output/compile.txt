@@ -2656,7 +2656,7 @@
      0CD4   00
      0CD5   00
      0CD6   00
-.L0CD7
+.doNotDrawSights
      0CD7   00
      0CD8   00
      0CD9   00
@@ -9192,7 +9192,7 @@
      39D5   8D C5 0C   STA &0CC5
 .sadr3
      39D8   60         RTS
-.ShowSights
+.DrawSights
      39D9   AD D7 0C   LDA &0CD7
      39DC   30 27      BMI &3A05
      39DE   20 A7 3A   JSR &3AA7
