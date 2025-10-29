@@ -19312,8 +19312,8 @@ L314A = C3148+2
                         \ value in A
 
  AND #%00000011         \ If the x-coordinate is now a multiple of four then the
- BEQ SetSightsAddress   \ sights just moved right into the next screen byte (as
-                        \ each screen byte contains four pixels), so jump to
+ BEQ SetSightsAddress   \ sights just moved right into the next character block
+                        \ (as each block is four pixels wide), so jump to
                         \ SetSightsAddress with X = 0 to update the screen
                         \ variables for the sights
 
@@ -19356,9 +19356,9 @@ L314A = C3148+2
 
  AND #%00000011         \ If the x-coordinate is now one less than a multiple of
  CMP #%00000011         \ four then the sights just moved left into the previous
- BEQ SetSightsAddress   \ screen byte (as each screen byte contains four
-                        \ pixels), so jump to SetSightsAddress to update the
-                        \ screen variables for the sights
+ BEQ SetSightsAddress   \ character block (as each block is four pixels wide),
+                        \ so jump to SetSightsAddress to update the screen
+                        \ variables for the sights
 
 .sisd4
 
@@ -19489,18 +19489,21 @@ L314A = C3148+2
 \       Name: SetSightsAddress
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: Update the address variables for the sights
+\    Summary: Update the address variables for the sights when they move into a
+\             new character block or row
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   X                   Describes how the sights have moved, relative to pixel
-\                       bytes and character rows in screen memory:
+\   X                   Describes how the sights have moved when they move into
+\                       a new character block or row in screen memory:
 \
-\                         * 0 if the sights moved right into the next byte
+\                         * 0 if the sights moved right into the next character
+\                           block
 \
-\                         * 1 if the sights moved left into the previous byte
+\                         * 1 if the sights moved left into the previous
+\                           character block
 \
 \                         * 2 if the sights moved up within the same row
 \
@@ -19520,30 +19523,49 @@ L314A = C3148+2
 
 .SetSightsAddress
 
- LDA sightsScreenAddr
- CLC
- ADC L3AC7,X
- STA sightsScreenAddr
- LDA sightsScreenAddr+1
- ADC L3ACD,X
- CMP #&80
- BCC sadr1
- SBC #&20
- JMP sadr2
+                        \ We calculate the new screen address for the sights
+                        \ after the movement type described in X, by adding the
+                        \ relevant address change from entry X in the tables at
+                        \ (sightsMoveAddrHi sightsMoveAddrLo)
+
+ LDA sightsScreenAddr   \ Add the address change for the movement type in X to
+ CLC                    \ the sights screen address in sightsScreenAddr(1 0)
+ ADC sightsMoveAddrLo,X \
+ STA sightsScreenAddr   \ We start by calculating this:
+ LDA sightsScreenAddr+1 \
+ ADC sightsMoveAddrHi,X \   (A sightsScreenAddr) = viewScreenAddr(1 0)
+                        \              + (sightsMoveAddrHi+X sightsMoveAddrLo+X)
+
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC sadr1              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
+                        \
+                        \ If the high byte is in range, jump to sadr1 to check
+                        \ the high byte against the start of screen memory
+
+ JMP sadr2              \ Jump to sadr2 to skip the next check, as we know it
+                        \ doesn't apply
 
 .sadr1
 
- CMP #&60
- BCS sadr2
- ADC #&20
+ CMP #&60               \ If the high byte in A < &60 then the new address is
+ BCS sadr2              \ before the start of screen memory, so add &20 to the
+ ADC #&20               \ high byte so the address wraps around within the range
+                        \ of screen memory between &6000 and &8000
 
 .sadr2
 
- STA sightsScreenAddr+1
+ STA sightsScreenAddr+1 \ Store the high byte of the result, so we now have:
+                        \
+                        \   sightsScreenAddr(1 0) = viewScreenAddr(1 0)
+                        \              + (sightsMoveAddrHi+X sightsMoveAddrLo+X)
+                        \
+                        \ with the address wrapped around as required
 
 .sadr3
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -19751,29 +19773,55 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3AC7
+\       Name: sightsMoveAddrLo
 \       Type: Variable
 \   Category: Sights
-\    Summary: ???
+\    Summary: The change to apply to the screen address of the sights when they
+\             move into a new character block or row (low byte)
 \
 \ ******************************************************************************
 
-.L3AC7
+.sightsMoveAddrLo
 
- EQUB &08, &F8, &FF, &01, &C7, &39
+ EQUB LO(+8)            \ Move right into the next character block
+
+ EQUB LO(-8)            \ Move left into the previous character block
+
+ EQUB LO(-1)            \ Move up within the same character row
+
+ EQUB LO(+1)            \ Move down within the same character row
+
+ EQUB LO(-320 + 7)      \ Move up into the bottom pixel row of the character row
+                        \ above
+
+ EQUB LO(320 - 7)       \ Move down into the top pixel row of the character row
+                        \ below
 
 \ ******************************************************************************
 \
-\       Name: L3ACD
+\       Name: sightsMoveAddrHi
 \       Type: Variable
 \   Category: Sights
-\    Summary: ???
+\    Summary: The change to apply to the screen address of the sights when they
+\             move into a new character block or row (high byte)
 \
 \ ******************************************************************************
 
-.L3ACD
+.sightsMoveAddrHi
 
- EQUB &00, &FF, &FF, &00, &FE, &01
+ EQUB HI(+8)            \ Move right into the next character block
+
+ EQUB HI(-8)            \ Move left into the previous character block
+
+ EQUB HI(-1)            \ Move up within the same character row
+
+ EQUB HI(+1)            \ Move down within the same character row
+
+ EQUB HI(-320 + 7)      \ Move up into the bottom pixel row of the character row
+                        \ above
+
+ EQUB HI(320 - 7)       \ Move down into the top pixel row of the character row
+                        \ below
 
 \ ******************************************************************************
 \

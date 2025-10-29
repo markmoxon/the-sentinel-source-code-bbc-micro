@@ -9337,14 +9337,14 @@
      3AC3   8E C9 0C   STX &0CC9
 .CRE38
      3AC6   60         RTS
-.L3AC7
+.sightsMoveAddrLo
      3AC7   08
      3AC8   F8
      3AC9   FF
      3ACA   01
      3ACB   C7
      3ACC   39
-.L3ACD
+.sightsMoveAddrHi
      3ACD   00
      3ACE   FF
      3ACF   FF
