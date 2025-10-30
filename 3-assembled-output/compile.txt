@@ -88,10 +88,8 @@
      0028
 .L0029
      0029
-.L002A
+.sightsByteAddr
      002A
-.L002B
-     002B
 .xSightsVectorLo
      002C
 .ySightsVectorLo
@@ -2632,7 +2630,7 @@
      0CC7   00
 .sightsInitialMoves
      0CC8   00
-.L0CC9
+.sightsByteCount
      0CC9   00
 .iconRowAddr
      0CCA   80 7F
@@ -9207,15 +9205,15 @@
      39F4   85 2A      STA &2A
      39F6   AD C5 0C   LDA &0CC5
      39F9   85 2B      STA &2B
-.C39FB
+.dras1
      39FB   AE C9 0C   LDX &0CC9
      39FE   98         TYA
      39FF   18         CLC
      3A00   7D 9A 3A   ADC &3A9A,X
      3A03   10 03      BPL &3A08
-.C3A05
+.dras2
      3A05   4C 89 3A   JMP &3A89
-.C3A08
+.dras3
      3A08   C9 08      CMP #&08
      3A0A   A8         TAY
      3A0B   90 16      BCC &3A23
@@ -9230,9 +9228,9 @@
      3A1B   C9 80      CMP #&80
      3A1D   90 02      BCC &3A21
      3A1F   E9 20      SBC #&20
-.C3A21
+.dras4
      3A21   85 2B      STA &2B
-.C3A23
+.dras5
      3A23   BD 8E 3A   LDA &3A8E,X
      3A26   F0 30      BEQ &3A58
      3A28   18         CLC
@@ -9242,7 +9240,7 @@
      3A31   0A         ASL A
      3A32   10 02      BPL &3A36
      3A34   C6 2B      DEC &2B
-.C3A36
+.dras6
      3A36   18         CLC
      3A37   65 2A      ADC &2A
      3A39   85 2A      STA &2A
@@ -9252,16 +9250,16 @@
      3A41   B0 05      BCS &3A48
      3A43   69 20      ADC #&20
      3A45   4C 4E 3A   JMP &3A4E
-.C3A48
+.dras7
      3A48   C9 80      CMP #&80
      3A4A   90 02      BCC &3A4E
      3A4C   E9 20      SBC #&20
-.C3A4E
+.dras8
      3A4E   85 2B      STA &2B
      3A50   AD CC 0C   LDA &0CCC
      3A53   29 03      AND #&03
      3A55   8D CC 0C   STA &0CCC
-.C3A58
+.dras9
      3A58   98         TYA
      3A59   05 2A      ORA &2A
      3A5B   9D C1 49   STA &49C1,X
@@ -9279,13 +9277,13 @@
      3A77   B0 05      BCS &3A7E
      3A79   1D 8A 3A   ORA &3A8A,X
      3A7C   90 03      BCC &3A81
-.C3A7E
+.dras10
      3A7E   1D 30 57   ORA &5730,X
-.C3A81
+.dras11
      3A81   91 2A      STA (&2A),Y
      3A83   EE C9 0C   INC &0CC9
      3A86   4C FB 39   JMP &39FB
-.CRE37
+.dras12
      3A89   60         RTS
 .L3A8A
      3A8A   80
@@ -9319,12 +9317,12 @@
      3AA4   02
      3AA5   02
      3AA6   80
-.HideSights
+.RemoveSights
      3AA7   AE C9 0C   LDX &0CC9
      3AAA   F0 1A      BEQ &3AC6
      3AAC   CA         DEX
      3AAD   A0 00      LDY #&00
-.P3AAF
+.rems1
      3AAF   BD C1 49   LDA &49C1,X
      3AB2   85 2A      STA &2A
      3AB4   BD F3 3D   LDA &3DF3,X
@@ -9335,7 +9333,7 @@
      3ABF   10 EE      BPL &3AAF
      3AC1   A2 00      LDX #&00
      3AC3   8E C9 0C   STX &0CC9
-.CRE38
+.rems2
      3AC6   60         RTS
 .sightsMoveAddrLo
      3AC7   08
@@ -10124,7 +10122,7 @@
      3DE4   47
      3DE5   48
      3DE6   49
-.L3DE7
+.sightsByte
      3DE7   00
      3DE8   00
      3DE9   00
@@ -10137,7 +10135,7 @@
      3DF0   00
      3DF1   00
      3DF2   00
-.L3DF3
+.sightsByteAddrHi
      3DF3   00
      3DF4   00
      3DF5   00
@@ -10989,7 +10987,7 @@
      49BE   00
      49BF   00
      49C0   00
-.L49C1
+.sightsByteAddrLo
      49C1   00
      49C2   00
      49C3   00

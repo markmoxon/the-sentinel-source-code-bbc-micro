@@ -324,13 +324,12 @@
 
  SKIP 1                 \ ???
 
-.L002A
+.sightsByteAddr
 
- SKIP 1                 \ ???
-
-.L002B
-
- SKIP 1                 \ ???
+ SKIP 2                 \ Storage for an address that loops through the pixel
+                        \ bytes in screen memory where the sights appear, so the
+                        \ sights can be drawn and removed using the contents of
+                        \ the sights pixel byte stash
 
 .xSightsVectorLo
 
@@ -408,19 +407,23 @@
 
 .sightsYawAngleLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The yaw angle of the vector from the player's eyes to
+                        \ the sights (low byte)
 
 .sightsYawAngleHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The yaw angle of the vector from the player's eyes to
+                        \ the sights (high byte)
 
 .sightsPitchAngleLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The pitch angle of the vector from the player's eyes
+                        \ to the sights (low byte)
 
 .sightsPitchAngleHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The pitch angle of the vector from the player's eyes
+                        \ to the sights (high byte)
 
 .L0041
 
@@ -1854,11 +1857,11 @@
 
 .xSights
 
- EQUB 0                 \ The x-coordinate of the sights
+ EQUB 0                 \ The pixel x-coordinate of the sights on-screen
 
 .ySights
 
- EQUB 0                 \ The y-coordinate of the sights
+ EQUB 0                 \ The pixel y-coordinate of the sights on-screen
 
 .sightsInitialMoves
 
@@ -1869,9 +1872,12 @@
                         \ the settings of bit 7 to bit 0, where a set bit
                         \ indicates a pause and a clear bit indicates a move
 
-.L0CC9
+.sightsByteCount
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The number of screen bytes in the sights pixel byte
+                        \ stash that contain the contents of the screen behind
+                        \ the sights (so they can be restored to remove the
+                        \ sights)
 
 .iconRowAddr
 
@@ -4618,7 +4624,7 @@ L1145 = C1144+1
 
 .ckey2
 
- JSR HideSights         \ Remove the sights from the screen
+ JSR RemoveSights       \ Remove the sights from the screen
 
 .ckey3
 
@@ -10259,7 +10265,7 @@ L1145 = C1144+1
  LDA L0C6D
  BPL C1F98
  SEI
- JSR HideSights
+ JSR RemoveSights
  CLI
 
 .C1F98
@@ -10338,7 +10344,7 @@ L1145 = C1144+1
 .C2022
 
  SEI
- JSR HideSights
+ JSR RemoveSights
  SEC
  ROR doNotDrawSights
  CLI
@@ -17654,7 +17660,7 @@ L314A = C3148+2
 
  STA lastPanKeyPressed  \ Zero lastPanKeyPressed to indicate pan right ???
 
- STA L0CC9              \ Set L0CC9 = 0 ???
+ STA sightsByteCount    \ Set sightsByteCount = 0 ???
 
  STA sightsAreVisible   \ Clear bit 7 of sightsAreVisible to indicate that the
                         \ sights are not visible
@@ -19588,9 +19594,9 @@ L314A = C3148+2
 .DrawSights
 
  LDA doNotDrawSights
- BMI C3A05
+ BMI dras2
 
- JSR HideSights
+ JSR RemoveSights
  LDA xSights
  AND #&03
  STA L0CCC
@@ -19599,111 +19605,111 @@ L314A = C3148+2
  TAY
  LDA sightsScreenAddr
  AND #&F8
- STA L002A
+ STA sightsByteAddr
  LDA sightsScreenAddr+1
- STA L002B
+ STA sightsByteAddr+1
 
-.C39FB
+.dras1
 
- LDX L0CC9
+ LDX sightsByteCount
  TYA
  CLC
  ADC L3A9A,X
- BPL C3A08
+ BPL dras3
 
-.C3A05
+.dras2
 
- JMP CRE37
+ JMP dras12
 
-.C3A08
+.dras3
 
  CMP #&08
  TAY
- BCC C3A23
+ BCC dras5
  SBC #&08
  TAY
- LDA L002A
+ LDA sightsByteAddr
  CLC
  ADC #&40
- STA L002A
- LDA L002B
+ STA sightsByteAddr
+ LDA sightsByteAddr+1
  ADC #&01
  CMP #&80
- BCC C3A21
+ BCC dras4
  SBC #&20
 
-.C3A21
+.dras4
 
- STA L002B
+ STA sightsByteAddr+1
 
-.C3A23
+.dras5
 
  LDA L3A8E,X
- BEQ C3A58
+ BEQ dras9
  CLC
  ADC L0CCC
  STA L0CCC
  AND #&FC
  ASL A
- BPL C3A36
- DEC L002B
+ BPL dras6
+ DEC sightsByteAddr+1
 
-.C3A36
+.dras6
 
  CLC
- ADC L002A
- STA L002A
- LDA L002B
+ ADC sightsByteAddr
+ STA sightsByteAddr
+ LDA sightsByteAddr+1
  ADC #&00
  CMP #&60
- BCS C3A48
+ BCS dras7
  ADC #&20
- JMP C3A4E
+ JMP dras8
 
-.C3A48
+.dras7
 
  CMP #&80
- BCC C3A4E
+ BCC dras8
  SBC #&20
 
-.C3A4E
+.dras8
 
- STA L002B
+ STA sightsByteAddr+1
  LDA L0CCC
  AND #&03
  STA L0CCC
 
-.C3A58
+.dras9
 
  TYA
- ORA L002A
- STA L49C1,X
- LDA L002B
- STA L3DF3,X
- LDA (L002A),Y
- STA L3DE7,X
+ ORA sightsByteAddr
+ STA sightsByteAddrLo,X
+ LDA sightsByteAddr+1
+ STA sightsByteAddrHi,X
+ LDA (sightsByteAddr),Y
+ STA sightsByte,X
  LDX L0CCC
  AND L227F,X
  CMP #&10
  PHP
- LDA (L002A),Y
+ LDA (sightsByteAddr),Y
  AND L36BF,X
  PLP
- BCS C3A7E
+ BCS dras10
  ORA L3A8A,X
- BCC C3A81
+ BCC dras11
 
-.C3A7E
+.dras10
 
  ORA L5730,X
 
-.C3A81
+.dras11
 
- STA (L002A),Y
- INC L0CC9
- JMP C39FB
+ STA (sightsByteAddr),Y
+ INC sightsByteCount
+ JMP dras1
 
-.CRE37
+.dras12
 
  RTS
 
@@ -19750,36 +19756,49 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: HideSights
+\       Name: RemoveSights
 \       Type: Subroutine
 \   Category: Sights
 \    Summary: Remove the sights from the screen
 \
 \ ******************************************************************************
 
-.HideSights
+.RemoveSights
 
- LDX L0CC9
- BEQ CRE38
- DEX
- LDY #0
+ LDX sightsByteCount    \ If the sights pixel byte stash is empty then there are
+ BEQ rems2              \ no pixel bytes to restore to the screen, so jump to
+                        \ rems2 to return from the subroutine 
 
-.P3AAF
+ DEX                    \ Decrement the size of the sights pixel byte stash to
+                        \ give us a loop counter to count throught the bytes
 
- LDA L49C1,X
- STA L002A
- LDA L3DF3,X
- STA L002B
- LDA L3DE7,X
- STA (L002A),Y
- DEX
- BPL P3AAF
- LDX #0
- STX L0CC9
+ LDY #0                 \ Set Y = 0 so the STA (sightsByteAddr),Y instruction
+                        \ below behaves like STA (sightsByteAddr)
 
-.CRE38
+.rems1
 
- RTS
+ LDA sightsByteAddrLo,X \ Set sightsByteAddr(1 0) to the address for the X-th
+ STA sightsByteAddr     \ entry in the sights pixel byte stash, which we get
+ LDA sightsByteAddrHi,X \ from the (sightsByteAddrHi sightsByteAddrLo) tables
+ STA sightsByteAddr+1
+
+ LDA sightsByte,X       \ Copy the X-th pixel byte from the sights pixel byte
+ STA (sightsByteAddr),Y \ stash to the address in sightsByteAddr(1 0), to
+                        \ restore this byte of screen memory to its original
+                        \ contents, thus removing the sights from this byte
+
+ DEX                    \ Decrement the pixel byte counter
+
+ BPL rems1              \ Loop back until we have restored every byte from the
+                        \ sights pixel byte stash into its original address in
+                        \ screen memory
+
+ LDX #0                 \ Reset the size of the sights pixel byte stash to zero
+ STX sightsByteCount    \ as we have just emptied it
+
+.rems2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -19996,6 +20015,15 @@ L314A = C3148+2
  EQUB &A0, &E0, &20, &60
  EQUB &A0, &E0, &20, &60, &A0
 
+\ ******************************************************************************
+\
+\       Name: L3DB5
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
 .L3DB5
 
  EQUB &60, &62, &63
@@ -20010,16 +20038,37 @@ L314A = C3148+2
  EQUB &3F, &40
  EQUB &42, &43, &44, &45, &47, &48, &49
 
-.L3DE7
+\ ******************************************************************************
+\
+\       Name: sightsByte
+\       Type: Variable
+\   Category: Sights
+\    Summary: The sights pixel byte stash, which contains the screen pixel bytes
+\             behind the sights, so they can be restored to remove the sights
+\
+\ ******************************************************************************
 
- EQUB &00
+.sightsByte
+
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00
+ EQUB &00, &00, &00, &00
 
-.L3DF3
+\ ******************************************************************************
+\
+\       Name: sightsByteAddrHi
+\       Type: Variable
+\   Category: Sights
+\    Summary: The screen addresses of the bytes in the sights pixel byte stash,
+\             to which they can be restored to remove the sights (high byte)
+\
+\ ******************************************************************************
 
- EQUB &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &08
+.sightsByteAddrHi
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00
+
+ EQUB &08               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -20629,17 +20678,18 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L49C1
+\       Name: sightsByteAddrLo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Sights
+\    Summary: The screen addresses of the bytes in the sights pixel byte stash,
+\             to which they can be restored to remove the sights (low byte)
 \
 \ ******************************************************************************
 
-.L49C1
+.sightsByteAddrLo
 
- EQUB &00, &00, &00, &00, &00, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF
 
 \ ******************************************************************************
 \
@@ -21616,7 +21666,7 @@ L314A = C3148+2
  JSR sub_C568E
  STA L0022
  LDA L56D0
- STA L002A
+ STA sightsByteAddr
  AND #&1F
  CMP #&1E
  BCS C56E3
@@ -21634,7 +21684,7 @@ L314A = C3148+2
 .C5708
 
  STA L0023
- LDA L002A
+ LDA sightsByteAddr
  ROL A
  ROL A
  ROL A
@@ -23616,7 +23666,7 @@ L314A = C3148+2
  PLA
  JSR sub_C5F68
  LDY #0
- STY L0CC9
+ STY sightsByteCount
  STY sightsAreVisible
  LDA titleObjectToDraw
  JSR sub_C5F80
