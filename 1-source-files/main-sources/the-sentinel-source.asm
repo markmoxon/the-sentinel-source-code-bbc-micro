@@ -1884,9 +1884,11 @@
  EQUW &7F80             \ The screen address of the icon and scanner row along
                         \ the top of the screen
 
-.L0CCC
+.xSightsBrush
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The x-coordinate of the "brush" that we use to draw
+                        \ the sights, relative to the top-left corner of the
+                        \ character block containig the top of the sights
 
 .L0CCD
 
@@ -17987,7 +17989,7 @@ L314A = C3148+2
 \
 \       Name: L36BF
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -19593,109 +19595,330 @@ L314A = C3148+2
 
 .DrawSights
 
- LDA doNotDrawSights
- BMI dras2
+ LDA doNotDrawSights    \ If bit 7 of doNotDrawSights is set then we do not draw
+ BMI dras2              \ the sights, so jump to dras12 via dras2 to return from
+                        \ the subroutine
 
- JSR RemoveSights
- LDA xSights
- AND #&03
- STA L0CCC
- LDA sightsScreenAddr
- AND #&07
- TAY
- LDA sightsScreenAddr
- AND #&F8
- STA sightsByteAddr
- LDA sightsScreenAddr+1
+ JSR RemoveSights       \ First we remove the sights from the screen (if there
+                        \ are any sights on-screen), so if we are drawing the
+                        \ sights to move them, this removes the old sights
+                        \
+                        \ This also sets sightsByteCount = 0 to reset the sights
+                        \ pixel byte stash
+
+                        \ We now set the coordinates of the "brush" that we're
+                        \ going to use to draw the sights
+                        \
+                        \ The coordinates of the brush are stored relative to
+                        \ the top-left corner of the character block containing
+                        \ the top of the sights
+                        \
+                        \ The current coordinate of the brush is stored as
+                        \ follows:
+                        \
+                        \   * sightsByteAddr(1 0) contains the address of the
+                        \     character block in which we are dabbing our brush
+                        \
+                        \   * The x-coordinate is stored in xSightsBrush in the
+                        \     form of a pixel offset within the character block
+                        \     pointed to by sightsByteAddr(1 0), so this is
+                        \     always in the range 0 to 3
+                        \
+                        \   * The y-coordinate is stored in Y in the form of a
+                        \     pixel row offset within the character block
+                        \     pointed to by sightsByteAddr(1 0), so this is
+                        \     always in the range 0 to 7
+
+ LDA xSights            \ Set xSightsBrush as follows:
+ AND #%00000011         \
+ STA xSightsBrush       \   xSightsBrush = xSights mod 4
+                        \
+                        \ Each pixel byte contains four pixels, so this sets
+                        \ xSightsBrush to the x-coordinate of the sights within
+                        \ the pixel byte in which the sights appear, in the
+                        \ range 0 to 3
+                        \
+                        \ This gives us the x-coordinate of the starting point
+                        \ for the brush at the top of the sights, relative to
+                        \ the top-left corner of the character block containing
+                        \ the top of the sights
+
+ LDA sightsScreenAddr   \ Set Y to bits 0-2 of the address of the sights in
+ AND #%00000111         \ screen memory, so Y contains the number of the pixel
+ TAY                    \ row within the character block containing the sights
+                        \
+                        \ This gives us the y-coordinate of the starting point
+                        \ for the brush at the top of the sights, relative to
+                        \ the top-left corner of the character block containing
+                        \ the top of the sights
+
+ LDA sightsScreenAddr   \ Set sightsByteAddr(1 0) to bits 3-15 of the address
+ AND #%11111000         \ of the sights in screen memory, so it contains the
+ STA sightsByteAddr     \ address of the top-left corner of the character block
+ LDA sightsScreenAddr+1 \ containing the top of the sights
  STA sightsByteAddr+1
+
+                        \ We now draw the sights one step at a time, dabbing the
+                        \ brush on the screen for each step
+                        \
+                        \ There are 12 steps when drawing the sights, and we
+                        \ draw one screen byte (four pixels) in each step,
+                        \ storing the original screen contents in the sights
+                        \ pixel byte stash, so we can easily remove the sights
+                        \ later
+                        \
+                        \ We start by placing our brush at the top of the sights
+                        \ and dabbing the screen to draw the first pixel byte
+                        \
+                        \ The top of the sights are at a relative coordinate of
+                        \ (xSightsBrush, Y) from the start of the character
+                        \ block of the sights, so this is where we start
+                        \
+                        \ We then apply the steps from the xSightsStep and
+                        \ ySightsStep tables to the brush coordinates, dabbing
+                        \ the screen at each step, starting from step 0 and
+                        \ moving as follows (where steps 10 and 11 are shown as
+                        \ A and B):
+                        \
+                        \        00
+                        \        11
+                        \        22
+                        \   334455667788
+                        \        99
+                        \        AA
+                        \        BB
+                        \
+                        \ The current step number is stored in sightsByteCount,
+                        \ which also tracks the size of the sights pixel byte
+                        \ stash
 
 .dras1
 
- LDX sightsByteCount
- TYA
- CLC
- ADC L3A9A,X
- BPL dras3
+                        \ We start by adding the next step to the y-coordinate
+                        \ of the brush and updating sightsByteAddr(1 0) and Y
+                        \ accordingly
+
+ LDX sightsByteCount    \ Set X to the current step number, which is also the
+                        \ current size of the sights pixel byte stash
+
+ TYA                    \ Set A = Y + the X-th entry in ySightsStep
+ CLC                    \
+ ADC ySightsStep,X      \ So this applies the next step from the ySightsStep
+                        \ table to the relative y-coordinate of the brush in Y
+
+ BPL dras3              \ The table at ySightsStep is terminated by %10000000,
+                        \ so if bit 7 of the result is clear then we haven't yet
+                        \ reached the end of the table, so jump to dras3 to keep
+                        \ drawing
+
+                        \ Otherwise we just read the terminator at the end of
+                        \ the ySightsStep table, so fall through into dras2 to
+                        \ return from the subroutine
 
 .dras2
 
- JMP dras12
+ JMP dras12             \ Jump to dras12 to return from the subroutine
 
 .dras3
 
- CMP #&08
- TAY
- BCC dras5
- SBC #&08
- TAY
- LDA sightsByteAddr
- CLC
- ADC #&40
- STA sightsByteAddr
- LDA sightsByteAddr+1
- ADC #&01
- CMP #&80
- BCC dras4
- SBC #&20
+ CMP #8                 \ Compare A and 8 and set the status flags for us to
+                        \ check below
+
+ TAY                    \ Set Y to the updated value of A, so Y now contains the
+                        \ updated y-coordinate of the brush after applying the
+                        \ next step from ySightsStep 
+
+ BCC dras5              \ If A < 8 then the y-coordinate has not moved past the
+                        \ bottom of the current character row, so jump to dras5
+                        \ to move on to processing the x-coordinate
+
+                        \ We have just stepped down into the next character row,
+                        \ so we need to recalculate the values in Y and
+                        \ sightsByteAddr(1 0) to point to the correct address
+                        \ in the next chadacter row
+
+ SBC #8                 \ Set Y = Y - 8
+ TAY                    \
+                        \ This resets Y to the number of the pixel row in the
+                        \ next character row down, as each character row is
+                        \ eight bytes high
+                        \
+                        \ This subtraction works as we passed through a BCC
+                        \ above, so we know the C flag is set
+
+ LDA sightsByteAddr     \ Set (A sightsByteAddr) = sightsByteAddr(1 0) + &140
+ CLC                    \                        = sightsByteAddr(1 0) + 320
+ ADC #&40               \
+ STA sightsByteAddr     \ Each character row in screen mode 5 takes up 320 bytes
+ LDA sightsByteAddr+1   \ (40 character blocks of eight bytes each), so this
+ ADC #&01               \ sets sightsByteAddr(1 0) to the address of the next
+                        \ row down in screen memory
+
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC dras4              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
 .dras4
 
- STA sightsByteAddr+1
+ STA sightsByteAddr+1   \ Store the high byte of the result, so we now have:
+                        \
+                        \   sightsByteAddr(1 0) = sightsByteAddr(1 0) + 320
+                        \
+                        \ with the address wrapped around as required
 
 .dras5
 
- LDA L3A8E,X
- BEQ dras9
- CLC
- ADC L0CCC
- STA L0CCC
- AND #&FC
- ASL A
- BPL dras6
- DEC sightsByteAddr+1
+                        \ We now need to add the next step to the x-coordinate
+                        \ of the brush and update sightsByteAddr(1 0) and
+                        \ xSightsBrush accordingly
+
+ LDA xSightsStep,X      \ Set A to the next step from the xSightsStep that we
+                        \ need to apply to the relative x-coordinate in
+                        \ xSightsBrush
+
+ BEQ dras9              \ If the step is zero then we don't need to change the
+                        \ x-coordinate in xSightsBrush, so jump to dras9 to
+                        \ move on to the actual drawing step
+
+ CLC                    \ Set xSightsBrush = xSightsBrush + A
+ ADC xSightsBrush       \
+ STA xSightsBrush       \ So this applies the next step from the xSightsStep
+                        \ table to the relative x-coordinate of the brush in
+                        \ xSightsBrush
+
+ AND #%11111100         \ Set A = (A * 2) div 8
+ ASL A                  \
+                        \ All the step values in xSightsStep and ySightsStep
+                        \ and the brush coordinates in xSightsBrush and Y are
+                        \ in pixels, with each step in the x-coordinate moving
+                        \ two pixels, so these steps:
+                        \
+                        \        00
+                        \        11
+                        \        22
+                        \   334455667788
+                        \        99
+                        \        AA
+                        \        BB
+                        \
+                        \ end up drawing pixels like this:
+                        \
+                        \        x.
+                        \        x.
+                        \        x.
+                        \   x.x.x.x.x.x.
+                        \        x.
+                        \        x.
+                        \        x.
+                        \
+                        \ Screen mode 5 contains four pixels in each byte, so to
+                        \ convert the x-coordinate of the brush offset from step
+                        \ pixels into screen pixels, we have to double it
+                        \
+                        \ We then apply div 8 to the result to give us the
+                        \ offset of the start of the character block containing
+                        \ the new position of the brush, as each character block
+                        \ contains eight bytes
+
+ BPL dras6              \ If A is a negative value then to make the following
+ DEC sightsByteAddr+1   \ addition work we would have to add (&FF A) to make
+                        \ the 16-bit addition work in signed 16-bit arithmetic,
+                        \ but to save having to do this we can simply decrement
+                        \ the high byte of sightsByteAddr(1 0) in advance and
+                        \ add (0 A) instead
 
 .dras6
 
- CLC
- ADC sightsByteAddr
- STA sightsByteAddr
+ CLC                    \ Set (A sightsByteAddr) = sightsByteAddr(1 0) + A
+ ADC sightsByteAddr     \
+ STA sightsByteAddr     \ So this applies the step in A to sightsByteAddr(1 0)
  LDA sightsByteAddr+1
- ADC #&00
- CMP #&60
- BCS dras7
- ADC #&20
- JMP dras8
+ ADC #0
+
+ CMP #&60               \ If the high byte in A < &60 then the new address is
+ BCS dras7              \ before the start of screen memory, so add &20 to the
+ ADC #&20               \ high byte so the address wraps around within the range
+                        \ of screen memory between &6000 and &8000
+
+ JMP dras8              \ Jump to dras8 to skip the next check, as we know it
+                        \ doesn't apply
 
 .dras7
 
- CMP #&80
- BCC dras8
- SBC #&20
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC dras8              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
 .dras8
 
- STA sightsByteAddr+1
- LDA L0CCC
- AND #&03
- STA L0CCC
+ STA sightsByteAddr+1   \ Store the high byte of the result, so we now have:
+                        \
+                        \   sightsByteAddr(1 0) = sightsByteAddr(1 0) + A
+                        \
+                        \ with the address wrapped around as required
+                        \
+                        \ So this applies the next step to sightsByteAddr(1 0)
+                        \ to give us the screen address of the character block
+                        \ that we need to update to make the next brush stroke
+
+ LDA xSightsBrush       \ Set xSightsBrush as follows:
+ AND #%00000011         \
+ STA xSightsBrush       \   xSightsBrush = xSightsBrush mod 4
+                        \
+                        \ Each pixel byte contains four pixels, so this sets
+                        \ xSightsBrush to the x-coordinate of the sights within
+                        \ the pixel byte in which the sights appear, in the
+                        \ range 0 to 3
 
 .dras9
 
- TYA
- ORA sightsByteAddr
- STA sightsByteAddrLo,X
- LDA sightsByteAddr+1
+                        \ We have now set up sightsByteAddr(1 0), xSightsBrush
+                        \ and Y to the address of the next pixel byte to paint,
+                        \ so let's dab the brush for this step
+                        \
+                        \ The address of the pixel byte we need to paint is
+                        \ sightsByteAddr(1 0) + Y
+                        \
+                        \ The offset of the pixel within that pixel byte (in
+                        \ terms of step pixels) is in xSightsBrush
+
+                        \ First, we need to save the current contents of the
+                        \ screen in the sights pixel byte stash by adding the
+                        \ screen address to the X-th entry of (sightsByteAddrHi
+                        \ sightsByteAddrLo) and the existing contents of that
+                        \ address to the X-th entry of sightsByte
+
+ TYA                    \ Set the X-th entry in the sights pixel byte stash
+ ORA sightsByteAddr     \ address list at (sightsByteAddrHi sightsByteAddrLo)
+ STA sightsByteAddrLo,X \ to sightsByteAddr(1 0) + Y, which is the address of
+ LDA sightsByteAddr+1   \ the pixel byte we are about to change
  STA sightsByteAddrHi,X
- LDA (sightsByteAddr),Y
- STA sightsByte,X
- LDX L0CCC
+
+ LDA (sightsByteAddr),Y \ Set A to the current screen contents of the pixel byte
+                        \ we are updating
+
+ STA sightsByte,X       \ Store the current screen contents in the X-th entry in
+                        \ the sights pixel byte stash at sightsByte
+
+                        \ We now apply the brush to the pixel byte in screen
+                        \ memory at sightsByteAddr(1 0) + Y
+
+ LDX xSightsBrush
  AND L227F,X
+
  CMP #&10
  PHP
- LDA (sightsByteAddr),Y
+
+ LDA (sightsByteAddr),Y \ Set A to the current screen contents of the pixel byte
+                        \ we are updating
+
  AND L36BF,X
+
  PLP
  BCS dras10
+
  ORA L3A8A,X
  BCC dras11
 
@@ -19705,13 +19928,17 @@ L314A = C3148+2
 
 .dras11
 
- STA (sightsByteAddr),Y
- INC sightsByteCount
- JMP dras1
+ STA (sightsByteAddr),Y \ Store the updated pixel byte in screen memory to apply
+                        \ the brush to the canvas
+
+ INC sightsByteCount    \ Increment sightsByteCount to move on to the next step
+                        \ in the drawing process
+
+ JMP dras1              \ Loop back to draw the next step of the sights
 
 .dras12
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -19728,31 +19955,99 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3A8E
+\       Name: xSightsStep
 \       Type: Variable
 \   Category: Sights
-\    Summary: ???
+\    Summary: Steps to take along the x-axis when drawing the sights
+\
+\ ------------------------------------------------------------------------------
+\
+\ The xSightsStep and ySightsStep tables define a set of 12 steps to follow when
+\ drawing the sights, relative to the start position at the top of the sights.
+\
+\ The steps draw a shape like this, starting at step 0 and showing steps 10 and
+\ 11 as A and B):
+\
+\        00
+\        11
+\        22
+\   334455667788
+\        99
+\        AA
+\        BB
+\
+\ Each step is made up of two pixels, one filled (e.g. white) and one
+\ transparent, to give a shape like this:
+\
+\        x.
+\        x.
+\        x.
+\   x.x.x.x.x.x.
+\        x.
+\        x.
+\        x.
+\
+\ In the above, "x" denotes a filled pixel while "." denotes a transparent
+\ pixel.
 \
 \ ******************************************************************************
 
-.L3A8E
+.xSightsStep
 
- EQUB &00, &00, &00, &FB, &02, &02, &02, &02
- EQUB &02, &FB, &00, &00
+ EQUB 0                 \ Step  0 = ( 0, 0) -> ( 0,  0)
+ EQUB 0                 \ Step  1 = ( 0, 2) -> ( 0,  2)
+ EQUB 0                 \ Step  2 = ( 0, 2) -> ( 0,  4)
+ EQUB -5                \ Step  3 = (-5, 1) -> (-5,  5)
+ EQUB 2                 \ Step  4 = ( 2, 0) -> (-3,  5)
+ EQUB 2                 \ Step  5 = ( 2, 0) -> (-1,  5)
+ EQUB 2                 \ Step  6 = ( 2, 0) -> ( 1,  5)
+ EQUB 2                 \ Step  7 = ( 2, 0) -> ( 3,  5)
+ EQUB 2                 \ Step  8 = ( 2, 0) -> ( 5,  5)
+ EQUB -5                \ Step  9 = (-5, 1) -> ( 0,  6)
+ EQUB 0                 \ Step 10 = ( 0, 2) -> ( 0,  8)
+ EQUB 0                 \ Step 11 = ( 0, 2) -> ( 0, 10)
 
 \ ******************************************************************************
 \
-\       Name: L3A9A
+\       Name: ySightsStep
 \       Type: Variable
 \   Category: Sights
-\    Summary: ???
+\    Summary: Steps to take along the y-axis when drawing the sights
+\
+\ ------------------------------------------------------------------------------
+\
+\ The ySightsStep and xSightsStep tables define a set of 12 steps to follow when
+\ drawing the sights, relative to the start position.
+\
+\ The steps draw a shape like this, starting at step 0 and showing steps 10 and
+\ 11 as A and B):
+\
+\        33
+\        44
+\        55
+\   00112299AABB
+\        66
+\        77
+\        88
 \
 \ ******************************************************************************
 
-.L3A9A
+.ySightsStep
 
- EQUB &00, &02, &02, &01, &00, &00, &00, &00
- EQUB &00, &01, &02, &02, &80
+ EQUB 0                 \ Step  0 = ( 0, 0) -> ( 0,  0)
+ EQUB 2                 \ Step  1 = ( 0, 2) -> ( 0,  2)
+ EQUB 2                 \ Step  2 = ( 0, 2) -> ( 0,  4)
+ EQUB 1                 \ Step  3 = (-5, 1) -> (-5,  5)
+ EQUB 0                 \ Step  4 = ( 2, 0) -> (-3,  5)
+ EQUB 0                 \ Step  5 = ( 2, 0) -> (-1,  5)
+ EQUB 0                 \ Step  6 = ( 2, 0) -> ( 1,  5)
+ EQUB 0                 \ Step  7 = ( 2, 0) -> ( 3,  5)
+ EQUB 0                 \ Step  8 = ( 2, 0) -> ( 5,  5)
+ EQUB 1                 \ Step  9 = (-5, 1) -> ( 0,  6)
+ EQUB 2                 \ Step 10 = ( 0, 2) -> ( 0,  8)
+ EQUB 2                 \ Step 11 = ( 0, 2) -> ( 0, 10)
+
+ EQUB %10000000         \ End of table
 
 \ ******************************************************************************
 \

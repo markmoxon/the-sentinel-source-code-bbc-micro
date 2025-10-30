@@ -2634,7 +2634,7 @@
      0CC9   00
 .iconRowAddr
      0CCA   80 7F
-.L0CCC
+.xSightsBrush
      0CCC   00
 .L0CCD
      0CCD   00
@@ -9290,7 +9290,7 @@
      3A8B   40
      3A8C   20
      3A8D   10
-.L3A8E
+.xSightsStep
      3A8E   00
      3A8F   00
      3A90   00
@@ -9303,7 +9303,7 @@
      3A97   FB
      3A98   00
      3A99   00
-.L3A9A
+.ySightsStep
      3A9A   00
      3A9B   02
      3A9C   02
