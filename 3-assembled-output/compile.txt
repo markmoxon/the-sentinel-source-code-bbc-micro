@@ -3946,7 +3946,7 @@
 .galt4
      15B2   38         SEC
      15B3   60         RTS
-.bitMasks
+.leadingBitMask
      15B4   FF
      15B5   7F
      15B6   3F
@@ -5732,7 +5732,7 @@
      227C   00
      227D   55
      227E   0F
-.L227F
+.pixelBitMask
      227F   88
      2280   44
      2281   22
@@ -8732,7 +8732,7 @@
      36BB   4C B0 36   JMP &36B0
 .text2
      36BE   60         RTS
-.L36BF
+.clearPixelMask
      36BF   77
      36C0   BB
      36C1   DD
@@ -9285,7 +9285,7 @@
      3A86   4C FB 39   JMP &39FB
 .dras12
      3A89   60         RTS
-.L3A8A
+.pixelByteColour2
      3A8A   80
      3A8B   40
      3A8C   20
@@ -14239,7 +14239,7 @@
      572E   00
 .L572F
      572F   00
-.L5730
+.pixelByteColour1
      5730   08
      5731   04
      5732   02

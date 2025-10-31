@@ -6878,7 +6878,7 @@ L1145 = C1144+1
                         \
                         \ To do this we count the number of continuous clear
                         \ bits at the top of A, and then use this as an index
-                        \ into the bitMasks table
+                        \ into the leadingBitMask table
                         \
                         \ So we count zeroes from bit 7 down until we hit a 1,
                         \ and put the result into Y
@@ -6898,9 +6898,9 @@ L1145 = C1144+1
                         \ the length of the run of zeroes in bits 7 to 0 of the
                         \ length of the list at tilesAtAltitude
 
- LDA bitMasks,Y         \ Set bitMask to the Y-th entry from the bitMasks table,
- STA bitMask            \ which will give us a bit mask with a matching number
-                        \ of leading zeroes as A
+ LDA leadingBitMask,Y   \ Set bitMask to the Y-th entry from the leadingBitMask
+ STA bitMask            \ table, which will give us a bit mask with a matching
+                        \ number of leading zeroes as A
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ found at least one tile block that matches the
@@ -6919,7 +6919,7 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: bitMasks
+\       Name: leadingBitMask
 \       Type: Variable
 \   Category: Landscape
 \    Summary: A table for converting the number of leading clear bits in a
@@ -6927,7 +6927,7 @@ L1145 = C1144+1
 \
 \ ******************************************************************************
 
-.bitMasks
+.leadingBitMask
 
  EQUB %11111111
  EQUB %01111111
@@ -11116,98 +11116,123 @@ L1145 = C1144+1
 \
 \       Name: L2277
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L2277
 
- EQUB &00, &00, &AA, &0F
+ EQUB %00000000
+ EQUB %00000000
+ EQUB %10101010
+ EQUB %00001111
 
 \ ******************************************************************************
 \
 \       Name: L227B
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L227B
 
- EQUB &0F, &00, &55, &0F
+ EQUB %00001111
+ EQUB %00000000
+ EQUB %01010101
+ EQUB %00001111
 
 \ ******************************************************************************
 \
-\       Name: L227F
+\       Name: pixelBitMask
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: A table for converting a pixel number in the range 0 to 3 into a
+\             screen mode 5 bit mask with that pixel's bits set and others clear
 \
 \ ******************************************************************************
 
-.L227F
+.pixelBitMask
 
- EQUB &88, &44, &22, &11
+ EQUB %10001000         \ Pixel bit mask with pixel 0 set
+
+ EQUB %01000100         \ Pixel bit mask with pixel 1 set
+
+ EQUB %00100010         \ Pixel bit mask with pixel 2 set
+
+ EQUB %00010001         \ Pixel bit mask with pixel 3 set
 
 \ ******************************************************************************
 \
 \       Name: L2283
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L2283
 
- EQUB &00, &0F, &F0, &FF
+ EQUB %00000000
+ EQUB %00001111
+ EQUB %11110000
+ EQUB %11111111
 
 \ ******************************************************************************
 \
 \       Name: L2287
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L2287
 
- EQUB &00, &88, &CC, &EE
+ EQUB %00000000
+ EQUB %10001000
+ EQUB %11001100
+ EQUB %11101110
 
 \ ******************************************************************************
 \
 \       Name: L228B
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L228B
 
- EQUB &77, &33, &11, &00
+ EQUB %01110111
+ EQUB %00110011
+ EQUB %00010001
+ EQUB %00000000
 
 \ ******************************************************************************
 \
 \       Name: L228F
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L228F
 
- EQUB &88, &CC, &EE, &FF
+ EQUB %10001000
+ EQUB %11001100
+ EQUB %11101110
+ EQUB %11111111
 
 \ ******************************************************************************
 \
 \       Name: L2293
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -17987,16 +18012,28 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L36BF
+\       Name: clearPixelMask
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: A table for converting a pixel number in the range 0 to 3 into a
+\             screen mode 5 bit mask with that pixel's bits clear and others set
 \
 \ ******************************************************************************
 
-.L36BF
+.clearPixelMask
 
- EQUB &77, &BB, &DD, &EE, &88, &44, &22, &11
+ EQUB %01110111         \ Pixel bit mask with all pixels set except pixel 0
+
+ EQUB %10111011         \ Pixel bit mask with all pixels set except pixel 1
+
+ EQUB %11011101         \ Pixel bit mask with all pixels set except pixel 2
+
+ EQUB %11101110         \ Pixel bit mask with all pixels set except pixel 3
+
+ EQUB %10001000         \ These bytes appear to be unused
+ EQUB %01000100
+ EQUB %00100010
+ EQUB %00010001
 
 \ ******************************************************************************
 \
@@ -19589,7 +19626,8 @@ L314A = C3148+2
 \       Name: DrawSights
 \       Type: Subroutine
 \   Category: Sights
-\    Summary: Draw the sights on the screen
+\    Summary: Draw the sights on the screen, saving the existing screen contents
+\             in the sights pixel byte stash
 \
 \ ******************************************************************************
 
@@ -19791,7 +19829,7 @@ L314A = C3148+2
  ASL A                  \
                         \ All the step values in xSightsStep and ySightsStep
                         \ and the brush coordinates in xSightsBrush and Y are
-                        \ in pixels, with each step in the x-coordinate moving
+                        \ in pixels, with each step in the x-coordinate drawing
                         \ two pixels, so these steps:
                         \
                         \        00
@@ -19904,27 +19942,77 @@ L314A = C3148+2
 
                         \ We now apply the brush to the pixel byte in screen
                         \ memory at sightsByteAddr(1 0) + Y
+                        \
+                        \ We do this by taking the existing screen pixel byte in
+                        \ A and setting the pixel number xSightsBrush to either
+                        \ colour 1 or colour 2, depending on the current colour
+                        \ in that pixel
+                        \
+                        \ Specifically, we draw the sights in colour 2 when the
+                        \ background is colour 0 or 1, and we draw the sights in
+                        \ colour 1 when the background is colour 2 or 3
+                        \
+                        \ As an example of physical colours, in landscape zero
+                        \ we paint the sights pixels in white (colour 2) when
+                        \ the background is blue (colour 0) or black (colour 1),
+                        \ and we paint the sights pixels in black (colour 1)
+                        \ when the background is white (colour 2) or green
+                        \ (colour 3)
+                        \
+                        \ This ensures that the sights are visible wherever they
+                        \ are on-screen, irrespective of the current screen
+                        \ contents
 
- LDX xSightsBrush
- AND L227F,X
+ LDX xSightsBrush       \ Convert xSightsBrush from a number in the range 0 to 3
+ AND pixelBitMask,X     \ into a bit mask with that pixel number set (where
+                        \ pixel 0 is on the left and pixel 3 is on the right)
+                        \
+                        \ So if xSightsBrush is 2, for example, the resulting
+                        \ mask will be %00100010, in which pixel 2 is set
 
- CMP #&10
- PHP
+                        \ At this point, A contains the existing contents of the
+                        \ screen byte into which we need to draw the sights,
+                        \ with all bits zeroed except for those for the pixel we
+                        \ want to colour in
+
+ CMP #%00010000         \ Set the status flags on the comparison of A and
+ PHP                    \ %00010000 and push the resulting flags on the stack
+                        \ so we can retrieve them below
 
  LDA (sightsByteAddr),Y \ Set A to the current screen contents of the pixel byte
                         \ we are updating
 
- AND L36BF,X
+ AND clearPixelMask,X   \ Clear the pixel number in xSightsBrush by applying a
+                        \ pixel bit mask from clearPixelMask where the bits for
+                        \ every pixel are set except for pixel X
 
- PLP
- BCS dras10
+ PLP                    \ Using the status flags that we put on the stack above,
+ BCS dras10             \ check whether A >= %00010000, where A contains the
+                        \ existing contents of the screen for pixel X
+                        \
+                        \ If A >= %00010000 then A must have at least one bit
+                        \ set in the high nibble, which means the existing
+                        \ contents of pixel X on-screen has to have its top bit
+                        \ set, so it must either be colour %10 (2) or %11 (3)
+                        \
+                        \ As the background is colour 2 or 3, jump to dras10 to
+                        \ paint the sights pixel in colour 1
 
- ORA L3A8A,X
- BCC dras11
+                        \ If we get here then the existing screen contents are
+                        \ in colour 0 or 1, so we now paint the sights pixel in
+                        \ colour 2
+
+ ORA pixelByteColour2,X \ Set the colour of pixel X to colour 2 by OR'ing in a
+                        \ pixel mask where pixel X is set to %10 for colour 2
+
+ BCC dras11             \ Jump to dras11 to skip the following instruction (this
+                        \ BCC is effectively a JMP as we just passed through a
+                        \ BCS)
 
 .dras10
 
- ORA L5730,X
+ ORA pixelByteColour1,X \ Set the colour of pixel X to colour 1 by OR'ing in a
+                        \ pixel mask where pixel X is set to %01 for colour 1
 
 .dras11
 
@@ -19942,16 +20030,23 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3A8A
+\       Name: pixelByteColour2
 \       Type: Variable
-\   Category: Sights
-\    Summary: ???
+\   Category: Graphics
+\    Summary: A table for converting a pixel number in the range 0 to 3 into a
+\             screen mode 5 pixel byte with that pixel set to colour 2 (%10)
 \
 \ ******************************************************************************
 
-.L3A8A
+.pixelByteColour2
 
- EQUB &80, &40, &20, &10
+ EQUB %10000000         \ Pixel byte with pixel 0 set to colour 2
+
+ EQUB %01000000         \ Pixel byte with pixel 1 set to colour 2
+
+ EQUB %00100000         \ Pixel byte with pixel 2 set to colour 2
+
+ EQUB %00010000         \ Pixel byte with pixel 3 set to colour 2
 
 \ ******************************************************************************
 \
@@ -21986,13 +22081,13 @@ L314A = C3148+2
  AND #&03
  TAX
  LDY #0
- LDA L227F,X
+ LDA pixelBitMask,X
  EOR #&FF
  AND (L0022),Y
- ORA L5730,X
+ ORA pixelByteColour1,X
  BIT L572F
  BPL C5726
- EOR L227F,X
+ EOR pixelBitMask,X
 
 .C5726
 
@@ -22029,16 +22124,23 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5730
+\       Name: pixelByteColour1
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Sights
+\    Summary: A table for converting a pixel number in the range 0 to 3 into a
+\             screen mode 5 pixel byte with that pixel set to colour 1 (%01)
 \
 \ ******************************************************************************
 
-.L5730
+.pixelByteColour1
 
- EQUB &08, &04, &02, &01
+ EQUB %00001000         \ Pixel byte with pixel 0 set to colour 1
+
+ EQUB %00000100         \ Pixel byte with pixel 1 set to colour 1
+
+ EQUB %00000010         \ Pixel byte with pixel 2 set to colour 1
+
+ EQUB %00000001         \ Pixel byte with pixel 3 set to colour 1
 
 \ ******************************************************************************
 \
@@ -23783,16 +23885,45 @@ L314A = C3148+2
 \ If the argument to SetColourPalette is &83, the palette is set as follows:
 \
 \   * Colour 0 = 4 (blue)
+\
 \   * Colour 1 = 0 (black)
+\
 \   * Colour 2 = 6 (cyan)
+\
 \   * Colour 3 = 3 (yellow)
 \
 \ If the argument to SetColourPalette is &87, the palette is set as follows:
 \
 \   * Colour 0 = 4 (blue)
+\
 \   * Colour 1 = 0 (black)
+\
 \   * Colour 2 = 1 (red)
+\
 \   * Colour 3 = 3 (yellow)
+\
+\ Note that while colours 0 and 1 are always blue and black, during gameplay
+\ colours 2 and 3 are set to different physical colours, depending on the number
+\ of enemies in the landscape. The gameplaye palettes are as follows:
+\
+\   * Enemy count = 1: blue, black, white, green
+\
+\   * Enemy count = 2: blue, black, yellow, red
+\
+\   * Enemy count = 3: blue, black, cyan, yellow
+\
+\   * Enemy count = 4: blue, black, red, cyan
+\
+\   * Enemy count = 5: blue, black, white, red
+\
+\   * Enemy count = 6: blue, black, yellow, cyan
+\
+\   * Enemy count = 7: blue, black, cyan, red
+\
+\   * Enemy count = 8: blue, black, red, yellow
+\
+\ Landscape zero has one enemy, so the starting landscape is therefore in blue,
+\ black, white and green.
 \
 \ ******************************************************************************
 
@@ -23830,7 +23961,7 @@ L314A = C3148+2
  ASL A
  INY
  BCC P5E74
- LDA bitMasks,Y
+ LDA leadingBitMask,Y
 
 .C5E7B
 
@@ -23914,10 +24045,10 @@ L314A = C3148+2
  TAX
  LDY #0
  LDA (fromAddr),Y
- AND L227F,X
+ AND pixelBitMask,X
  STA L0013
  LDA (toAddr),Y
- AND L36BF,X
+ AND clearPixelMask,X
  ORA L0013
  STA (toAddr),Y
  BIT L0C1E
