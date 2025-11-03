@@ -1713,9 +1713,10 @@
  EQUB 0                 \ The number of enemies in the current landscape,
                         \ including the Sentinel (in the range 1 to 8)
 
-.L0C70
+.noteCounter
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Storage for the sound counter for an individual note
+                        \ while playing chords in the music player
 
 .doNotPlayLandscape
 
@@ -1752,13 +1753,27 @@
                         \
                         \   * Bit 7 set = the game is paused
 
-.L0C73
+.soundEffect
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Determines how the current sound is processed by the
+                        \ ProcessSound routine
+                        \
+                        \   * 0 = no processing required
+                        \
+                        \   * 3 = music
+                        \
+                        \   * 4 = scanner sound effect ???
+                        \
+                        \   * 6 = game over sound effect
 
-.L0C74
+.gameOverSoundPitch
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A timer for the game over sound
+                        \
+                        \ Sound is made in ProcessSound when the timer is 80 or
+                        \ higher, and it starts at 250 in DisplayGameOver and
+                        \ decrements in ProcessSound until it dips below 80, at
+                        \ which point the sound stops
 
 .L0C75
 
@@ -2027,9 +2042,13 @@
                         \ corrupt the code (so this forms part of the cracker
                         \ protection code)
 
-.soundCounter2
+.musicCounter
 
- EQUB %10000000         \ ???
+ EQUB %10000000         \ A counter for the music currently being made, which
+                        \ counts up in the ProcessMusic routine while the music
+                        \ is being played
+                        \
+                        \ If bit 7 is set then there is no music being played
 
 .keyLogger
 
@@ -5169,7 +5188,7 @@ L1145 = C1144+1
  JSR ProcessPauseKeys   \ Pause or unpause the game when COPY or DELETE are
                         \ pressed
 
- JSR sub_C355A          \ Sound related ???
+ JSR ProcessSound       \ Process any sounds or music that are being made
 
  JSR ProcessVolumeKeys  \ Adjust the volume of the sound envelopes when the
                         \ volume keys are pressed
@@ -7827,9 +7846,9 @@ L1145 = C1144+1
  STY scannerUpdate
  LDA T
  STA L0C4F
- LDA L0C73
- CPY L0C73
- STY L0C73
+ LDA soundEffect
+ CPY soundEffect
+ STY soundEffect
  BEQ CRE08
  LDY #&12
  STY soundData+16       \ First parameter of sound block #2 (channel)
@@ -8471,11 +8490,12 @@ L1145 = C1144+1
  EOR #%10000000         \ flipping bit 7, which turns the player around
  STA objectYawAngle,X
 
- LDA #40                \ Set A = 40 to set as the value of soundCounter2 ???
+ LDA #40                \ Set A = 40 to pass to the PlayMusic routine after we
+                        \ jump to pkey6, so it plays the music for a U-turn
 
- BNE pkey6              \ Jump to pkey6 to return from the subroutine with the
-                        \ C flag set (this BNE is effectively a JMP as A is
-                        \ never zero)
+ BNE pkey6              \ Jump to pkey6 to play the U-turn music and return from
+                        \ the subroutine with the C flag set (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .pkey3
 
@@ -8606,11 +8626,18 @@ L1145 = C1144+1
 
 .pkey5
 
- LDA #25                \ Set A = 25 to set as the value of soundCounter2 ???
+                        \ If we get here then the player has just transferred
+                        \ into a robot
+
+ LDA #25                \ Set A = 25 to pass to the PlayMusic routine so it
+                        \ plays the music for when the player transfers into a
+                        \ new robot
 
 .pkey6
 
- JSR SetSoundCounter2   \ Set soundCounter2 = A and L0C73 = 3 ???
+ JSR PlayMusic          \ Call PlayMusic to play the music specified in A (so
+                        \ that's either the music for transferring into a new
+                        \ robot or the music for a U-turn)
 
  LDA #%10000000         \ Set bit 7 of playerHasMovedTile to indicate that the
  STA playerHasMovedTile \ player has moved to a new tile
@@ -10888,8 +10915,8 @@ L1145 = C1144+1
 
 .hypr1
 
- LDA #0                 \ Set soundCounter2 = 0 and L0C73 = 3 ???
- JSR SetSoundCounter2
+ LDA #0                 \ Call the PlayMusic routine with A = 0 to play the
+ JSR PlayMusic          \ hyperspace music
 
  LDX playerObject       \ If the player is not on the Sentinel's tile in terms
  LDA xObject,X          \ of the x-coordinate, jump to hypr2
@@ -11705,7 +11732,8 @@ L23E3 = C23E2+1
 
 .C24F5
 
- JSR sub_C355A
+ JSR ProcessSound       \ Process any sounds or music that are being made
+
  LDY #0
  STY T
  DEY
@@ -12163,7 +12191,9 @@ L23E3 = C23E2+1
  STA L0037
  LDA cosSightsPitchHi
  STA L0038
- JSR sub_C355A
+
+ JSR ProcessSound       \ Process any sounds or music that are being made
+
  DEC zTile
  BMI C26D4
  LDY zTile
@@ -12909,7 +12939,8 @@ L23E3 = C23E2+1
 
 .sub_C29E2
 
- JSR sub_C355A
+ JSR ProcessSound       \ Process any sounds or music that are being made
+
  LDA yTile
  ORA L0005
  CLC
@@ -16946,19 +16977,19 @@ L314A = C3148+2
 \
 \   A                   The number of the sound to make (0 to 6):
 \
-\                         * A = 0 for ??? (two-part)
+\                         * 0 = ??? (two-part)
 \
-\                         * A = 1 for ??? (two-part)
+\                         * 1 = ??? (two-part)
 \
-\                         * A = 2 for ???
+\                         * 2 = ???
 \
-\                         * A = 3 for ???
+\                         * 3 = ???
 \
-\                         * A = 4 for ???
+\                         * 4 = ???
 \
-\                         * A = 5 for ping
+\                         * 5 = ping
 \
-\                         * A = 6 for ??? (two-part)
+\                         * 6 = ??? (two-part)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17413,57 +17444,113 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3505
+\       Name: ProcessMusic
 \       Type: Subroutine
-\   Category: ???
+\   Category: Sound
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3505
+.ProcessMusic
 
- LDX soundCounter2
- BMI CRE31
- INC soundCounter2
- LDA L5850,X
- CMP #&FF
- BEQ C3544
- CMP #&C8
- BCC C3522
- SBC #&C8
- ASL A
- ASL A
- STA L0C70
- JMP sub_C3505
+ LDX musicCounter       \ Set X to the music counter, which points to the
+                        \ current place in the music data
+       
+ BMI musi4              \ If bit 7 of musicCounter is set then there is no music
+                        \ playing, so jump to musi4 to return from the
+                        \ subroutine
 
-.C3522
+ INC musicCounter       \ Otherwise there is some music being played, so
+                        \ increment the music counter to move through the music
+                        \ data
 
- STA soundData+20       \ Third parameter of sound data block #2 (pitch)
- LDA L0C70
- STA soundCounter
- LDA soundData+16       \ First parameter of sound data block #2 (channel)
- CLC
- ADC #&01
- CMP #&14
- BCC C3537
- LDA #&11
+ LDA musicData,X        \ Set A to the next byte of music data
 
-.C3537
+ CMP #&FF               \ If A = &FF then we just reached the end of this piece
+ BEQ musi3              \ of music, so jump to musi3 to stop playing music
 
- STA soundData+16       \ First parameter of sound data block #2 (channel)
- LDA #&04
- STA soundData+18       \ Second parameter of sound data block #2 (amplitude)
+                        \ If we get here then we need to process the byte of
+                        \ music data in A
 
- LDA #3                 \ Make sound #3 (???)
- JMP MakeSound
+ CMP #200               \ If A < 200 then jump to musi1 to make the sound
+ BCC musi1
 
-.C3544
+                        \ If we get here then A contains the sound counter to
+                        \ set for all following notes, with the form 200 + x
+                        \ setting the counter to 4 * x
 
- STA soundCounter2
+ SBC #200               \ Set noteCounter = (A - 200) * 4
+ ASL A                  \
+ ASL A                  \ This subtraction works because we just passed through
+ STA noteCounter        \ a BCC, so we know the C flag is set
 
-.CRE31
+ JMP ProcessMusic       \ Loop back to the start of the routine to process the
+                        \ next byte of music data
 
- RTS
+.musi1
+
+ STA soundData+20       \ Set the third parameter of sound data block #2 to A,
+                        \ to set the pitch
+
+ LDA noteCounter        \ Set soundCounter to the note duration so the note
+ STA soundCounter       \ plays for the correct amount of time
+                        \
+                        \ This means that the ProcessSound routine will do
+                        \ nothing until this counter has run down, so we can
+                        \ play three-note chords by setting the delay to zero
+                        \ for the first two notes in the chord, so that there is
+                        \ no delay between them, and then setting the delay for
+                        \ the last note to the duration of the chord, so the
+                        \ three chord notes play together for that period
+                        \
+                        \ All we need to do is ensure that the three notes can
+                        \ play together, which is what we do next
+
+ LDA soundData+16       \ Set A to the first parameter of sound data block #2,
+                        \ which contains the channel
+                        \
+                        \ This is in the form &1x for sound channel x, and it
+                        \ starts out at &12 for channel 2
+                        \
+                        \ Channels 1 to 3 are for tones, so we work our way
+                        \ through channels &11 to &13, playing each note on the
+                        \ next channel number
+                        \
+                        \ This plays the music with the the last three notes
+                        \ being sustained, which lets us play three-note chords
+                        \ as described above, giving the game music its
+                        \ distinctive chord style
+
+ CLC                    \ Add 1 to move A onto the number of the next channel
+ ADC #1
+
+ CMP #&14               \ If A < &14 then we are still in the range &11 to &13,
+ BCC musi2              \ so jump to musi2 to use this channel
+
+ LDA #&11               \ Otherwise warp around to channel &11
+
+.musi2
+
+ STA soundData+16       \ Set the first parameter of sound data block #2 to A,
+                        \ which sets the channel
+
+ LDA #4                 \ Set the second parameter of sound data block #2 to 4,
+ STA soundData+18       \ which sets the amplitude
+
+ LDA #3                 \ Make sound #3 (music), which plays the next note of
+ JMP MakeSound          \ music, returning from the subroutine using a tail call
+
+.musi3
+
+                        \ If we get here then we just reached the end of the
+                        \ piece of music and A = &FF
+
+ STA musicCounter       \ Set bit 7 of the music counter to flag that we are no
+                        \ longer playing any music
+
+.musi4
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -17537,63 +17624,93 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C355A
+\       Name: ProcessSound
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Sound
+\    Summary: Process any sound effects that have been configured, such as the
+\             descending game over sound
 \
 \ ******************************************************************************
 
-.sub_C355A
+.ProcessSound
 
- LDA soundCounter
- BNE CRE32
- LDA L0C73
- CMP #&04
- BEQ C358E
- CMP #&03
- BEQ C358B
- CMP #&06
- BNE CRE32
- LDX #&07
- LDY L0C74
- CPY #&50
- BCC CRE32
+ LDA soundCounter       \ If soundCounter is non-zero then a sound is already
+ BNE psou1              \ being made, so jump to psou1 to return from the
+                        \ subroutine
 
- LDA #6                 \ Make sound #6 (???) with the pitch in X and Y
+ LDA soundEffect        \ Set A to the type of sound effect we need to apply,
+                        \ which is specified in the soundEffect variable when
+                        \ the sound is made
+
+ CMP #4                 \ If A = 4 then this is the scanner sound, so jump to
+ BEQ psou3              \ psou3 to process the scanner sound ???
+
+ CMP #3                 \ If A = 3 then this is music, so jump to ProcessMusic
+ BEQ psou2              \ via psou2 to process the music being played
+
+ CMP #6                 \ If A <> 6 then there is no sound effect to apply, so
+ BNE psou1              \ jump to psou1 to return from the subroutine
+
+                        \ If we get here then soundEffect = 6, so this is the
+                        \ game over sound
+
+ LDX #7                 \ Set X = 7 to pass to MakeSound-6 as the pitch of the
+                        \ first part of the game over sound
+
+ LDY gameOverSoundPitch \ Set Y to the pitch for the second part of the game
+                        \ over sound, which starts at 250 in the DisplayGameOver
+                        \ routine and counts down towards 80
+
+ CPY #80                \ If Y < 80 then the game over sound has finished, so
+ BCC psou1              \ jump to psou1 to return from the subroutine without
+                        \ making a sound
+
+ LDA #6                 \ Make sound #6 (game over) with the pitches in X and Y
  JSR MakeSound-6
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
-                        \ of seed numbers
+                        \ of seed numbers, which by this point in the game is
+                        \ effectigvely a random number
 
- AND #&03
- CLC
- ADC #&01
- STA soundCounter
- DEC L0C74
+ AND #3                 \ Convert the random number in A into a random number in
+ CLC                    \ the range 1 to 4
+ ADC #1
 
-.CRE32
+ STA soundCounter       \ Set soundCounter to a random number between 1 and 4 to
+                        \ control the length of the noise we just made
 
- RTS
+ DEC gameOverSoundPitch \ Decrement the pitch of the game over sound so the
+                        \ overall effect is of a slowly decaying sound effect
 
-.C358B
+.psou1
 
- JMP sub_C3505
+ RTS                    \ Return from the subroutine
 
-.C358E
+.psou2
+
+                        \ If we get here then soundEffect = 3, so the sound
+                        \ effect is music
+
+ JMP ProcessMusic       \ Jump to ProcessMusic to play the music
+
+.psou3
+
+                        \ If we get here then soundEffect = 4, so this is some
+                        \ kind of scanner sound ???
 
  LDA #50                \ Set soundCounter = 50 to count down while the next
  STA soundCounter       \ sound is made
 
- LDA #&22
- STA soundData+20       \ Third parameter of sound data block #2 (pitch)
- LDA #&03
- STA soundData+18       \ Second parameter of sound data block #2 (amplitude)
+ LDA #34                \ Set the third parameter of sound data block #2 to 34,
+ STA soundData+20       \ to set the pitch
+
+ LDA #3                 \ Set the second parameter of sound data block #2 to 3,
+ STA soundData+18       \ to set the amplitude
 
  LDA #4                 \ Make sound #4 (???)
  JSR MakeSound
 
- RTS
+ RTS                    \ Return from the subroutine
 
  EQUB &B9               \ This byte appears to be unused
 
@@ -17748,10 +17865,11 @@ L314A = C3148+2
 
 .game5
 
- JSR sub_C355A          \ Sound-related ???
+ JSR ProcessSound       \ Process any sounds or music that are being made
 
- LDA soundCounter2      \ Loop back to keep calling sub_C355A until bit 7 of
- BPL game5              \ soundCounter2 is clear ???
+ LDA musicCounter       \ Loop back to keep calling ProcessSound until bit 7 of
+ BPL game5              \ musicCounter is clear, so if any music is being
+                        \ played, we wait until it has finished
 
  LDA #&83               \ Set the palette to the first set of colours from the
  JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
@@ -17770,8 +17888,8 @@ L314A = C3148+2
  STA sentinelHasWon     \ Set bit 7 of sentinelHasWon to indicate that the
                         \ player has run out of energy and the Sentinel has won
 
- LDA #6                 \ Set L0C73 = 6 ???
- STA L0C73
+ LDA #6                 \ Set soundEffect = 6 so the sound is processed as the
+ STA soundEffect        \ game over sound
 
  LDA #5                 \ The Sentinel has won, so display the game over screen
  JSR DisplayGameOver    \ with A = 5 ???
@@ -17812,7 +17930,8 @@ L314A = C3148+2
 
  LDA #0                 \ Set A = 0 so we can zero the four bytes
 
- STA L0C73              \ Set L0C73 = 0 ???
+ STA soundEffect        \ Set soundEffect = 0 to disable sound effect processing
+                        \ in the ProcessSound routine
 
 .game8
 
@@ -17834,15 +17953,16 @@ L314A = C3148+2
  LDA #10                \ Set soundCounter = 10 to count down while the next
  STA soundCounter       \ sound is made
 
- LDA #66                \ Set soundCounter2 = 66 and L0C73 = 3 ???
- JSR SetSoundCounter2
+ LDA #66                \ Call the PlayMusic routine with A = 66 to play the
+ JSR PlayMusic          \ music for when the player finishes a landscape
 
 .game9
 
- JSR sub_C355A          \ Sound-related ???
+ JSR ProcessSound       \ Process any sounds or music that are being made
 
- LDA soundCounter2      \ Loop back to keep calling sub_C355A until bit 7 of
- BPL game9              \ soundCounter2 is clear ???
+ LDA musicCounter       \ Loop back to keep calling ProcessSound until bit 7 of
+ BPL game9              \ musicCounter is clear, so if any music is being
+                        \ played, we wait until it has finished
 
  LDX #6                 \ Print text token 6: Print "PRESS ANY KEY" at (64, 100)
  JSR PrintTextToken
@@ -22837,27 +22957,173 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5850
+\       Name: musicData
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Sound
+\    Summary: Data for the game's music
+\
+\ ------------------------------------------------------------------------------
+\
+\ Music data is as follows:
+\
+\   * If a value is 200 + x, then the sound counter for all the following notes
+\     is set to 4 * x, measured in 1/50 second (i.e. calls to the interrupt
+\     handler)
+\
+\   * Otherwise the value is the pitch of the note to play
+\
+\ Each note is played on a separate tone channel, working through channels 1 to
+\ 3 in sequence.
+\
+\ Setting the sound counter stops ProcessSound from doing anything until the
+\ counter runs down. This means that the last three notes are played together,
+\ so we can play three-note chords by playing two notes with a counter of zero,
+\ followed by a third note with the counter set to the duration of the chord.
+\
+\ Setting the counter to zero for the last chord in a piece of music ensures
+\ that the last chords plays until it naturally decays according to the sound
+\ envelope for sound #3.
 \
 \ ******************************************************************************
 
-.L5850
+.musicData
 
- EQUB &C8, &08, &24, &CE, &24, &C8, &14, &30
- EQUB &CE, &30, &C8, &1C, &38, &CE, &38, &C8
- EQUB &00, &1C, &CE, &1C, &C8, &08, &24, &24
- EQUB &FF, &C8, &08, &24, &CE, &24, &C8, &14
- EQUB &30, &CE, &30, &C8, &10, &2C, &CE, &2C
- EQUB &C8, &00, &1C, &CE, &1C, &C8, &08, &24
- EQUB &24, &FF, &CC, &08, &24, &40, &44, &D7
- EQUB &54, &C9, &68, &54, &44, &40, &24, &D4
- EQUB &08, &FF, &C9, &08, &24, &D4, &24, &C9
- EQUB &00, &1C, &CD, &1C, &C9, &1C, &38, &CE
- EQUB &38, &C9, &14, &30, &CF, &30, &C9, &10
- EQUB &1C, &D1, &1C, &C9, &08, &24, &24, &FF
+                        \ Music data offset 0: Hyperspace
+
+ EQUB 200 + 0           \ Chord 1 = 8, 36, 36 with sound counter 6 * 4 = 24
+ EQUB 8
+ EQUB 36
+ EQUB 200 + 6
+ EQUB 36
+
+ EQUB 200 + 0           \ Chord 2 = 20, 48, 48 with sound counter 6 * 4 = 24
+ EQUB 20
+ EQUB 48
+ EQUB 200 + 6
+ EQUB 48
+
+ EQUB 200 + 0           \ Chord 3 = 28, 56, 56 with sound counter 6 * 4 = 24
+ EQUB 28
+ EQUB 56
+ EQUB 200 + 6
+ EQUB 56
+
+ EQUB 200 + 0           \ Chord 4 = 0, 28, 28 with sound counter 6 * 4 = 24
+ EQUB 0
+ EQUB 28
+ EQUB 200 + 6
+ EQUB 28
+
+ EQUB 200 + 0           \ Chord 5 = 8, 36, 36 with sound counter 0
+ EQUB 8
+ EQUB 36
+ EQUB 36
+
+ EQUB &FF               \ End of music data
+
+                        \ Music data offset 25: Transfer into a new robot
+                        \
+                        \ Note that the transfer music plays the U-turn music as
+                        \ its last two chords, as there is no terminator after
+                        \ chord 2 below
+
+ EQUB 200 + 0           \ Chord 1 = 8, 36, 36 with sound counter 6 * 4 = 24
+ EQUB 8
+ EQUB 36                
+ EQUB 200 + 6
+ EQUB 36
+
+ EQUB 200 + 0           \ Chord 2 = 20, 48, 48 with sound counter 6 * 4 = 24
+ EQUB 20
+ EQUB 48    
+ EQUB 200 + 6
+ EQUB 48
+
+ EQUB 200 + 0           \ Chord 2 = 16, 44, 44 with sound counter 6 * 4 = 24
+ EQUB 16
+ EQUB 44
+ EQUB 200 + 6
+ EQUB 44
+
+                        \ Music data offset 25: U-turn
+
+ EQUB 200 + 0           \ Chord 1 = 0, 28, 28 with sound counter 6 * 4 = 24
+ EQUB 0
+ EQUB 28
+ EQUB 200 + 6
+ EQUB 28
+
+ EQUB 200 + 0           \ Chord 2 = 8, 36, 36 with sound counter 0
+ EQUB 8
+ EQUB 36
+ EQUB 36
+
+ EQUB &FF               \ End of music data
+
+                        \ Music data offset 50: Game over
+
+ EQUB 200 + 4           \ Note 1 = 8 with sound counter 4 * 4 = 16
+ EQUB 8
+
+ EQUB 36                \ Note 2 = 36 with sound counter 4 * 4 = 16
+
+ EQUB 64                \ Note 3 = 64 with sound counter 4 * 4 = 16
+
+ EQUB 68                \ Note 4 = 68 with sound counter 4 * 4 = 16
+
+ EQUB 200 + 15          \ Note 5 = 8 with sound counter 15 * 4 = 60
+ EQUB 84
+
+ EQUB 200 + 1           \ Discrete glissando with five short notes, each with
+ EQUB 104               \ sound counter 1 * 4 = 4:
+ EQUB 84                \
+ EQUB 68                \ 104, 84, 68, 64, 36
+ EQUB 64
+ EQUB 36
+
+ EQUB 200 + 12          \ Final note = 8 with counter 15 * 4 = 48
+ EQUB 8
+
+ EQUB &FF               \ End of music data
+
+                        \ Music data offset 66: Landscape successfully finished
+
+ EQUB 200 + 1           \ Chord 1 = 8, 36, 36 with sound counter 12 * 4 = 48 and
+ EQUB 8                 \ the first two notes each introduced with a counter of
+ EQUB 36                \ 1 * 4 = 4
+ EQUB 200 + 12
+ EQUB 36
+
+ EQUB 200 + 1           \ Chord 2 = 0, 28, 28 with sound counter 5 * 4 = 20 and
+ EQUB 0                 \ the first two notes each introduced with a counter of
+ EQUB 28                \ 1 * 4 = 4
+ EQUB 200 + 5
+ EQUB 28
+
+ EQUB 200 + 1           \ Chord 3 = 28, 56, 56 with sound counter 6 * 4 = 24 and
+ EQUB 28                \ the first two notes each introduced with a counter of
+ EQUB 56                \ 1 * 4 = 4
+ EQUB 200 + 6
+ EQUB 56
+
+ EQUB 200 + 1           \ Chord 4 = 20, 48, 48 with sound counter 7 * 4 = 28 and
+ EQUB 20                \ the first two notes each introduced with a counter of
+ EQUB 48                \ 1 * 4 = 4
+ EQUB 200 + 7
+ EQUB 48
+
+ EQUB 200 + 1           \ Chord 5 = 16, 28, 28 with sound counter 9 * 4 = 36 and
+ EQUB 16                \ the first two notes each introduced with a counter of
+ EQUB 28                \ 1 * 4 = 4
+ EQUB 200 + 9
+ EQUB 28
+
+ EQUB 200 + 1           \ Chord 6 = 8, 36, 36 with sound counter 1 * 4 = 1 and 
+ EQUB 8                 \ the first two notes each introduced with a counter of
+ EQUB 36                \ 1 * 4 = 4
+ EQUB 36
+
+ EQUB &FF               \ End of music data
 
 \ ******************************************************************************
 \
@@ -22922,17 +23188,17 @@ L314A = C3148+2
 
  EQUB &10, &00          \ Sound data block #0: SOUND &10, 1, 7, 5
  EQUB &01, &00          \
- EQUB &07, &00          \ Used for the first part of sounds #0 and #1 (???)
- EQUB &05, &00
+ EQUB &07, &00          \ Used for the first part of sounds #0 (???), #1 (???)
+ EQUB &05, &00          \ and #6 (game over)
 
  EQUB &11, &00          \ Sound data block #1: SOUND &11, 0, 120, 10
  EQUB &00, &00          \
- EQUB &78, &00          \ Used for the second part of sounds #0 and #1 (???)
- EQUB &0A, &00
+ EQUB &78, &00          \ Used for the second part of sounds #0 (???), #1 (???)
+ EQUB &0A, &00          \ and #6 (game over)
 
  EQUB &12, &00          \ Sound data block #2: SOUND &12, 3, 34, 20
  EQUB &03, &00          \
- EQUB &22, &00          \ Used for sounds #3 and #4 (???)
+ EQUB &22, &00          \ Used for sounds #3 (music) and #4 (???)
  EQUB &14, &00
 
  EQUB &13, &00          \ Sound data block #3: SOUND &13, 4, 144, 20
@@ -22966,7 +23232,7 @@ L314A = C3148+2
 \
 \   * Envelope 4 is used for sound #5 (ping).
 \
-\   * Envelope 5 is used for sound #6 (???).
+\   * Envelope 5 is used for sound #6 (game over).
 \
 \ ******************************************************************************
 
@@ -24055,7 +24321,9 @@ L314A = C3148+2
  BMI CRE41
  DEC L0CD2
  BNE C5F20
- JSR sub_C355A
+
+ JSR ProcessSound       \ Process any sounds or music that are being made
+
  DEC L2094
  BEQ CRE41
 
@@ -24085,10 +24353,12 @@ L314A = C3148+2
  JSR ClearIconsScanner  \ Clear the energy icon and scanner row at the top of
                         \ the screen
 
- LDA #&06
- STA L0C73
- LDA #&FA
- STA L0C74
+ LDA #6                 \ Set soundEffect = 6 so the sound is processed as the
+ STA soundEffect        \ game over sound
+
+ LDA #250               \ Set gameOverSoundPitch = 250 to start the sound effect
+ STA gameOverSoundPitch \ processing for the game over sound
+
  PLA
  JSR sub_C5F68
  LDY #0
@@ -24105,8 +24375,8 @@ L314A = C3148+2
  STA L0C6D
  LSR L0C1E
 
- LDA #50                \ Set soundCounter2 = 50 and L0C73 = 3 ???
- JSR SetSoundCounter2
+ LDA #50                \ Call the PlayMusic routine with A = 50 to play the
+ JSR PlayMusic          \ game over music
 
  JSR sub_C1F84
  LDA #&1E
@@ -24133,7 +24403,9 @@ L314A = C3148+2
 .P5F6E
 
  JSR sub_C56D9
- JSR sub_C355A
+
+ JSR ProcessSound       \ Process any sounds or music that are being made
+
  DEC loopCounter
  BNE P5F6E
  DEC L001E
@@ -24335,21 +24607,43 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: SetSoundCounter2
+\       Name: PlayMusic
 \       Type: Subroutine
 \   Category: Sound
-\    Summary: ???
+\    Summary: Play a piece of music
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The number of the music to play (which is expressed as
+\                       a byte offset into the music data at musicData):
+\
+\                         * 0 = hyperspace
+\
+\                         * 25 = player has just transferred onto the Sentinel's
+\                                tower
+\
+\                         * 40 = U-turn
+\
+\                         * 50 = game over
+\
+\                         * 66 = landscape successfully finished
 \
 \ ******************************************************************************
 
-.SetSoundCounter2
+.PlayMusic
 
- STA soundCounter2
- LDA #3
- STA L0C73
- RTS
+ STA musicCounter       \ Set the musicCounter to the value in A to start the
+                        \ music playing from this point
 
- EQUB &23
+ LDA #3                 \ Set soundEffect = 3 to tell the the ProcessSound
+ STA soundEffect        \ routine that this is music and should therefore be
+                        \ processed using the ProcessMusic routine
+
+ RTS                    \ Return from the subroutine
+
+ EQUB &23               \ This byte appears to be unused
 
 \ ******************************************************************************
 \

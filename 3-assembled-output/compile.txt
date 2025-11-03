@@ -2519,15 +2519,15 @@
      0C6E   00
 .numberOfEnemies
      0C6F   00
-.L0C70
+.noteCounter
      0C70   00
 .doNotPlayLandscape
      0C71   00
 .gamePaused
      0C72   00
-.L0C73
+.soundEffect
      0C73   00
-.L0C74
+.gameOverSoundPitch
      0C74   00
 .L0C75
      0C75   00
@@ -2678,7 +2678,7 @@
      0CE5   80
 .playerIsOnTower
      0CE6   80
-.soundCounter2
+.musicCounter
      0CE7   80
 .keyLogger
      0CE8   80
@@ -8516,7 +8516,7 @@
      3501   4E 72 0C   LSR &0C72
 .paws2
      3504   60         RTS
-.sub_C3505
+.ProcessMusic
      3505   AE E7 0C   LDX &0CE7
      3508   30 3D      BMI &3547
      350A   EE E7 0C   INC &0CE7
@@ -8530,7 +8530,7 @@
      351B   0A         ASL A
      351C   8D 70 0C   STA &0C70
      351F   4C 05 35   JMP &3505
-.C3522
+.musi1
      3522   8D 14 59   STA &5914
      3525   AD 70 0C   LDA &0C70
      3528   8D DF 0C   STA &0CDF
@@ -8540,15 +8540,15 @@
      3531   C9 14      CMP #&14
      3533   90 02      BCC &3537
      3535   A9 11      LDA #&11
-.C3537
+.musi2
      3537   8D 10 59   STA &5910
      353A   A9 04      LDA #&04
      353C   8D 12 59   STA &5912
      353F   A9 03      LDA #&03
      3541   4C 40 34   JMP &3440
-.C3544
+.musi3
      3544   8D E7 0C   STA &0CE7
-.CRE31
+.musi4
      3547   60         RTS
 .FlushSoundBuffers
      3548   A2 07      LDX #&07
@@ -8563,7 +8563,7 @@
 .FlushBuffer
      3555   A9 15      LDA #&15
      3557   4C F4 FF   JMP &FFF4
-.sub_C355A
+.ProcessSound
      355A   AD DF 0C   LDA &0CDF
      355D   D0 2B      BNE &358A
      355F   AD 73 0C   LDA &0C73
@@ -8585,11 +8585,11 @@
      3582   69 01      ADC #&01
      3584   8D DF 0C   STA &0CDF
      3587   CE 74 0C   DEC &0C74
-.CRE32
+.psou1
      358A   60         RTS
-.C358B
+.psou2
      358B   4C 05 35   JMP &3505
-.C358E
+.psou3
      358E   A9 32      LDA #&32
      3590   8D DF 0C   STA &0CDF
      3593   A9 22      LDA #&22
@@ -14447,7 +14447,7 @@
 .token17
      5842   50 52 45 ...
      584F   FF
-.L5850
+.musicData
      5850   C8
      5851   08
      5852   24
@@ -15942,7 +15942,7 @@
      5FEE   20 80 5F   JSR &5F80
      5FF1   A0 01      LDY #&01
      5FF3   4C 33 5D   JMP &5D33
-.SetSoundCounter2
+.PlayMusic
      5FF6   8D E7 0C   STA &0CE7
      5FF9   A9 03      LDA #&03
      5FFB   8D 73 0C   STA &0C73
