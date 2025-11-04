@@ -278,13 +278,9 @@
 
  SKIP 1                 \ ???
 
-.L0022
+.screenAddr
 
- SKIP 1                 \ ???
-
-.L0023
-
- SKIP 1                 \ ???
+ SKIP 2                 \ Storage for a screen address
 
 .xTile
 
@@ -4358,7 +4354,8 @@
 \                               by alternating colour 3/0/3/0 and 0/3/0/3
 \                               pixel bytes
 \
-\                         * 3 = fill with solid colour 1 (black)
+\                         * 3 = fill with solid colour 1 (black) and draw 240
+\                               randomly positioned stars on the background
 \
 \ ******************************************************************************
 
@@ -4390,18 +4387,20 @@
  CMP #3                 \ return from the subroutine
  BNE clrs2
 
-                        \ If we get here then screenBackground = 3 ???
+                        \ If we get here then screenBackground = 3, so we now
+                        \ draw stars on the screen
 
- LDA #3                 \ Set a loop counter so we call the sub_C56D5 routine
- STA loopCounter        \ three times in the following loop
+ LDA #3                 \ Set a loop counter so we call the DrawStars routine
+ STA loopCounter        \ three times in the following loop, giving a total of
+                        \ 240 stars
 
 .clrs1
 
- JSR sub_C56D5          \ ???
+ JSR DrawStars          \ Draw 80 random stars on the screen
 
  DEC loopCounter        \ Decrement the loop counter
 
- BNE clrs1              \ Loop back until we have called sub_C56D5 three times
+ BNE clrs1              \ Loop back until we have called DrawStars three times
 
 .clrs2
 
@@ -7307,7 +7306,7 @@ L1145 = C1144+1
  LDA viewScreenAddr
  SEC
  SBC #&4F
- STA L0022
+ STA screenAddr
  LDA viewScreenAddr+1
  SBC #&00
  CMP #&60
@@ -7316,14 +7315,16 @@ L1145 = C1144+1
 
 .C1646
 
- STA L0023
+ STA screenAddr+1
  LDA #&08
  STA L169A
 
 .C164D
 
  LDY #&03
- JSR sub_C568E
+
+ JSR GetRandomNumber    \ Set A to a random number
+
  JMP C165A
 
 .P1655
@@ -7339,14 +7340,14 @@ L1145 = C1144+1
  ORA L169B
  TAX
  LDA L169C,X
- STA (L0022),Y
+ STA (screenAddr),Y
  DEY
  BPL P1655
- LDA L0022
+ LDA screenAddr
  CLC
  ADC #&08
- STA L0022
- LDA L0023
+ STA screenAddr
+ LDA screenAddr+1
  ADC #&00
  CMP #&80
  BCC C167C
@@ -7354,7 +7355,7 @@ L1145 = C1144+1
 
 .C167C
 
- STA L0023
+ STA screenAddr+1
  DEC L169A
  BEQ CRE07
  LDA L169A
@@ -18809,7 +18810,7 @@ L314A = C3148+2
  LDA L0C4D              \ If bit 7 of L0C4D is clear, skip the following to
  BPL irqh8              \ return from the interrupt handler ???
 
- JSR sub_C56D9          \ ???
+ JSR DrawStars+4        \ ???
 
 .irqh8
 
@@ -22274,220 +22275,220 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C568E
+\       Name: GetRandomNumber
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Set A to a random number
 \
 \ ******************************************************************************
 
-.sub_C568E
+.GetRandomNumber
 
- LDA L56CF
- STA L56D2
- LDA L56D0
- STA L56D3
- LDA L56D1
- STA L56D4
- ASL L56D2
- ROL L56D3
- ROL L56D4
- ASL L56D2
- ROL L56D3
- ROL L56D4
- LDA L56CF
+                        \ We generate a new random number by taking our 24-bit
+                        \ generator in randomGenerator(2 1 0) and adding it to
+                        \ itself but shifted left by two places, so on each
+                        \ iteration we do the following:
+                        \
+                        \   randomGenerator(2 1 0) += shiftGenerator(2 1 0)
+                        \
+                        \ We then return the high byte of randomGenerator(2 1 0)
+                        \ as the next random number
+
+ LDA randomGenerator    \ Set shiftGenerator(2 1 0) = randomGenerator(2 1 0)
+ STA shiftGenerator
+ LDA randomGenerator+1
+ STA shiftGenerator+1
+ LDA randomGenerator+2
+ STA shiftGenerator+2
+
+ ASL shiftGenerator     \ Shift shiftGenerator(2 1 0) left by two places
+ ROL shiftGenerator+1
+ ROL shiftGenerator+2
+ ASL shiftGenerator
+ ROL shiftGenerator+1
+ ROL shiftGenerator+2
+
+ LDA randomGenerator    \ Set randomGenerator(2 1 0) += shiftGenerator(2 1 0)
  CLC
- ADC L56D2
- STA L56CF
- LDA L56D0
- ADC L56D3
- STA L56D0
- LDA L56D1
- ADC L56D4
- STA L56D1
- RTS
+ ADC shiftGenerator
+ STA randomGenerator
+ LDA randomGenerator+1
+ ADC shiftGenerator+1
+ STA randomGenerator+1
+ LDA randomGenerator+2
+ ADC shiftGenerator+2
+ STA randomGenerator+2
+
+                        \ A is set to byte #2 of randomGenerator, so return this as
+                        \ the next random number
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L56CF
+\       Name: randomGenerator
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: A 24-bit random number generator that works independently from the
+\             landscape seeds and with a much simpler generation algorithm
 \
 \ ******************************************************************************
 
-.L56CF
+.randomGenerator
 
- EQUB &01
+ EQUB 1
+ EQUB 0
+ EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: L56D0
+\       Name: shiftGenerator
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Arithmetic)
+\    Summary: Storage for randomGenerator(2 1 0) while we shift it left by two
+\             places
 \
 \ ******************************************************************************
 
-.L56D0
+.shiftGenerator
 
- EQUB &00
-
-\ ******************************************************************************
-\
-\       Name: L56D1
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L56D1
-
- EQUB &00
+ EQUB 1
+ EQUB 0
+ EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: L56D2
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L56D2
-
- EQUB &01
-
-\ ******************************************************************************
-\
-\       Name: L56D3
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L56D3
-
- EQUB &00
-
-\ ******************************************************************************
-\
-\       Name: L56D4
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L56D4
-
- EQUB &00
-
-\ ******************************************************************************
-\
-\       Name: sub_C56D5
+\       Name: DrawStars
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
-\ ******************************************************************************
-
-.sub_C56D5
-
- LDA #&80
- BNE C56DB
-
-\ ******************************************************************************
+\ ------------------------------------------------------------------------------
 \
-\       Name: sub_C56D9
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\ Other entry points:
+\
+\   DrawStars+4         Do not apply an EOR to the star pixels ???
 \
 \ ******************************************************************************
 
-.sub_C56D9
+.DrawStars
 
- LDA #0
+ LDA #%10000000         \ Set bit 7 of eorStars so we apply an EOR to the star
+                        \ pixels
 
-.C56DB
+ BNE star1              \ Jump to star1 to skip the following instruction (this
+                        \ BNE is effectively a JMP as A is never zero)
 
- STA L572F
- LDA #&50
- STA L572E
+ LDA #0                 \ Clear bit 7 of eorStars so we do not apply an EOR to
+                        \ the star pixels
 
-.C56E3
+.star1
 
- JSR sub_C568E
- STA L0022
- LDA L56D0
- STA sightsByteAddr
- AND #&1F
- CMP #&1E
- BCS C56E3
- STA L0023
- LDA viewScreenAddr
- CLC
- ADC L0022
- STA L0022
+ STA eorStars           \ Set eorStars to the value of A from above, so we
+                        \ apply EOR to the stars if we call DrawStars but don't
+                        \ apply EOR is we call DrawStars+4
+
+ LDA #80                \ Set starCounter = 80 so we draw 80 stars on the screen
+ STA starCounter
+
+.star2
+
+ JSR GetRandomNumber    \ Set A to a random number
+
+ STA screenAddr         \ Set the low byte of screenAddr(1 0) to the random
+                        \ number in A
+
+ LDA randomGenerator+1  \ Set the low byte of sightsByteAddr(1 0) to the second
+ STA sightsByteAddr     \ byte of the random number seed
+
+ AND #&1F               \ Reduce the random number to the range 0 to &1F
+
+ CMP #&1E               \ If A >= &1E then loop back to star2 to choose another
+ BCS star2              \ random number
+
+ STA screenAddr+1       \ Set the high byte of screenAddr(1 0) to A, so we now
+                        \ have screenAddr(1 0) set to a random number in the
+                        \ range 0 to &1DFF
+
+                        \ We can now add this to the address of the start of
+                        \ screen memory in viewScreenAddr(1 0) to get the
+                        \ address of a random pixel byte within screen memory
+
+ LDA viewScreenAddr     \ Set screenAddr(1 0) = viewScreenAddr(1 0)
+ CLC                    \                       + screenAddr(1 0)
+ ADC screenAddr
+ STA screenAddr
  LDA viewScreenAddr+1
- ADC L0023
- CMP #&80
- BCC C5708
- SBC #&20
+ ADC screenAddr+1
 
-.C5708
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC star3              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
- STA L0023
+.star3
+
+ STA screenAddr+1       \ Store the high byte of the result, so we now have:
+                        \
+                        \   screenAddr(1 0) = viewScreenAddr(1 0)
+                        \                     + screenAddr(1 0)
+                        \
+                        \ So screenAddr(1 0) is the address of a random pixel
+                        \ byte within screen memory
+
  LDA sightsByteAddr
  ROL A
  ROL A
  ROL A
  AND #&03
  TAX
+
  LDY #0
  LDA pixelBitMask,X
  EOR #&FF
- AND (L0022),Y
+ AND (screenAddr),Y
  ORA pixelByteColour1,X
- BIT L572F
- BPL C5726
+
+ BIT eorStars           \ If bit 7 of eorStars is set, flip the bits of the
+ BPL star4              \ pixel to be drawn
  EOR pixelBitMask,X
 
-.C5726
+.star4
 
- STA (L0022),Y
- DEC L572E
- BNE C56E3
- RTS
+ STA (screenAddr),Y
+
+ DEC starCounter        \ Decrement the star counter
+
+ BNE star2              \ Loop back until we have drawn all 80 stars
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L572E
+\       Name: starCounter
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: A counter for the number of stars drawn in the DrawStars routine
 \
 \ ******************************************************************************
 
-.L572E
+.starCounter
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: L572F
+\       Name: eorStars
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: A flag that determines whether the stars drawn by DrawStars are
+\             bit-flipped before being drawn
 \
 \ ******************************************************************************
 
-.L572F
+.eorStars
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -24483,8 +24484,10 @@ L314A = C3148+2
 .C5E7E
 
  SEI
- JSR sub_C568E
- LDY L56D0
+
+ JSR GetRandomNumber    \ Set A to a random number
+
+ LDY randomGenerator+1
  STY L0CD0
  CLI
  CLC
@@ -24649,7 +24652,7 @@ L314A = C3148+2
 
 .P5F6E
 
- JSR sub_C56D9
+ JSR DrawStars+4
 
  JSR ProcessSound       \ Process any sounds or music that are being made
 

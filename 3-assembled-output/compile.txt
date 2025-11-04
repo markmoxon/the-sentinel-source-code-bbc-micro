@@ -79,10 +79,8 @@
      0020
 .L0021
      0021
-.L0022
+.screenAddr
      0022
-.L0023
-     0023
 .xTile
      0024
 .columnCounter
@@ -14162,7 +14160,7 @@
      568C   60         RTS
 .yStoreHypotenuse
      568D   41
-.sub_C568E
+.GetRandomNumber
      568E   AD CF 56   LDA &56CF
      5691   8D D2 56   STA &56D2
      5694   AD D0 56   LDA &56D0
@@ -14186,28 +14184,23 @@
      56C8   6D D4 56   ADC &56D4
      56CB   8D D1 56   STA &56D1
      56CE   60         RTS
-.L56CF
+.randomGenerator
      56CF   01
-.L56D0
      56D0   00
-.L56D1
      56D1   00
-.L56D2
+.shiftGenerator
      56D2   01
-.L56D3
      56D3   00
-.L56D4
      56D4   00
-.sub_C56D5
+.DrawStars
      56D5   A9 80      LDA #&80
      56D7   D0 02      BNE &56DB
-.sub_C56D9
      56D9   A9 00      LDA #&00
-.C56DB
+.star1
      56DB   8D 2F 57   STA &572F
      56DE   A9 50      LDA #&50
      56E0   8D 2E 57   STA &572E
-.C56E3
+.star2
      56E3   20 8E 56   JSR &568E
      56E6   85 22      STA &22
      56E8   AD D0 56   LDA &56D0
@@ -14225,7 +14218,7 @@
      5702   C9 80      CMP #&80
      5704   90 02      BCC &5708
      5706   E9 20      SBC #&20
-.C5708
+.star3
      5708   85 23      STA &23
      570A   A5 2A      LDA &2A
      570C   2A         ROL A
@@ -14241,14 +14234,14 @@
      571E   2C 2F 57   BIT &572F
      5721   10 03      BPL &5726
      5723   5D 7F 22   EOR &227F,X
-.C5726
+.star4
      5726   91 22      STA (&22),Y
      5728   CE 2E 57   DEC &572E
      572B   D0 B6      BNE &56E3
      572D   60         RTS
-.L572E
+.starCounter
      572E   00
-.L572F
+.eorStars
      572F   00
 .pixelByteColour1
      5730   08
