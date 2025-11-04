@@ -23,7 +23,9 @@
 .playerObject
      000B
 .L000C
+     000C
 .zCounter
+     000C
 .stashAddr
      000C
 .L000D
@@ -50,11 +52,13 @@
 .L0017
      0017
 .L0018
+     0018
 .xBlock
      0018
 .L0019
      0019
 .L001A
+     001A
 .zBlock
      001A
 .L001B
@@ -63,8 +67,11 @@
      001C
 .L001D
      001D
-.L001E
+.moreColumnsToFill
+     001E
 .treeCounter
+     001E
+.L001E
      001E
 .L001F
      001F
@@ -78,8 +85,12 @@
      0023
 .xTile
      0024
+.columnCounter
+     0025
 .yTile
      0025
+.screenRowNumber
+     0026
 .zTile
      0026
 .bitMask
@@ -164,7 +175,7 @@
      0055
 .L0056
      0056
-.L0057
+.screenRowCounter
      0057
 .L0058
      0058
@@ -2447,7 +2458,7 @@
      0C4A   07
 .drawingTitleScreen
      0C4B   80
-.L0C4C
+.screenBackground
      0C4C   01
 .L0C4D
      0C4D   00
@@ -3234,11 +3245,11 @@
      10A9   D0 0B      BNE &10B6
      10AB   A9 03      LDA #&03
      10AD   85 15      STA &15
-.P10AF
+.clrs1
      10AF   20 D5 56   JSR &56D5
      10B2   C6 15      DEC &15
      10B4   D0 F9      BNE &10AF
-.CRE04
+.clrs2
      10B6   60         RTS
 .sub_C10B7
      10B7   A4 08      LDY &08
@@ -5654,7 +5665,7 @@
      21FF   10 F2      BPL &21F3
 .CRE12
      2201   60         RTS
-.sub_C2202
+.FillScreen
      2202   85 26      STA &26
      2204   84 57      STY &57
      2206   8A         TXA
@@ -5663,9 +5674,9 @@
      220B   E9 20      SBC #&20
      220D   A2 20      LDX #&20
      220F   D0 02      BNE &2213
-.C2211
+.fill1
      2211   A9 80      LDA #&80
-.C2213
+.fill2
      2213   85 1E      STA &1E
      2215   86 25      STX &25
      2217   AE 4C 0C   LDX &0C4C
@@ -5673,7 +5684,7 @@
      221D   85 74      STA &74
      221F   BD 7B 22   LDA &227B,X
      2222   85 75      STA &75
-.C2224
+.fill3
      2224   A6 26      LDX &26
      2226   BD 83 3D   LDA &3D83,X
      2229   85 70      STA &70
@@ -5682,9 +5693,9 @@
      2230   A6 25      LDX &25
      2232   A9 01      LDA #&01
      2234   85 15      STA &15
-.C2236
+.fill4
      2236   A0 FF      LDY #&FF
-.C2238
+.fill5
      2238   C8         INY
      2239   A5 74      LDA &74
      223B   91 70      STA (&70),Y
@@ -5717,17 +5728,17 @@
      2269   30 05      BMI &2270
      226B   E6 71      INC &71
      226D   4C 36 22   JMP &2236
-.C2270
+.fill6
      2270   E6 26      INC &26
      2272   C6 57      DEC &57
      2274   D0 AE      BNE &2224
      2276   60         RTS
-.L2277
+.backgroundEven
      2277   00
      2278   00
      2279   AA
      227A   0F
-.L227B
+.backgroundOdd
      227B   0F
      227C   00
      227D   55
@@ -10018,7 +10029,7 @@
      3D80   D2
      3D81   D3
      3D82   D4
-.L3D83
+.screenRowAddrLo
      3D83   C0
      3D84   00
      3D85   40
@@ -10070,7 +10081,7 @@
      3DB2   20
      3DB3   60
      3DB4   A0
-.L3DB5
+.screenRowAddrHi
      3DB5   60
      3DB6   62
      3DB7   63

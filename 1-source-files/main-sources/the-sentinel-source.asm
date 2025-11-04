@@ -147,7 +147,13 @@
  SKIP 1                 \ The number of the player object
 
 .L000C
+
+ SKIP 0                 \ ???
+
 .zCounter
+
+ SKIP 0                 \ ???
+
 .stashAddr
 
  SKIP 1                 \ ???
@@ -198,6 +204,9 @@
  SKIP 1                 \ ???
 
 .L0018
+
+ SKIP 0                 \ ???
+
 .xBlock
 
  SKIP 1                 \ Used to store the tile x-coordinate of the tile we are
@@ -208,6 +217,9 @@
  SKIP 1                 \ ???
 
 .L001A
+
+ SKIP 0                 \ ???
+
 .zBlock
 
  SKIP 1                 \ Used to store the tile z-coordinate of the tile we are
@@ -234,8 +246,22 @@
 
  SKIP 1                 \ ???
 
-.L001E
+.moreColumnsToFill
+
+ SKIP 0                 \ Stores the number of extra columns we need to fill in
+                        \ the FillScreen routine after filling up to 32 columns
+                        \
+                        \   * Bit 7 set = no extra columns required
+                        \
+                        \   * Bit 7 clear = contains the number of extra columns
+                        \                   that we need to fill beyond the 32
+                        \                   columns already filled
+
 .treeCounter
+
+ SKIP 0                 \ ???
+
+.L001E
 
  SKIP 1                 \ Used as a loop counter when adding trees to the
                         \ landscape
@@ -277,6 +303,10 @@
                         \ As a result we tend to use the terms "tile" and "tile
                         \ corner" interchangeably, depending on the context
 
+.columnCounter
+
+ SKIP 0                 \ ???
+
 .yTile
 
  SKIP 1                 \ Tile corner y-coordinate
@@ -292,6 +322,10 @@
                         \
                         \ As a result we tend to use the terms "tile" and "tile
                         \ corner" interchangeably, depending on the context
+
+.screenRowNumber
+
+ SKIP 0                 \ ???
 
 .zTile
 
@@ -489,9 +523,10 @@
 
  SKIP 1                 \ ???
 
-.L0057
+.screenRowCounter
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A counter for filling screen rows in the FillScreen
+                        \ routine
 
 .L0058
 
@@ -1482,9 +1517,21 @@
                         \
                         \   * Bit 7 set = we are drawing the title screen
 
-.L0C4C
+.screenBackground
 
- EQUB 1                 \ ???
+ EQUB 1                 \ The type of screen background when clearing the screen
+                        \
+                        \   * 0 = fill with alternating colour 0/1 (blue/black)
+                        \         pixel rows, for the sky during gameplay
+                        \
+                        \   * 1 = fill with solid colour 0 (blue)
+                        \
+                        \   * 2 = fill with dithered pixels in colour 0 (blue)
+                        \         and colour 3 (e.g. green in landscape zero)
+                        \         by alternating colour 3/0/3/0 and 0/3/0/3
+                        \         pixel bytes
+                        \
+                        \   * 3 = fill with solid colour 1 (black)
 
 .L0C4D
 
@@ -4293,7 +4340,25 @@
 \       Name: ClearScreen
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Clear the screen to a specified background
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   screenBackground    The type of screen background:
+\
+\                         * 0 = fill with alternating colour 0/1 (blue/black)
+\                               pixel rows, for the sky during gameplay
+\
+\                         * 1 = fill with solid colour 0 (blue)
+\
+\                         * 2 = fill with dithered pixels in colour 0 (blue)
+\                               and colour 3 (e.g. green in landscape zero)
+\                               by alternating colour 3/0/3/0 and 0/3/0/3
+\                               pixel bytes
+\
+\                         * 3 = fill with solid colour 1 (black)
 \
 \ ******************************************************************************
 
@@ -4304,32 +4369,43 @@
  JSR ClearIconsScanner  \ Clear the energy icon and scanner row at the top of
                         \ the screen
 
- LDA #0
+ LDA #0                 \ Set screen variables of some kind with A = 0 ???
  JSR sub_C2963
 
- LDA #0
- LDY #&18
- LDX #&28
- JSR sub_C2202
+ LDA #0                 \ Set A to the row number to start filling from in the
+                        \ call to FillScreen, so this clears the player's
+                        \ scrolling landscape view from the top row down
 
- LDA L0C4C
- CMP #3
- BNE CRE04
+ LDY #24                \ Set Y to the number of character rows to fill, so this
+                        \ clears every character row in the landscape view
 
- LDA #3
- STA loopCounter
+ LDX #40                \ Set X to the number of character columns to fill, so
+                        \ this clears every character column in the landscape
+                        \ view
 
-.P10AF
+ JSR FillScreen         \ Fill the entire screen with the background specified
+                        \ in screenBackground
 
- JSR sub_C56D5
+ LDA screenBackground   \ If the screen background is not 3, jump to clrs2 to
+ CMP #3                 \ return from the subroutine
+ BNE clrs2
 
- DEC loopCounter
+                        \ If we get here then screenBackground = 3 ???
 
- BNE P10AF
+ LDA #3                 \ Set a loop counter so we call the sub_C56D5 routine
+ STA loopCounter        \ three times in the following loop
 
-.CRE04
+.clrs1
 
- RTS
+ JSR sub_C56D5          \ ???
+
+ DEC loopCounter        \ Decrement the loop counter
+
+ BNE clrs1              \ Loop back until we have called sub_C56D5 three times
+
+.clrs2
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -4354,7 +4430,7 @@
  LDY #&18
  LDX #&10
  STX L0C69
- JSR sub_C2202
+ JSR FillScreen
  JSR sub_C391E
 
  JSR DrawLandscapeView  \ Draw the landscape view
@@ -4394,7 +4470,7 @@
  LDY #&08
  LDX #&28
  STX L0C69
- JSR sub_C2202
+ JSR FillScreen
  JSR sub_C3908
 
  JSR DrawLandscapeView  \ Draw the landscape view
@@ -5680,7 +5756,7 @@ L1145 = C1144+1
 \
 \                         * &80 = draw the landscape preview
 \
-\   X                   ???
+\   X                   The screen background:
 \
 \                         * 0 = ???
 \
@@ -5701,7 +5777,8 @@ L1145 = C1144+1
  STA titleObjectToDraw  \ Set titleObjectToDraw to the object that we are
                         \ drawing so we can refer to it later
 
- STX L0C4C              \ Store the X argument in L0C4C (0, 1, 3)
+ STX screenBackground   \ Set screenBackground to the type of background
+                        \ (0, 1, 3)
 
  TXA
 
@@ -5760,7 +5837,7 @@ L1145 = C1144+1
 
  LDA #0
  STA L0C78
- STA L0C4C
+ STA screenBackground
  RTS
 
 \ ******************************************************************************
@@ -10316,7 +10393,7 @@ L1145 = C1144+1
  LDA #&19
  LDY #&18
  LDX L0C69
- JSR sub_C2202
+ JSR FillScreen
  BIT L0C4D
  BPL C1FD2
  LDY currentObject
@@ -10902,8 +10979,8 @@ L1145 = C1144+1
  JSR DeleteObject       \ Delete object #X and remove it from the landscape, so
                         \ we remove the robot that we just spawned
 
- LDA #3                 \ Set L0C4C = 3 ???
- STA L0C4C
+ LDA #3                 \ Set screenBackground = 3 ???
+ STA screenBackground
 
  LDA #%10000000         \ Set bit 7 of hyperspaceEndsGame to indicate that the
  STA hyperspaceEndsGame \ game has ended with a hyperspace, and clear bit 6 to
@@ -11050,126 +11127,252 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2202
+\       Name: FillScreen
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Fill a rectangular in screen memory with the specified background
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The character row number to start filling from
+\
+\   X                   The number of character columns to fill
+\
+\   Y                   The number of character rows to fill
+\
+\   screenBackground    The type of background to fill the rectangle with:
+\
+\                         * 0 = fill with alternating colour 0/1 (blue/black)
+\                               pixel rows, for the sky during gameplay
+\
+\                         * 1 = fill with solid colour 0 (blue)
+\
+\                         * 2 = fill with dithered pixels in colour 0 (blue)
+\                               and colour 3 (e.g. green in landscape zero)
+\                               by alternating colour 3/0/3/0 and 0/3/0/3
+\                               pixel bytes
+\
+\                         * 3 = fill with solid colour 1 (black)
 \
 \ ******************************************************************************
 
-.sub_C2202
+.FillScreen
 
- STA zTile
- STY L0057
- TXA
- CMP #&20
- BCC C2211
- SBC #&20
- LDX #&20
- BNE C2213
+ STA screenRowNumber    \ Set screenRowNumber = A, so we start filling from this
+                        \ character row number
 
-.C2211
+ STY screenRowCounter   \ Set screenRowCounter = Y, so we will fill this many
+                        \ character rows
 
- LDA #&80
+ TXA                    \ If X < 32 then each character row in the fill will fit
+ CMP #32                \ into 256 bytes (as each character block is eight bytes
+ BCC fill1              \ and 32 * 8 = 256), so jump to fill1 to set bit 7 of
+                        \ moreColumnsToFill to record this fact
 
-.C2213
+                        \ If we get here then each character row in the fill
+                        \ needs more than 256 bytes, so we set A to the number
+                        \ of columns that we need to fill beyond the 256-byte
+                        \ limit, which we get by subtracting 32 from the total
+                        \ number of columns we need to fill
 
- STA L001E
- STX yTile
- LDX L0C4C
- LDA L2277,X
- STA T
- LDA L227B,X
- STA U
+ SBC #32                \ Set A = X - 32 to store in moreColumnsToFill below
+                        \ (this subtraction works as we just passed through a
+                        \ BCC instruction, so we know the C flag is set)
 
-.C2224
+ LDX #32                \ Set X = 32 to set as the value of columnCounter below,
+                        \ so we fill 32 columns in the first iteration around
+                        \ the fill loop, and then fill moreColumnsToFill columns
+                        \ in the second iteration
 
- LDX zTile
- LDA L3D83,X
- STA P
- LDA L3DB5,X
+ BNE fill2              \ Jump to fill2 to skip the following instruction (this
+                        \ BNE is effectively a JMP as X is never zero)
+
+.fill1
+
+ LDA #%10000000         \ Set bit 7 of moreColumnsToFill in the next instruction
+                        \ to indicate that this fill does not require more than
+                        \ 32 columns
+
+.fill2
+
+ STA moreColumnsToFill  \ Set moreColumnsToFill to the value of A that we set
+                        \ above
+
+ STX columnCounter      \ Set columnCounter to the updated value of X, so this
+                        \ contains the number of columns to fill in the first
+                        \ iteration around the fill loop (i.e. the total number
+                        \ of columns if it's less than 32, or 32 if we need to
+                        \ do the fill in two stages)
+
+ LDX screenBackground   \ Set T to the backgroundEven pixel byte for the screen
+ LDA backgroundEven,X   \ background type in screenBackground, to give us the
+ STA T                  \ pixel byte we should be clearing the screen to for
+                        \ even pixel rows
+
+ LDA backgroundOdd,X    \ Set U to the backgroundOdd pixel byte for the screen
+ STA U                  \ background type in screenBackground, to give us the
+                        \ pixel byte we should be clearing the screen to for odd
+                        \ pixel rows
+
+.fill3
+
+ LDX screenRowNumber    \ Set (Q P) to the entry from the screenRowAddrLo and
+ LDA screenRowAddrLo,X  \ screenRowAddrHi tables for the character row whose
+ STA P                  \ number is in screenRowNumber
+ LDA screenRowAddrHi,X
  STA Q
- LDX yTile
- LDA #&01
- STA loopCounter
 
-.C2236
+ LDX columnCounter      \ Set X to the number of columns that we need to fill
 
- LDY #&FF
+ LDA #1                 \ Set loopCounter = 1 so we only do a maximum of two
+ STA loopCounter        \ fill stages, to prevent an incorrectly configured fill
+                        \ from filling up more than 64 columns
 
-.C2238
+                        \ We now fill X character blocks from screen address
+                        \ (Q P) onwards, alternating each pixel row between the
+                        \ pixel bytes in T and U
 
- INY
- LDA T
- STA (P),Y
- INY
- LDA U
- STA (P),Y
- INY
- LDA T
- STA (P),Y
- INY
- LDA U
- STA (P),Y
- INY
- LDA T
- STA (P),Y
- INY
- LDA U
- STA (P),Y
- INY
- LDA T
- STA (P),Y
- INY
- LDA U
- STA (P),Y
- DEX
- BNE C2238
- DEC loopCounter
- BMI C2270
- LDX L001E
- BMI C2270
- INC Q
- JMP C2236
+.fill4
 
-.C2270
+ LDY #&FF               \ Set Y = &FF so we increment Y to zero at the start of
+                        \ the following loop, so we can use it as an index into
+                        \ the block of screen memory starting at (P Q)
 
- INC zTile
- DEC L0057
- BNE C2224
- RTS
+.fill5
+
+ INY                    \ Increment the index in Y to point to the first byte
+                        \ in the character block
+
+ LDA T                  \ Set the first byte in the character block to T
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the second byte
+                        \ in the character block
+
+ LDA U                  \ Set the second byte in the character block to U
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the third byte
+                        \ in the character block
+
+ LDA T                  \ Set the third byte in the character block to T
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the fourth byte
+                        \ in the character block
+
+ LDA U                  \ Set the fourth byte in the character block to U
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the fifth byte
+                        \ in the character block
+
+ LDA T                  \ Set the fifth byte in the character block to T
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the sixth byte
+                        \ in the character block
+
+ LDA U                  \ Set the sixth byte in the character block to U
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the seventh byte
+                        \ in the character block
+
+ LDA T                  \ Set the seventh byte in the character block to T
+ STA (P),Y
+
+ INY                    \ Increment the index in Y to point to the eighth byte
+                        \ in the character block
+
+ LDA U                  \ Set the eighth byte in the character block to U
+ STA (P),Y
+
+ DEX                    \ Decrement the column counter in X
+
+ BNE fill5              \ Loop back until we have filled X character blocks
+
+ DEC loopCounter        \ Decrement the loop counter
+
+ BMI fill6              \ If we have already run two fill loops, jump to fill6
+                        \ to move on to the next row, so we never do more than
+                        \ two fill stages
+
+ LDX moreColumnsToFill  \ Set X to the value of moreColumnsToFill, which either
+                        \ has bit 7 set, or contains the number of columns we
+                        \ still need to fill on top of the 32 we just filled
+
+ BMI fill6              \ If bit 7 of moreColumnsToFill is set then each row in
+                        \ the fill fits into 256 bytes, so we will have already
+                        \ filled in the required bytes and can jump to fill6 to
+                        \ move on to the next row
+
+ INC Q                  \ Increment the high byte of (Q P) to point to the next
+                        \ page in memory
+
+ JMP fill4              \ Loop back to fill4 to continue filling along the
+                        \ character row, filling the number of columns in X to
+                        \ take us to the correct total number for the row
+
+.fill6
+
+ INC screenRowNumber    \ Increment the row number to move down to the next
+                        \ character row
+
+ DEC screenRowCounter   \ Decrement the row counter
+
+ BNE fill3              \ Loop back to fill the next character row until we have
+                        \ filled the number of rows in screenRowCounter
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L2277
+\       Name: backgroundEven
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Pixel bytes for even pixel rows in the screen background
 \
 \ ******************************************************************************
 
-.L2277
+.backgroundEven
 
- EQUB %00000000
- EQUB %00000000
- EQUB %10101010
- EQUB %00001111
+ EQUB %00000000         \ Background 0 = colour 0 (even)
+                        \                colour 1 (odd)
+
+ EQUB %00000000         \ Background 1 = colour 0 (even)
+                        \                colour 0 (odd)
+
+ EQUB %10101010         \ Background 2 = colour 3/0/3/0 (even)
+                        \                colour 0/3/0/3 (odd)
+
+ EQUB %00001111         \ Background 3 = colour 1 (even)
+                        \                colour 1 (odd)
 
 \ ******************************************************************************
 \
-\       Name: L227B
+\       Name: backgroundOdd
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Pixel bytes for odd pixel rows in the screen background
 \
 \ ******************************************************************************
 
-.L227B
+.backgroundOdd
 
- EQUB %00001111
- EQUB %00000000
- EQUB %01010101
- EQUB %00001111
+ EQUB %00001111         \ Background 0 = colour 0 (even)
+                        \                colour 1 (odd)
+
+ EQUB %00000000         \ Background 1 = colour 0 (even)
+                        \                colour 0 (odd)
+
+ EQUB %01010101         \ Background 2 = colour 3/0/3/0 (even)
+                        \                colour 0/3/0/3 (odd)
+
+ EQUB %00001111         \ Background 3 = colour 1 (even)
+                        \                colour 1 (odd)
 
 \ ******************************************************************************
 \
@@ -11318,9 +11521,9 @@ L1145 = C1144+1
  LDA T
  AND #&07
  CLC
- ADC L3D83,X
+ ADC screenRowAddrLo,X
  STA R
- LDA L3DB5,X
+ LDA screenRowAddrHi,X
  STA S
  LDY L0010
  LDA R
@@ -12792,29 +12995,45 @@ L23E3 = C23E2+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   ??? 0, 1, 2
+\
 \ ******************************************************************************
 
 .sub_C2963
 
  STA L0010
+
  TAY
+
  LDA L2994,Y
  STA L0007
+
  LSR A
  EOR #&80
  STA L0012
+
  LDA L298B,Y
  STA L0011
+
  LDA L2991,Y
  STA L0061
+
  LDA L298E,Y
  STA L0035
+
  CLC
  ADC L0061
  STA L0036
+
  LDA #0
  STA L0028
+
  STA L0029
+
  RTS
 
 \ ******************************************************************************
@@ -20504,49 +20723,77 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3D83
+\       Name: screenRowAddrLo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Address lookup table for character rows in screen memory and the
+\             screen buffer (low byte)
 \
 \ ******************************************************************************
 
-.L3D83
+.screenRowAddrLo
 
- EQUB &C0, &00, &40, &80, &C0
- EQUB &00, &40, &80, &C0, &00, &40, &80, &C0
- EQUB &00, &40, &80, &C0, &00, &40, &80, &C0
- EQUB &00, &40, &80, &C0, &00, &40, &80, &C0
- EQUB &00, &40, &80, &C0, &00, &40, &80, &C0
- EQUB &00, &40, &80, &C0
+ FOR I%, 0, 24
+
+  EQUB LO(&60C0 + (I% * &140))
+
+ NEXT
+
+ FOR I%, 0, 15
+
+  EQUB LO(&3F00 + (I% * &140))
+
+ NEXT
 
 .L3DAC
 
- EQUB &A0, &E0, &20, &60
- EQUB &A0, &E0, &20, &60, &A0
+ FOR I%, 0, 8
+
+  EQUB LO(&3FA0 + (I% * &140))
+
+ NEXT
 
 \ ******************************************************************************
 \
-\       Name: L3DB5
+\       Name: screenRowAddrHi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Address lookup table for character rows in screen memory and the
+\             screen buffer (high byte)
+\
+\ ------------------------------------------------------------------------------
+\
+\ The first 25 entries are the addresses for each of the 24 character rows in
+\ the player's scrolling landscape view, plus another row past the end of screen
+\ memory.
+\
+\ The next 16 addresses are for character rows in the screen buffer.
+\
+\ L3DDE contains 9 addresses for the screen buffer + &A0. ???
 \
 \ ******************************************************************************
 
-.L3DB5
+.screenRowAddrHi
 
- EQUB &60, &62, &63
- EQUB &64, &65, &67, &68, &69, &6A, &6C, &6D
- EQUB &6E, &6F, &71, &72, &73, &74, &76, &77
- EQUB &78, &79, &7B, &7C, &7D, &7E, &3F, &40
- EQUB &41, &42, &44, &45, &46, &47, &49, &4A
- EQUB &4B, &4C, &4E, &4F, &50, &51
+ FOR I%, 0, 24
+
+  EQUB HI(&60C0 + (I% * &140))
+
+ NEXT
+
+ FOR I%, 0, 15
+
+  EQUB HI(&3F00 + (I% * &140))
+
+ NEXT
 
 .L3DDE
 
- EQUB &3F, &40
- EQUB &42, &43, &44, &45, &47, &48, &49
+ FOR I%, 0, 8
+
+  EQUB HI(&3FA0 + (I% * &140))
+
+ NEXT
 
 \ ******************************************************************************
 \
@@ -23074,8 +23321,8 @@ L314A = C3148+2
  EQUB 200 + 15          \ Note 5 = 8 with sound counter 15 * 4 = 60
  EQUB 84
 
- EQUB 200 + 1           \ Discrete glissando with five short notes, each with
- EQUB 104               \ sound counter 1 * 4 = 4:
+ EQUB 200 + 1           \ Arpeggiated chord of five short notes, each with
+ EQUB 104               \ sound counter 1 * 4 = 4:g
  EQUB 84                \
  EQUB 68                \ 104, 84, 68, 64, 36
  EQUB 64
@@ -24367,7 +24614,7 @@ L314A = C3148+2
  LDA titleObjectToDraw
  JSR sub_C5F80
  LDA #&03
- STA L0C4C
+ STA screenBackground
  LDA #&01
  STA currentObject
  LDA #&C0
