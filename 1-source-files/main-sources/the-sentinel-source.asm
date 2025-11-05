@@ -18040,12 +18040,16 @@ L314A = C3148+2
 
  STA lastPanKeyPressed  \ Zero lastPanKeyPressed to indicate pan right ???
 
- STA sightsByteCount    \ Set sightsByteCount = 0 ???
+ STA sightsByteCount    \ Set sightsByteCount to zero to reset the sights pixel
+                        \ byte stash
 
  STA sightsAreVisible   \ Clear bit 7 of sightsAreVisible to indicate that the
                         \ sights are not visible
 
  JSR SetScannerUpdate   \ Set scannerUpdate to zero to prevent scanner updates
+                        \
+                        \ This routine also performs a delay of 40 empty loops
+                        \ of 256 iterations each (i.e. 10,240 loops)
 
  LDA playerObject       \ Set anotherObject to the object number of the player
  STA anotherObject
@@ -22564,24 +22568,43 @@ L314A = C3148+2
 \
 \       Name: SetScannerUpdate
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Main game loop
+\    Summary: Set the scanner update status and delay for 40 empty loops of 256
+\             iterations each (i.e. 10,240 loops)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The new value for scannerUpdate (this routine is only
+\                       ever called from the main game loop with A = 0, so this
+\                       sets scannerUpdate to zero to prevent scanner updates)
 \
 \ ******************************************************************************
 
 .SetScannerUpdate
 
- STA scannerUpdate      
+ STA scannerUpdate      \ Set scannerUpdate to the new value in A
 
- LDX #&28
+ LDX #40                \ We now perform a delay with a nested loop, so set X
+                        \ as an outer loop counter
+                        \
+                        \ We use Y as an inner loop counter to count down from
+                        \ 255 to 0, though the first loop will depend on the
+                        \ initial value of Y, which isn't explicitly set to
+                        \ anything before the routine is called
 
-.C5739
+.scup1
 
- DEY
- BNE C5739
- DEX
- BNE C5739
- RTS
+ DEY                    \ Decrement the inner loop counter in Y
+
+ BNE scup1              \ Loop back until Y reaches zero
+
+ DEX                    \ Decrement the inner loop counter in X
+
+ BNE scup1              \ Loop back until X reaches zero
+
+ RTS                    \ Return from the subroutine
 
  EQUB &FF, &FF          \ These bytes appear to be unused
  EQUB &FF, &FF

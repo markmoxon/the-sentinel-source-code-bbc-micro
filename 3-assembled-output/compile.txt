@@ -14254,7 +14254,7 @@
 .SetScannerUpdate
      5734   8D 04 0C   STA &0C04
      5737   A2 28      LDX #&28
-.C5739
+.scup1
      5739   88         DEY
      573A   D0 FD      BNE &5739
      573C   CA         DEX
