@@ -97,6 +97,8 @@
      0028
 .L0029
      0029
+.randomPixel
+     002A
 .sightsByteAddr
      002A
 .xSightsVectorLo
@@ -14195,12 +14197,13 @@
 .DrawStars
      56D5   A9 80      LDA #&80
      56D7   D0 02      BNE &56DB
+.DrawBlackDots
      56D9   A9 00      LDA #&00
-.star1
+.DrawRandomDots
      56DB   8D 2F 57   STA &572F
      56DE   A9 50      LDA #&50
      56E0   8D 2E 57   STA &572E
-.star2
+.dots1
      56E3   20 8E 56   JSR &568E
      56E6   85 22      STA &22
      56E8   AD D0 56   LDA &56D0
@@ -14218,7 +14221,7 @@
      5702   C9 80      CMP #&80
      5704   90 02      BCC &5708
      5706   E9 20      SBC #&20
-.star3
+.dots2
      5708   85 23      STA &23
      570A   A5 2A      LDA &2A
      570C   2A         ROL A
@@ -14234,14 +14237,14 @@
      571E   2C 2F 57   BIT &572F
      5721   10 03      BPL &5726
      5723   5D 7F 22   EOR &227F,X
-.star4
+.dots3
      5726   91 22      STA (&22),Y
      5728   CE 2E 57   DEC &572E
      572B   D0 B6      BNE &56E3
      572D   60         RTS
-.starCounter
+.dotCounter
      572E   00
-.eorStars
+.dotColour
      572F   00
 .pixelByteColour1
      5730   08

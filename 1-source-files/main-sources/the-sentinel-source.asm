@@ -354,6 +354,12 @@
 
  SKIP 1                 \ ???
 
+.randomPixel
+
+ SKIP 0                 \ Storage for a random value in the DrawRandomDots
+                        \ routine to use as a random pixel number when drawing
+                        \ dots
+
 .sightsByteAddr
 
  SKIP 2                 \ Storage for an address that loops through the pixel
@@ -1527,7 +1533,8 @@
                         \         by alternating colour 3/0/3/0 and 0/3/0/3
                         \         pixel bytes
                         \
-                        \   * 3 = fill with solid colour 1 (black)
+                        \   * 3 = fill with solid colour 1 (black) and draw 240
+                        \         randomly positioned stars on the background
 
 .L0C4D
 
@@ -4388,7 +4395,7 @@
  BNE clrs2
 
                         \ If we get here then screenBackground = 3, so we now
-                        \ draw stars on the screen
+                        \ draw three lots of 80 stars on the screen
 
  LDA #3                 \ Set a loop counter so we call the DrawStars routine
  STA loopCounter        \ three times in the following loop, giving a total of
@@ -4396,7 +4403,8 @@
 
 .clrs1
 
- JSR DrawStars          \ Draw 80 random stars on the screen
+ JSR DrawStars          \ Draw 80 randomly positioned stars on the screen in
+                        \ colour 2 (white, yellow, cyan or red)
 
  DEC loopCounter        \ Decrement the loop counter
 
@@ -5326,7 +5334,7 @@ L1145 = C1144+1
                         \ bearings when they first start a landscape)
                         \
                         \ So clear bit 7 of activateSentinel to indicate that
-                        \ the Sentinal is activated and the game has started
+                        \ the Sentinel is activated and the game has started
 
  JSR ProcessActionKeys  \ Process any key presses in key logger entry 1, which
                         \ is where action key presses are stored (absorb,
@@ -5757,11 +5765,18 @@ L1145 = C1144+1
 \
 \   X                   The screen background:
 \
-\                         * 0 = ???
+\                         * 0 = fill with alternating colour 0/1 (blue/black)
+\                               pixel rows, for the sky during gameplay
 \
-\                         * 1 = ???
+\                         * 1 = fill with solid colour 0 (blue)
 \
-\                         * 3 = ???
+\                         * 2 = fill with dithered pixels in colour 0 (blue)
+\                               and colour 3 (e.g. green in landscape zero)
+\                               by alternating colour 3/0/3/0 and 0/3/0/3
+\                               pixel bytes
+\
+\                         * 3 = fill with solid colour 1 (black) and draw 240
+\                               randomly positioned stars in on the background
 \
 \   Y                   ???
 \
@@ -5776,8 +5791,8 @@ L1145 = C1144+1
  STA titleObjectToDraw  \ Set titleObjectToDraw to the object that we are
                         \ drawing so we can refer to it later
 
- STX screenBackground   \ Set screenBackground to the type of background
-                        \ (0, 1, 3)
+ STX screenBackground   \ Set screenBackground to the type of background for
+                        \ the title screen
 
  TXA
 
@@ -10980,8 +10995,8 @@ L1145 = C1144+1
  JSR DeleteObject       \ Delete object #X and remove it from the landscape, so
                         \ we remove the robot that we just spawned
 
- LDA #3                 \ Set screenBackground = 3 ???
- STA screenBackground
+ LDA #3                 \ Set screenBackground = 3 so the next time the screen
+ STA screenBackground   \ is cleared, it shows a black background with stars
 
  LDA #%10000000         \ Set bit 7 of hyperspaceEndsGame to indicate that the
  STA hyperspaceEndsGame \ game has ended with a hyperspace, and clear bit 6 to
@@ -13212,9 +13227,10 @@ L23E3 = C23E2+1
  EOR zTile
  AND #&01
  BEQ C2A2D
- LDX #&08
- LDA L0C75,X
- STA L0C4D,X
+
+ LDX #8
+ LDA seedNumberLFSR+2-8,X
+ STA stashOffset-8,X
 
 .C2A2D
 
@@ -18655,8 +18671,8 @@ L314A = C3148+2
 \   * If a game is not in progress (i.e. we are in the title screen rather than
 \     playing a landscape), return from the handler
 \
-\   * If the Sentinel has won, then call sub_C56D9 (if bit 7 of L0C4D is set),
-\     and return from the handler
+\   * If the Sentinel has won, then call DrawBlackDots (while bit 7 of L0C4D is
+\     set), and return from the handler
 \
 \   * If the game is paused, scan for the pause and volume keys and return from
 \     the handler
@@ -18810,7 +18826,9 @@ L314A = C3148+2
  LDA L0C4D              \ If bit 7 of L0C4D is clear, skip the following to
  BPL irqh8              \ return from the interrupt handler ???
 
- JSR DrawStars+4        \ ???
+ JSR DrawBlackDots      \ Draw 80 randomly positioned dots on the screen in
+                        \ colour 1 (black) to fade the screen to black in a
+                        \ slowly decaying manner
 
 .irqh8
 
@@ -22309,18 +22327,15 @@ L314A = C3148+2
  ROL shiftGenerator+2
 
  LDA randomGenerator    \ Set randomGenerator(2 1 0) += shiftGenerator(2 1 0)
- CLC
- ADC shiftGenerator
- STA randomGenerator
+ CLC                    \
+ ADC shiftGenerator     \ This also sets A to byte #2 of randomGenerator, so we
+ STA randomGenerator    \ return this as the next random number
  LDA randomGenerator+1
  ADC shiftGenerator+1
  STA randomGenerator+1
  LDA randomGenerator+2
  ADC shiftGenerator+2
  STA randomGenerator+2
-
-                        \ A is set to byte #2 of randomGenerator, so return this as
-                        \ the next random number
 
  RTS                    \ Return from the subroutine
 
@@ -22336,9 +22351,7 @@ L314A = C3148+2
 
 .randomGenerator
 
- EQUB 1
- EQUB 0
- EQUB 0
+ EQUB 1, 0, 0
 
 \ ******************************************************************************
 \
@@ -22352,59 +22365,88 @@ L314A = C3148+2
 
 .shiftGenerator
 
- EQUB 1
- EQUB 0
- EQUB 0
+ EQUB 1, 0, 0
 
 \ ******************************************************************************
 \
 \       Name: DrawStars
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ------------------------------------------------------------------------------
-\
-\ Other entry points:
-\
-\   DrawStars+4         Do not apply an EOR to the star pixels ???
+\   Category: Graphics
+\    Summary: Draw 80 randomly positioned stars on the screen in colour 2
+\             (white, yellow, cyan or red)
 \
 \ ******************************************************************************
 
 .DrawStars
 
- LDA #%10000000         \ Set bit 7 of eorStars so we apply an EOR to the star
-                        \ pixels
+ LDA #%10000000         \ Set bit 7 of A to pass to the DrawRandomDots routine
+                        \ so we draw random dots on-screen in colour 2 to look
+                        \ like stars
 
- BNE star1              \ Jump to star1 to skip the following instruction (this
-                        \ BNE is effectively a JMP as A is never zero)
+ BNE DrawRandomDots     \ Jump to DrawRandomDots to draw 80 coloured dots on the
+                        \ screen (this BNE is effectively a JMP as A is never
+                        \ zero)
 
- LDA #0                 \ Clear bit 7 of eorStars so we do not apply an EOR to
-                        \ the star pixels
+\ ******************************************************************************
+\
+\       Name: DrawBlackDots
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Draw 80 randomly positioned dots on the screen in colour 1 (black)
+\
+\ ******************************************************************************
 
-.star1
+.DrawBlackDots
 
- STA eorStars           \ Set eorStars to the value of A from above, so we
-                        \ apply EOR to the stars if we call DrawStars but don't
-                        \ apply EOR is we call DrawStars+4
+ LDA #0                 \ Clear bit 7 of A to pass to the DrawRandomDots routine
+                        \ so we draw random black dots on the screen to fade the
+                        \ screen to black in a slowly decaying manner
 
- LDA #80                \ Set starCounter = 80 so we draw 80 stars on the screen
- STA starCounter
+                        \ Fall through into DrawRandomDots to draw 80 black dots
+                        \ on the screen
 
-.star2
+\ ******************************************************************************
+\
+\       Name: DrawRandomDots
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: Draw 80 randomly positioned dots on the screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The colour of the dots:
+\
+\                         * Bit 7 clear = colour 1 (black)
+\
+\                         * Bit 7 set = colour 2 (white, yellow, cyan or red)
+\
+\ ******************************************************************************
+
+.DrawRandomDots
+
+ STA dotColour          \ Set dotColour to the value of A from above, so we
+                        \ draw coloured dots if bit 7 is set or black dots if
+                        \ bit 7 is clear
+
+ LDA #80                \ Set dotCounter = 80 so we draw 80 dots on the screen
+ STA dotCounter
+
+.dots1
 
  JSR GetRandomNumber    \ Set A to a random number
 
  STA screenAddr         \ Set the low byte of screenAddr(1 0) to the random
                         \ number in A
 
- LDA randomGenerator+1  \ Set the low byte of sightsByteAddr(1 0) to the second
- STA sightsByteAddr     \ byte of the random number seed
+ LDA randomGenerator+1  \ Set randomPixel to the second byte of the random number
+ STA randomPixel        \ generator, so this is also a random number
 
  AND #&1F               \ Reduce the random number to the range 0 to &1F
 
- CMP #&1E               \ If A >= &1E then loop back to star2 to choose another
- BCS star2              \ random number
+ CMP #&1E               \ If A >= &1E then loop back to dots1 to choose another
+ BCS dots1              \ random number
 
  STA screenAddr+1       \ Set the high byte of screenAddr(1 0) to A, so we now
                         \ have screenAddr(1 0) set to a random number in the
@@ -22422,11 +22464,11 @@ L314A = C3148+2
  ADC screenAddr+1
 
  CMP #&80               \ If the high byte in A >= &80 then the new address is
- BCC star3              \ past the end of screen memory, so subtract &20 from
+ BCC dots2              \ past the end of screen memory, so subtract &20 from
  SBC #&20               \ the high byte so the address wraps around within the
                         \ range of screen memory between &6000 and &8000
 
-.star3
+.dots2
 
  STA screenAddr+1       \ Store the high byte of the result, so we now have:
                         \
@@ -22436,57 +22478,65 @@ L314A = C3148+2
                         \ So screenAddr(1 0) is the address of a random pixel
                         \ byte within screen memory
 
- LDA sightsByteAddr
- ROL A
- ROL A
- ROL A
- AND #&03
+ LDA randomPixel        \ Take bits 6 and 7 of randomPixel and put them into
+ ROL A                  \ bits 0 and 1 of X (with all the other bits clear), so
+ ROL A                  \ X is a random number in the range 0 to 3 that we can
+ ROL A                  \ use as the pixel number within the pixel byte for the
+ AND #%00000011         \ dot we want to draw
  TAX
 
- LDY #0
- LDA pixelBitMask,X
- EOR #&FF
- AND (screenAddr),Y
- ORA pixelByteColour1,X
+ LDY #0                 \ Set Y = 0 so we can use (screenAddr),Y below to behave
+                        \ like AND (screenAddr) or STA (screenAddr)
 
- BIT eorStars           \ If bit 7 of eorStars is set, flip the bits of the
- BPL star4              \ pixel to be drawn
- EOR pixelBitMask,X
+ LDA pixelBitMask,X     \ Take the existing pixel byte from screenAddr(1 0) and
+ EOR #%11111111         \ clear the two bits for pixel number X (the EOR inverts
+ AND (screenAddr),Y     \ the mask in pixelBitMask so that AND'ing the mask will
+                        \ clear pixel X while leaving the other pixels alone
 
-.star4
+ ORA pixelByteColour1,X \ Change the two bits for pixel X into colour 1 (%01),
+                        \ which is black, so that drawing lots of dots will
+                        \ slowly turn the screen to black
 
- STA (screenAddr),Y
+ BIT dotColour          \ If bit 7 of dotColour is set, flip the two bits of the
+ BPL dots3              \ pixel so they are drawn in colour 2 (%10), for when we
+ EOR pixelBitMask,X     \ we want to draw coloured stars instead
 
- DEC starCounter        \ Decrement the star counter
+.dots3
 
- BNE star2              \ Loop back until we have drawn all 80 stars
+ STA (screenAddr),Y     \ Store the updated pixel byte in screenAddr(1 0) to
+                        \ draw a black dot or a coloured star on-screen
+
+ DEC dotCounter         \ Decrement the dot counter
+
+ BNE dots1              \ Loop back until we have drawn all 80 dots
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: starCounter
+\       Name: dotCounter
 \       Type: Variable
 \   Category: Graphics
-\    Summary: A counter for the number of stars drawn in the DrawStars routine
+\    Summary: A counter for the number of dots drawn in the DrawRandomDots
+\             routine
 \
 \ ******************************************************************************
 
-.starCounter
+.dotCounter
 
  EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: eorStars
+\       Name: dotColour
 \       Type: Variable
 \   Category: Graphics
-\    Summary: A flag that determines whether the stars drawn by DrawStars are
-\             bit-flipped before being drawn
+\    Summary: A flag that determines the colour of the dots drawn by the
+\             DrawRandomDots routine
 \
 \ ******************************************************************************
 
-.eorStars
+.dotColour
 
  EQUB 0
 
@@ -24616,8 +24666,10 @@ L314A = C3148+2
  STY sightsAreVisible
  LDA titleObjectToDraw
  JSR sub_C5F80
- LDA #&03
- STA screenBackground
+
+ LDA #3                 \ Set screenBackground = 3 so the next time the screen
+ STA screenBackground   \ is cleared, it shows a black background with stars
+
  LDA #&01
  STA currentObject
  LDA #&C0
@@ -24652,7 +24704,9 @@ L314A = C3148+2
 
 .P5F6E
 
- JSR DrawStars+4
+ JSR DrawBlackDots      \ Draw 80 randomly positioned dots on the screen in
+                        \ colour 1 (black) to fade the screen to black in a
+                        \ slowly decaying manner
 
  JSR ProcessSound       \ Process any sounds or music that are being made
 
