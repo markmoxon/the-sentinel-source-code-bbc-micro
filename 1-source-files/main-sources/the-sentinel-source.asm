@@ -1551,9 +1551,15 @@
                         \   * Bit 7 set = player has run out of energy and the
                         \                 Sentinel has won
 
-.L0C4F
+.playerTileIsHidden
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag that records when the player is being scanned
+                        \ but the player's tile is hidden from the Sentinel or
+                        \ sentry doing the scan
+                        \
+                        \   * 64 = player's tile is hidden from the scan
+                        \
+                        \   * Not 64 = player's tile is visible
 
 .L0C50
 
@@ -7277,7 +7283,7 @@ L1145 = C1144+1
                         \ tail call
 
  CMP lastScannerState   \ If the scanner state has not changed since the last
- BEQ CRE07              \ time we updated the scanner, jump to CRE07 to return
+ BEQ scan6              \ time we updated the scanner, jump to scan6 to return
                         \ from the subroutine without updating the scanner
 
                         \ Otherwise fall through into UpdateScannerNow to update
@@ -7298,7 +7304,7 @@ L1145 = C1144+1
 \
 \                         * 0 = fill scanner with black
 \
-\                         * ???
+\                         * 4 = fill the scanner with static in colour 3
 \
 \                         * 8 = fill scanner with green
 \
@@ -7306,7 +7312,7 @@ L1145 = C1144+1
 \
 \ Other entry points:
 \
-\   CRE07               Contains an RTS
+\   scan6               Contains an RTS
 \
 \ ******************************************************************************
 
@@ -7316,129 +7322,238 @@ L1145 = C1144+1
                         \ so we can use this to check for when the scanner state
                         \ changes in the future
 
- STA L169B
+ STA scannerState       \ Store the new state of the scanner in scannerState so
+                        \ we can refer to it (and possibly change it) during the
+                        \ routine
 
- LDA viewScreenAddr
- SEC
+                        \ We start by calculating the screen address of the
+                        \ scanner, which is 79 bytes before the start of the
+                        \ player's scrolling landscape view (79 bytes represents
+                        \ ten character blocks of eight bytes each, less one
+                        \ byte, so the scanner address is the second pixel row
+                        \ in the character block that's ten blocks from the
+                        \ right end of the energy icon and scanner row at the
+                        \ top of the screen (the top pixel row contains the
+                        \ scanner box border)
+                        \
+                        \ viewScreenAddr(1 0) contains the addtress of the
+                        \ latter, so we can simply subtract 79
+
+ LDA viewScreenAddr     \ Set (A screenAddr) = viewScreenAddr(1 0) - &004F
+ SEC                    \                    = viewScreenAddr(1 0) - 79
  SBC #&4F
  STA screenAddr
  LDA viewScreenAddr+1
  SBC #&00
- CMP #&60
- BCS C1646
- ADC #&20
 
-.C1646
+ CMP #&60               \ If the high byte in A < &60 then the new address is
+ BCS scan1              \ before the start of screen memory, so add &20 to the
+ ADC #&20               \ high byte so the address wraps around within the range
+                        \ of screen memory between &6000 and &8000
 
- STA screenAddr+1
- LDA #&08
- STA L169A
+.scan1
 
-.C164D
+ STA screenAddr+1       \ Store the high byte of the result, so we now have:
+                        \
+                        \   screenAddr(1 0) = viewScreenAddr(1 0) - 79
+                        \
+                        \ with the address wrapped around as required
 
- LDY #&03
+ LDA #8                 \ The inside portion of the scanner consists of eight
+ STA scannerBlock       \ character blocks (the box edges on either side are
+                        \ outside of these eight blocks), so set scannerBlock
+                        \ to 8 so we can use it to count through the character
+                        \ blocks as we draw the scanner
+.scan2
 
- JSR GetRandomNumber    \ Set A to a random number
+                        \ Each character block contains one pixel row at the top
+                        \ for the top scanner box edge, then four pixel rows of
+                        \ scanner content, followed by another pixel row for the
+                        \ bottom scanner box edge
+                        \
+                        \ We now draw the four pixel rows of scanner content,
+                        \ avoiding drawing over the top and bottom edges
 
- JMP C165A
+ LDY #3                 \ Set Y = 3 to use as a counter for drawing four pixel
+                        \ rows in the drawing loop
 
-.P1655
+ JSR GetRandomNumber    \ Set A to a random number to seed the drawing loop, of
+                        \ which we use two bits for each of the four pixel bytes
+                        \ we draw
 
- LDA L1699
+ JMP scan4              \ Jump to scan4 to join the drawing loop
+
+.scan3
+
+ LDA scannerStatic      \ Shift the random number in scannerStatic to the right
+ LSR A                  \ by two places
  LSR A
- LSR A
 
-.C165A
+.scan4
 
- STA L1699
- AND #&03
- ORA L169B
- TAX
- LDA L169C,X
- STA (screenAddr),Y
- DEY
- BPL P1655
- LDA screenAddr
+ STA scannerStatic      \ Store the random number in scannerStatic (on the first
+                        \ iteration this is the full random number, while on
+                        \ subsequent iterations the number is shifted right by
+                        \ two places on each loop)
+
+ AND #%00000011         \ Extract bits 0 and 1 from the random number, so we
+                        \ get two different random bits on each iteration and
+                        \ a value of A in the range 0 to 3
+
+ ORA scannerState       \ Add the scanner state to the two random bits to get
+                        \ the following:
+                        \
+                        \   * If scannerState = 0 then this leaves A in the
+                        \     range 0 to 3
+                        \
+                        \   * If scannerState = 4 then this sets A into the
+                        \     range 4 to 7
+                        \
+                        \   * If scannerState = 8 then this sets A into the
+                        \     range 8 to 11
+
+ TAX                    \ Copy A into X so we can use it as an index into the
+                        \ scannerPixelByte table
+
+ LDA scannerPixelByte,X \ Set A to the X-th pixel byte from the relevant part of
+                        \ the scannerPixelByte lookup table, which will return a
+                        \ pixel byte containing black, random static or green,
+                        \ according to the value of scannerState
+
+ STA (screenAddr),Y     \ Draw the Y-th pixel row for this character block in
+                        \ the scanner
+
+ DEY                    \ Decrement the pixel row counter in Y
+
+ BPL scan3              \ Loop back to scan3 to draw the next pixel row until we
+                        \ have drawn all four pixel rows
+
+                        \ We now move along the scanner to draw the next
+                        \ character block to the right
+
+ LDA screenAddr         \ Set (A screenAddr) = screenAddr(1 0) + 8
  CLC
  ADC #&08
  STA screenAddr
  LDA screenAddr+1
  ADC #&00
- CMP #&80
- BCC C167C
- SBC #&20
 
-.C167C
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC scan5              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
- STA screenAddr+1
- DEC L169A
- BEQ CRE07
- LDA L169A
- CMP #&04
- BNE C164D
- LDA L0C4F
- CMP #&40
- BNE C164D
- LDA #0
- STA L169B
- BEQ C164D
+.scan5
 
-.CRE07
+ STA screenAddr+1       \ Store the high byte of the result, so we now have:
+                        \
+                        \   screenAddr(1 0) = screenAddr(1 0) + 8
+                        \
+                        \ with the address wrapped around as required
+                        \
+                        \ This updates screenAddr(1 0) to point to the next
+                        \ character block to the right, so we move along the
+                        \ scanner
 
- RTS
+ DEC scannerBlock       \ Decrement scannerBlock to move on to the next block
+                        \ in the scanner
+
+ BEQ scan6              \ If we have drawn all eight columns, jump to scan6 to
+                        \ return 
+
+ LDA scannerBlock       \ If scannerBlock <> 4 then loop back to scan2 to keep
+ CMP #4                 \ drawing the scanner
+ BNE scan2
+
+                        \ If we get here then scannerBlock = 4, so we have drawn
+                        \ the left half of the scanner
+
+ LDA playerTileIsHidden \ If playerTileIsHidden <> 64 then the player's tile is
+ CMP #64                \ not hidden from the Sentinel or sentry doing the scan,
+ BNE scan2              \ so loop back to scan2 to keep drawing the scanner
+
+ LDA #0                 \ If we get here then playerTileIsHidden = 64, so the
+ STA scannerState       \ player's tile is hidden from the Sentinel or sentry
+                        \ doing the scan
+                        \
+                        \ We represent this by only filling the left half of the
+                        \ scanner and leaving the right half blank, so set
+                        \ scannerState to zero so the rest of the fill routine
+                        \ fills the right half with black
+
+ BEQ scan2              \ Jump back to scan2 to keep drawing the scanner (this
+                        \ BEQ is effectively a JMP as A is always zero)
+
+.scan6
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L1699
+\       Name: scannerStatic
 \       Type: Variable
-\   Category: ???
+\   Category: Graphics
+\    Summary: Storage for a random number that's used to generate static in the
+\             scanner
+\
+\ ******************************************************************************
+
+.scannerStatic
+
+ EQUB 0
+
+\ ******************************************************************************
+\
+\       Name: scannerBlock
+\       Type: Variable
+\   Category: Graphics
+\    Summary: A counter for the eight character blocks that make up the scanner
+\
+\ ******************************************************************************
+
+.scannerBlock
+
+ EQUB 0
+
+\ ******************************************************************************
+\
+\       Name: scannerState
+\       Type: Variable
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L1699
+.scannerState
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
-\       Name: L169A
+\       Name: scannerPixelByte
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Graphics
+\    Summary: Pixel bytes for the three states of the scanner (black, static and
+\             green)
 \
 \ ******************************************************************************
 
-.L169A
+.scannerPixelByte
 
- EQUB &00
+ EQUB %00001111         \ Four bytes of colour 1 (black) for scanner state 0
+ EQUB %00001111
+ EQUB %00001111
+ EQUB %00001111
 
-\ ******************************************************************************
-\
-\       Name: L169B
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
+ EQUB %10001111         \ Four bytes of static in colour 3 on a background of
+ EQUB %01001111         \ colour 1 (black)
+ EQUB %00101111
+ EQUB %00011111
 
-.L169B
-
- EQUB &00
-
-\ ******************************************************************************
-\
-\       Name: L169C
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L169C
-
- EQUB &0F, &0F, &0F, &0F, &8F, &4F, &2F, &1F
- EQUB &FF, &FF, &FF, &FF
+ EQUB %11111111         \ Four bytes of colour 3 (green) for scanner state 8
+ EQUB %11111111
+ EQUB %11111111
+ EQUB %11111111
 
 \ ******************************************************************************
 \
@@ -7938,7 +8053,7 @@ L1145 = C1144+1
 
  STY scannerUpdate
  LDA T
- STA L0C4F
+ STA playerTileIsHidden
  LDA soundEffect
  CPY soundEffect
  STY soundEffect

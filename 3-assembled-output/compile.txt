@@ -2464,7 +2464,7 @@
      0C4D   00
 .sentinelHasWon
      0C4E   00
-.L0C4F
+.playerTileIsHidden
      0C4F   00
 .L0C50
      0C50   00
@@ -4041,19 +4041,19 @@
      1640   C9 60      CMP #&60
      1642   B0 02      BCS &1646
      1644   69 20      ADC #&20
-.C1646
+.scan1
      1646   85 23      STA &23
      1648   A9 08      LDA #&08
      164A   8D 9A 16   STA &169A
-.C164D
+.scan2
      164D   A0 03      LDY #&03
      164F   20 8E 56   JSR &568E
      1652   4C 5A 16   JMP &165A
-.P1655
+.scan3
      1655   AD 99 16   LDA &1699
      1658   4A         LSR A
      1659   4A         LSR A
-.C165A
+.scan4
      165A   8D 99 16   STA &1699
      165D   29 03      AND #&03
      165F   0D 9B 16   ORA &169B
@@ -4071,7 +4071,7 @@
      1676   C9 80      CMP #&80
      1678   90 02      BCC &167C
      167A   E9 20      SBC #&20
-.C167C
+.scan5
      167C   85 23      STA &23
      167E   CE 9A 16   DEC &169A
      1681   F0 15      BEQ &1698
@@ -4084,15 +4084,15 @@
      1691   A9 00      LDA #&00
      1693   8D 9B 16   STA &169B
      1696   F0 B5      BEQ &164D
-.CRE07
+.scan6
      1698   60         RTS
-.L1699
+.scannerStatic
      1699   00
-.L169A
+.scannerBlock
      169A   00
-.L169B
+.scannerState
      169B   00
-.L169C
+.scannerPixelByte
      169C   0F
      169D   0F
      169E   0F
