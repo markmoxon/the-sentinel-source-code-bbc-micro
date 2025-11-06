@@ -152,16 +152,20 @@
 
 .zCounter
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A counter to iterate along tiles in the z-axis
 
 .stashAddr
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The address of the four bytes in the secretCodeStash
+                        \ that correspond to the landscape's secret code
 
 .L000D
+
+ SKIP 0                 \ ???
+
 .xCounter
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A counter to iterate along tiles in the x-axis
 
 .L000E
 
@@ -259,7 +263,8 @@
 
 .treeCounter
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A counter for the number of trees that are added to
+                        \ the landscape in the SpawnTrees routine
 
 .L001E
 
@@ -301,7 +306,8 @@
 
 .columnCounter
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A counter for the number of columns to fill in the
+                        \ FillScreen routine
 
 .yTile
 
@@ -321,7 +327,8 @@
 
 .screenRowNumber
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The number of the character row to start filling from
+                        \ in the FillScreen routine
 
 .zTile
 
@@ -399,11 +406,13 @@
 
 .cosSightsPitchLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The low byte of cos(sightsPitchAngle) when converting
+                        \ pitch and yaw angles to cartesian vectors
 
 .cosSightsPitchHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The high byte of cos(sightsPitchAngle) when converting
+                        \ pitch and yaw angles to cartesian vectors
 
 .L0034
 
@@ -694,37 +703,43 @@
 
  SKIP 1                 \ ???
 
-.L0080
+.xDeltaLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The difference between two x-coordinates (low byte)
 
-.L0081
+.yDeltaLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The difference between two y-coordinates (low byte)
 
-.L0082
+.zDeltaLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The difference between two z-coordinates (low byte)
 
-.L0083
+.xDeltaAbsoluteHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The absolute difference between two x-coordinates
+                        \ (high byte), i.e. |xDeltaHi|
 
-.L0084
+.yDeltaHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The difference between two y-coordinates (high byte)
 
-.L0085
+.zDeltaAbsoluteHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The absolute difference between two z-coordinates
+                        \ (high byte), i.e. |zDeltaHi|
 
-.L0086
+.xDeltaHi
 
- SKIP 2                 \ ???
+ SKIP 1                 \ The difference between two x-coordinates (high byte)
 
-.L0088
+ SKIP 1                 \ Some kind of yDeltaHi value ???
 
- SKIP 2                 \ ???
+.zDeltaHi
+
+ SKIP 1                 \ The difference between two z-coordinates (high byte)
+
+ SKIP 1                 \ This byte appears to be unused
 
 .angleLo
 
@@ -1841,9 +1856,10 @@
 
  EQUB 0                 \ This byte appears to be unused
 
-.L0C78
+.xTitleOffset
 
- EQUB &EF               \ ???
+ EQUB 239               \ An x-coordinate offset for drawing the title screen
+                        \ this is zero during gameplay)
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -5836,7 +5852,7 @@ L1145 = C1144+1
 .C13DF
 
  PLA
- STA L0C78
+ STA xTitleOffset
  LDX #&10
  STX anotherObject
 
@@ -5856,7 +5872,7 @@ L1145 = C1144+1
 .C13FA
 
  LDA #0
- STA L0C78
+ STA xTitleOffset
  STA screenBackground
  RTS
 
@@ -7949,9 +7965,9 @@ L1145 = C1144+1
  SEC                    \ Set bit 7 of L0C6E ???
  ROR L0C6E
 
- LDA L0081
- STA L0080
- LDA L0084
+ LDA yDeltaLo
+ STA xDeltaLo
+ LDA yDeltaHi
 
 .C18E1
 
@@ -7972,11 +7988,11 @@ L1145 = C1144+1
 
  LSR L0C6E              \ Clear bit 7 of L0C6E ???
 
- LDA L0081
+ LDA yDeltaLo
  SEC
  SBC #&E0
- STA L0080
- LDA L0084
+ STA xDeltaLo
+ LDA yDeltaHi
  SBC #&00
  DEC L001E
  BNE C18E1
@@ -10739,7 +10755,7 @@ L1145 = C1144+1
 
 .C20AF
 
- STA L0080
+ STA xDeltaLo
  LDA #0
  STA L0CD4
  JSR sub_C561D
@@ -12083,7 +12099,7 @@ L23E3 = C23E2+1
 .C250D
 
  LDA #0
- STA L0086,X
+ STA xDeltaHi,X
  SEC
  SBC L0037,X
  STA xSightsVectorLo,X
@@ -12091,7 +12107,7 @@ L23E3 = C23E2+1
  SBC L003A,X
  STA xSightsVectorHi,X
  BPL C2529
- DEC L0086,X
+ DEC xDeltaHi,X
  LDA #0
  SEC
  SBC xSightsVectorLo,X
@@ -12284,7 +12300,7 @@ L23E3 = C23E2+1
  ADC xSightsVectorHi,X
  STA L0037,X
  LDA L003A,X
- ADC L0086,X
+ ADC xDeltaHi,X
  STA L003A,X
  CLC
  DEX
@@ -12844,41 +12860,41 @@ L23E3 = C23E2+1
  STA L007F
  LDX anotherObject
  LDA #&80
- STA L0080
+ STA xDeltaLo
  CLC
  LDA xTile
  SBC L0003
  SEC
- SBC L0C78
- STA L0086
+ SBC xTitleOffset
+ STA xDeltaHi
  BPL C2840
  LDA #0
  SEC
- SBC L0080
- STA L0080
+ SBC xDeltaLo
+ STA xDeltaLo
  LDA #0
- SBC L0086
+ SBC xDeltaHi
 
 .C2840
 
- STA L0083
+ STA xDeltaAbsoluteHi
  LDA #&80
- STA L0082
+ STA zDeltaLo
  CLC
  LDA zTile
  SBC L001D
- STA L0088
+ STA zDeltaHi
  BPL C285A
  LDA #0
  SEC
- SBC L0082
- STA L0082
+ SBC zDeltaLo
+ STA zDeltaLo
  LDA #0
- SBC L0088
+ SBC zDeltaHi
 
 .C285A
 
- STA L0085
+ STA zDeltaAbsoluteHi
  JSR sub_C5567
  LDY L0021
  LDA angleLo
@@ -13025,7 +13041,7 @@ L23E3 = C23E2+1
  LDA #0
  SEC
  SBC yObjectLo,X
- STA L0080
+ STA xDeltaLo
  LDA U
  SBC yObjectHi,X
  JSR sub_C561D
@@ -22128,67 +22144,67 @@ L314A = C3148+2
 
 .sub_C5567
 
- LDA L0085
- CMP L0083
+ LDA zDeltaAbsoluteHi
+ CMP xDeltaAbsoluteHi
  BCC C5575
  BNE C5588
- LDA L0082
- CMP L0080
+ LDA zDeltaLo
+ CMP xDeltaLo
  BCS C5588
 
 .C5575
 
- LDA L0085
+ LDA zDeltaAbsoluteHi
  STA bHi
- LDA L0082
+ LDA zDeltaLo
  STA bLo
- LDA L0080
+ LDA xDeltaLo
  STA aLo
- LDA L0083
+ LDA xDeltaAbsoluteHi
  STA aHi
  JMP C55A5
 
 .C5588
 
- LDA L0083
+ LDA xDeltaAbsoluteHi
  STA bHi
- LDA L0080
+ LDA xDeltaLo
  STA bLo
- LDA L0082
+ LDA zDeltaLo
  STA aLo
- LDA L0085
+ LDA zDeltaAbsoluteHi
  STA aHi
- ORA L0082
+ ORA zDeltaLo
  BEQ C5560
- LDA L0085
+ LDA zDeltaAbsoluteHi
  JMP C55E3
 
 .P55A1
 
- ASL L0082
- ROL L0085
+ ASL zDeltaLo
+ ROL zDeltaAbsoluteHi
 
 .C55A5
 
- ASL L0080
+ ASL xDeltaLo
  ROL A
  BCC P55A1
  ROR A
- ROR L0080
+ ROR xDeltaLo
  STA V
- LDA L0082
+ LDA zDeltaLo
  STA T
- LDA L0080
+ LDA xDeltaLo
  AND #&FC
  STA W
- LDA L0085
+ LDA zDeltaAbsoluteHi
 
  JSR GetAngleFromCoords \ Calculate the following angle:
                         \
                         \   (angleHi angleLo) = arctan( (A T) / (V W) )
 
- LDA L0086
- EOR L0088
+ LDA xDeltaHi
+ EOR zDeltaHi
  BMI C55D1
  LDA #0
  SEC
@@ -22201,7 +22217,7 @@ L314A = C3148+2
 .C55D1
 
  LDA #&40
- BIT L0086
+ BIT xDeltaHi
  BPL C55D9
  LDA #&C0
 
@@ -22214,30 +22230,30 @@ L314A = C3148+2
 
 .P55DF
 
- ASL L0080
- ROL L0083
+ ASL xDeltaLo
+ ROL xDeltaAbsoluteHi
 
 .C55E3
 
- ASL L0082
+ ASL zDeltaLo
  ROL A
  BCC P55DF
  ROR A
- ROR L0082
+ ROR zDeltaLo
  STA V
- LDA L0080
+ LDA xDeltaLo
  STA T
- LDA L0082
+ LDA zDeltaLo
  AND #&FC
  STA W
- LDA L0083
+ LDA xDeltaAbsoluteHi
 
  JSR GetAngleFromCoords \ Calculate the following angle:
                         \
                         \   (angleHi angleLo) = arctan( (A T) / (V W) )
 
- LDA L0086
- EOR L0088
+ LDA xDeltaHi
+ EOR zDeltaHi
  BPL C560F
  LDA #0
  SEC
@@ -22250,7 +22266,7 @@ L314A = C3148+2
 .C560F
 
  LDA #0
- BIT L0088
+ BIT zDeltaHi
  BPL C5617
  LDA #&80
 
@@ -22272,25 +22288,25 @@ L314A = C3148+2
 
 .sub_C561D
 
- STA L0086
+ STA xDeltaHi
  TAY
  BPL C562D
  LDA #0
  SEC
- SBC L0080
- STA L0080
+ SBC xDeltaLo
+ STA xDeltaLo
  LDA #0
- SBC L0086
+ SBC xDeltaHi
 
 .C562D
 
- STA L0083
+ STA xDeltaAbsoluteHi
  LDA hypotenuseLo
- STA L0082
+ STA zDeltaLo
  LDA hypotenuseHi
- STA L0085
+ STA zDeltaAbsoluteHi
  LDA #0
- STA L0088
+ STA zDeltaHi
  JSR sub_C5567
  LDA angleLo
  SEC
@@ -24035,8 +24051,31 @@ L314A = C3148+2
  LDA objectTypes,Y
  STA L004C
  LDX anotherObject
- JSR sub_C5DC4
- JSR sub_C5DF5
+
+ JSR GetHorizontalDelta \ Calculate the following:
+                        \
+                        \   (xDeltaHi xDeltaLo) =   x-coordinate of object #Y
+                        \                         - x-coordinate of object #X
+                        \                         - xTitleOffset
+                        \
+                        \   xDeltaAbsoluteHi = |xDeltaAbsoluteHi|
+                        \
+                        \   (zDeltaHi zDeltaLo) =   z-coordinate of object #Y
+                        \                         - z-coordinate of object #X
+                        \
+                        \   zDeltaAbsoluteHi = |zDeltaHi|
+                        \
+                        \ So this calculates the difference in both horizontal
+                        \ axes between object #X and object #Y
+
+ JSR GetVerticalDelta   \ Calculate the following:
+                        \
+                        \   (yDeltaHi yDeltaLo) =   y-coordinate of object #Y
+                        \                         - y-coordinate of object #X
+                        \
+                        \ So this calculates the difference in altitude between
+                        \ object #X and object #Y
+
  JSR sub_C5567
  LDX anotherObject
  LDA angleLo
@@ -24068,14 +24107,14 @@ L314A = C3148+2
  LSR hypotenuseHi
  ROR hypotenuseLo
  SEC
- ROR L0084
- ROR L0081
- LDA L0081
+ ROR yDeltaHi
+ ROR yDeltaLo
+ LDA yDeltaLo
  CLC
  ADC #&70
- STA L0081
+ STA yDeltaLo
  BCC C5C60
- INC L0084
+ INC yDeltaHi
 
 .C5C60
 
@@ -24083,9 +24122,9 @@ L314A = C3148+2
  STA L0C5D
  LDA hypotenuseHi
  STA L0C5E
- LDA L0081
+ LDA yDeltaLo
  STA L0C5B
- LDA L0084
+ LDA yDeltaHi
  STA L0C5C
  RTS
 
@@ -24142,32 +24181,32 @@ L314A = C3148+2
  LDA L0C5D
  CLC
  ADC T
- STA L0082
+ STA zDeltaLo
  LDA L0C5E
  ADC U
- STA L0088
+ STA zDeltaHi
  BPL C5CC7
  LDA #0
  SEC
- SBC L0082
- STA L0082
+ SBC zDeltaLo
+ STA zDeltaLo
  LDA #0
- SBC L0088
+ SBC zDeltaHi
 
 .C5CC7
 
- STA L0085
+ STA zDeltaAbsoluteHi
  LDA L4D60,Y
  STA U
  LDA sinA
 
  JSR Multiply8x8        \ Set (A T) = A * U
 
- STA L0080
+ STA xDeltaLo
  LDA #0
- STA L0083
+ STA xDeltaAbsoluteHi
  LDA H
- STA L0086
+ STA xDeltaHi
  JSR sub_C5567
  LDY L0021
  LDA angleLo
@@ -24193,7 +24232,7 @@ L314A = C3148+2
  LDA T
  CLC
  ADC L0C5B
- STA L0080
+ STA xDeltaLo
  LDA U
  ADC L0C5C
  LDX anotherObject
@@ -24318,66 +24357,161 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5DC4
+\       Name: GetHorizontalDelta
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate the difference in the x-axis and z-axis between two
+\             objects, as both signed and absolute deltas
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates the following:
+\
+\   (xDeltaHi xDeltaLo) = x-coordinate of object #Y - x-coordinate of object #X
+\                                                   - xTitleOffset
+\
+\   xDeltaAbsoluteHi = |xDeltaHi|
+\
+\   (zDeltaHi zDeltaLo) = z-coordinate of object #Y - z-coordinate of object #X
+\
+\   zDeltaAbsoluteHi = |zDeltaHi|
+\
+\ So this calculates the difference (the "delta") in both the x-coordinate and
+\ z-coordinate between the two objects, which are the differences along the
+\ left-right x-axis and the z-axis the goes into the screen.
+\
+\ Note that xTitleOffset is zero during gameplay, and is only non-zero when
+\ drawing a title screen.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The number of the first object
+\
+\   Y                   The number of the second object
 \
 \ ******************************************************************************
 
-.sub_C5DC4
+.GetHorizontalDelta
 
- LDA #0
- STA L0080
- SEC
+                        \ The x-coordinates for each object are stored as 8-bit
+                        \ signed integers, with the x-coordinate for object #X
+                        \ in xObject+X and for object #Y in xObject+Y
+                        \
+                        \ We want to calculate the deltas in 16-bit accuracy,
+                        \ where the low byte is effectively a fractional part,
+                        \ so we can convert these x-coordinates into 16-bit
+                        \ numbers like this:
+                        \
+                        \   * x-coordinate for object #X = (xObject+X 0)
+                        \
+                        \   * x-coordinate for object #Y = (xObject+Y 0)
+                        \
+                        \ and we can then do a multi-byte subtraction to get the
+                        \ delta, with the title offset included in the
+                        \ calculation as (xTitleOffset 0)
+
+ LDA #0                 \ Calculate the following:
+ STA xDeltaLo           \
+                        \   (xDeltaHi xDeltaLo) =   (xObject+Y 0) - (xObject,X 0)
+                        \                         - (xTitleOffset 0)
+                        \
+                        \ starting with the low byte (which we know will be zero)
+
+ SEC                    \ And then subtracting the high bytes
  LDA xObject,Y
  SBC xObject,X
  SEC
- SBC L0C78
- STA L0086
- BPL C5DDC
- SEC
- LDA #0
- SBC L0086
+ SBC xTitleOffset
+ STA xDeltaHi
 
-.C5DDC
+ BPL delt1              \ If the high byte of the result is positive, jump to
+                        \ delt1 as the result in A is already correct for the
+                        \ absolute value (i.e. A = xDeltaHi = |xDeltaHi|)
 
- STA L0083
- LDA #0
- STA L0082
- SEC
+ SEC                    \ The high byte is negative, so set:
+ LDA #0                 \
+ SBC xDeltaHi           \   A = 0 - xDeltaHi
+                        \     = -xDeltaHi
+                        \     = |xDeltaHi|
+
+.delt1
+
+ STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = |xDeltaHi|
+
+                        \ We now do the same thing, but with the z-coordinates
+                        \
+                        \ There is no title delta to include for the z-axis
+                        \ calculation
+
+ LDA #0                 \ Calculate the following:
+ STA zDeltaLo           \
+                        \   (zDeltaHi zDeltaLo) = (zObject+Y 0) - (zObject,X 0)
+                        \
+                        \ starting with the low byte (which we know will be zero)
+
+ SEC                    \ And then subtracting the high bytes
  LDA zObject,Y
  SBC zObject,X
- STA L0088
- BPL C5DF2
- SEC
- LDA #0
- SBC L0088
+ STA zDeltaHi
 
-.C5DF2
+ BPL delt2              \ If the high byte of the result is positive, jump to
+                        \ delt2 as the result in A is already correct for the
+                        \ absolute value (i.e. A = zDeltaHi = |zDeltaHi|)
 
- STA L0085
- RTS
+ SEC                    \ The high byte is negative, so set:
+ LDA #0                 \
+ SBC zDeltaHi           \   A = 0 - zDeltaHi
+                        \     = -zDeltaHi
+                        \     = |zDeltaHi|
+
+.delt2
+
+ STA zDeltaAbsoluteHi   \ Set zDeltaAbsoluteHi = |zDeltaHi|
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C5DF5
+\       Name: GetVerticalDelta
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate the difference in the y-axis between two objects as a
+\             signed delta
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates the following:
+\
+\   (yDeltaHi yDeltaLo) = y-coordinate of object #Y - y-coordinate of object #X
+\
+\ So (yDeltaHi yDeltaLo) contains the difference (the "delta") in the
+\ y-coordinate between the two objects, which is the difference in altitude.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The number of the first object
+\
+\   Y                   The number of the second object
 \
 \ ******************************************************************************
 
-.sub_C5DF5
+.GetVerticalDelta
 
- LDA yObjectLo,Y
- SEC
- SBC yObjectLo,X
- STA L0081
- LDA yObjectHi,Y
+ LDA yObjectLo,Y        \ Set (yDeltaHi yDeltaLo) = 
+ SEC                    \                    (yObjectHi yObjectLo) for object #Y
+ SBC yObjectLo,X        \                  - (yObjectHi yObjectLo) for object #X
+ STA yDeltaLo           \
+                        \ starting with the low bytes
+
+ LDA yObjectHi,Y        \ And then the high bytes 
  SBC yObjectHi,X
- STA L0084
- RTS
+ STA yDeltaHi
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \

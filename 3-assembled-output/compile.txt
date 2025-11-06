@@ -29,6 +29,7 @@
 .stashAddr
      000C
 .L000D
+     000D
 .xCounter
      000D
 .L000E
@@ -251,22 +252,24 @@
      007E
 .L007F
      007F
-.L0080
+.xDeltaLo
      0080
-.L0081
+.yDeltaLo
      0081
-.L0082
+.zDeltaLo
      0082
-.L0083
+.xDeltaAbsoluteHi
      0083
-.L0084
+.yDeltaHi
      0084
-.L0085
+.zDeltaAbsoluteHi
      0085
-.L0086
+.xDeltaHi
      0086
-.L0088
+     0087
+.zDeltaHi
      0088
+     0089
 .angleLo
      008A
 .angleHi
@@ -2545,7 +2548,7 @@
 .L0C76
      0C76   00
      0C77   00
-.L0C78
+.xTitleOffset
      0C78   EF
      0C79   00
 .L0C7A
@@ -15640,7 +15643,7 @@
      5DBE   4E 7A 0C   LSR &0C7A
      5DC1   A4 6F      LDY &6F
      5DC3   60         RTS
-.sub_C5DC4
+.GetHorizontalDelta
      5DC4   A9 00      LDA #&00
      5DC6   85 80      STA &80
      5DC8   38         SEC
@@ -15653,7 +15656,7 @@
      5DD7   38         SEC
      5DD8   A9 00      LDA #&00
      5DDA   E5 86      SBC &86
-.C5DDC
+.delt1
      5DDC   85 83      STA &83
      5DDE   A9 00      LDA #&00
      5DE0   85 82      STA &82
@@ -15665,10 +15668,10 @@
      5DED   38         SEC
      5DEE   A9 00      LDA #&00
      5DF0   E5 88      SBC &88
-.C5DF2
+.delt2
      5DF2   85 85      STA &85
      5DF4   60         RTS
-.sub_C5DF5
+.GetVerticalDelta
      5DF5   B9 00 0A   LDA &0A00,Y
      5DF8   38         SEC
      5DF9   FD 00 0A   SBC &0A00,X
