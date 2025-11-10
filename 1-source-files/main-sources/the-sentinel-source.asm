@@ -374,6 +374,21 @@
                         \ sights can be drawn and removed using the contents of
                         \ the sights pixel byte stash
 
+.xSightsVectorBot
+
+ SKIP 1                 \ The x-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (bottom byte)
+
+.ySightsVectorBot
+
+ SKIP 1                 \ The y-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (bottom byte)
+
+.zSightsVectorBot
+
+ SKIP 1                 \ The z-coordinate of the vector from the player's eyes
+                        \ to the sights within the 3D world (bottom byte)
+
 .xSightsVectorLo
 
  SKIP 1                 \ The x-coordinate of the vector from the player's eyes
@@ -389,21 +404,6 @@
  SKIP 1                 \ The z-coordinate of the vector from the player's eyes
                         \ to the sights within the 3D world (low byte)
 
-.xSightsVectorHi
-
- SKIP 1                 \ The x-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (high byte)
-
-.ySightsVectorHi
-
- SKIP 1                 \ The y-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (high byte)
-
-.zSightsVectorHi
-
- SKIP 1                 \ The z-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (high byte)
-
 .cosSightsPitchLo
 
  SKIP 1                 \ The low byte of cos(sightsPitchAngle) when converting
@@ -414,7 +414,7 @@
  SKIP 1                 \ The high byte of cos(sightsPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
-.xCoordLo
+.xCoordBot
 
  SKIP 0                 \ ???
 
@@ -422,7 +422,7 @@
 
  SKIP 1                 \ ???
 
-.yCoordLo
+.yCoordBot
 
  SKIP 0                 \ ???
 
@@ -430,7 +430,7 @@
 
  SKIP 1                 \ ???
 
-.zCoordLo
+.zCoordBot
 
  SKIP 0                 \ ???
 
@@ -438,7 +438,7 @@
 
  SKIP 1                 \ ???
 
-.xCoordHi
+.xCoordLo
 
  SKIP 0                 \ ???
 
@@ -446,7 +446,7 @@
 
  SKIP 1                 \ ???
 
-.yCoordHi
+.yCoordLo
 
  SKIP 0                 \ ???
 
@@ -454,7 +454,7 @@
 
  SKIP 1                 \ ???
 
-.zCoordHi
+.zCoordLo
 
  SKIP 0                 \ ???
 
@@ -462,7 +462,7 @@
 
  SKIP 1                 \ ???
 
-.xCoordTop
+.xCoordHi
 
  SKIP 0                 \ ???
 
@@ -470,7 +470,7 @@
 
  SKIP 1                 \ ???
 
-.yCoordTop
+.yCoordHi
 
  SKIP 0                 \ ???
 
@@ -478,7 +478,7 @@
 
  SKIP 1                 \ ???
 
-.zCoordTop
+.zCoordHi
 
  SKIP 0                 \ ???
 
@@ -8773,9 +8773,9 @@ L1145 = C1144+1
                         \
                         \ and as a cartesian vector:
                         \
-                        \   [ (xSightsVectorHi xSightsVectorLo) ]
-                        \   [ (ySightsVectorHi ySightsVectorLo) ]
-                        \   [ (zSightsVectorHi zSightsVectorLo) ]
+                        \   [ (xSightsVectorLo xSightsVectorBot) ]
+                        \   [ (ySightsVectorLo ySightsVectorBot) ]
+                        \   [ (zSightsVectorLo zSightsVectorBot) ]
 
  JSR sub_C1CCC          \ Something to do with vectors? (secondAxis is involved)
                         \ Is it working out if we are able to see the tile ???
@@ -9247,9 +9247,9 @@ L1145 = C1144+1
                         \ We now fall through into GetVectorForAngles to convert
                         \ these two angles into a cartesian vector:
                         \
-                        \   [ (xSightsVectorHi xSightsVectorLo) ]
-                        \   [ (ySightsVectorHi ySightsVectorLo) ]
-                        \   [ (zSightsVectorHi zSightsVectorLo) ]
+                        \   [ (xSightsVectorLo xSightsVectorBot) ]
+                        \   [ (ySightsVectorLo ySightsVectorBot) ]
+                        \   [ (zSightsVectorLo zSightsVectorBot) ]
 
 \ ******************************************************************************
 \
@@ -9273,9 +9273,9 @@ L1145 = C1144+1
 \ The same vector, but expressed as a cartesian vector, is calculated as
 \ follows:
 \
-\   [ (xSightsVectorHi xSightsVectorLo) ]
-\   [ (ySightsVectorHi ySightsVectorLo) ]
-\   [ (zSightsVectorHi zSightsVectorLo) ]
+\   [ (xSightsVectorLo xSightsVectorBot) ]
+\   [ (ySightsVectorLo ySightsVectorBot) ]
+\   [ (zSightsVectorLo zSightsVectorBot) ]
 \
 \ The calculation is this:
 \
@@ -9295,7 +9295,7 @@ L1145 = C1144+1
                         \ the y-axis is the up-down axis
                         \
                         \ We store the resulting y-coordinate in the 16-bit
-                        \ variable (ySightsVectorHi ySightsVectorLo)
+                        \ variable (ySightsVectorLo ySightsVectorBot)
                         \
                         \ We calculate ySightsVector by considering a triangle
                         \ with the sights vector as the hypotenuse, and we drop
@@ -9372,8 +9372,8 @@ L1145 = C1144+1
  LDY #0                 \ Set (A X) = sinSightsPitchAngle / 16
  JSR DivideBy16
 
- STA ySightsVectorHi    \ Set (ySightsVectorHi ySightsVectorLo)
- STX ySightsVectorLo    \                             = sinSightsPitchAngle / 16
+ STA ySightsVectorLo    \ Set (ySightsVectorLo ySightsVectorBot)
+ STX ySightsVectorBot   \                             = sinSightsPitchAngle / 16
                         \
                         \ So we now have the y-coordinate of the sights vector
                         \ as follows:
@@ -9386,8 +9386,8 @@ L1145 = C1144+1
                         \ screen
                         \
                         \ We store the resulting x-coordinate in the 16-bit
-                        \ variable (xSightsVectorHi yxSightsVectorLo) and the
-                        \ z-coordinate in (zSightsVectorHi zxSightsVectorLo)
+                        \ variable (xSightsVectorLo yxSightsVectorBot) and the
+                        \ z-coordinate in (zSightsVectorLo zxSightsVectorBot)
                         \
                         \ We calculate xSightsVector and zSightsVector by
                         \ considering a triangle on the y = 0 plane, so that's a
@@ -9474,13 +9474,13 @@ L1145 = C1144+1
  LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
  LDX #2                 \ the following:
  JSR MultiplyCoords     \
-                        \   (zSightsVectorHi zSightsVectorLo)
+                        \   (zSightsVectorLo zSightsVectorBot)
                         \       = cosSightsPitchAngle * cosSightsYawAngle / 16
 
  LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
  LDX #0                 \ calculate the following:
                         \
-                        \   (xSightsVectorHi xSightsVectorLo)
+                        \   (xSightsVectorLo xSightsVectorBot)
                         \        = cosSightsPitchAngle * sinSightsYawAngle / 16
                         \
                         \ and return from the subroutine using a tail call
@@ -9509,9 +9509,9 @@ L1145 = C1144+1
 \
 \ i.e. cosSightsPitch * cosAngle
 \
-\ When X = 0, store the result in (xSightsVectorHi xSightsVectorLo).
+\ When X = 0, store the result in (xSightsVectorLo xSightsVectorBot).
 \
-\ When X = 2, store the result in (zSightsVectorHi zSightsVectorLo).
+\ When X = 2, store the result in (zSightsVectorLo zSightsVectorBot).
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9529,9 +9529,9 @@ L1145 = C1144+1
 \
 \   X                   Offset of the variable to store the result in:
 \
-\                         * 0 = (xSightsVectorHi xSightsVectorLo)
+\                         * 0 = (xSightsVectorLo xSightsVectorBot)
 \
-\                         * 2 = (zSightsVectorHi zSightsVectorLo)
+\                         * 2 = (zSightsVectorLo zSightsVectorBot)
 \
 \ ******************************************************************************
 
@@ -9556,11 +9556,11 @@ L1145 = C1144+1
                         \ And apply the sign from bit 7 of H to ensure the
                         \ result is positive
 
- STA xSightsVectorHi,X  \ Store the result in:
+ STA xSightsVectorLo,X  \ Store the result in:
  LDA T                  \
- STA xSightsVectorLo,X  \   * (xSightsVectorHi xSightsVectorLo) when X = 0
+ STA xSightsVectorBot,X \   * (xSightsVectorLo xSightsVectorBot) when X = 0
                         \
-                        \   * (zSightsVectorHi zSightsVectorLo) when X = 2
+                        \   * (zSightsVectorLo zSightsVectorBot) when X = 2
 
  RTS                    \ Return from the subroutine
 
@@ -9645,21 +9645,21 @@ L1145 = C1144+1
 
  LDA #0
  STA T
- LDA xCoordLo,X
+ LDA xCoordBot,X
  CLC
- ADC xSightsVectorLo,X
- STA xCoordLo,X
- LDA xSightsVectorHi,X
+ ADC xSightsVectorBot,X
+ STA xCoordBot,X
+ LDA xSightsVectorLo,X
  BPL C1CBD
  DEC T
 
 .C1CBD
 
- ADC xCoordHi,X
- STA xCoordHi,X
- LDA xCoordTop,X
+ ADC xCoordLo,X
+ STA xCoordLo,X
+ LDA xCoordHi,X
  ADC T
- STA xCoordTop,X
+ STA xCoordHi,X
  DEX
  BPL P1CAC
  RTS
@@ -9685,11 +9685,11 @@ L1145 = C1144+1
 .C1CD7
 
  JSR sub_C1CAA
- LDA xCoordTop
+ LDA xCoordHi
  STA xTile
  CMP #&1F
  BCS C1D33
- LDA zCoordTop
+ LDA zCoordHi
  STA zTile
  CMP #&1F
  BCS C1D33
@@ -9704,10 +9704,10 @@ L1145 = C1144+1
  TAX
  LDA L0079
  SEC
- SBC yCoordHi
+ SBC yCoordLo
  STA L0079
  TXA
- SBC yCoordTop
+ SBC yCoordHi
  BMI C1CD7
  BNE C1D33
  LDA L0079
@@ -9720,7 +9720,7 @@ L1145 = C1144+1
  ORA L0C67              \ skip the following test ???
  BMI C1D21
 
- LDA ySightsVectorHi
+ LDA ySightsVectorLo
  BPL C1D33
 
 .C1D21
@@ -9770,7 +9770,7 @@ L1145 = C1144+1
 
 .C1D5F
 
- LDA yCoordTop
+ LDA yCoordHi
  CMP S
  BCS C1D74
  CMP T
@@ -9808,13 +9808,13 @@ L1145 = C1144+1
 
  STA G
  LSR A
- LDA xCoordHi
+ LDA xCoordLo
  BCC C1D93
  EOR #&FF
 
 .C1D93
 
- CMP zCoordHi
+ CMP zCoordLo
  LDA G
  ROL A
  TAY
@@ -9824,9 +9824,9 @@ L1145 = C1144+1
 
  TAX
  LSR A
- LDY xCoordHi
+ LDY xCoordLo
  BCS C1DA4
- LDY zCoordHi
+ LDY zCoordLo
 
 .C1DA4
 
@@ -9866,10 +9866,10 @@ L1145 = C1144+1
  CLC
  ADC G
  STA U
- LDA yCoordHi
+ LDA yCoordLo
  SEC
  SBC T
- LDA yCoordTop
+ LDA yCoordHi
  SBC U
  BPL C1DDB
  JMP C1D33
@@ -9947,7 +9947,7 @@ L1145 = C1144+1
  BNE data7              \ 6) then it must contain a robot, sentry, meanie or the
                         \ Sentinel, so jump to data7 to ???
 
- JSR sub_C1E98          \ Set T = max(|xCoordHi - 128|, |zCoordHi - 128|)
+ JSR sub_C1E98          \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
                         \ and return the same value in A
 
@@ -9982,7 +9982,7 @@ L1145 = C1144+1
                         \ If we get here then the tile contains a tree or
                         \ boulder
 
- JSR sub_C1E98          \ Set T = max(|xCoordHi - 128|, |zCoordHi - 128|)
+ JSR sub_C1E98          \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
                         \ and return the same value in A
 
@@ -10006,10 +10006,10 @@ L1145 = C1144+1
 
  LDA yObjectLo,Y
  SEC
- SBC yCoordHi
+ SBC yCoordLo
  STA U
  LDA yObjectHi,Y
- SBC yCoordTop
+ SBC yCoordHi
  PHA
  LDA U
  CLC
@@ -10069,7 +10069,7 @@ L1145 = C1144+1
 
 .sub_C1E98
 
- LDA xCoordHi           \ Set A = |xCoordHi - 128|
+ LDA xCoordLo           \ Set A = |xCoordLo - 128|
  SEC
  SBC #128
  BPL C1EA1
@@ -10077,9 +10077,9 @@ L1145 = C1144+1
 
 .C1EA1
 
- STA T                  \ Set T = |xCoordHi - 128|
+ STA T                  \ Set T = |xCoordLo - 128|
 
- LDA zCoordHi           \ Set A = |zCoordHi - 128|
+ LDA zCoordLo           \ Set A = |zCoordLo - 128|
  SEC
  SBC #128
  BPL C1EAC
@@ -10094,7 +10094,7 @@ L1145 = C1144+1
 
 .C1EB2
 
- STA T                  \ Set T = max(|xCoordHi - 128|, |zCoordHi - 128|)
+ STA T                  \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
 
  RTS                    \ Return from the subroutine
 
@@ -10110,20 +10110,20 @@ L1145 = C1144+1
 .sub_C1EB5
 
  LDA #0
- STA xCoordLo
- STA yCoordLo
- STA zCoordLo
+ STA xCoordBot
+ STA yCoordBot
+ STA zCoordBot
  LDA #&80
- STA xCoordHi
- STA zCoordHi
+ STA xCoordLo
+ STA zCoordLo
  LDA yObjectLo,X
- STA yCoordHi
+ STA yCoordLo
  LDA xObject,X
- STA xCoordTop
+ STA xCoordHi
  LDA yObjectHi,X
- STA yCoordTop
+ STA yCoordHi
  LDA zObject,X
- STA zCoordTop
+ STA zCoordHi
  RTS
 
 \ ******************************************************************************
@@ -11721,8 +11721,8 @@ L1145 = C1144+1
 .sub_C2299
 
  LDA #&01
- STA xSightsVectorLo
- STA ySightsVectorLo
+ STA xSightsVectorBot
+ STA ySightsVectorBot
  LDA tileAltitude
  CLC
  ADC L0004
@@ -11827,13 +11827,13 @@ L1145 = C1144+1
 .C2333
 
  LDA #0
- STA ySightsVectorLo
+ STA ySightsVectorBot
  BEQ sub_C230D
 
 .C2339
 
  LDA #0
- STA xSightsVectorLo
+ STA xSightsVectorBot
  BEQ sub_C230D
 
 .C233F
@@ -11841,7 +11841,7 @@ L1145 = C1144+1
  LDA L0061
  ASL A
  STA L0056
- STA xSightsVectorLo
+ STA xSightsVectorBot
  BNE C23A6
 
 .C2348
@@ -11854,7 +11854,7 @@ L1145 = C1144+1
  SBC #&00
  STA Q
  LDA #0
- STA ySightsVectorLo
+ STA ySightsVectorBot
  LDA #&F8
  BNE C23D8
 
@@ -12187,18 +12187,18 @@ L23E3 = C23E2+1
  LDA #0
  STA xDeltaHi,X
  SEC
+ SBC xCoordLo,X
+ STA xSightsVectorBot,X
+ LDA L0018,X
  SBC xCoordHi,X
  STA xSightsVectorLo,X
- LDA L0018,X
- SBC xCoordTop,X
- STA xSightsVectorHi,X
  BPL C2529
  DEC xDeltaHi,X
  LDA #0
  SEC
- SBC xSightsVectorLo,X
+ SBC xSightsVectorBot,X
  LDA #0
- SBC xSightsVectorHi,X
+ SBC xSightsVectorLo,X
 
 .C2529
 
@@ -12223,19 +12223,19 @@ L23E3 = C23E2+1
 
 .P253A
 
- ASL xSightsVectorLo
- ROL xSightsVectorHi
- ASL ySightsVectorLo
- ROL ySightsVectorHi
- ASL zSightsVectorLo
- ROL zSightsVectorHi
+ ASL xSightsVectorBot
+ ROL xSightsVectorLo
+ ASL ySightsVectorBot
+ ROL ySightsVectorLo
+ ASL zSightsVectorBot
+ ROL zSightsVectorLo
  LSR L0017
  ASL A
  BCC P253A
- LDA zCoordTop
+ LDA zCoordHi
  CLC
  ADC #&60
- STA zCoordTop
+ STA zCoordHi
  LDA L0CCE
  BMI C257E
 
@@ -12376,26 +12376,26 @@ L23E3 = C23E2+1
 
 .P2583
 
- LDA xCoordLo,X
- ADC xSightsVectorLo,X
- STA xCoordLo,X
+ LDA xCoordBot,X
+ ADC xSightsVectorBot,X
+ STA xCoordBot,X
 
 .C2589
 
+ LDA xCoordLo,X
+ ADC xSightsVectorLo,X
+ STA xCoordLo,X
  LDA xCoordHi,X
- ADC xSightsVectorHi,X
- STA xCoordHi,X
- LDA xCoordTop,X
  ADC xDeltaHi,X
- STA xCoordTop,X
+ STA xCoordHi,X
  CLC
  DEX
  BEQ C2589
  BPL P2583
- LDA zCoordTop
+ LDA zCoordHi
  STA S
- LDY xCoordTop
- LDA yCoordTop
+ LDY xCoordHi
+ LDA yCoordHi
  CMP (R),Y
  BCC C25AE
  DEC L0017
@@ -13572,7 +13572,7 @@ L23E3 = C23E2+1
  BCS C2A90
  JSR sub_C2299
  LDY L0010
- LDA xSightsVectorLo,Y
+ LDA xSightsVectorBot,Y
  CMP #&01
  BEQ CRE18
 
@@ -15429,11 +15429,11 @@ L23E3 = C23E2+1
 
  LDA #0
  STA tileAltitude
- STA zSightsVectorHi
+ STA zSightsVectorLo
  STA L001E
  LDA #&FF
  STA L0004
- STA ySightsVectorHi
+ STA ySightsVectorLo
  STA L007F
  LDY #0
 
@@ -15536,9 +15536,9 @@ L23E3 = C23E2+1
  BCS C2E88
  STY L0004
  STY tileAltitude
- LDA ySightsVectorHi
+ LDA ySightsVectorLo
  STA L5A00,Y
- LDA zSightsVectorHi
+ LDA zSightsVectorLo
  STA L5B00,Y
  LDA #0
  STA L007F
@@ -15561,15 +15561,15 @@ L23E3 = C23E2+1
 .C2E96
 
  LDA L54A0,X
- CMP zSightsVectorHi
+ CMP zSightsVectorLo
  BCC C2E9F
- STA zSightsVectorHi
+ STA zSightsVectorLo
 
 .C2E9F
 
- CMP ySightsVectorHi
+ CMP ySightsVectorLo
  BCS C2EA5
- STA ySightsVectorHi
+ STA ySightsVectorLo
 
 .C2EA5
 
