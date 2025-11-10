@@ -414,37 +414,73 @@
  SKIP 1                 \ The high byte of cos(sightsPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
+.xCoordLo
+
+ SKIP 0                 \ ???
+
 .L0034
 
  SKIP 1                 \ ???
+
+.yCoordLo
+
+ SKIP 0                 \ ???
 
 .L0035
 
  SKIP 1                 \ ???
 
+.zCoordLo
+
+ SKIP 0                 \ ???
+
 .L0036
 
  SKIP 1                 \ ???
+
+.xCoordHi
+
+ SKIP 0                 \ ???
 
 .L0037
 
  SKIP 1                 \ ???
 
+.yCoordHi
+
+ SKIP 0                 \ ???
+
 .L0038
 
  SKIP 1                 \ ???
+
+.zCoordHi
+
+ SKIP 0                 \ ???
 
 .L0039
 
  SKIP 1                 \ ???
 
+.xCoordTop
+
+ SKIP 0                 \ ???
+
 .L003A
 
  SKIP 1                 \ ???
 
+.yCoordTop
+
+ SKIP 0                 \ ???
+
 .L003B
 
  SKIP 1                 \ ???
+
+.zCoordTop
+
+ SKIP 0                 \ ???
 
 .L003C
 
@@ -9609,21 +9645,21 @@ L1145 = C1144+1
 
  LDA #0
  STA T
- LDA L0034,X
+ LDA xCoordLo,X
  CLC
  ADC xSightsVectorLo,X
- STA L0034,X
+ STA xCoordLo,X
  LDA xSightsVectorHi,X
  BPL C1CBD
  DEC T
 
 .C1CBD
 
- ADC L0037,X
- STA L0037,X
- LDA L003A,X
+ ADC xCoordHi,X
+ STA xCoordHi,X
+ LDA xCoordTop,X
  ADC T
- STA L003A,X
+ STA xCoordTop,X
  DEX
  BPL P1CAC
  RTS
@@ -9649,11 +9685,11 @@ L1145 = C1144+1
 .C1CD7
 
  JSR sub_C1CAA
- LDA L003A
+ LDA xCoordTop
  STA xTile
  CMP #&1F
  BCS C1D33
- LDA L003C
+ LDA zCoordTop
  STA zTile
  CMP #&1F
  BCS C1D33
@@ -9663,15 +9699,15 @@ L1145 = C1144+1
  LDA #0
  STA L0079
  STA L0C67
- JSR sub_C1DE6
+ JSR ExtractTileData
  BCS C1D35
  TAX
  LDA L0079
  SEC
- SBC L0038
+ SBC yCoordHi
  STA L0079
  TXA
- SBC L003B
+ SBC yCoordTop
  BMI C1CD7
  BNE C1D33
  LDA L0079
@@ -9713,13 +9749,13 @@ L1145 = C1144+1
  STA W
  LSR secondAxis
  INC xTile
- JSR sub_C1DE6
+ JSR ExtractTileData
  STA V
  INC zTile
- JSR sub_C1DE6
+ JSR ExtractTileData
  STA U
  DEC xTile
- JSR sub_C1DE6
+ JSR ExtractTileData
  STA T
  DEC zTile
 
@@ -9734,7 +9770,7 @@ L1145 = C1144+1
 
 .C1D5F
 
- LDA L003B
+ LDA yCoordTop
  CMP S
  BCS C1D74
  CMP T
@@ -9772,13 +9808,13 @@ L1145 = C1144+1
 
  STA G
  LSR A
- LDA L0037
+ LDA xCoordHi
  BCC C1D93
  EOR #&FF
 
 .C1D93
 
- CMP L0039
+ CMP zCoordHi
  LDA G
  ROL A
  TAY
@@ -9788,9 +9824,9 @@ L1145 = C1144+1
 
  TAX
  LSR A
- LDY L0037
+ LDY xCoordHi
  BCS C1DA4
- LDY L0039
+ LDY zCoordHi
 
 .C1DA4
 
@@ -9830,10 +9866,10 @@ L1145 = C1144+1
  CLC
  ADC G
  STA U
- LDA L0038
+ LDA yCoordHi
  SEC
  SBC T
- LDA L003B
+ LDA yCoordTop
  SBC U
  BPL C1DDB
  JMP C1D33
@@ -9857,49 +9893,66 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1DE6
+\       Name: ExtractTileData
 \       Type: Subroutine
-\   Category: ???
+\   Category: Landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C1DE6
+.ExtractTileData
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCS C1E28
- PHA
- AND #&0F
- TAY
- PLA
- LSR A
- LSR A
- LSR A
- LSR A
- CPY #&01
- RTS
+ BCS data3              \ If the tile contains an object then jump to data3
 
-.C1DF7
+ PHA                    \ Store the tile data on the stack
 
- CPY targetObject
- BNE C1DFF
+ AND #%00001111         \ The tile shape is in the low nibble of the tile data,
+ TAY                    \ so extract the tile shape into Y
+
+ PLA                    \ Retrieve the tile data from the stack
+
+ LSR A                  \ Set A to the tile altitude, which is in the top nibble
+ LSR A                  \ of the tile data
+ LSR A
+ LSR A
+
+ CPY #1                 \ Clear the C flag if Y < 1, which will only happen when
+                        \ Y = 0, so this clears the C flag if the tile shape is
+                        \ flat, or sets the C flag if the tile shape is not flat
+
+ RTS                    \ Return from the subroutine
+
+.data1
+
+ CPY targetObject       \ If Y = targetObject, set bit 7 of L0C56
+ BNE data2
  ROR L0C56
 
-.C1DFF
+.data2
 
- LDA objectTypes,Y
- CMP #&03
- BEQ C1E31
- CMP #&02
- BEQ C1E31
- CMP #&06
- BNE C1E8D
- JSR sub_C1E98
+ LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
+                        \ (i.e. the type of object #Y)
+
+ CMP #3                 \ If the tile contains an object of type 3 (a boulder),
+ BEQ data4              \ jump to data4 to ???
+
+ CMP #2                 \ If the tile contains an object of type 2 (a tree),
+ BEQ data4              \ jump to data4 to ???
+
+ CMP #6                 \ If the tile doesn't contain the Sentinel's tower (type
+ BNE data7              \ 6) then it must contain a robot, sentry, meanie or the
+                        \ Sentinel, so jump to data7 to ???
+
+ JSR sub_C1E98          \ Set T = max(|xCoordHi - 128|, |zCoordHi - 128|)
+                        \
+                        \ and return the same value in A
+
  CMP #&64
- BCS C1E82
+ BCS data6
  LDA #&10
  STA L000C
  LDA yObjectLo,Y
@@ -9911,22 +9964,33 @@ L1145 = C1144+1
  CLC
  RTS
 
-.C1E28
+.data3
 
- AND #&3F
- TAY
- BIT secondAxis
- BPL C1E8D
- BMI C1DF7
+                        \ If we get here then the tile contains an object
 
-.C1E31
+ AND #%00111111         \ Because the tile already has an object on it, the tile
+ TAY                    \ data contains the existing object's number in bits 0
+                        \ to 5, so extract the object number into Y
 
- JSR sub_C1E98
+ BIT secondAxis         \ If bit 7 of secondAxis is clear, jump to data7
+ BPL data7
+
+ BMI data1              \ Otherwise bit 7 of secondAxis is set, so jump to data1
+
+.data4
+
+                        \ If we get here then the tile contains a tree or
+                        \ boulder
+
+ JSR sub_C1E98          \ Set T = max(|xCoordHi - 128|, |zCoordHi - 128|)
+                        \
+                        \ and return the same value in A
+
  CMP #&40
- BCS C1E82
+ BCS data6
  LDA objectTypes,Y
  CMP #&02
- BEQ C1E52
+ BEQ data5
  SEC
  ROR L0C67
  LDA yObjectLo,Y
@@ -9938,14 +10002,14 @@ L1145 = C1144+1
  CLC
  RTS
 
-.C1E52
+.data5
 
  LDA yObjectLo,Y
  SEC
- SBC L0038
+ SBC yCoordHi
  STA U
  LDA yObjectHi,Y
- SBC L003B
+ SBC yCoordTop
  PHA
  LDA U
  CLC
@@ -9953,35 +10017,46 @@ L1145 = C1144+1
  STA U
  PLA
  ADC #&00
- BMI C1E82
+ BMI data6
  LSR A
  ROR U
  LSR A
- BNE C1E82
+ BNE data6
  LDA U
  ROR A
  CMP T
- BCC C1E82
+ BCC data6
  BIT L0C56
- BMI C1E82
+ BMI data6
  SEC
  ROR L0CDD
 
-.C1E82
+.data6
 
- LDA objectTypes,Y
- CMP #&02
- BEQ C1E8D
+ LDA objectTypes,Y      \ Set A to the type of object #Y
+
+ CMP #2
+ BEQ data7
+
  LDA #&C0
  STA secondAxis
 
-.C1E8D
+.data7
 
- LDA objectFlags,Y
- CMP #&40
- BCS C1E28
- LDA yObjectHi,Y
- RTS
+ LDA objectFlags,Y      \ Set A to the object flags for object #Y
+
+ CMP #%01000000         \ If both bits 6 and 7 of the object flags for object #Y
+ BCS data3              \ are set then object #Y is stacked on top of another
+                        \ object, so jump to data3 to look at that object
+                        \ instead
+
+ LDA yObjectHi,Y        \ Otherwise we have reached the object on the tile
+                        \ itself, so set A to the y-coordinate of that object,
+                        \ and return from the subroutine with the C flag clear
+                        \ to denote a flat tile, as objects are only ever placed
+                        \ on flat tiles
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9994,31 +10069,34 @@ L1145 = C1144+1
 
 .sub_C1E98
 
- LDA L0037
+ LDA xCoordHi           \ Set A = |xCoordHi - 128|
  SEC
- SBC #&80
+ SBC #128
  BPL C1EA1
- EOR #&FF
+ EOR #%11111111
 
 .C1EA1
 
- STA T
- LDA L0039
+ STA T                  \ Set T = |xCoordHi - 128|
+
+ LDA zCoordHi           \ Set A = |zCoordHi - 128|
  SEC
- SBC #&80
+ SBC #128
  BPL C1EAC
- EOR #&FF
+ EOR #%11111111
 
 .C1EAC
 
- CMP T
+ CMP T                  \ If A >= T then jump to C1EB2
  BCS C1EB2
- LDA T
+
+ LDA T                  \ Set A = T
 
 .C1EB2
 
- STA T
- RTS
+ STA T                  \ Set T = max(|xCoordHi - 128|, |zCoordHi - 128|)
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -10032,20 +10110,20 @@ L1145 = C1144+1
 .sub_C1EB5
 
  LDA #0
- STA L0034
- STA L0035
- STA L0036
+ STA xCoordLo
+ STA yCoordLo
+ STA zCoordLo
  LDA #&80
- STA L0037
- STA L0039
+ STA xCoordHi
+ STA zCoordHi
  LDA yObjectLo,X
- STA L0038
+ STA yCoordHi
  LDA xObject,X
- STA L003A
+ STA xCoordTop
  LDA yObjectHi,X
- STA L003B
+ STA yCoordTop
  LDA zObject,X
- STA L003C
+ STA zCoordTop
  RTS
 
 \ ******************************************************************************
@@ -11971,16 +12049,24 @@ L23E3 = C23E2+1
  BMI CRE14              \ has ended because of a hyperspace, so jump to CRE14
                         \ to return from the subroutine
 
- LDA #0
- STA L0005
- LDX #&7F
+ LDA #0                 \ Set A = 0 to use when we zero the L3E80 and L3EC0
+                        \ variables
+
+ STA L0005              \ Set L0005 = 0 ???
+
+ LDX #127               \ We now zero 64 bytes at L3E80 and 64 bytes at L3EC0,
+                        \ so set a counter in X for zeroing 128 bytes
 
 .P246E
 
- STA L3E80,X
- DEX
- BPL P246E
+ STA L3E80,X            \ Zero the X-th byte of L3E80
+
+ DEX                    \ Decrement the byte counter
+
+ BPL P246E              \ Loop back until we have zeroed both variables
+
  JSR sub_C25C3
+
  LDA #&1F
  STA L001A
  JSR sub_C24EA
@@ -12101,10 +12187,10 @@ L23E3 = C23E2+1
  LDA #0
  STA xDeltaHi,X
  SEC
- SBC L0037,X
+ SBC xCoordHi,X
  STA xSightsVectorLo,X
  LDA L0018,X
- SBC L003A,X
+ SBC xCoordTop,X
  STA xSightsVectorHi,X
  BPL C2529
  DEC xDeltaHi,X
@@ -12146,10 +12232,10 @@ L23E3 = C23E2+1
  LSR L0017
  ASL A
  BCC P253A
- LDA L003C
+ LDA zCoordTop
  CLC
  ADC #&60
- STA L003C
+ STA zCoordTop
  LDA L0CCE
  BMI C257E
 
@@ -12290,26 +12376,26 @@ L23E3 = C23E2+1
 
 .P2583
 
- LDA L0034,X
+ LDA xCoordLo,X
  ADC xSightsVectorLo,X
- STA L0034,X
+ STA xCoordLo,X
 
 .C2589
 
- LDA L0037,X
+ LDA xCoordHi,X
  ADC xSightsVectorHi,X
- STA L0037,X
- LDA L003A,X
+ STA xCoordHi,X
+ LDA xCoordTop,X
  ADC xDeltaHi,X
- STA L003A,X
+ STA xCoordTop,X
  CLC
  DEX
  BEQ C2589
  BPL P2583
- LDA L003C
+ LDA zCoordTop
  STA S
- LDY L003A
- LDA L003B
+ LDY xCoordTop
+ LDA yCoordTop
  CMP (R),Y
  BCC C25AE
  DEC L0017
@@ -12354,19 +12440,37 @@ L23E3 = C23E2+1
 
 .sub_C25C3
 
- LDA #0
+ LDA #0                 \ Set the low byte of (Q P) = &7F00
  STA P
- STA secondAxis
- LDA #&7F
+
+ STA secondAxis         \ Cleat bit 7 of secondAxis ???
+
+ LDA #&7F               \ Set the high byte of (Q P) = &7F00
  STA Q
- LDA #&1F
- STA zTile
+
+                        \ We now iterate through the tile corners with a nested
+                        \ loop, with zTile going from 31 to 0 (so that's from
+                        \ back to front)
+                        \
+                        \ For each zTile, xTile also goes from 31 to 0, so
+                        \ that's from right to left
+                        \
+                        \ So we work through the landscape, starting with the
+                        \ row of tile corners at the back (which we work through
+                        \ from right to left), and then doing the next row
+                        \ forward, looping until we reach the front row
+
+ LDA #31                \ Set zTile = 31 so we start iterating from the back row
+ STA zTile              \ (so zTile iterates from 31 to 0 in the outer loop)
 
 .P25D1
 
- LDA #&1F
- STA xTile
- BNE C25DA
+ LDA #31                \ Set xTile = 31 so we start iterating from the right
+ STA xTile              \ end of the current row (so xTile iterates from 31 to 0
+                        \ in the inner loop)
+
+ BNE C25DA              \ Jump to C25DA to join the loop below (this BNE is
+                        \ effectively a JMP as A is never zero)
 
 .C25D7
 
@@ -12374,15 +12478,50 @@ L23E3 = C23E2+1
 
 .C25DA
 
- JSR sub_C1DE6
- LDY xTile
+ JSR ExtractTileData
+
+ LDY xTile              \ Set Y to the tile x-coordinate, to use as an index so
+                        \ we store the tile data like this:
+                        \
+                        \   * Column xTile = 31 is stored in (Q P) + &1F
+                        \   * Column xTile = 30 is stored in (Q P) + &1E
+                        \   ...
+                        \   * Column xTile = 1 is stored in (Q P) + &01
+                        \   * Column xTile = 0 is stored in (Q P) + &00
+                        \
+                        \ (Q P) starts at &7F00 for zTile = 31, so the back row
+                        \ of the landscape is stored in &7F00 to &7F1F
+                        \
+                        \ (Q P) is decremented for each tile row (see below), so
+                        \ the next row forward is stored in &7E00 to &7E1F, for
+                        \ example
+
  ROL A
+
  STA (P),Y
- DEC xTile
- BPL C25DA
- DEC Q
- DEC zTile
- BPL P25D1
+
+ DEC xTile              \ Decrement the tile x-coordinate in the inner loop
+
+ BPL C25DA              \ Loop back until we have processed all the tiles in the
+                        \ tile row at z-coordinate zTile, working from right to
+                        \ left
+
+ DEC Q                  \ Decrement the high byte of (Q P), so we store the
+                        \ tile data like this:
+                        \
+                        \   * Row zTile = 31 is stored in &7F00 to &7F1F
+                        \   * Row zTile = 30 is stored in &7E00 to &7E1F
+                        \   ...
+                        \   * Row zTile = 1 is stored in &6100 to &611F
+                        \   * Row zTile = 0 is stored in &6000 to &601F
+
+ DEC zTile              \ Decrement the outer loop counter
+
+ BPL P25D1              \ Loop back until we have processed all the tile rows in
+                        \ the landscape, working from the back row of the
+                        \ landscape all the way to the front row
+
+
  LDA #&20
  STA R
  LDX #&1E
@@ -12431,9 +12570,12 @@ L23E3 = C23E2+1
  STA (R),Y
  DEY
  BPL C25FC
+
  DEX
+
  BPL C25F2
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -14003,7 +14145,7 @@ L23E3 = C23E2+1
                         \ tile row at z-coordinate zTile, working from right to
                         \ left
 
- DEC zTile              \ Decrement outer loop counter
+ DEC zTile              \ Decrement the outer loop counter
 
  BPL proc1              \ Loop back until we have processed all the tile rows in
                         \ the landscape, working from the back row of the
@@ -21017,6 +21159,15 @@ L314A = C3148+2
 
  EQUB &88, &CC, &EE, &FF
 
+\ ******************************************************************************
+\
+\       Name: L3E80
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
 .L3E80
 
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
@@ -21027,6 +21178,15 @@ L314A = C3148+2
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+
+\ ******************************************************************************
+\
+\       Name: L3EC0
+\       Type: Variable
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .L3EC0
 

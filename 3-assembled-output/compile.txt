@@ -118,22 +118,40 @@
      0032
 .cosSightsPitchHi
      0033
+.xCoordLo
+     0034
 .L0034
      0034
+.yCoordLo
+     0035
 .L0035
      0035
+.zCoordLo
+     0036
 .L0036
      0036
+.xCoordHi
+     0037
 .L0037
      0037
+.yCoordHi
+     0038
 .L0038
      0038
+.zCoordHi
+     0039
 .L0039
      0039
+.xCoordTop
+     003A
 .L003A
      003A
+.yCoordTop
+     003B
 .L003B
      003B
+.zCoordTop
+     003C
 .L003C
      003C
 .sightsYawAngleLo
@@ -5094,7 +5112,7 @@
      1DE3   02
      1DE4   02
      1DE5   03
-.sub_C1DE6
+.ExtractTileData
      1DE6   20 78 2B   JSR &2B78
      1DE9   B0 3D      BCS &1E28
      1DEB   48         PHA
@@ -5107,11 +5125,11 @@
      1DF3   4A         LSR A
      1DF4   C0 01      CPY #&01
      1DF6   60         RTS
-.C1DF7
+.data1
      1DF7   CC 58 0C   CPY &0C58
      1DFA   D0 03      BNE &1DFF
      1DFC   6E 56 0C   ROR &0C56
-.C1DFF
+.data2
      1DFF   B9 40 0A   LDA &0A40,Y
      1E02   C9 03      CMP #&03
      1E04   F0 2B      BEQ &1E31
@@ -5132,13 +5150,13 @@
      1E24   69 00      ADC #&00
      1E26   18         CLC
      1E27   60         RTS
-.C1E28
+.data3
      1E28   29 3F      AND #&3F
      1E2A   A8         TAY
      1E2B   24 60      BIT &60
      1E2D   10 5E      BPL &1E8D
      1E2F   30 C6      BMI &1DF7
-.C1E31
+.data4
      1E31   20 98 1E   JSR &1E98
      1E34   C9 40      CMP #&40
      1E36   B0 4A      BCS &1E82
@@ -5155,7 +5173,7 @@
      1E4E   E9 00      SBC #&00
      1E50   18         CLC
      1E51   60         RTS
-.C1E52
+.data5
      1E52   B9 00 0A   LDA &0A00,Y
      1E55   38         SEC
      1E56   E5 38      SBC &38
@@ -5182,13 +5200,13 @@
      1E7C   30 04      BMI &1E82
      1E7E   38         SEC
      1E7F   6E DD 0C   ROR &0CDD
-.C1E82
+.data6
      1E82   B9 40 0A   LDA &0A40,Y
      1E85   C9 02      CMP #&02
      1E87   F0 04      BEQ &1E8D
      1E89   A9 C0      LDA #&C0
      1E8B   85 60      STA &60
-.C1E8D
+.data7
      1E8D   B9 00 01   LDA &0100,Y
      1E90   C9 40      CMP #&40
      1E92   B0 94      BCS &1E28
