@@ -5212,24 +5212,24 @@
      1E92   B0 94      BCS &1E28
      1E94   B9 40 09   LDA &0940,Y
      1E97   60         RTS
-.sub_C1E98
+.GetMaxXZCoordLo
      1E98   A5 37      LDA &37
      1E9A   38         SEC
      1E9B   E9 80      SBC #&80
      1E9D   10 02      BPL &1EA1
      1E9F   49 FF      EOR #&FF
-.C1EA1
+.maxc1
      1EA1   85 74      STA &74
      1EA3   A5 39      LDA &39
      1EA5   38         SEC
      1EA6   E9 80      SBC #&80
      1EA8   10 02      BPL &1EAC
      1EAA   49 FF      EOR #&FF
-.C1EAC
+.maxc2
      1EAC   C5 74      CMP &74
      1EAE   B0 02      BCS &1EB2
      1EB0   A5 74      LDA &74
-.C1EB2
+.maxc3
      1EB2   85 74      STA &74
      1EB4   60         RTS
 .sub_C1EB5
@@ -6261,7 +6261,7 @@
      25BF   4C F5 24   JMP &24F5
 .CRE15
      25C2   60         RTS
-.sub_C25C3
+.GetTileAltitudes
      25C3   A9 00      LDA #&00
      25C5   85 70      STA &70
      25C7   85 60      STA &60
@@ -6269,13 +6269,13 @@
      25CB   85 71      STA &71
      25CD   A9 1F      LDA #&1F
      25CF   85 26      STA &26
-.P25D1
+.talt1
      25D1   A9 1F      LDA #&1F
      25D3   85 24      STA &24
      25D5   D0 03      BNE &25DA
-.C25D7
+.talt2
      25D7   4C 63 36   JMP &3663
-.C25DA
+.talt3
      25DA   20 E6 1D   JSR &1DE6
      25DD   A4 24      LDY &24
      25DF   2A         ROL A
@@ -6288,14 +6288,14 @@
      25EC   A9 20      LDA #&20
      25EE   85 72      STA &72
      25F0   A2 1E      LDX #&1E
-.C25F2
+.talt4
      25F2   8A         TXA
      25F3   18         CLC
      25F4   69 60      ADC #&60
      25F6   85 71      STA &71
      25F8   85 73      STA &73
      25FA   A0 1E      LDY #&1E
-.C25FC
+.talt5
      25FC   B1 70      LDA (&70),Y
      25FE   4A         LSR A
      25FF   90 1A      BCC &261B
@@ -6304,20 +6304,20 @@
      2603   D1 70      CMP (&70),Y
      2605   90 02      BCC &2609
      2607   B1 70      LDA (&70),Y
-.C2609
+.talt6
      2609   E6 71      INC &71
      260B   D1 70      CMP (&70),Y
      260D   90 02      BCC &2611
      260F   B1 70      LDA (&70),Y
-.C2611
+.talt7
      2611   88         DEY
      2612   D1 70      CMP (&70),Y
      2614   90 02      BCC &2618
      2616   B1 70      LDA (&70),Y
-.C2618
+.talt8
      2618   C6 71      DEC &71
      261A   4A         LSR A
-.C261B
+.talt9
      261B   91 72      STA (&72),Y
      261D   88         DEY
      261E   10 DC      BPL &25FC

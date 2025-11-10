@@ -9898,6 +9898,35 @@ L1145 = C1144+1
 \   Category: Landscape
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (xTile, zTile)      The coordinates of the tile to analyse
+\
+\   secondAxis          The data to extract:
+\
+\                         * Bit 7 clear = extract the tile's altitude and shape
+\
+\                         * Bit 7 set = if the tile contains an object, then ???
+\                                       otherwise extract the tile's altitude
+\                                       and shape
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   The high byte of the tile's altitude
+\
+\   L0079               The low byte of the tile's altitude in (A L0079) when
+\                       the tile contains the Sentinel's tower or a boulder
+\
+\   C flag              The tile's shape:
+\
+\                         * Clear if the tile is flat
+\
+\                         * Set if the tile is not flat
+\
 \ ******************************************************************************
 
 .ExtractTileData
@@ -9947,22 +9976,29 @@ L1145 = C1144+1
  BNE data7              \ 6) then it must contain a robot, sentry, meanie or the
                         \ Sentinel, so jump to data7 to ???
 
- JSR sub_C1E98          \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+                        \ If we get here then the tile contains the Sentinel's
+                        \ tower in object #Y
+
+ JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
                         \ and return the same value in A
 
- CMP #&64
+ CMP #100               \ If A >= 100 then jump to data6 to ???
  BCS data6
- LDA #&10
+
+ LDA #16                \ Set L000C = 16 ???
  STA L000C
- LDA yObjectLo,Y
- CLC
- ADC #&20
+
+ LDA yObjectLo,Y        \ Set (A L0079) = (yObjectHi yObjectLo) + 32
+ CLC                    \
+ ADC #&20               \ where yObject is the altitude of the Sentinel's tower
  STA L0079
  LDA yObjectHi,Y
  ADC #&00
- CLC
- RTS
+
+ CLC                    \ Clear the C flag to indicate that the tile is flat
+
+ RTS                    \ Return from the subroutine
 
 .data3
 
@@ -9972,37 +10008,51 @@ L1145 = C1144+1
  TAY                    \ data contains the existing object's number in bits 0
                         \ to 5, so extract the object number into Y
 
- BIT secondAxis         \ If bit 7 of secondAxis is clear, jump to data7
- BPL data7
+ BIT secondAxis         \ If bit 7 of secondAxis is clear, jump to data7 to get
+ BPL data7              \ the altitude of the bottom object on the tile (which
+                        \ will the altitude of the tile itself) and return that
+                        \ as the tile's data
 
  BMI data1              \ Otherwise bit 7 of secondAxis is set, so jump to data1
+                        \ to do calculations involving xCoord ???
 
 .data4
 
-                        \ If we get here then the tile contains a tree or
-                        \ boulder
+                        \ If we get here then the tile contains a tree or a
+                        \ boulder in object #Y
 
- JSR sub_C1E98          \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+ JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
                         \ and return the same value in A
 
- CMP #&40
+ CMP #64                \ If A >= 64 then jump to data6 to ???
  BCS data6
- LDA objectTypes,Y
- CMP #&02
+
+ LDA objectTypes,Y      \ If object #Y is an object of type 2 (a tree), jump to
+ CMP #2                 \ data5
  BEQ data5
- SEC
+
+                        \ If we get here then the tile contains a boulder in
+                        \ object #Y
+
+ SEC                    \ Set bit 7 of L0C67 ???
  ROR L0C67
- LDA yObjectLo,Y
- SEC
- SBC #&60
+
+ LDA yObjectLo,Y        \ Set (A L0079) = (yObjectHi yObjectLo) - 96
+ SEC                    \
+ SBC #&60               \ where yObject is the altitude of the boulder
  STA L0079
  LDA yObjectHi,Y
  SBC #&00
- CLC
- RTS
+
+ CLC                    \ Clear the C flag to indicate that the tile is flat
+
+ RTS                    \ Return from the subroutine
 
 .data5
+
+                        \ If we get here then the tile contains a tree in
+                        \ object #Y
 
  LDA yObjectLo,Y
  SEC
@@ -10010,6 +10060,7 @@ L1145 = C1144+1
  STA U
  LDA yObjectHi,Y
  SBC yCoordHi
+
  PHA
  LDA U
  CLC
@@ -10028,6 +10079,7 @@ L1145 = C1144+1
  BCC data6
  BIT L0C56
  BMI data6
+
  SEC
  ROR L0CDD
 
@@ -10038,7 +10090,7 @@ L1145 = C1144+1
  CMP #2
  BEQ data7
 
- LDA #&C0
+ LDA #%11000000
  STA secondAxis
 
 .data7
@@ -10052,49 +10104,55 @@ L1145 = C1144+1
 
  LDA yObjectHi,Y        \ Otherwise we have reached the object on the tile
                         \ itself, so set A to the y-coordinate of that object,
-                        \ and return from the subroutine with the C flag clear
-                        \ to denote a flat tile, as objects are only ever placed
-                        \ on flat tiles
+                        \ which will be the tile altitude, and return from the
+                        \ subroutine with the C flag clear to denote a flat
+                        \ tile, as objects are only ever placed on flat tiles
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C1E98
+\       Name: GetMaxXZCoordLo
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate max(|xCoordLo - 128|, |zCoordLo - 128|)
 \
 \ ******************************************************************************
 
-.sub_C1E98
+.GetMaxXZCoordLo
 
  LDA xCoordLo           \ Set A = |xCoordLo - 128|
  SEC
  SBC #128
- BPL C1EA1
+ BPL maxc1
  EOR #%11111111
 
-.C1EA1
+.maxc1
 
  STA T                  \ Set T = |xCoordLo - 128|
 
  LDA zCoordLo           \ Set A = |zCoordLo - 128|
  SEC
  SBC #128
- BPL C1EAC
+ BPL maxc2
  EOR #%11111111
 
-.C1EAC
+.maxc2
 
- CMP T                  \ If A >= T then jump to C1EB2
- BCS C1EB2
+ CMP T                  \ If A >= T then A is already set to the higher value
+ BCS maxc3              \ out of A and T, so jump to maxc3
 
- LDA T                  \ Set A = T
+ LDA T                  \ If we get here then A < T, so set A to the value of T
+                        \ so A is now set the higher value out of A and T
 
-.C1EB2
+.maxc3
 
- STA T                  \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+ STA T                  \ A is set to the higher value of A and T, so this does
+                        \ the following:
+                        \
+                        \   T = max(A, T)
+                        \
+                        \     = max(|xCoordLo - 128|, |zCoordLo - 128|)
 
  RTS                    \ Return from the subroutine
 
@@ -12065,7 +12123,8 @@ L23E3 = C23E2+1
 
  BPL P246E              \ Loop back until we have zeroed both variables
 
- JSR sub_C25C3
+ JSR GetTileAltitudes   \ Calculate tile corner altitudes and maximum tile
+                        \ corner altitudes for each tile in the landscape
 
  LDA #&1F
  STA L001A
@@ -12323,9 +12382,9 @@ L23E3 = C23E2+1
  LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
 
  CMP #%01111111         \ If it does not match %01111111 then this byte from the
- BNE C25D7              \ secret code was not matched by the CheckSecretCode
+ BNE talt2              \ secret code was not matched by the CheckSecretCode
                         \ routine (so it must have been bypassed by crackers),
-                        \ so jump to MainTitleLoop via C25D7 to restart the game
+                        \ so jump to MainTitleLoop via talt2 to restart the game
 
  DEC stashAddr          \ Decrement stashAddr(1 0) to point to the previous byte
                         \ in memory (we decrement as we initialised stashAddr
@@ -12362,7 +12421,7 @@ L23E3 = C23E2+1
  LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
 
  CMP #%01111111         \ If it matches %01111111 then we know the stash has
- BEQ C25D7              \ been compromised, so jump to Mainloop via C25D7 to
+ BEQ talt2              \ been compromised, so jump to Mainloop via talt2 to
                         \ restart the game
 
  SEC
@@ -12425,28 +12484,54 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C25C3
+\       Name: GetTileAltitudes
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Calculate tile corner altitudes and maximum tile corner altitudes
+\             for each tile in the landscape
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates tile altitudes for use when drawing the landscape.
+\
+\ The altitude of each tile corner and the shape of the anchored tile (if any)
+\ are stored as follows:
+\
+\   * &6000 to &601F for row zTile = 0
+\   * &6100 to &611F for row zTile = 1
+\     ...
+\   * &7E00 to &7E1F for row zTile = 30
+\   * &7F00 to &7F1F for row zTile = 31
+\
+\ The altitude of the highest tile corner for each tile is stored as follows:
+\
+\   * &6020 to &603E for tile row anchored by zTile = 0
+\   * &6120 to &613E for tile row anchored by zTile = 1
+\     ...
+\   * &7D20 to &7E3E for tile row anchored by zTile = 29
+\   * &7E20 to &7E3E for tile row anchored by zTile = 30
 \
 \ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
-\   C25D7               Jump to MainTitleLoop via game10
+\   talt2               Jump to MainTitleLoop via game10
 \
 \ ******************************************************************************
 
-.sub_C25C3
+.GetTileAltitudes
 
  LDA #0                 \ Set the low byte of (Q P) = &7F00
  STA P
 
- STA secondAxis         \ Cleat bit 7 of secondAxis ???
+ STA secondAxis         \ Clear bit 7 of secondAxis so ExtractTileData will only
+                        \ extract the altitude and shape of the landscape tiles
+                        \ when we call it below
 
  LDA #&7F               \ Set the high byte of (Q P) = &7F00
- STA Q
+ STA Q                  \
+                        \ This is the adddress where we will store the altitude
+                        \ data for the back row of tile corners in the landscape
 
                         \ We now iterate through the tile corners with a nested
                         \ loop, with zTile going from 31 to 0 (so that's from
@@ -12463,25 +12548,34 @@ L23E3 = C23E2+1
  LDA #31                \ Set zTile = 31 so we start iterating from the back row
  STA zTile              \ (so zTile iterates from 31 to 0 in the outer loop)
 
-.P25D1
+.talt1
 
  LDA #31                \ Set xTile = 31 so we start iterating from the right
  STA xTile              \ end of the current row (so xTile iterates from 31 to 0
                         \ in the inner loop)
 
- BNE C25DA              \ Jump to C25DA to join the loop below (this BNE is
+ BNE talt3              \ Jump to talt3 to join the loop below (this BNE is
                         \ effectively a JMP as A is never zero)
 
-.C25D7
+.talt2
 
- JMP game10             \ Jump to MainTitleLoop to restart the game
+ JMP game10             \ Jump to MainTitleLoop to restart the game (this has
+                        \ nothing to do with the GetTileAltitudes routine, but
+                        \ is all part of the anti-cracker code)
 
-.C25DA
+.talt3
 
- JSR ExtractTileData
+ JSR ExtractTileData    \ Call ExtractTileData with bit 7 of secondAxis clear
+                        \ to extract the following tile data:
+                        \
+                        \   * A = the high byte of the tile's altitude (which
+                        \         is also the altitude of the tile corner)
+                        \
+                        \   * C flag = the tile's shape, clear if the tile is
+                        \              flat or set if the tile is not flat
 
- LDY xTile              \ Set Y to the tile x-coordinate, to use as an index so
-                        \ we store the tile data like this:
+ LDY xTile              \ Set Y to the tile corner x-coordinate, to use as an
+                        \ index so we store the tile corner data like this:
                         \
                         \   * Column xTile = 31 is stored in (Q P) + &1F
                         \   * Column xTile = 30 is stored in (Q P) + &1E
@@ -12496,18 +12590,27 @@ L23E3 = C23E2+1
                         \ the next row forward is stored in &7E00 to &7E1F, for
                         \ example
 
- ROL A
+ ROL A                  \ Rotate the C flag into bit 0 of A, so we have the
+                        \ following:
+                        \
+                        \   * Bit 0 = clear if the tile is flat or set if the
+                        \             tile is not flat
+                        \
+                        \   * Bits 1-4 = the tile corner's altitude
 
- STA (P),Y
+ STA (P),Y              \ Store the tile corner data in A in the Y-th entry in
+                        \ the variable at (Q P), so this populates the extracted
+                        \ data for the tile corner at (xTile, zTile)
 
- DEC xTile              \ Decrement the tile x-coordinate in the inner loop
+ DEC xTile              \ Decrement the tile corner x-coordinate in the inner
+                        \ loop
 
- BPL C25DA              \ Loop back until we have processed all the tiles in the
-                        \ tile row at z-coordinate zTile, working from right to
-                        \ left
+ BPL talt3              \ Loop back until we have processed all the tile corners
+                        \ in the tile row at z-coordinate zTile, working from
+                        \ right to left
 
  DEC Q                  \ Decrement the high byte of (Q P), so we store the
-                        \ tile data like this:
+                        \ tile corner data like this:
                         \
                         \   * Row zTile = 31 is stored in &7F00 to &7F1F
                         \   * Row zTile = 30 is stored in &7E00 to &7E1F
@@ -12515,65 +12618,153 @@ L23E3 = C23E2+1
                         \   * Row zTile = 1 is stored in &6100 to &611F
                         \   * Row zTile = 0 is stored in &6000 to &601F
 
- DEC zTile              \ Decrement the outer loop counter
+ DEC zTile              \ Decrement the tile corner z-coordinate in the outer
+                        \ loop
 
- BPL P25D1              \ Loop back until we have processed all the tile rows in
+ BPL talt1              \ Loop back until we have processed all the tile rows in
                         \ the landscape, working from the back row of the
                         \ landscape all the way to the front row
 
+                        \ We now iterate through each tile to calculate the
+                        \ altitude of the highest tile corner, so we can store
+                        \ it after the altitude data that we just extracted
 
- LDA #&20
- STA R
- LDX #&1E
+ LDA #&20               \ Set the low byte of (S R) = &20
+ STA R                  \
+                        \ At this point the low byte of (Q P) is still zero, so
+                        \ the following loop will start with the following
+                        \ values:
+                        \
+                        \   (Q P) = &7E00
+                        \
+                        \   (S R) = &7E20
+                        \
+                        \ In other words (Q P) points to the altitude data that
+                        \ we just extracted, and (S R) points to the next set of
+                        \ bytes just after the end of the altitude data
 
-.C25F2
+                        \ We now work our way through the tiles, usine X as the
+                        \ row number iterating from the rear, and Y as the
+                        \ column number iterating from right to left along each
+                        \ row in turn
 
- TXA
- CLC
- ADC #&60
- STA Q
- STA S
- LDY #&1E
+ LDX #30                \ Set X = 30 to use as the row number, so we start
+                        \ iterating from the rear, skipping the row right at the
+                        \ back as the tile corners in that row do not anchor any
+                        \ tiles (so X iterates from 30 to 0 in the outer loop)
 
-.C25FC
+.talt4
 
- LDA (P),Y
- LSR A
- BCC C261B
- ROL A
- INY
- CMP (P),Y
- BCC C2609
- LDA (P),Y
+ TXA                    \ Set A = &60 + X
+ CLC                    \
+ ADC #&60               \ So this is the high byte of the address of the
+                        \ extracted altitude for row X, starting from &7E and
+                        \ working down to &60 as we iterate over each row
 
-.C2609
+ STA Q                  \ Set the high byte of (Q P) to A, so (Q P) points to
+                        \ the extracted altitude data for row X
 
- INC Q
- CMP (P),Y
- BCC C2611
- LDA (P),Y
+ STA S                  \ Set the high byte of (S R) to A, so (S R) points to
+                        \ the address just after the extracted altitude data
+                        \ for row X
 
-.C2611
+ LDY #30                \ Set Y = 30 to use as the column number, so we start
+                        \ iterating from the right, skipping the rightmost
+                        \ column as the tile corners in that column do not
+                        \ anchor any tiles (so Y iterates from 30 to 0 in the
+                        \ inner loop)
 
- DEY
- CMP (P),Y
- BCC C2618
- LDA (P),Y
+.talt5
 
-.C2618
+                        \ We now calculate the altitude of the highest corner
+                        \ for the tile that we are analysing, i.e. the tile
+                        \ that's anchored by the tile corner at tile coordinates
+                        \ (X, Y)
+                        \
+                        \ We do this by working through all four corners in the
+                        \ tile, starting with the anchor point, and then
+                        \ checking the corner to the right, then the corner
+                        \ behind, and then the corner to the left
 
- DEC Q
- LSR A
+ LDA (P),Y              \ Fetch the extracted altitude data for the anchor of
+                        \ the tile that we are analysing
 
-.C261B
+ LSR A                  \ Shift bit 0 into the C flag, so it contains the shape,
+                        \ and set A as the altitude
 
- STA (R),Y
- DEY
- BPL C25FC
+ BCC talt9              \ If the tile is flat then the C flag will be clear, so
+                        \ jump to talt9 to set (S R) to the altitude of the tile
+                        \ anchor, as the tile is flat and this altitude will do
+                        \ for the highest point on the tile
 
- DEX
+ ROL A                  \ Otherwise the tile is not flat, so rotate the C flag
+                        \ back into the extracted altitude data in A
 
- BPL C25F2
+ INY                    \ Increment Y to the tile corner to the right of the one
+                        \ we are analysing
+
+ CMP (P),Y              \ If this corner's altitude is less than the tile
+ BCC talt6              \ anchor's altitude, jump to talt6 to skip the following
+
+ LDA (P),Y              \ Set A to the new corner's height, so that A contains
+                        \ the highest altitude of the tile's front two corners
+
+.talt6
+
+ INC Q                  \ Increment the high byte of (Q P), so it now points to
+                        \ the extracted altitude data for the row of tile
+                        \ corners behind the one we are currently analysing
+                        \
+                        \ Y is still incremented from the anchor point, so this
+                        \ points us to the corner behind the one we just
+                        \ analysed
+
+ CMP (P),Y              \ If this corner's altitude is less than the highest
+ BCC talt7              \ altitude, jump to talt7 to skip the following
+
+ LDA (P),Y              \ Set A to the new corner's height, so that A contains
+                        \ the highest altitude of the tile's front two corners
+                        \ and the one at the rear-right of the tile
+
+.talt7
+
+ DEY                    \ Decrement Y to the tile corner to the left of the one
+                        \ we just analysed
+
+ CMP (P),Y              \ If this corner's altitude is less than the highest
+ BCC talt8              \ altitude, jump to talt8 to skip the following
+
+ LDA (P),Y              \ Set A to the new corner's height, so that A contains
+                        \ the highest altitude of the tile's front two corners
+                        \ and the two rear corners
+
+.talt8
+
+ DEC Q                  \ Decrement the high byte of (Q P) so it once again
+                        \ points to the extracted altitude data for the anchor
+                        \ point of the tile we are analysing
+
+ LSR A                  \ Shift the highest altitude in A to remove the tile
+                        \ shape from bit 0 and set A to the actual altitude from
+                        \ bits 2 to 4
+
+.talt9
+
+ STA (R),Y              \ Set the entry in (S R) for this tile to the value in A
+                        \ so it contains the highest altitude of the tile
+                        \ anchored by the relevant tile corner
+
+ DEY                    \ Decrement the column counter in Y to move left by one
+                        \ tile
+
+ BPL talt5              \ Loop back until we have processed the whole row from
+                        \ right to left
+
+ DEX                    \ Decrement the row counter in X to move forward by one
+                        \ row
+
+ BPL talt4              \ Loop back to process the next row until we have
+                        \ processed all tiles in all rows in the landscape
 
  RTS                    \ Return from the subroutine
 
