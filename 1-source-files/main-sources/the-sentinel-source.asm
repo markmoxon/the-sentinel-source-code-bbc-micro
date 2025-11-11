@@ -12231,7 +12231,8 @@ L23E3 = C23E2+1
                         \ corner altitudes for each tile in the landscape
                         \
                         \ This also sets P to zero, so (Q P) is of the form
-                        \ &xx00
+                        \ &xx00, and it also sets R to &20, so (S R) is of the
+                        \ form &xx20
 
  LDA #31                \ Set zTileRow = 31 so the call to GetRowVisibility
  STA zTileRow           \ analyses the back row of tiles
@@ -12335,7 +12336,9 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   P                   P is always zero
+\   P                   P is always zero, so (Q P) is of the form &xx00
+\
+\   R                   R is always &20, so (S R) is of the form &xx20
 \
 \   zTileRow            The tile z-coordinate of the tile row to analyse
 \
@@ -12435,9 +12438,9 @@ L23E3 = C23E2+1
 
                         \ By this point we have the following:
                         \
-                        \   (A *) = |xSightsVectorLo xSightsVectorBot|
+                        \   * (A *) = |xSightsVectorLo xSightsVectorBot|
                         \
-                        \   xDeltaHi is the original sign of the result
+                        \   * xDeltaHi is the original sign of the result
 
  CMP T                  \ If A >= T then set T = A, so T keeps a record of the
  BCC rvis4              \ largest result across all three axes (so it will be
@@ -12470,7 +12473,7 @@ L23E3 = C23E2+1
 
 .rvis5
 
- ASL xSightsVectorBot   \ Double (xSightsVectorLo xSightsVectorBot) 
+ ASL xSightsVectorBot   \ Double (xSightsVectorLo xSightsVectorBot)
  ROL xSightsVectorLo
  ASL ySightsVectorBot
  ROL ySightsVectorLo
@@ -12493,7 +12496,8 @@ L23E3 = C23E2+1
                         \ the number of the row containing the player)
 
                         \ We now take a short interlude to check the secret code
-                        \ stash, as part of the game's anti-cracker code
+                        \ stash, as part of the game's anti-cracker code, and we
+                        \ pick up the tile visibility code in part 2
 
 \ ******************************************************************************
 \
@@ -12652,6 +12656,16 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
+                        \ In part 1 we set up various variables, as follows:
+                        \
+                        \   * (A *) = |xSightsVectorLo xSightsVectorBot|
+                        \
+                        \   * xDeltaHi is the original sign of the result
+                        \
+                        \   * scaleFactor is a scale factor for (A *) ???
+                        \
+                        \ This is for just one axis
+
 .rvis6
 
  LDX #2                 \ We now work through all three axes in turn, so set an
@@ -12701,17 +12715,21 @@ L23E3 = C23E2+1
  BPL rvis7              \ If we are about to calculate the y-axis, jump back to
                         \ rvis7 to include the bottom byte
 
- LDA zObjCoordHi
- STA S
+ LDA zObjCoordHi        \ Set the top byte of (S R) to the address we set up in
+ STA S                  \ zObjCoordHi in part 1, which will point to the &xx20
+                        \ table of altitude data for the tile row, which
+                        \ contains the altitude of the highest tile corner for
+                        \ each tile in the row
 
- LDY xObjCoordHi
+ LDY xObjCoordHi        \ Set Y to the tile x-coordinate of the tile we are
+                        \ analysing, so (S R) + Y will point to the altitude of
+                        \ the highest tile corner for the tile we are analysing
 
- LDA yObjCoordHi
-
- CMP (R),Y              \ If yObjCoordHi < ??? then not visible ???
+ LDA yObjCoordHi        \ If yObjCoordHi < (S R) + Y then not visible ???
+ CMP (R),Y
  BCC rvis9
 
- DEC scaleFactor
+ DEC scaleFactor        \ Work through scale factors ???
 
  BNE rvis6              \ If scaleFactor > 0, loop back to rvis6 to repeat the
                         \ process ???
@@ -12795,6 +12813,8 @@ L23E3 = C23E2+1
 \ Returns:
 \
 \   P                   P is set to 0, so (Q P) is of the form &xx00
+\
+\   R                   P is set to &20, so (S R) is of the form &xx20
 \
 \ ------------------------------------------------------------------------------
 \
