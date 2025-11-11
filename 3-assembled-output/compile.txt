@@ -118,39 +118,39 @@
      0032
 .cosSightsPitchHi
      0033
-.xCoordBot
+.xObjCoordBot
      0034
 .L0034
      0034
-.yCoordBot
+.yObjCoordBot
      0035
 .L0035
      0035
-.zCoordBot
+.zObjCoordBot
      0036
 .L0036
      0036
-.xCoordLo
+.xObjCoordLo
      0037
 .L0037
      0037
-.yCoordLo
+.yObjCoordLo
      0038
 .L0038
      0038
-.zCoordLo
+.zObjCoordLo
      0039
 .L0039
      0039
-.xCoordHi
+.xObjCoordHi
      003A
 .L003A
      003A
-.yCoordHi
+.yObjCoordHi
      003B
 .L003B
      003B
-.zCoordHi
+.zObjCoordHi
      003C
 .L003C
      003C
@@ -5232,7 +5232,7 @@
 .maxc3
      1EB2   85 74      STA &74
      1EB4   60         RTS
-.sub_C1EB5
+.GetObjectCoords
      1EB5   A9 00      LDA #&00
      1EB7   85 34      STA &34
      1EB9   85 35      STA &35

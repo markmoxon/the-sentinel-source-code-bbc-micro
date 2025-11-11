@@ -414,73 +414,100 @@
  SKIP 1                 \ The high byte of cos(sightsPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
-.xCoordBot
+.xObjCoordBot
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The x-coordinate of a specific object (bottom byte)
+                        \
+                        \ Stored as a 24-bit value (xObjCoordHi xObjCoordLo
+                        \ xObjCoordBot)
 
 .L0034
 
  SKIP 1                 \ ???
 
-.yCoordBot
+.yObjCoordBot
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of a specific object (bottom byte)
+                        \
+                        \ Stored as a 24-bit value (yObjCoordHi yObjCoordLo
+                        \ yObjCoordBot)
 
 .L0035
 
  SKIP 1                 \ ???
 
-.zCoordBot
+.zObjCoordBot
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The z-coordinate of a specific object (bottom byte)
+                        \
+                        \ Stored as a 24-bit value (zObjCoordHi zObjCoordLo
+                        \ zObjCoordBot)
 
 .L0036
 
  SKIP 1                 \ ???
 
-.xCoordLo
+.xObjCoordLo
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The x-coordinate of a specific object (low byte)
+                        \
+                        \ Stored as a 24-bit value (xObjCoordHi xObjCoordLo
+                        \ xObjCoordBot)
 
 .L0037
 
  SKIP 1                 \ ???
 
-.yCoordLo
+.yObjCoordLo
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of a specific object (low byte)
+                        \
+                        \ Stored as a 24-bit value (yObjCoordHi yObjCoordLo
+                        \ yObjCoordBot)
 
 .L0038
 
  SKIP 1                 \ ???
 
-.zCoordLo
+.zObjCoordLo
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The z-coordinate of a specific object (low byte)
+                        \
+                        \ Stored as a 24-bit value (zObjCoordHi zObjCoordLo
+                        \ zObjCoordBot)
 
 .L0039
 
  SKIP 1                 \ ???
 
-.xCoordHi
+.xObjCoordHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The x-coordinate of a specific object (high byte)
+                        \
+                        \ Stored as a 24-bit value (xObjCoordHi xObjCoordLo
+                        \ xObjCoordBot)
 
 .L003A
 
  SKIP 1                 \ ???
 
-.yCoordHi
+.yObjCoordHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of a specific object (high byte)
+                        \
+                        \ Stored as a 24-bit value (yObjCoordHi yObjCoordLo
+                        \ yObjCoordBot)
 
 .L003B
 
  SKIP 1                 \ ???
 
-.zCoordHi
+.zObjCoordHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The z-coordinate of a specific object (high byte)
+                        \
+                        \ Stored as a 24-bit value (zObjCoordHi zObjCoordLo
+                        \ zObjCoordBot)
 
 .L003C
 
@@ -8780,7 +8807,7 @@ L1145 = C1144+1
  JSR sub_C1CCC          \ Something to do with vectors? (secondAxis is involved)
                         \ Is it working out if we are able to see the tile ???
                         \
-                        \ This also calls sub_C1EB5 which sets (L003A, L003C)
+                        \ This also calls GetObjectCoords which sets (L003A, L003C)
                         \ which we use below as the tile coordinates where we
                         \ create objects, so is (L003A, L003C) the tile that the
                         \ player is looking at ???
@@ -9645,21 +9672,21 @@ L1145 = C1144+1
 
  LDA #0
  STA T
- LDA xCoordBot,X
+ LDA xObjCoordBot,X
  CLC
  ADC xSightsVectorBot,X
- STA xCoordBot,X
+ STA xObjCoordBot,X
  LDA xSightsVectorLo,X
  BPL C1CBD
  DEC T
 
 .C1CBD
 
- ADC xCoordLo,X
- STA xCoordLo,X
- LDA xCoordHi,X
+ ADC xObjCoordLo,X
+ STA xObjCoordLo,X
+ LDA xObjCoordHi,X
  ADC T
- STA xCoordHi,X
+ STA xObjCoordHi,X
  DEX
  BPL P1CAC
  RTS
@@ -9680,16 +9707,16 @@ L1145 = C1144+1
  LDX anotherObject
  LSR L0C56
  LSR L0CDD
- JSR sub_C1EB5
+ JSR GetObjectCoords
 
 .C1CD7
 
  JSR sub_C1CAA
- LDA xCoordHi
+ LDA xObjCoordHi
  STA xTile
  CMP #&1F
  BCS C1D33
- LDA zCoordHi
+ LDA zObjCoordHi
  STA zTile
  CMP #&1F
  BCS C1D33
@@ -9704,10 +9731,10 @@ L1145 = C1144+1
  TAX
  LDA L0079
  SEC
- SBC yCoordLo
+ SBC yObjCoordLo
  STA L0079
  TXA
- SBC yCoordHi
+ SBC yObjCoordHi
  BMI C1CD7
  BNE C1D33
  LDA L0079
@@ -9770,7 +9797,7 @@ L1145 = C1144+1
 
 .C1D5F
 
- LDA yCoordHi
+ LDA yObjCoordHi
  CMP S
  BCS C1D74
  CMP T
@@ -9808,13 +9835,13 @@ L1145 = C1144+1
 
  STA G
  LSR A
- LDA xCoordLo
+ LDA xObjCoordLo
  BCC C1D93
  EOR #&FF
 
 .C1D93
 
- CMP zCoordLo
+ CMP zObjCoordLo
  LDA G
  ROL A
  TAY
@@ -9824,9 +9851,9 @@ L1145 = C1144+1
 
  TAX
  LSR A
- LDY xCoordLo
+ LDY xObjCoordLo
  BCS C1DA4
- LDY zCoordLo
+ LDY zObjCoordLo
 
 .C1DA4
 
@@ -9866,10 +9893,10 @@ L1145 = C1144+1
  CLC
  ADC G
  STA U
- LDA yCoordLo
+ LDA yObjCoordLo
  SEC
  SBC T
- LDA yCoordHi
+ LDA yObjCoordHi
  SBC U
  BPL C1DDB
  JMP C1D33
@@ -9979,7 +10006,7 @@ L1145 = C1144+1
                         \ If we get here then the tile contains the Sentinel's
                         \ tower in object #Y
 
- JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+ JSR GetMaxXZCoordLo    \ Set T = max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
                         \
                         \ and return the same value in A
 
@@ -10014,14 +10041,14 @@ L1145 = C1144+1
                         \ as the tile's data
 
  BMI data1              \ Otherwise bit 7 of secondAxis is set, so jump to data1
-                        \ to do calculations involving xCoord ???
+                        \ to do calculations involving xObjCoord ???
 
 .data4
 
                         \ If we get here then the tile contains a tree or a
                         \ boulder in object #Y
 
- JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+ JSR GetMaxXZCoordLo    \ Set T = max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
                         \
                         \ and return the same value in A
 
@@ -10056,10 +10083,10 @@ L1145 = C1144+1
 
  LDA yObjectLo,Y
  SEC
- SBC yCoordLo
+ SBC yObjCoordLo
  STA U
  LDA yObjectHi,Y
- SBC yCoordHi
+ SBC yObjCoordHi
 
  PHA
  LDA U
@@ -10115,13 +10142,13 @@ L1145 = C1144+1
 \       Name: GetMaxXZCoordLo
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate max(|xCoordLo - 128|, |zCoordLo - 128|)
+\    Summary: Calculate max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
 \
 \ ******************************************************************************
 
 .GetMaxXZCoordLo
 
- LDA xCoordLo           \ Set A = |xCoordLo - 128|
+ LDA xObjCoordLo        \ Set A = |xObjCoordLo - 128|
  SEC
  SBC #128
  BPL maxc1
@@ -10129,9 +10156,9 @@ L1145 = C1144+1
 
 .maxc1
 
- STA T                  \ Set T = |xCoordLo - 128|
+ STA T                  \ Set T = |xObjCoordLo - 128|
 
- LDA zCoordLo           \ Set A = |zCoordLo - 128|
+ LDA zObjCoordLo        \ Set A = |zObjCoordLo - 128|
  SEC
  SBC #128
  BPL maxc2
@@ -10152,37 +10179,71 @@ L1145 = C1144+1
                         \
                         \   T = max(A, T)
                         \
-                        \     = max(|xCoordLo - 128|, |zCoordLo - 128|)
+                        \     = max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C1EB5
+\       Name: GetObjectCoords
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: Get an object's coordinates
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine fetches the cartesian coordinates of object #X as three 24-bit
+\ numbers, as follows:
+\
+\   (xObjCoordHi xObjCoordLo xObjCoordBot)
+\
+\   (yObjCoordHi yObjCoordLo yObjCoordBot)
+\
+\   (zObjCoordHi zObjCoordLo zObjCoordBot)
+\
+\ The high byte can be thought of as the integer with low and bottom bytes as
+\ the fractional part.
+\
+\ Tile corners are integers in the x- and z-axis, and objects are placed in the
+\ centre of tiles by setting the fractional part to 0.5. So an object that's
+\ been placed directly on the tile that's anchored at (2, y, 3) will appear at
+\ (2.5, y, 3.5).
+\
+\ The y-coordinate - i.e. the altitude of the object above the tile itself -
+\ depends on the object type and whether it is stacked on top of another object.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   An object number
 \
 \ ******************************************************************************
 
-.sub_C1EB5
+.GetObjectCoords
 
- LDA #0
- STA xCoordBot
- STA yCoordBot
- STA zCoordBot
- LDA #&80
- STA xCoordLo
- STA zCoordLo
- LDA yObjectLo,X
- STA yCoordLo
- LDA xObject,X
- STA xCoordHi
- LDA yObjectHi,X
- STA yCoordHi
- LDA zObject,X
- STA zCoordHi
- RTS
+ LDA #0                 \ Set the bottom byte of each coordinate to zero
+ STA xObjCoordBot
+ STA yObjCoordBot
+ STA zObjCoordBot
+
+ LDA #128               \ Set the low byte of the x- and -z-coordinates to 128
+ STA xObjCoordLo        \ (which represents 0.5, so the object sits in the
+ STA zObjCoordLo        \ middle of the tile on which it is placed)
+
+ LDA yObjectLo,X        \ Set the low byte of the y-coordinate to the altitude
+ STA yObjCoordLo        \ of object #X
+
+ LDA xObject,X          \ Set the high byte of the x-coordinate to the value for
+ STA xObjCoordHi        \ object #X from the xObject table
+
+ LDA yObjectHi,X        \ Set the high byte of the y-coordinate to the value for
+ STA yObjCoordHi        \ object #X from the yObjectHi table
+
+ LDA zObject,X          \ Set the high byte of the z-coordinate to the value for
+ STA zObjCoordHi        \ object #X from the zObject table
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12238,7 +12299,7 @@ L23E3 = C23E2+1
  LSR A
  STA L0019
  LDX playerObject
- JSR sub_C1EB5
+ JSR GetObjectCoords
  LDX #&02
 
 .C250D
@@ -12246,10 +12307,10 @@ L23E3 = C23E2+1
  LDA #0
  STA xDeltaHi,X
  SEC
- SBC xCoordLo,X
+ SBC xObjCoordLo,X
  STA xSightsVectorBot,X
  LDA L0018,X
- SBC xCoordHi,X
+ SBC xObjCoordHi,X
  STA xSightsVectorLo,X
  BPL C2529
  DEC xDeltaHi,X
@@ -12291,10 +12352,10 @@ L23E3 = C23E2+1
  LSR L0017
  ASL A
  BCC P253A
- LDA zCoordHi
+ LDA zObjCoordHi
  CLC
  ADC #&60
- STA zCoordHi
+ STA zObjCoordHi
  LDA L0CCE
  BMI C257E
 
@@ -12435,26 +12496,26 @@ L23E3 = C23E2+1
 
 .P2583
 
- LDA xCoordBot,X
+ LDA xObjCoordBot,X
  ADC xSightsVectorBot,X
- STA xCoordBot,X
+ STA xObjCoordBot,X
 
 .C2589
 
- LDA xCoordLo,X
+ LDA xObjCoordLo,X
  ADC xSightsVectorLo,X
- STA xCoordLo,X
- LDA xCoordHi,X
+ STA xObjCoordLo,X
+ LDA xObjCoordHi,X
  ADC xDeltaHi,X
- STA xCoordHi,X
+ STA xObjCoordHi,X
  CLC
  DEX
  BEQ C2589
  BPL P2583
- LDA zCoordHi
+ LDA zObjCoordHi
  STA S
- LDY xCoordHi
- LDA yCoordHi
+ LDY xObjCoordHi
+ LDA yObjCoordHi
  CMP (R),Y
  BCC C25AE
  DEC L0017
