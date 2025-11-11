@@ -97,6 +97,11 @@
 
  SKIP 1                 \ ???
 
+.storeResultsOffset
+
+ SKIP 0                 \ The offset to use when storing results from the
+                        \ GetRowVisibility routine
+
 .L0005
 
  SKIP 1                 \ ???
@@ -203,6 +208,11 @@
 
  SKIP 1                 \ ???
 
+.scaleFactor
+
+ SKIP 0                 \ Storage for a scale factor in when calculating tile
+                        \ visibility in the GetRowVisibility routine
+
 .L0017
 
  SKIP 1                 \ ???
@@ -210,6 +220,11 @@
 .L0018
 
  SKIP 0                 \ ???
+
+.xTileRow
+
+ SKIP 0                 \ Used to store the tile x-coordinate of the tile we are
+                        \ analysing in the GetRowVisibility routine
 
 .xBlock
 
@@ -223,6 +238,11 @@
 .L001A
 
  SKIP 0                 \ ???
+
+.zTileRow
+
+ SKIP 0                 \ Used to store the tile z-coordinate of the tile row we
+                        \ are analysing in the GetRowVisibility routine
 
 .zBlock
 
@@ -871,11 +891,17 @@
 
 .L0180
 
- SKIP 32                \ ???
+ SKIP 0                 \ ???
 
-.L01A0
+.oddTileData
 
- SKIP 32                \ ???
+ SKIP 32                \ Storage for the visibility of tiles in the odd rows
+                        \ that are processed by the GetRowVisibility routine
+
+.evenTileData
+
+ SKIP 32                \ Storage for the visibility of tiles in the even rows
+                        \ that are processed by the GetRowVisibility routine
 
 \ ******************************************************************************
 \
@@ -1692,9 +1718,9 @@
 
  EQUB 0                 \ The offset into the secretCodeStash where we store a
                         \ set of generated values for later checking in the
-                        \ sub_C24EA routine ???
+                        \ GetRowVisibility routine
                         \
-                        \ sub_C2A1B writes a value to this location
+                        \ sub_C2A1B writes a value to this location ???
                         \
                         \ e.g. &8D for landscape 0, &BF for landscape 1
                         \
@@ -2044,9 +2070,14 @@
 
  EQUB 0                 \ ???
 
-.L0CCE
+.doNotCheckSecret
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to control whether we perform the secret code
+                        \ check that's buried in the GetRowVisibility routine
+                        \
+                        \   * Bit 7 clear = perform check
+                        \
+                        \   * Bit 7 set = do not perform check
 
 .L0CCF
 
@@ -6388,8 +6419,8 @@ L1145 = C1144+1
                         \
                         \ The third step is only relevant if we are going on to
                         \ play the game, as this feeds into a second secret code
-                        \ check that is performed in the sub_C24EA routine,
-                        \ which looks like it is only run during gameplay ???
+                        \ check that is performed in the GetRowVisibility
+                        \ routine, which is only run during gameplay
 
 .srct1
 
@@ -6475,10 +6506,10 @@ L1145 = C1144+1
                         \ contains the result of each of the comparisons with
                         \ %01111111 added to them
                         \
-                        \ The stash is checked in the sub_C24EA routine and will
-                        \ abort the game if the values aren't correct, so this
-                        \ enables a second secret code check once the game has
-                        \ started
+                        \ The stash is checked in the GetRowVisibility routine
+                        \ and will abort the game if the values aren't correct,
+                        \ so this enables a second secret code check once the
+                        \ game has started
                         \
                         \ The secret stash adds a known value into the mix, by
                         \ fetching the value of objectFlags, which contains the
@@ -6522,7 +6553,7 @@ L1145 = C1144+1
                         \ then the four corresponding entries in secretCodeStash
                         \ will be %01111111
                         \
-                        \ See the sub_C24EA routine to see this in action
+                        \ See the GetRowVisibility routine to see this in action
 
  INY                    \ Increment the index in Y so we build the stash upwards
                         \ in memory
@@ -9707,7 +9738,15 @@ L1145 = C1144+1
  LDX anotherObject
  LSR L0C56
  LSR L0CDD
- JSR GetObjectCoords
+
+ JSR GetObjectCoords    \ Fetch the cartesian coordinates of the another object
+                        \ as three 24-bit numbers, as follows:
+                        \
+                        \   (xObjCoordHi xObjCoordLo xObjCoordBot)
+                        \
+                        \   (yObjCoordHi yObjCoordLo yObjCoordBot)
+                        \
+                        \   (zObjCoordHi zObjCoordLo zObjCoordBot)
 
 .C1CD7
 
@@ -12155,68 +12194,81 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2463
+\       Name: GetTileVisibility
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: For each tile in the landscape, calculate whether the player can
+\             see that tile, to speed up the process of drawing the landscape
 \
 \ ******************************************************************************
 
-.sub_C2463
+.GetTileVisibility
 
  LDA hyperspaceEndsGame \ If bit 7 of hyperspaceEndsGame is set then the game
- BMI CRE14              \ has ended because of a hyperspace, so jump to CRE14
+ BMI tvis5              \ has ended because of a hyperspace, so jump to tvis5
                         \ to return from the subroutine
 
  LDA #0                 \ Set A = 0 to use when we zero the L3E80 and L3EC0
                         \ variables
 
- STA L0005              \ Set L0005 = 0 ???
+ STA storeResultsOffset \ Set storeResultsOffset = 0 so the call to first call
+                        \ to GetRowVisibility (for tile row 31) will populate
+                        \ the table at oddTileData with the tile visibilities
+                        \ of the row being analysed
 
  LDX #127               \ We now zero 64 bytes at L3E80 and 64 bytes at L3EC0,
                         \ so set a counter in X for zeroing 128 bytes
 
-.P246E
+.tvis1
 
  STA L3E80,X            \ Zero the X-th byte of L3E80
 
  DEX                    \ Decrement the byte counter
 
- BPL P246E              \ Loop back until we have zeroed both variables
+ BPL tvis1              \ Loop back until we have zeroed both variables
 
  JSR GetTileAltitudes   \ Calculate tile corner altitudes and maximum tile
                         \ corner altitudes for each tile in the landscape
+                        \
+                        \ This also sets P to zero, so (Q P) is of the form
+                        \ &xx00
 
- LDA #&1F
- STA L001A
- JSR sub_C24EA
- DEC L001A
+ LDA #31                \ Set zTileRow = 31 so the call to GetRowVisibility
+ STA zTileRow           \ analyses the back row of tiles
 
-.C2480
+ JSR GetRowVisibility   \ ???
 
- LDA L0005
- EOR #&20
- STA L0005
- JSR sub_C24EA
+ DEC zTileRow           \ Decrement zTileRow to move forward by one tile row
+
+.tvis2
+
+ LDA storeResultsOffset \ Flip storeResultsOffset between 0 and 32, so each
+ EOR #32                \ call to GetRowVisibility alternates between storing
+ STA storeResultsOffset \ the tile visibilities in oddTileData and evenTileData
+                        \
+                        \ This works because evenTileData - oddTileData = 32
+
+ JSR GetRowVisibility   \ ???
+
  LDX playerObject
  LDA yObjectHi,X
  STA V
  LDX #&1E
 
-.C2492
+.tvis3
 
  TXA
  TAY
  LDA (P),Y
  LDY #&FF
  LSR A
- BCS C24A2
+ BCS tvis4
  CMP V
- BCC C24A2
- BEQ C24A2
+ BCC tvis4
+ BEQ tvis4
  INY
 
-.C24A2
+.tvis4
 
  STY W
  TXA
@@ -12224,7 +12276,7 @@ L23E3 = C23E2+1
  ASL A
  ASL A
  AND #&E0
- ORA L001A
+ ORA zTileRow
  LSR A
  STA T
  TXA
@@ -12234,10 +12286,10 @@ L23E3 = C23E2+1
  LDA L24E2,Y
  EOR #&FF
  STA bitMask
- LDA L0180,X
- ORA L0180+1,X
- ORA L01A0,X
- ORA L01A0+1,X
+ LDA oddTileData,X
+ ORA oddTileData+1,X
+ ORA evenTileData,X
+ ORA evenTileData+1,X
  AND W
  AND L24E2,Y
  STA U
@@ -12247,13 +12299,16 @@ L23E3 = C23E2+1
  ORA U
  STA L3E80,Y
  DEX
- BPL C2492
- DEC L001A
- BPL C2480
+ BPL tvis3
 
-.CRE14
+ DEC zTileRow           \ Decrement zTileRow to move forward by one tile row
 
- RTS
+ BPL tvis2              \ Loop back until we have processed all the tile rows in
+                        \ the landscape
+
+.tvis5
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12270,94 +12325,189 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C24EA
+\       Name: GetRowVisibility (Part 1 of 2)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: Set up the calculations for whether each tile in a tile row is
+\             potentially visible to the player
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   P                   P is always zero
+\
+\   zTileRow            The tile z-coordinate of the tile row to analyse
+\
+\   storeResultsOffset  Defines where we store the results of the analysis:
+\
+\                         * oddTileData when storeResultsOffset = 0
+\
+\                         * evenTileData when storeResultsOffset = 32
 \
 \ ******************************************************************************
 
-.sub_C24EA
+.GetRowVisibility
 
- LDA L001A
- CLC
- ADC #&60
- STA Q
- LDA #&1F
- STA L0018
+ LDA zTileRow           \ Set the high byte of (Q P) to &60 + zTileRow
+ CLC                    \
+ ADC #&60               \ This gives us the address where the GetTileAltitudes
+ STA Q                  \ routine stored the altitude data for tile row zTileRow
+                        \
+                        \ This works because we only ever call this routine with
+                        \ P = 0, and row zTile = 0 is at &6000, row zTile = 1 is
+                        \ at &6100 and so on
 
-.C24F5
+ LDA #31                \ Set xTileRow = 31 so we start iterating from the right
+ STA xTileRow           \ end of the current row (so xTileRow iterates from 31
+                        \ to in the following loop)
+
+                        \ We now loop through each tile corner in the row, from
+                        \ right to left, in a loop that's split over part 1 and
+                        \ part 2 (and which has an anti-cracker interlude in the
+                        \ middle that has nothing to do with visibility checks)
+
+.rvis1
 
  JSR ProcessSound       \ Process any sounds or music that are being made
 
- LDY #0
- STY T
- DEY
- STY L0017
- LDY L0018
- LDA (P),Y
+ LDY #0                 \ Set T = 0, so we can use it to capture the longest
+ STY T                  \ axis in the vector calculation below
+
+ DEY                    \ Set scaleFactor = 255, which is the highest possible
+ STY scaleFactor        \ value in one byte, so we can scale this down to use as
+                        \ a scale factor
+
+ LDY xTileRow           \ Set L0019 to the extracted altitude data for the tile
+ LDA (P),Y              \ we are processing (is this used ???)
  LSR A
  STA L0019
- LDX playerObject
- JSR GetObjectCoords
- LDX #&02
 
-.C250D
+ LDX playerObject       \ Fetch the cartesian coordinates of the player object
+ JSR GetObjectCoords    \ as three 24-bit numbers, as follows:
+                        \
+                        \   (xObjCoordHi xObjCoordLo xObjCoordBot)
+                        \
+                        \   (yObjCoordHi yObjCoordLo yObjCoordBot)
+                        \
+                        \   (zObjCoordHi zObjCoordLo zObjCoordBot)
 
- LDA #0
- STA xDeltaHi,X
- SEC
- SBC xObjCoordLo,X
- STA xSightsVectorBot,X
- LDA L0018,X
- SBC xObjCoordHi,X
- STA xSightsVectorLo,X
- BPL C2529
- DEC xDeltaHi,X
- LDA #0
- SEC
- SBC xSightsVectorBot,X
- LDA #0
- SBC xSightsVectorLo,X
+ LDX #2                 \ We now work through all three axes in turn, so set an
+                        \ axis counter in X to iterate through 2, 1 and 0 (for
+                        \ the z-axis, y-axis and x-axis respectively)
+                        \
+                        \ The comments in the following loop will concentrate on
+                        \ the x-axis to keep things simple
 
-.C2529
+.rvis2
 
- CMP T
- BCC C252F
- STA T
+ LDA #0                 \ Set xDeltaHi = 0, so we can use it as the top byte of
+ STA xDeltaHi,X         \ the x-axis element of the vector from the player to
+                        \ the tile corner
 
-.C252F
+ SEC                    \ Set (xSightsVectorLo xSightsVectorBot) = 
+ SBC xObjCoordLo,X      \               (xTileRow 0) - (xObjCoordHi xObjCoordLo)
+ STA xSightsVectorBot,X \
+ LDA xTileRow,X         \ So (xSightsVectorLo xSightsVectorBot) contains the
+ SBC xObjCoordHi,X      \ distance in the x-axis from the player to the tile
+ STA xSightsVectorLo,X  \ corner that we are analysing
+                        \
+                        \ The vector is this way around because if you add this
+                        \ value to the player's coordinates we get the tile
+                        \ corner's coordinates
 
- DEX
+ BPL rvis3              \ If the result is positive, jump to rvis3
 
- BPL C250D
+ DEC xDeltaHi,X         \ The result is negative, so set xDeltaHi = &FF so it
+                        \ can be used as the top byte for the x-axis element of
+                        \ the vector from the player to the tile corner
+
+ LDA #0                 \ Negate the result as follows (we ignore the bottom
+ SEC                    \ byte):
+ SBC xSightsVectorBot,X \
+ LDA #0                 \   (A *) = -(xSightsVectorLo xSightsVectorBot)
+ SBC xSightsVectorLo,X  \
+                        \ So this makes (A *) positive, to give this:
+                        \
+                        \   (A *) = |xSightsVectorLo xSightsVectorBot|
+
+.rvis3
+
+                        \ By this point we have the following:
+                        \
+                        \   (A *) = |xSightsVectorLo xSightsVectorBot|
+                        \
+                        \   xDeltaHi is the original sign of the result
+
+ CMP T                  \ If A >= T then set T = A, so T keeps a record of the
+ BCC rvis4              \ largest result across all three axes (so it will be
+ STA T                  \ the longest axis in the vector from the player to the
+                        \ tile we are analysing)
+
+.rvis4
+
+ DEX                    \ Decrement the axis counter in X to move on to the next
+                        \ axis
+
+ BPL rvis2              \ Loop back until we have processed all three axes
 
                         \ At this point X is set to 255, which we use below when
-                        \ checking the secret entry code
+                        \ checking the secret entry code in CheckSecretStash
 
- LDA T
- ASL A
- ASL A
- CMP #&06
- BCC C25AF
+ LDA T                  \ If T * 4 < 6, then T < 1.5, so jump to rvis10 with the
+ ASL A                  \ C flag clear to store &FF as the visibility result (to
+ ASL A                  \ record that this corner is visible)
+ CMP #6                 \
+ BCC rvis10             \ This ensures that all tile corners that are within 1.5
+                        \ tiles of the player are marked as being potentially
+                        \ visible
 
-.P253A
+                        \ We now scale the value in A to be as high as possible
+                        \ while still fitting into one byte, and at the same
+                        \ time we double (xSightsVectorLo xSightsVectorBot) and
+                        \ halve the scale factor in scaleFactor to record the
+                        \ amount of scaling
 
- ASL xSightsVectorBot
+.rvis5
+
+ ASL xSightsVectorBot   \ Double (xSightsVectorLo xSightsVectorBot) 
  ROL xSightsVectorLo
  ASL ySightsVectorBot
  ROL ySightsVectorLo
  ASL zSightsVectorBot
  ROL zSightsVectorLo
- LSR L0017
- ASL A
- BCC P253A
- LDA zObjCoordHi
- CLC
- ADC #&60
- STA zObjCoordHi
- LDA L0CCE
- BMI C257E
+
+ LSR scaleFactor        \ Halve scaleFactor
+
+ ASL A                  \ Shift A to the left to shift bit 7 into the C flag
+
+ BCC rvis5              \ Loop back to repeat the above scalings until we have
+                        \ shifted a 1 out of bit 7
+
+ LDA zObjCoordHi        \ Set zObjCoordHi = zObjCoordHi + &60
+ CLC                    \
+ ADC #&60               \ This sets zObjCoordHi to the high byte of the address
+ STA zObjCoordHi        \ for the extracted altitude data for the tile row on
+                        \ which the player is standing (as zObjCoordHi is the
+                        \ integer part of the player's z-coordinate, which is
+                        \ the number of the row containing the player)
+
+                        \ We now take a short interlude to check the secret code
+                        \ stash, as part of the game's anti-cracker code
+
+\ ******************************************************************************
+\
+\       Name: CheckSecretStash
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: Check whether the secret code stash is correctly set up, as part
+\             of the anti-cracker code
+\
+\ ******************************************************************************
+
+ LDA doNotCheckSecret   \ If bit 7 of doNotCheckSecret is set then jump down to
+ BMI rvis6              \ part 2 of GetRowVisibility to skip checking the secret
+                        \ code stash
 
                         \ The following code does a check on the secret entry
                         \ code for the current landscape to ensure that it
@@ -12438,7 +12588,7 @@ L23E3 = C23E2+1
                         \ We use X as the loop counter to work through all four
                         \ bytes, as we set it to 3 above
 
-.P2569
+.stas1
 
  LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
 
@@ -12454,7 +12604,7 @@ L23E3 = C23E2+1
 
  DEX                    \ Decrement the loop counter
 
- BPL P2569              \ Loop back until we have checked all four secret code
+ BPL stas1              \ Loop back until we have checked all four secret code
                         \ bytes
 
                         \ The four code bytes have now been checked, but we have
@@ -12485,63 +12635,131 @@ L23E3 = C23E2+1
  BEQ talt2              \ been compromised, so jump to Mainloop via talt2 to
                         \ restart the game
 
- SEC
- ROR L0CCE
+ SEC                    \ Set bit 7 of doNotCheckSecret so we do not repeat the
+ ROR doNotCheckSecret   \ secret code check again (at least, until we reach the
+                        \ next landscape)
 
-.C257E
+                        \ Fall through into part 2 of GetRowVisibility to
+                        \ continue with the visibility calculations
 
- LDX #&02
- CLC
- BCC C2589
+\ ******************************************************************************
+\
+\       Name: GetRowVisibility (Part 2 of 2)
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: Calculate whether each tile in a tile row is potentially visible
+\             to the player
+\
+\ ******************************************************************************
 
-.P2583
+.rvis6
 
- LDA xObjCoordBot,X
- ADC xSightsVectorBot,X
- STA xObjCoordBot,X
+ LDX #2                 \ We now work through all three axes in turn, so set an
+                        \ axis counter in X to iterate through 2, 1 and 0 (for
+                        \ the z-axis, y-axis and x-axis respectively)
+                        \
+                        \ The comments in the following loop will concentrate on
+                        \ the x-axis to keep things simple
 
-.C2589
+ CLC                    \ Clear the C flag so the initial addition at rvis8 will
+                        \ start properly
 
- LDA xObjCoordLo,X
- ADC xSightsVectorLo,X
+ BCC rvis8              \ Jump into the following loop at rvis8 so we start off
+                        \ that calculations with the z-axis and skip the bottom
+                        \ byte
+
+.rvis7
+
+ LDA xObjCoordBot,X     \ For the y-axis calculation, we include the bottom byte
+ ADC xSightsVectorBot,X \ for more accuracy, so we calculate the following:
+ STA xObjCoordBot,X     \
+                        \   (xObjCoordHi xObjCoordLo xObjCoordBot) +=
+                        \            (xDeltaHi xSightsVectorLo xSightsVectorBot)
+.rvis8
+
+ LDA xObjCoordLo,X      \ Set (xObjCoordHi xObjCoordLo) +=
+ ADC xSightsVectorLo,X  \                             (xDeltaHi xSightsVectorLo)
  STA xObjCoordLo,X
  LDA xObjCoordHi,X
  ADC xDeltaHi,X
  STA xObjCoordHi,X
- CLC
- DEX
- BEQ C2589
- BPL P2583
+
+                        \ The calculations above add the scaled vector from the
+                        \ player to the tile corner, which is in xSightsVector,
+                        \ to the player's object coordinates in xObjCoord
+                        \
+                        \ So this calculation effectively follows the player's
+                        \ gaze
+
+ CLC                    \ Clear the C flag for the next additions
+
+ DEX                    \ Decrement the axis counter
+
+ BEQ rvis8              \ If we are just about to calculate the x-axis, jump back
+                        \ to rvis8 to skip the bottom byte
+
+ BPL rvis7              \ If we are about to calculate the y-axis, jump back to
+                        \ rvis7 to include the bottom byte
+
  LDA zObjCoordHi
  STA S
+
  LDY xObjCoordHi
+
  LDA yObjCoordHi
- CMP (R),Y
- BCC C25AE
- DEC L0017
- BNE C257E
- CLC
- BCC C25AF
 
-.C25AE
+ CMP (R),Y              \ If yObjCoordHi < ??? then not visible ???
+ BCC rvis9
 
- SEC
+ DEC scaleFactor
 
-.C25AF
+ BNE rvis6              \ If scaleFactor > 0, loop back to rvis6 to repeat the
+                        \ process ???
 
- LDA L0018
- ORA L0005
- TAY
- LDA #0
- SBC #&00
- STA L0180,Y
- DEC L0018
- BMI CRE15
- JMP C24F5
+ CLC                    \ Clear the C flag so we store &FF in the visibility
+                        \ table to indicate that this tile corner is visible
 
-.CRE15
+ BCC rvis10             \ Jump to rvis10 to store the result (this BCC is
+                        \ effectively a JMP as the C flag is always clear)
 
- RTS
+.rvis9
+
+ SEC                    \ Set the C flag so we store 0 in the visibility table
+                        \ to indicate that this tile corner is not visible
+
+.rvis10
+
+ LDA xTileRow           \ Set Y = storeResultsOffset + xTileRow
+ ORA storeResultsOffset \
+ TAY                    \ The value of storeResultsOffset is either 0 or 32, so
+                        \ this creates an index in Y that we can use to store
+                        \ the result in either oddTileData (when it is 0) or
+                        \ evenTileData when it is 32)
+
+ LDA #0                 \ Set A = 0 - 0 - (1 - C)
+ SBC #0                 \       = C - 1
+                        \
+                        \ so this sets:
+                        \
+                        \   * A = 0 if the C flag is set
+                        \
+                        \   * A = &FF if the C flag is clear
+
+ STA oddTileData,Y      \ Store the result in the oddTileData or evenTileData
+                        \ table, as determined by storeResultsOffset
+
+ DEC xTileRow           \ Decrement xTileRow to move left along the tile row we
+                        \ are analysing
+
+ BMI rvis11             \ If we have already processed the leftmost tile then
+                        \ jump to rvis11 to return from the subroutine
+
+ JMP rvis1              \ Otherwise jump back to part 1 to analyse the next tile
+                        \ to the left
+
+.rvis11
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12571,6 +12789,12 @@ L23E3 = C23E2+1
 \     ...
 \   * &7D20 to &7E3E for tile row anchored by zTile = 29
 \   * &7E20 to &7E3E for tile row anchored by zTile = 30
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   P                   P is set to 0, so (Q P) is of the form &xx00
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18605,10 +18829,13 @@ L314A = C3148+2
 
  LDA uTurnStatus        \ If bit 7 of uTurnStatus is set then we just performed
  BMI game3              \ a U-turn in the ProcessActionKeys routine, so jump to
-                        \ game3 to skip the following instruction ???
+                        \ game3 to skip the following instruction, as we don't
+                        \ need to recalculate tile visibility if we are turning
+                        \ around (as the player hasn't moved)
 
- JSR sub_C2463          \ Prepare something for the landscape-drawing process
-                        \ that we don't need to repeat when U-turning ???
+ JSR GetTileVisibility  \ For each tile in the landscape, calculate whether the
+                        \ player can see that tile, to speed up the process of
+                        \ drawing the landscape
 
 .game3
 

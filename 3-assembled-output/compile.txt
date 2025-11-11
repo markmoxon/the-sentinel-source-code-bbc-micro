@@ -8,6 +8,8 @@
      0003
 .L0004
      0004
+.storeResultsOffset
+     0005
 .L0005
      0005
 .tileAltitude
@@ -50,15 +52,21 @@
      0015
 .L0016
      0016
+.scaleFactor
+     0017
 .L0017
      0017
 .L0018
+     0018
+.xTileRow
      0018
 .xBlock
      0018
 .L0019
      0019
 .L001A
+     001A
+.zTileRow
      001A
 .zBlock
      001A
@@ -305,7 +313,9 @@
      0140
 .L0180
      0180
-.L01A0
+.oddTileData
+     0180
+.evenTileData
      01A0
 .tileData
      0400   00
@@ -2670,7 +2680,7 @@
      0CCC   00
 .L0CCD
      0CCD   00
-.L0CCE
+.doNotCheckSecret
      0CCE   00
 .L0CCF
      0CCF   00
@@ -6053,13 +6063,13 @@
      245E   91 70      STA (&70),Y
 .C2460
      2460   4C 0D 23   JMP &230D
-.sub_C2463
+.GetTileVisibility
      2463   AD DE 0C   LDA &0CDE
      2466   30 79      BMI &24E1
      2468   A9 00      LDA #&00
      246A   85 05      STA &05
      246C   A2 7F      LDX #&7F
-.P246E
+.tvis1
      246E   9D 80 3E   STA &3E80,X
      2471   CA         DEX
      2472   10 FA      BPL &246E
@@ -6068,7 +6078,7 @@
      2479   85 1A      STA &1A
      247B   20 EA 24   JSR &24EA
      247E   C6 1A      DEC &1A
-.C2480
+.tvis2
      2480   A5 05      LDA &05
      2482   49 20      EOR #&20
      2484   85 05      STA &05
@@ -6077,7 +6087,7 @@
      248B   BD 40 09   LDA &0940,X
      248E   85 76      STA &76
      2490   A2 1E      LDX #&1E
-.C2492
+.tvis3
      2492   8A         TXA
      2493   A8         TAY
      2494   B1 70      LDA (&70),Y
@@ -6088,7 +6098,7 @@
      249D   90 03      BCC &24A2
      249F   F0 01      BEQ &24A2
      24A1   C8         INY
-.C24A2
+.tvis4
      24A2   84 77      STY &77
      24A4   8A         TXA
      24A5   0A         ASL A
@@ -6121,7 +6131,7 @@
      24DB   10 B5      BPL &2492
      24DD   C6 1A      DEC &1A
      24DF   10 9F      BPL &2480
-.CRE14
+.tvis5
      24E1   60         RTS
 .L24E2
      24E2   80
@@ -6132,14 +6142,14 @@
      24E7   04
      24E8   02
      24E9   01
-.sub_C24EA
+.GetRowVisibility
      24EA   A5 1A      LDA &1A
      24EC   18         CLC
      24ED   69 60      ADC #&60
      24EF   85 71      STA &71
      24F1   A9 1F      LDA #&1F
      24F3   85 18      STA &18
-.C24F5
+.rvis1
      24F5   20 5A 35   JSR &355A
      24F8   A0 00      LDY #&00
      24FA   84 74      STY &74
@@ -6152,7 +6162,7 @@
      2506   A6 0B      LDX &0B
      2508   20 B5 1E   JSR &1EB5
      250B   A2 02      LDX #&02
-.C250D
+.rvis2
      250D   A9 00      LDA #&00
      250F   95 86      STA &86,X
      2511   38         SEC
@@ -6168,11 +6178,11 @@
      2523   F5 2C      SBC &2C,X
      2525   A9 00      LDA #&00
      2527   F5 2F      SBC &2F,X
-.C2529
+.rvis3
      2529   C5 74      CMP &74
      252B   90 02      BCC &252F
      252D   85 74      STA &74
-.C252F
+.rvis4
      252F   CA         DEX
      2530   10 DB      BPL &250D
      2532   A5 74      LDA &74
@@ -6180,7 +6190,7 @@
      2535   0A         ASL A
      2536   C9 06      CMP #&06
      2538   90 75      BCC &25AF
-.P253A
+.rvis5
      253A   06 2C      ASL &2C
      253C   26 2F      ROL &2F
      253E   06 2D      ASL &2D
@@ -6206,7 +6216,7 @@
      2563   69 3C      ADC #&3C
      2565   85 0D      STA &0D
      2567   A0 00      LDY #&00
-.P2569
+.stas1
      2569   B1 0C      LDA (&0C),Y
      256B   C9 7F      CMP #&7F
      256D   D0 68      BNE &25D7
@@ -6218,15 +6228,15 @@
      2578   F0 5D      BEQ &25D7
      257A   38         SEC
      257B   6E CE 0C   ROR &0CCE
-.C257E
+.rvis6
      257E   A2 02      LDX #&02
      2580   18         CLC
      2581   90 06      BCC &2589
-.P2583
+.rvis7
      2583   B5 34      LDA &34,X
      2585   75 2C      ADC &2C,X
      2587   95 34      STA &34,X
-.C2589
+.rvis8
      2589   B5 37      LDA &37,X
      258B   75 2F      ADC &2F,X
      258D   95 37      STA &37,X
@@ -6247,9 +6257,9 @@
      25A9   D0 D3      BNE &257E
      25AB   18         CLC
      25AC   90 01      BCC &25AF
-.C25AE
+.rvis9
      25AE   38         SEC
-.C25AF
+.rvis10
      25AF   A5 18      LDA &18
      25B1   05 05      ORA &05
      25B3   A8         TAY
@@ -6259,7 +6269,7 @@
      25BB   C6 18      DEC &18
      25BD   30 03      BMI &25C2
      25BF   4C F5 24   JMP &24F5
-.CRE15
+.rvis11
      25C2   60         RTS
 .GetTileAltitudes
      25C3   A9 00      LDA #&00
