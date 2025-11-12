@@ -208,10 +208,11 @@
 
  SKIP 1                 \ ???
 
-.scaleFactor
+.traceStepCounter
 
- SKIP 0                 \ Storage for a scale factor in when calculating tile
-                        \ visibility in the GetRowVisibility routine
+ SKIP 0                 \ The number of steps in the ray-tracing process when
+                        \ calculating tile visibility in the GetRowVisibility
+                        \ routine
 
 .L0017
 
@@ -230,6 +231,11 @@
 
  SKIP 1                 \ Used to store the tile x-coordinate of the tile we are
                         \ analysing when calculating the highest tile in a block
+
+.yTileRow
+
+ SKIP 0                 \ Used to store the tile y-coordinate of the tile we are
+                        \ analysing in the GetRowVisibility routine
 
 .L0019
 
@@ -394,164 +400,175 @@
                         \ sights can be drawn and removed using the contents of
                         \ the sights pixel byte stash
 
-.xSightsVectorBot
+.xVectorBot
 
- SKIP 1                 \ The x-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (bottom byte)
+ SKIP 1                 \ The x-coordinate of a vector (bottom byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.ySightsVectorBot
+.yVectorBot
 
- SKIP 1                 \ The y-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (bottom byte)
+ SKIP 1                 \ The y-coordinate of a vector (bottom byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.zSightsVectorBot
+.zVectorBot
 
- SKIP 1                 \ The z-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (bottom byte)
+ SKIP 1                 \ The z-coordinate of a vector (bottom byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.xSightsVectorLo
+.xVectorLo
 
- SKIP 1                 \ The x-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (low byte)
+ SKIP 1                 \ The x-coordinate of a vector (low byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.ySightsVectorLo
+.yVectorLo
 
- SKIP 1                 \ The y-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (low byte)
+ SKIP 1                 \ The y-coordinate of a vector (low byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.zSightsVectorLo
+.zVectorLo
 
- SKIP 1                 \ The z-coordinate of the vector from the player's eyes
-                        \ to the sights within the 3D world (low byte)
+ SKIP 1                 \ The z-coordinate of a vector (low byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
 .cosSightsPitchLo
 
- SKIP 1                 \ The low byte of cos(sightsPitchAngle) when converting
+ SKIP 1                 \ The low byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
 .cosSightsPitchHi
 
- SKIP 1                 \ The high byte of cos(sightsPitchAngle) when converting
+ SKIP 1                 \ The high byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
-.xObjCoordBot
+.xCoordBot
 
- SKIP 0                 \ The x-coordinate of a specific object (bottom byte)
+ SKIP 0                 \ The x-coordinate of an object or point (bottom byte)
                         \
-                        \ Stored as a 24-bit value (xObjCoordHi xObjCoordLo
-                        \ xObjCoordBot)
+                        \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
 
 .L0034
 
  SKIP 1                 \ ???
 
-.yObjCoordBot
+.yCoordBot
 
- SKIP 0                 \ The y-coordinate of a specific object (bottom byte)
+ SKIP 0                 \ The y-coordinate of an object or point (bottom byte)
                         \
-                        \ Stored as a 24-bit value (yObjCoordHi yObjCoordLo
-                        \ yObjCoordBot)
+                        \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
 
 .L0035
 
  SKIP 1                 \ ???
 
-.zObjCoordBot
+.zCoordBot
 
- SKIP 0                 \ The z-coordinate of a specific object (bottom byte)
+ SKIP 0                 \ The z-coordinate of an object or point (bottom byte)
                         \
-                        \ Stored as a 24-bit value (zObjCoordHi zObjCoordLo
-                        \ zObjCoordBot)
+                        \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
 
 .L0036
 
  SKIP 1                 \ ???
 
-.xObjCoordLo
+.xCoordLo
 
- SKIP 0                 \ The x-coordinate of a specific object (low byte)
+ SKIP 0                 \ The x-coordinate of an object or point (low byte)
                         \
-                        \ Stored as a 24-bit value (xObjCoordHi xObjCoordLo
-                        \ xObjCoordBot)
+                        \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
 
 .L0037
 
  SKIP 1                 \ ???
 
-.yObjCoordLo
+.yCoordLo
 
- SKIP 0                 \ The y-coordinate of a specific object (low byte)
+ SKIP 0                 \ The y-coordinate of an object or point (low byte)
                         \
-                        \ Stored as a 24-bit value (yObjCoordHi yObjCoordLo
-                        \ yObjCoordBot)
+                        \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
 
 .L0038
 
  SKIP 1                 \ ???
 
-.zObjCoordLo
+.zCoordLo
 
- SKIP 0                 \ The z-coordinate of a specific object (low byte)
+ SKIP 0                 \ The z-coordinate of an object or point (low byte)
                         \
-                        \ Stored as a 24-bit value (zObjCoordHi zObjCoordLo
-                        \ zObjCoordBot)
+                        \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
 
 .L0039
 
  SKIP 1                 \ ???
 
-.xObjCoordHi
+.xCoordHi
 
- SKIP 0                 \ The x-coordinate of a specific object (high byte)
+ SKIP 0                 \ The x-coordinate of an object or point (high byte)
                         \
-                        \ Stored as a 24-bit value (xObjCoordHi xObjCoordLo
-                        \ xObjCoordBot)
+                        \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
 
 .L003A
 
  SKIP 1                 \ ???
 
-.yObjCoordHi
+.yCoordHi
 
- SKIP 0                 \ The y-coordinate of a specific object (high byte)
+ SKIP 0                 \ The y-coordinate of an object or point (high byte)
                         \
-                        \ Stored as a 24-bit value (yObjCoordHi yObjCoordLo
-                        \ yObjCoordBot)
+                        \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
 
 .L003B
 
  SKIP 1                 \ ???
 
-.zObjCoordHi
+.zCoordHi
 
- SKIP 0                 \ The z-coordinate of a specific object (high byte)
+ SKIP 0                 \ The z-coordinate of an object or point (high byte)
                         \
-                        \ Stored as a 24-bit value (zObjCoordHi zObjCoordLo
-                        \ zObjCoordBot)
+                        \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
 
 .L003C
 
  SKIP 1                 \ ???
 
-.sightsYawAngleLo
+.vectorYawAngleLo
 
- SKIP 1                 \ The yaw angle of the vector from the player's eyes to
-                        \ the sights (low byte)
+ SKIP 1                 \ The yaw angle of a vector (low byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.sightsYawAngleHi
+.vectorYawAngleHi
 
- SKIP 1                 \ The yaw angle of the vector from the player's eyes to
-                        \ the sights (high byte)
+ SKIP 1                 \ The yaw angle of a vector (high byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.sightsPitchAngleLo
+.vectorPitchAngleLo
 
- SKIP 1                 \ The pitch angle of the vector from the player's eyes
-                        \ to the sights (low byte)
+ SKIP 1                 \ The pitch angle of a vector (low byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
-.sightsPitchAngleHi
+.vectorPitchAngleHi
 
- SKIP 1                 \ The pitch angle of the vector from the player's eyes
-                        \ to the sights (high byte)
+ SKIP 1                 \ The pitch angle of a vector (high byte)
+                        \
+                        \ For example, this is used to store the vector from the
+                        \ player's eyes to the sights within the 3D world
 
 .L0041
 
@@ -812,11 +829,30 @@
  SKIP 1                 \ The absolute difference between two z-coordinates
                         \ (high byte), i.e. |zDeltaHi|
 
+.xVectorHi
+
+ SKIP 0                 \ The x-coordinate of a vector (high byte)
+                        \
+                        \ For example, this is used to when ray-tracing from the
+                        \ player to tile corners in GetRowVisibility
+
 .xDeltaHi
 
  SKIP 1                 \ The difference between two x-coordinates (high byte)
 
- SKIP 1                 \ Some kind of yDeltaHi value ???
+.yVectorHi
+
+ SKIP 1                 \ The y-coordinate of a vector (high byte)
+                        \
+                        \ For example, this is used to when ray-tracing from the
+                        \ player to tile corners in GetRowVisibility
+
+.zVectorHi
+
+ SKIP 0                 \ The z-coordinate of a vector (high byte)
+                        \
+                        \ For example, this is used to when ray-tracing from the
+                        \ player to tile corners in GetRowVisibility
 
 .zDeltaHi
 
@@ -893,15 +929,25 @@
 
  SKIP 0                 \ ???
 
-.oddTileData
+.oddVisibility
 
- SKIP 32                \ Storage for the visibility of tiles in the odd rows
-                        \ that are processed by the GetRowVisibility routine
+ SKIP 32                \ Storage for the visibility of tiles corners in odd
+                        \ rows as they are processed by the GetRowVisibility
+                        \ routine
+                        \
+                        \   * 0 = tile corner is not visible
+                        \
+                        \   * &FF = tile corner is visible
 
-.evenTileData
+.evenVisibility
 
- SKIP 32                \ Storage for the visibility of tiles in the even rows
-                        \ that are processed by the GetRowVisibility routine
+ SKIP 32                \ Storage for the visibility of tiles corners in even
+                        \ rows as they are processed by the GetRowVisibility
+                        \ routine
+                        \
+                        \   * 0 = tile corner is not visible
+                        \
+                        \   * &FF = tile corner is visible
 
 \ ******************************************************************************
 \
@@ -2888,13 +2934,13 @@
 \
 \ This routine is used to calculate the following:
 \
-\   sinAngle = sin(sightsPitchAngle)
-\   cosAngle = cos(sightsPitchAngle)
+\   sinAngle = sin(vectorPitchAngle)
+\   cosAngle = cos(vectorPitchAngle)
 \
 \ or:
 \
-\   sinAngle = sin(sightsYawAngle)
-\   cosAngle = cos(sightsYawAngle)
+\   sinAngle = sin(vectorYawAngle)
+\   cosAngle = cos(vectorYawAngle)
 \
 \ We can use these to convert the pitch and yaw angles of the vector from the
 \ player's eyes to the sights into a cartesian vector within the 3D world.
@@ -2936,7 +2982,7 @@
 .GetRotationMatrix
 
  STA J                  \ Set (J T) = (A T)
-                        \           = sightsYawAngle or sightsPitchAngle
+                        \           = vectorYawAngle or vectorPitchAngle
                         \
                         \ Note that because this routine is copied almost
                         \ verbatim from Revs, the commentary only refers to yaw
@@ -2946,7 +2992,7 @@
  STX xStoreMatrix       \ Store X in xStoreMatrix so it can be preserved across
                         \ calls to the routine
 
- JSR GetAngleInRadians  \ Set (U A) to the sightsYawAngle, reduced to a quarter
+ JSR GetAngleInRadians  \ Set (U A) to the vectorYawAngle, reduced to a quarter
                         \ circle, converted to radians, and halved
                         \
                         \ Let's call this yawRadians / 2, where yawRadians is
@@ -2969,7 +3015,7 @@
  STX secondAxis         \ into sinAngle and cos(H G) into cosAngle
  LDX #0
 
- BIT J                  \ If bit 6 of J is clear, then sightsYawAngle is in one
+ BIT J                  \ If bit 6 of J is clear, then vectorYawAngle is in one
  BVC rotm1              \ of these ranges:
                         \
                         \   * 0 to 63 (%00000000 to %00111111)
@@ -2990,20 +3036,20 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So sightsYawAngle is in the top-right or bottom-left
+                        \ So vectorYawAngle is in the top-right or bottom-left
                         \ quarter in the above diagram
                         \
                         \ In both cases we jump to rotm1 to set sinAngle and
                         \ cosAngle
 
                         \ If we get here then bit 6 of J is set, so
-                        \ sightsYawAngle is in one of these ranges:
+                        \ vectorYawAngle is in one of these ranges:
                         \
                         \   * 64 to 127 (%01000000 to %01111111)
                         \
                         \   * -64 to -1 (%11000000 to %11111111)
                         \
-                        \ So sightsYawAngle is in the bottom-right or top-left
+                        \ So vectorYawAngle is in the bottom-right or top-left
                         \ quarter in the above diagram
                         \
                         \ In both cases we set the variables the other way
@@ -3028,15 +3074,15 @@
                         \ If we get here, then we are set up to calculate the
                         \ following:
                         \
-                        \   * If sightsYawAngle is top-right or bottom-left:
+                        \   * If vectorYawAngle is top-right or bottom-left:
                         \
-                        \     sinAngle = sin(sightsYawAngle)
-                        \     cosAngle = cos(sightsYawAngle)
+                        \     sinAngle = sin(vectorYawAngle)
+                        \     cosAngle = cos(vectorYawAngle)
                         \
-                        \   * If sightsYawAngle is bottom-right or top-left:
+                        \   * If vectorYawAngle is bottom-right or top-left:
                         \
-                        \     sinAngle = cos(sightsYawAngle)
-                        \     cosAngle = sin(sightsYawAngle)
+                        \     sinAngle = cos(vectorYawAngle)
+                        \     cosAngle = sin(vectorYawAngle)
                         \
                         \ In each case, the calculation gives us the correct
                         \ coordinate, as the second set of results uses angles
@@ -3345,13 +3391,13 @@
                         \ The above calculations were done on an angle that was
                         \ reduced to a quarter-circle, so now we need to add the
                         \ correct signs according to which quarter-circle the
-                        \ original sightsYawAngle in (J T) was in
+                        \ original vectorYawAngle in (J T) was in
 
- LDA J                  \ If J is positive then sightsYawAngle is positive (as
- BPL rotm7              \ J contains sightsYawAngleHi), so jump to rotm7 to skip
+ LDA J                  \ If J is positive then vectorYawAngle is positive (as
+ BPL rotm7              \ J contains vectorYawAngleHi), so jump to rotm7 to skip
                         \ the following
 
-                        \ If we get here then sightsYawAngle is negative
+                        \ If we get here then vectorYawAngle is negative
                         \
                         \ The degree system in the Sentinel looks like this:
                         \
@@ -3367,7 +3413,7 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So sightsYawAngle is in the left half of the above
+                        \ So vectorYawAngle is in the left half of the above
                         \ diagram, where the x-coordinates are negative, so we
                         \ need to negate the x-coordinate
 
@@ -3382,7 +3428,7 @@
  EOR J                  \ the sign of cosAngle is correct
  BPL rotm8
 
-                        \ Bits 6 and 7 of J, i.e. of sightsYawAngleHi, are
+                        \ Bits 6 and 7 of J, i.e. of vectorYawAngleHi, are
                         \ different, so the angle is in one of these ranges:
                         \
                         \   * 64 to 127 (%01000000 to %01111111)
@@ -3403,7 +3449,7 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So sightsYawAngle is in the bottom half of the above
+                        \ So vectorYawAngle is in the bottom half of the above
                         \ diagram, where the y-coordinates are negative, so we
                         \ need to negate the y-coordinate
 
@@ -8048,9 +8094,9 @@ L1145 = C1144+1
  CMP L0C68
  BCS C1912
  LDA angleLo
- STA sightsYawAngleLo
+ STA vectorYawAngleLo
  LDA angleHi
- STA sightsYawAngleHi
+ STA vectorYawAngleHi
  LDA #&02
  STA L001E
  LDA L004C
@@ -8067,10 +8113,10 @@ L1145 = C1144+1
 
  JSR sub_C561D
  LDA angleLo
- STA sightsPitchAngleLo
+ STA vectorPitchAngleLo
  STA T
  LDA angleHi
- STA sightsPitchAngleHi
+ STA vectorPitchAngleHi
  JSR GetVectorForAngles
  JSR sub_C1CCC
  ROL L0C56
@@ -8825,15 +8871,15 @@ L1145 = C1144+1
  JSR GetSightsVector    \ Calculate the vector from the player's eyes to the
                         \ sights, returning it in both angle format:
                         \
-                        \   (sightsYawAngleHi sightsYawAngleLo)
+                        \   (vectorYawAngleHi vectorYawAngleLo)
                         \
-                        \   (sightsPitchAngleHi sightsPitchAngleLo)
+                        \   (vectorPitchAngleHi vectorPitchAngleLo)
                         \
                         \ and as a cartesian vector:
                         \
-                        \   [ (xSightsVectorLo xSightsVectorBot) ]
-                        \   [ (ySightsVectorLo ySightsVectorBot) ]
-                        \   [ (zSightsVectorLo zSightsVectorBot) ]
+                        \   [ (xVectorLo xVectorBot) ]
+                        \   [ (yVectorLo yVectorBot) ]
+                        \   [ (zVectorLo zVectorBot) ]
 
  JSR sub_C1CCC          \ Something to do with vectors? (secondAxis is involved)
                         \ Is it working out if we are able to see the tile ???
@@ -9212,9 +9258,9 @@ L1145 = C1144+1
 \
 \ The vector from the player's eyes to the sights is calculated as follows:
 \
-\   sightsYawAngle = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+\   vectorYawAngle = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
 \
-\   sightsPitchAngle = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
+\   vectorPitchAngle = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9242,21 +9288,21 @@ L1145 = C1144+1
                         \
                         \   (U A) + (objectYawAngle,X 0) - (10 0)
                         \
-                        \ and store it in (sightsYawAngleHi sightsYawAngleLo)
+                        \ and store it in (vectorYawAngleHi vectorYawAngleLo)
 
  CLC                    \ Clear the C flag for the following
 
- STA sightsYawAngleLo   \ Store the low byte of the calculation (which we know
-                        \ will be A) in sightsYawAngleLo
+ STA vectorYawAngleLo   \ Store the low byte of the calculation (which we know
+                        \ will be A) in vectorYawAngleLo
 
  LDA U                  \ Calculate the high byte of the calculation as
  ADC objectYawAngle,X   \ follows:
  SEC                    \
  SBC #10                \   U + objectYawAngle,X - 10
- STA sightsYawAngleHi   \
-                        \ and store it in sightsYawAngleHi
+ STA vectorYawAngleHi   \
+                        \ and store it in vectorYawAngleHi
 
-                        \ So (sightsYawAngleHi sightsYawAngleLo) is now equal to
+                        \ So (vectorYawAngleHi vectorYawAngleLo) is now equal to
                         \ the following:
                         \
                         \   (xSights * 32) + (objectYawAngle,X 0) - (10 0)
@@ -9281,33 +9327,33 @@ L1145 = C1144+1
                         \   (U A) + (objectPitchAngle,X 0) + (3 32)
                         \
                         \ and store it in both (A T) and in
-                        \ (sightsPitchAngleHi sightsPitchAngleLo)
+                        \ (vectorPitchAngleHi vectorPitchAngleLo)
 
  CLC                    \ Calculate the low byte and store it in both T and
- ADC #32                \ sightsPitchAngleLo
- STA sightsPitchAngleLo
+ ADC #32                \ vectorPitchAngleLo
+ STA vectorPitchAngleLo
  STA T
 
  LDA U                  \ Calculate the high byte, keep it in A and store it in
- ADC objectPitchAngle,X \ sightsPitchAngleHi
+ ADC objectPitchAngle,X \ vectorPitchAngleHi
  CLC
  ADC #3
- STA sightsPitchAngleHi
+ STA vectorPitchAngleHi
 
                         \ So by this point we have the following:
                         \
-                        \   (sightsYawAngleHi sightsYawAngleLo)
+                        \   (vectorYawAngleHi vectorYawAngleLo)
                         \   = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
                         \
-                        \   (sightsPitchAngleHi sightsPitchAngleLo)
+                        \   (vectorPitchAngleHi vectorPitchAngleLo)
                         \   = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
                         \
                         \ We now fall through into GetVectorForAngles to convert
                         \ these two angles into a cartesian vector:
                         \
-                        \   [ (xSightsVectorLo xSightsVectorBot) ]
-                        \   [ (ySightsVectorLo ySightsVectorBot) ]
-                        \   [ (zSightsVectorLo zSightsVectorBot) ]
+                        \   [ (xVectorLo xVectorBot) ]
+                        \   [ (yVectorLo yVectorBot) ]
+                        \   [ (zVectorLo zVectorBot) ]
 
 \ ******************************************************************************
 \
@@ -9324,28 +9370,34 @@ L1145 = C1144+1
 \
 \ The pitch and yaw angles are 16-bit numbers as follows:
 \
-\   (sightsPitchAngleHi sightsPitchAngleLo)
+\   (vectorPitchAngleHi vectorPitchAngleLo)
 \
-\   (sightsYawAngleHi sightsYawAngleLo)
+\   (vectorYawAngleHi vectorYawAngleLo)
 \
 \ The same vector, but expressed as a cartesian vector, is calculated as
 \ follows:
 \
-\   [ (xSightsVectorLo xSightsVectorBot) ]
-\   [ (ySightsVectorLo ySightsVectorBot) ]
-\   [ (zSightsVectorLo zSightsVectorBot) ]
+\   [ (xVectorLo xVectorBot) ]
+\   [ (yVectorLo yVectorBot) ]
+\   [ (zVectorLo zVectorBot) ]
 \
 \ The calculation is this:
 \
-\   ySightsVector = sinSightsPitchAngle / 16
+\   yVector = sinSightsPitchAngle / 16
 \
-\   zSightsVector = cosSightsPitchAngle * cosSightsYawAngle / 16
+\   zVector = cosSightsPitchAngle * cosSightsYawAngle / 16
 \
-\   xSightsVector = cosSightsPitchAngle * sinSightsYawAngle / 16
+\   xVector = cosSightsPitchAngle * sinSightsYawAngle / 16
 \
 \ ******************************************************************************
 
 .GetVectorForAngles
+
+                        \ In the following commentary I am talking about the
+                        \ vector from the player's eyes to the sights, as that
+                        \ makes it easier to describe the various points, but
+                        \ this routine can convert any vector into angles using
+                        \ the same process
 
                         \ We start by converting the pitch angle of the vector
                         \ from the player's eyes to the sights into a cartesian
@@ -9353,15 +9405,15 @@ L1145 = C1144+1
                         \ the y-axis is the up-down axis
                         \
                         \ We store the resulting y-coordinate in the 16-bit
-                        \ variable (ySightsVectorLo ySightsVectorBot)
+                        \ variable (yVectorLo yVectorBot)
                         \
-                        \ We calculate ySightsVector by considering a triangle
-                        \ with the sights vector as the hypotenuse, and we drop
-                        \ the end point down onto the y = 0 plane (i.e. onto the
+                        \ We calculate yVector by considering a triangle with
+                        \ the sights vector as the hypotenuse, and we drop the
+                        \ end point down onto the y = 0 plane (i.e. onto the
                         \ ground)
                         \
                         \ Consider the case where the player is looking up at an
-                        \ angle of sightsPitchAngle, so the vector from the
+                        \ angle of vectorPitchAngle, so the vector from the
                         \ player's eye to the sights is from the bottom-left to
                         \ the top-right in the following triangle:
                         \
@@ -9372,7 +9424,7 @@ L1145 = C1144+1
                         \                   _.-´           |
                         \               _.-´               |  y
                         \           _.-´                   |
-                        \        .-´sightsPitchAngle       |
+                        \        .-´vectorPitchAngle       |
                         \   eye +--------------------------+
                         \                   p
                         \
@@ -9381,12 +9433,12 @@ L1145 = C1144+1
                         \
                         \ Trigonometry gives us the following:
                         \
-                        \   sin(sightsPitchAngle) = opposite / hypotenuse
+                        \   sin(vectorPitchAngle) = opposite / hypotenuse
                         \                         = y / 1
                         \
                         \ So the y-coordinate is given by:
                         \
-                        \   y = sin(sightsPitchAngle)
+                        \   y = sin(vectorPitchAngle)
                         \
                         \ which is what we calculate now
                         \
@@ -9394,10 +9446,10 @@ L1145 = C1144+1
                         \ of the vector projected down onto the y = 0 plane, is
                         \ calculated in a similar way:
                         \
-                        \   cos(sightsPitchAngle) = adjacent / hypotenuse
+                        \   cos(vectorPitchAngle) = adjacent / hypotenuse
                         \                         = p / 1
                         \
-                        \ So p = cos(sightsPitchAngle), which we will use to
+                        \ So p = cos(vectorPitchAngle), which we will use to
                         \ calculate the x- and z-coordinates of the vector later
 
  JSR GetRotationMatrix  \ This routine is taken from Revs, where it calculates a
@@ -9407,9 +9459,9 @@ L1145 = C1144+1
                         \ Revs routine calculates the values that we do need
                         \ here, specifically:
                         \
-                        \   cosSightsPitchAngle = cos(sightsPitchAngle)
+                        \   cosSightsPitchAngle = cos(vectorPitchAngle)
                         \
-                        \   sinSightsPitchAngle = sin(sightsPitchAngle)
+                        \   sinSightsPitchAngle = sin(vectorPitchAngle)
                         \
                         \ These calculations return 16-bit sign-magnitude
                         \ numbers with the sign in bit 0, which the DivideBy16
@@ -9430,13 +9482,12 @@ L1145 = C1144+1
  LDY #0                 \ Set (A X) = sinSightsPitchAngle / 16
  JSR DivideBy16
 
- STA ySightsVectorLo    \ Set (ySightsVectorLo ySightsVectorBot)
- STX ySightsVectorBot   \                             = sinSightsPitchAngle / 16
-                        \
+ STA yVectorLo          \ Set (yVectorLo yVectorBot) = sinSightsPitchAngle / 16
+ STX yVectorBot         \                           
                         \ So we now have the y-coordinate of the sights vector
                         \ as follows:
                         \
-                        \   y = sin(sightsPitchAngle)
+                        \   y = sin(vectorPitchAngle)
 
                         \ Now we convert the yaw angle of the sights vector
                         \ into cartesian x- and z-coordinates, where the x-axis
@@ -9444,12 +9495,12 @@ L1145 = C1144+1
                         \ screen
                         \
                         \ We store the resulting x-coordinate in the 16-bit
-                        \ variable (xSightsVectorLo yxSightsVectorBot) and the
-                        \ z-coordinate in (zSightsVectorLo zxSightsVectorBot)
+                        \ variable (xVectorLo yxVectorBot) and the z-coordinate
+                        \ in (zVectorLo zxVectorBot)
                         \
-                        \ We calculate xSightsVector and zSightsVector by
-                        \ considering a triangle on the y = 0 plane, so that's a
-                        \ triangle on the ground
+                        \ We calculate xVector and zVector by considering a
+                        \ triangle on the y = 0 plane, so that's a triangle on
+                        \ the ground
                         \
                         \ The hypotenuse of this triangle is side p from the
                         \ first calculation, which is the sights vector
@@ -9462,7 +9513,7 @@ L1145 = C1144+1
                         \ To see this, consider the same vector as before, with
                         \ p as the vector projected down onto the ground, and
                         \ where the player is looking sideways at a yaw angle of
-                        \ sightsYawAngle
+                        \ vectorYawAngle
                         \
                         \ This gives us a triangle like this, when viewed from
                         \ above, so it's as if we are the light source directly
@@ -9473,7 +9524,7 @@ L1145 = C1144+1
                         \
                         \                   z
                         \   eye +--------------------------+       z-axis -->
-                        \        `-._ sightsYawAngle       |       into screen
+                        \        `-._ vectorYawAngle       |       into screen
                         \            `-._                  |
                         \                `-._              | x
                         \                 p  `-._          |
@@ -9484,45 +9535,45 @@ L1145 = C1144+1
                         \
                         \ Again, simple trigonometry gives us the following:
                         \
-                        \   sin(sightsYawAngle) = opposite / hypotenuse
+                        \   sin(vectorYawAngle) = opposite / hypotenuse
                         \                       = x / p
                         \
                         \ So:
                         \
-                        \   x = p * sin(sightsYawAngle)
+                        \   x = p * sin(vectorYawAngle)
                         \
                         \ And:
                         \
-                        \   cos(sightsYawAngle) = adjacent / hypotenuse
+                        \   cos(vectorYawAngle) = adjacent / hypotenuse
                         \                       = z / p
                         \
                         \ So:
                         \
-                        \   z = p * cos(sightsYawAngle)
+                        \   z = p * cos(vectorYawAngle)
                         \
                         \ We calculated above that:
                         \
-                        \   p = cos(sightsPitchAngle)
+                        \   p = cos(vectorPitchAngle)
                         \
                         \ So substituting that into our result gives us:
                         \
-                        \   x = p * sin(sightsYawAngle)
-                        \     = cos(sightsPitchAngle) * sin(sightsYawAngle)
+                        \   x = p * sin(vectorYawAngle)
+                        \     = cos(vectorPitchAngle) * sin(vectorYawAngle)
                         \
-                        \   z = p * cos(sightsYawAngle)
-                        \     = cos(sightsPitchAngle) * cos(sightsYawAngle)
+                        \   z = p * cos(vectorYawAngle)
+                        \     = cos(vectorPitchAngle) * cos(vectorYawAngle)
                         \
                         \ which is what we calculate now
 
- LDA sightsYawAngleLo   \ Set (A T) = (sightsYawAngleHi sightsYawAngleLo)
+ LDA vectorYawAngleLo   \ Set (A T) = (vectorYawAngleHi vectorYawAngleLo)
  STA T
- LDA sightsYawAngleHi
+ LDA vectorYawAngleHi
 
  JSR GetRotationMatrix  \ Calculate the following:
                         \
-                        \   cosSightsYawAngle = cos(sightsYawAngle)
+                        \   cosSightsYawAngle = cos(vectorYawAngle)
                         \
-                        \   sinSightsYawAngle = sin(sightsYawAngle)
+                        \   sinSightsYawAngle = sin(vectorYawAngle)
                         \
                         \ Again these are returned as 16-bit sign-magnitude
                         \ numbers with the sign in bit 0, which the
@@ -9532,13 +9583,13 @@ L1145 = C1144+1
  LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
  LDX #2                 \ the following:
  JSR MultiplyCoords     \
-                        \   (zSightsVectorLo zSightsVectorBot)
+                        \   (zVectorLo zVectorBot)
                         \       = cosSightsPitchAngle * cosSightsYawAngle / 16
 
  LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
  LDX #0                 \ calculate the following:
                         \
-                        \   (xSightsVectorLo xSightsVectorBot)
+                        \   (xVectorLo xVectorBot)
                         \        = cosSightsPitchAngle * sinSightsYawAngle / 16
                         \
                         \ and return from the subroutine using a tail call
@@ -9567,9 +9618,9 @@ L1145 = C1144+1
 \
 \ i.e. cosSightsPitch * cosAngle
 \
-\ When X = 0, store the result in (xSightsVectorLo xSightsVectorBot).
+\ When X = 0, store the result in (xVectorLo xVectorBot).
 \
-\ When X = 2, store the result in (zSightsVectorLo zSightsVectorBot).
+\ When X = 2, store the result in (zVectorLo zVectorBot).
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9587,9 +9638,9 @@ L1145 = C1144+1
 \
 \   X                   Offset of the variable to store the result in:
 \
-\                         * 0 = (xSightsVectorLo xSightsVectorBot)
+\                         * 0 = (xVectorLo xVectorBot)
 \
-\                         * 2 = (zSightsVectorLo zSightsVectorBot)
+\                         * 2 = (zVectorLo zVectorBot)
 \
 \ ******************************************************************************
 
@@ -9614,11 +9665,11 @@ L1145 = C1144+1
                         \ And apply the sign from bit 7 of H to ensure the
                         \ result is positive
 
- STA xSightsVectorLo,X  \ Store the result in:
+ STA xVectorLo,X        \ Store the result in:
  LDA T                  \
- STA xSightsVectorBot,X \   * (xSightsVectorLo xSightsVectorBot) when X = 0
+ STA xVectorBot,X       \   * (xVectorLo xVectorBot) when X = 0
                         \
-                        \   * (zSightsVectorLo zSightsVectorBot) when X = 2
+                        \   * (zVectorLo zVectorBot) when X = 2
 
  RTS                    \ Return from the subroutine
 
@@ -9703,21 +9754,21 @@ L1145 = C1144+1
 
  LDA #0
  STA T
- LDA xObjCoordBot,X
+ LDA xCoordBot,X
  CLC
- ADC xSightsVectorBot,X
- STA xObjCoordBot,X
- LDA xSightsVectorLo,X
+ ADC xVectorBot,X
+ STA xCoordBot,X
+ LDA xVectorLo,X
  BPL C1CBD
  DEC T
 
 .C1CBD
 
- ADC xObjCoordLo,X
- STA xObjCoordLo,X
- LDA xObjCoordHi,X
+ ADC xCoordLo,X
+ STA xCoordLo,X
+ LDA xCoordHi,X
  ADC T
- STA xObjCoordHi,X
+ STA xCoordHi,X
  DEX
  BPL P1CAC
  RTS
@@ -9742,20 +9793,20 @@ L1145 = C1144+1
  JSR GetObjectCoords    \ Fetch the cartesian coordinates of the another object
                         \ as three 24-bit numbers, as follows:
                         \
-                        \   (xObjCoordHi xObjCoordLo xObjCoordBot)
+                        \   (xCoordHi xCoordLo xCoordBot)
                         \
-                        \   (yObjCoordHi yObjCoordLo yObjCoordBot)
+                        \   (yCoordHi yCoordLo yCoordBot)
                         \
-                        \   (zObjCoordHi zObjCoordLo zObjCoordBot)
+                        \   (zCoordHi zCoordLo zCoordBot)
 
 .C1CD7
 
  JSR sub_C1CAA
- LDA xObjCoordHi
+ LDA xCoordHi
  STA xTile
  CMP #&1F
  BCS C1D33
- LDA zObjCoordHi
+ LDA zCoordHi
  STA zTile
  CMP #&1F
  BCS C1D33
@@ -9770,10 +9821,10 @@ L1145 = C1144+1
  TAX
  LDA L0079
  SEC
- SBC yObjCoordLo
+ SBC yCoordLo
  STA L0079
  TXA
- SBC yObjCoordHi
+ SBC yCoordHi
  BMI C1CD7
  BNE C1D33
  LDA L0079
@@ -9786,7 +9837,7 @@ L1145 = C1144+1
  ORA L0C67              \ skip the following test ???
  BMI C1D21
 
- LDA ySightsVectorLo
+ LDA yVectorLo
  BPL C1D33
 
 .C1D21
@@ -9836,7 +9887,7 @@ L1145 = C1144+1
 
 .C1D5F
 
- LDA yObjCoordHi
+ LDA yCoordHi
  CMP S
  BCS C1D74
  CMP T
@@ -9874,13 +9925,13 @@ L1145 = C1144+1
 
  STA G
  LSR A
- LDA xObjCoordLo
+ LDA xCoordLo
  BCC C1D93
  EOR #&FF
 
 .C1D93
 
- CMP zObjCoordLo
+ CMP zCoordLo
  LDA G
  ROL A
  TAY
@@ -9890,9 +9941,9 @@ L1145 = C1144+1
 
  TAX
  LSR A
- LDY xObjCoordLo
+ LDY xCoordLo
  BCS C1DA4
- LDY zObjCoordLo
+ LDY zCoordLo
 
 .C1DA4
 
@@ -9932,10 +9983,10 @@ L1145 = C1144+1
  CLC
  ADC G
  STA U
- LDA yObjCoordLo
+ LDA yCoordLo
  SEC
  SBC T
- LDA yObjCoordHi
+ LDA yCoordHi
  SBC U
  BPL C1DDB
  JMP C1D33
@@ -10045,7 +10096,7 @@ L1145 = C1144+1
                         \ If we get here then the tile contains the Sentinel's
                         \ tower in object #Y
 
- JSR GetMaxXZCoordLo    \ Set T = max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
+ JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
                         \ and return the same value in A
 
@@ -10080,14 +10131,14 @@ L1145 = C1144+1
                         \ as the tile's data
 
  BMI data1              \ Otherwise bit 7 of secondAxis is set, so jump to data1
-                        \ to do calculations involving xObjCoord ???
+                        \ to do calculations involving xCoord ???
 
 .data4
 
                         \ If we get here then the tile contains a tree or a
                         \ boulder in object #Y
 
- JSR GetMaxXZCoordLo    \ Set T = max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
+ JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
                         \ and return the same value in A
 
@@ -10122,10 +10173,10 @@ L1145 = C1144+1
 
  LDA yObjectLo,Y
  SEC
- SBC yObjCoordLo
+ SBC yCoordLo
  STA U
  LDA yObjectHi,Y
- SBC yObjCoordHi
+ SBC yCoordHi
 
  PHA
  LDA U
@@ -10181,13 +10232,13 @@ L1145 = C1144+1
 \       Name: GetMaxXZCoordLo
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
+\    Summary: Calculate max(|xCoordLo - 128|, |zCoordLo - 128|)
 \
 \ ******************************************************************************
 
 .GetMaxXZCoordLo
 
- LDA xObjCoordLo        \ Set A = |xObjCoordLo - 128|
+ LDA xCoordLo           \ Set A = |xCoordLo - 128|
  SEC
  SBC #128
  BPL maxc1
@@ -10195,9 +10246,9 @@ L1145 = C1144+1
 
 .maxc1
 
- STA T                  \ Set T = |xObjCoordLo - 128|
+ STA T                  \ Set T = |xCoordLo - 128|
 
- LDA zObjCoordLo        \ Set A = |zObjCoordLo - 128|
+ LDA zCoordLo           \ Set A = |zCoordLo - 128|
  SEC
  SBC #128
  BPL maxc2
@@ -10218,7 +10269,7 @@ L1145 = C1144+1
                         \
                         \   T = max(A, T)
                         \
-                        \     = max(|xObjCoordLo - 128|, |zObjCoordLo - 128|)
+                        \     = max(|xCoordLo - 128|, |zCoordLo - 128|)
 
  RTS                    \ Return from the subroutine
 
@@ -10234,11 +10285,11 @@ L1145 = C1144+1
 \ This routine fetches the cartesian coordinates of object #X as three 24-bit
 \ numbers, as follows:
 \
-\   (xObjCoordHi xObjCoordLo xObjCoordBot)
+\   (xCoordHi xCoordLo xCoordBot)
 \
-\   (yObjCoordHi yObjCoordLo yObjCoordBot)
+\   (yCoordHi yCoordLo yCoordBot)
 \
-\   (zObjCoordHi zObjCoordLo zObjCoordBot)
+\   (zCoordHi zCoordLo zCoordBot)
 \
 \ The high byte can be thought of as the integer with low and bottom bytes as
 \ the fractional part.
@@ -10262,25 +10313,25 @@ L1145 = C1144+1
 .GetObjectCoords
 
  LDA #0                 \ Set the bottom byte of each coordinate to zero
- STA xObjCoordBot
- STA yObjCoordBot
- STA zObjCoordBot
+ STA xCoordBot
+ STA yCoordBot
+ STA zCoordBot
 
  LDA #128               \ Set the low byte of the x- and -z-coordinates to 128
- STA xObjCoordLo        \ (which represents 0.5, so the object sits in the
- STA zObjCoordLo        \ middle of the tile on which it is placed)
+ STA xCoordLo           \ (which represents 0.5, so the object sits in the
+ STA zCoordLo           \ middle of the tile on which it is placed)
 
  LDA yObjectLo,X        \ Set the low byte of the y-coordinate to the altitude
- STA yObjCoordLo        \ of object #X
+ STA yCoordLo           \ of object #X
 
  LDA xObject,X          \ Set the high byte of the x-coordinate to the value for
- STA xObjCoordHi        \ object #X from the xObject table
+ STA xCoordHi           \ object #X from the xObject table
 
  LDA yObjectHi,X        \ Set the high byte of the y-coordinate to the value for
- STA yObjCoordHi        \ object #X from the yObjectHi table
+ STA yCoordHi           \ object #X from the yObjectHi table
 
  LDA zObject,X          \ Set the high byte of the z-coordinate to the value for
- STA zObjCoordHi        \ object #X from the zObject table
+ STA zCoordHi           \ object #X from the zObject table
 
  RTS                    \ Return from the subroutine
 
@@ -11879,8 +11930,8 @@ L1145 = C1144+1
 .sub_C2299
 
  LDA #&01
- STA xSightsVectorBot
- STA ySightsVectorBot
+ STA xVectorBot
+ STA yVectorBot
  LDA tileAltitude
  CLC
  ADC L0004
@@ -11985,13 +12036,13 @@ L1145 = C1144+1
 .C2333
 
  LDA #0
- STA ySightsVectorBot
+ STA yVectorBot
  BEQ sub_C230D
 
 .C2339
 
  LDA #0
- STA xSightsVectorBot
+ STA xVectorBot
  BEQ sub_C230D
 
 .C233F
@@ -11999,7 +12050,7 @@ L1145 = C1144+1
  LDA L0061
  ASL A
  STA L0056
- STA xSightsVectorBot
+ STA xVectorBot
  BNE C23A6
 
 .C2348
@@ -12012,7 +12063,7 @@ L1145 = C1144+1
  SBC #&00
  STA Q
  LDA #0
- STA ySightsVectorBot
+ STA yVectorBot
  LDA #&F8
  BNE C23D8
 
@@ -12213,7 +12264,7 @@ L23E3 = C23E2+1
 
  STA storeResultsOffset \ Set storeResultsOffset = 0 so the call to first call
                         \ to GetRowVisibility (for tile row 31) will populate
-                        \ the table at oddTileData with the tile visibilities
+                        \ the table at oddVisibility with the tile visibilities
                         \ of the row being analysed
 
  LDX #127               \ We now zero 64 bytes at L3E80 and 64 bytes at L3EC0,
@@ -12245,9 +12296,16 @@ L23E3 = C23E2+1
 
  LDA storeResultsOffset \ Flip storeResultsOffset between 0 and 32, so each
  EOR #32                \ call to GetRowVisibility alternates between storing
- STA storeResultsOffset \ the tile visibilities in oddTileData and evenTileData
+ STA storeResultsOffset \ the tile visibilities in oddVisibility and
+                        \ evenVisibility
                         \
-                        \ This works because evenTileData - oddTileData = 32
+                        \ We EOR with 32 because:
+                        \
+                        \   evenVisibility - oddVisibility = 32
+                        \
+                        \ So we can add the result in storeResultsOffset to
+                        \ oddVisibility to point to the correct table for
+                        \ storing the results
 
  JSR GetRowVisibility   \ ???
 
@@ -12287,10 +12345,10 @@ L23E3 = C23E2+1
  LDA L24E2,Y
  EOR #&FF
  STA bitMask
- LDA oddTileData,X
- ORA oddTileData+1,X
- ORA evenTileData,X
- ORA evenTileData+1,X
+ LDA oddVisibility,X
+ ORA oddVisibility+1,X
+ ORA evenVisibility,X
+ ORA evenVisibility+1,X
  AND W
  AND L24E2,Y
  STA U
@@ -12329,8 +12387,8 @@ L23E3 = C23E2+1
 \       Name: GetRowVisibility (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Set up the calculations for whether each tile in a tile row is
-\             potentially visible to the player
+\    Summary: Set up the calculations to determine whether each tile corner in a
+\             tile row is obscured from the player by any intervening landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12344,9 +12402,9 @@ L23E3 = C23E2+1
 \
 \   storeResultsOffset  Defines where we store the results of the analysis:
 \
-\                         * oddTileData when storeResultsOffset = 0
+\                         * oddVisibility when storeResultsOffset = 0
 \
-\                         * evenTileData when storeResultsOffset = 32
+\                         * evenVisibility when storeResultsOffset = 32
 \
 \ ******************************************************************************
 
@@ -12377,23 +12435,30 @@ L23E3 = C23E2+1
  LDY #0                 \ Set T = 0, so we can use it to capture the longest
  STY T                  \ axis in the vector calculation below
 
- DEY                    \ Set scaleFactor = 255, which is the highest possible
- STY scaleFactor        \ value in one byte, so we can scale this down to use as
-                        \ a scale factor
+ DEY                    \ Set traceStepCounter = 255, so we start off by tracing
+ STY traceStepCounter   \ 255 steps (as the initial calculation calculates the
+                        \ vector to trace by dividing the full vector from the
+                        \ player to the tile corner by 256)
+                        \
+                        \ We may reduce the number of steps below to make the
+                        \ process more efficient
 
- LDY xTileRow           \ Set L0019 to the extracted altitude data for the tile
- LDA (P),Y              \ we are processing (is this used ???)
- LSR A
- STA L0019
+ LDY xTileRow           \ Set yTileRow to the altitude of the tile corner we are
+ LDA (P),Y              \ analysing
+ LSR A                  \
+ STA yTileRow           \ The value in the table at (Q P) contains the flatness
+                        \ of the tile in bit 0 and the altitude of the tile
+                        \ corner in bits 1-4, so we shift this value right by
+                        \ one place to extract the altitude
 
  LDX playerObject       \ Fetch the cartesian coordinates of the player object
  JSR GetObjectCoords    \ as three 24-bit numbers, as follows:
                         \
-                        \   (xObjCoordHi xObjCoordLo xObjCoordBot)
+                        \   (xCoordHi xCoordLo xCoordBot)
                         \
-                        \   (yObjCoordHi yObjCoordLo yObjCoordBot)
+                        \   (yCoordHi yCoordLo yCoordBot)
                         \
-                        \   (zObjCoordHi zObjCoordLo zObjCoordBot)
+                        \   (zCoordHi zCoordLo zCoordBot)
 
  LDX #2                 \ We now work through all three axes in turn, so set an
                         \ axis counter in X to iterate through 2, 1 and 0 (for
@@ -12404,48 +12469,88 @@ L23E3 = C23E2+1
 
 .rvis2
 
- LDA #0                 \ Set xDeltaHi = 0, so we can use it as the top byte of
- STA xDeltaHi,X         \ the x-axis element of the vector from the player to
-                        \ the tile corner
+ LDA #0                 \ Zero the high byte of (xVector yVector zVector), which
+ STA xVectorHi,X        \ we will use to store the vector from the player to the
+                        \ tile corner
 
- SEC                    \ Set (xSightsVectorLo xSightsVectorBot) = 
- SBC xObjCoordLo,X      \               (xTileRow 0) - (xObjCoordHi xObjCoordLo)
- STA xSightsVectorBot,X \
- LDA xTileRow,X         \ So (xSightsVectorLo xSightsVectorBot) contains the
- SBC xObjCoordHi,X      \ distance in the x-axis from the player to the tile
- STA xSightsVectorLo,X  \ corner that we are analysing
+ SEC                    \ Set (xVectorLo xVectorBot) = 
+ SBC xCoordLo,X         \             ((xTileRow 0) - (xCoordHi xCoordLo)) / 256
+ STA xVectorBot,X       \
+ LDA xTileRow,X         \ So (xVectorLo xVectorBot) contains the distance in the
+ SBC xCoordHi,X         \ x-axis from the player to the tile corner that we are
+ STA xVectorLo,X        \ analysing, divided by 256
                         \
-                        \ The vector is this way around because if you add this
-                        \ value to the player's coordinates we get the tile
-                        \ corner's coordinates
+                        \ The "divided by 256" part is subtle and important
+                        \
+                        \ We want to divide the vector from the player to the
+                        \ tile corner into small steps, so we can move along the
+                        \ vector sequentially, checking on each step whether the
+                        \ vector is passing below ground level (in which case we
+                        \ will know that the line of sight from the player to
+                        \ the tile corner is obstructed by landscape)
+                        \
+                        \ The above calculation subtracts two high byte/low byte
+                        \ 16-bit numbers in (xTileRow 0) and (xCoordHi xCoordLo)
+                        \ and puts the result into a low byte/bottom byte 16-bit
+                        \ number in (xVectorLo xVectorBot)
+                        \
+                        \ This is the same as dividing the result of the
+                        \ subtraction by 256, which we can see if we consider
+                        \ that this would be the normal high/low calculation:
+                        \
+                        \   (xVectorHi xVectorLo) =   (xTileRow 0)
+                        \                           - (xCoordHi xCoordLo)
+                        \
+                        \ and we also have:
+                        \
+                        \   (xVectorLo xVectorBot) = (xVectorHi xVectorLo) / 256
+                        \
+                        \ so we get:
+                        \
+                        \   (xVectorLo xVectorBot)
+                        \           = ((xTileRow 0) - (xCoordHi xCoordLo)) / 256
+                        \
+                        \ Also, its worth noting that this is the vector from
+                        \ the player to the tile corner, because if you add this
+                        \ vector to the player's coordinates 256 times, then you
+                        \ get the tile corner's coordinates
 
- BPL rvis3              \ If the result is positive, jump to rvis3
+ BPL rvis3              \ If the result is positive, jump to rvis3, with the low
+                        \ byte of the result (xVectorLo) in A
 
- DEC xDeltaHi,X         \ The result is negative, so set xDeltaHi = &FF so it
-                        \ can be used as the top byte for the x-axis element of
-                        \ the vector from the player to the tile corner
+ DEC xVectorHi,X        \ The result is negative, so set xVectorHi to %11111111
+                        \ so it can be used as the high byte for the negative
+                        \ 24-bit number in (xVectorHi xVectorLo xVectorBot)
 
- LDA #0                 \ Negate the result as follows (we ignore the bottom
- SEC                    \ byte):
- SBC xSightsVectorBot,X \
- LDA #0                 \   (A *) = -(xSightsVectorLo xSightsVectorBot)
- SBC xSightsVectorLo,X  \
+ LDA #0                 \ Negate the result as follows (note that we ignore the
+ SEC                    \ bottom byte, as we are only interested in the low byte
+ SBC xVectorBot,X       \ of the result):
+ LDA #0                 \
+ SBC xVectorLo,X        \   (A *) = -(xVectorLo xVectorBot)
+                        \
                         \ So this makes (A *) positive, to give this:
                         \
-                        \   (A *) = |xSightsVectorLo xSightsVectorBot|
+                        \   (A *) = |xVectorLo xVectorBot|
+                        \
+                        \ So the low byte of the result |xVectorLo| is in A
 
 .rvis3
 
                         \ By this point we have the following:
                         \
-                        \   * (A *) = |xSightsVectorLo xSightsVectorBot|
+                        \   * A = |xVectorLo|
                         \
-                        \   * xDeltaHi is the original sign of the result
+                        \   * xVectorHi is either 0 or %11111111, depending on
+                        \     the sign of (xVectorLo xVectorBot)
 
  CMP T                  \ If A >= T then set T = A, so T keeps a record of the
- BCC rvis4              \ largest result across all three axes (so it will be
- STA T                  \ the longest axis in the vector from the player to the
-                        \ tile we are analysing)
+ BCC rvis4              \ largest value of |xVectorLo| across all three axes
+ STA T                  \
+                        \ In other words, once we have finished looping through
+                        \ all three axes, T will contain the magnitude of the
+                        \ longest axis in the vector:
+                        \
+                        \   T = max(|xVectorLo|, |yVectorLo|, |zVectorLo|)
 
 .rvis4
 
@@ -12457,43 +12562,109 @@ L23E3 = C23E2+1
                         \ At this point X is set to 255, which we use below when
                         \ checking the secret entry code in CheckSecretStash
 
- LDA T                  \ If T * 4 < 6, then T < 1.5, so jump to rvis10 with the
- ASL A                  \ C flag clear to store &FF as the visibility result (to
- ASL A                  \ record that this corner is visible)
+ LDA T                  \ If:
+ ASL A                  \
+ ASL A                  \   T * 4 < 6
  CMP #6                 \
- BCC rvis10             \ This ensures that all tile corners that are within 1.5
-                        \ tiles of the player are marked as being potentially
-                        \ visible
+ BCC rvis10             \ then:
+                        \
+                        \   T < 1.5
+                        \
+                        \ and:
+                        \
+                        \  max(|xVectorLo|, |yVectorLo|, |zVectorLo|) < 1.5
+                        \
+                        \ In other words, if this is true, then the longest axis
+                        \ of the vector from player to the tile corner is less
+                        \ than 1.5 (where each tile is of size 1), so the tile
+                        \ corner we are analysing is within 1.5 tile widths of
+                        \ the player
+                        \
+                        \ We automatically mark all these close-by tiles as
+                        \ being potentially visible, so we jump to rvis10 with
+                        \ the C flag clear to store &FF as the visibility result
+                        \ (to record that this corner is potentially visible)
 
-                        \ We now scale the value in A to be as high as possible
-                        \ while still fitting into one byte, and at the same
-                        \ time we double (xSightsVectorLo xSightsVectorBot) and
-                        \ halve the scale factor in scaleFactor to record the
-                        \ amount of scaling
+                        \ The next step is an optimisation
+                        \
+                        \ We could trace the vector from the player to the tile
+                        \ corner in steps of 256, but given that the landscape
+                        \ is only 32 tile corners across in each direction, this
+                        \ would mean that most of the time we would be stepping
+                        \ along the vector while staying above the same tile
+                        \
+                        \ Instead we can scale up the size of our steps and do
+                        \ fewer of them, and as long as each individual step is
+                        \ smaller than a tile width, we can still check every
+                        \ landscape tile along the line of sight
+                        \
+                        \ We therefore double the value in A, which contains the
+                        \ longest side of the vector, to be as high as possible
+                        \ while still fitting into one byte (which represents a
+                        \ fraction of a tile as it's the low byte of the vector)
+                        \
+                        \ At the same time we double the size of the vector by
+                        \ doubling the following:
+                        \
+                        \   (xVectorHi xVectorLo xVectorBot)
+                        \
+                        \   (yVectorHi yVectorLo yVectorBot)
+                        \
+                        \   (zVectorHi zVectorLo zVectorBot)
+                        \
+                        \ though we don't actually need to shift the high bytes
+                        \ as we won't be shifting data out of the low bytes and
+                        \ they are either zero or %11111111
+                        \
+                        \ Because we have doubled the size of the vector, we
+                        \ also halve the number of steps in traceStepCounter
+                        \
+                        \ This reduces the number of steps in the ray-tracing
+                        \ process as far as possible while keeping the size of
+                        \ each step to less than one tile (so that the tracing
+                        \ process still steps through each tile en route)
 
 .rvis5
 
- ASL xSightsVectorBot   \ Double (xSightsVectorLo xSightsVectorBot)
- ROL xSightsVectorLo
- ASL ySightsVectorBot
- ROL ySightsVectorLo
- ASL zSightsVectorBot
- ROL zSightsVectorLo
+ ASL xVectorBot         \ Double (xVectorLo xVectorBot) to double the size of
+ ROL xVectorLo          \ the vector
+ ASL yVectorBot
+ ROL yVectorLo
+ ASL zVectorBot
+ ROL zVectorLo
 
- LSR scaleFactor        \ Halve scaleFactor
+ LSR traceStepCounter   \ Halve traceStepCounter to halve the number of steps in
+                        \ the tracing process
 
- ASL A                  \ Shift A to the left to shift bit 7 into the C flag
+ ASL A                  \ Shift A to the left to shift bit 7 into the C flag, to
+                        \ detect when A is as big as it can be within one byte
 
  BCC rvis5              \ Loop back to repeat the above scalings until we have
-                        \ shifted a 1 out of bit 7
+                        \ scaled up the vector as much as we can
 
- LDA zObjCoordHi        \ Set zObjCoordHi = zObjCoordHi + &60
+                        \ So (xVectorHi xVectorLo xVectorBot) now contains the
+                        \ vector from the player to the tile corner, divided by
+                        \ 256 and scaled up as far as possible while still
+                        \ keeping the vector within the dimensions of a tile,
+                        \ and traceStepCounter contains the number of times this
+                        \ vector fits into the original vector from the player
+                        \ to the tile corner
+                        \
+                        \ We can therefore trace the vector from the player to
+                        \ the tile corner by taking the player's coordinates and
+                        \ adding the (xVectorHi xVectorLo xVectorBot) vector
+                        \ traceStepCounter times, knowing that togther, these
+                        \ steps will stop over every tile between the player and
+                        \ the tile corner in the process (we may stop over some
+                        \ tiles more than once, but that's OK)
+
+ LDA zCoordHi           \ Set zCoordHi = zCoordHi + &60
  CLC                    \
- ADC #&60               \ This sets zObjCoordHi to the high byte of the address
- STA zObjCoordHi        \ for the extracted altitude data for the tile row on
-                        \ which the player is standing (as zObjCoordHi is the
-                        \ integer part of the player's z-coordinate, which is
-                        \ the number of the row containing the player)
+ ADC #&60               \ This sets zCoordHi to the high byte of the address for
+ STA zCoordHi           \ the extracted altitude data for the tile row on which
+                        \ the player is standing (as zCoordHi is the integer
+                        \ part of the player's z-coordinate, which is the number
+                        \ of the row containing the player)
 
                         \ We now take a short interlude to check the secret code
                         \ stash, as part of the game's anti-cracker code, and we
@@ -12651,20 +12822,37 @@ L23E3 = C23E2+1
 \       Name: GetRowVisibility (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Calculate whether each tile in a tile row is potentially visible
-\             to the player
+\    Summary: Calculate whether each tile corner in a tile row is obscured from
+\             the player by any intervening landscape
 \
 \ ******************************************************************************
 
-                        \ In part 1 we set up various variables, as follows:
+                        \ In part 1 we set up (xVectorHi xVectorLo xVectorBot)
+                        \ with the vector from the player to the tile corner,
+                        \ split up into traceStepCounter steps, each of which is
+                        \ smaller than the size of a tile
                         \
-                        \   * (A *) = |xSightsVectorLo xSightsVectorBot|
+                        \ We can therefore trace the vector from the player to
+                        \ the tile corner by taking the player's coordinates and
+                        \ adding the vector:
                         \
-                        \   * xDeltaHi is the original sign of the result
+                        \   [ (xVectorHi xVectorLo xVectorBot) ]
+                        \   [ (yVectorHi yVectorLo yVectorBot) ]
+                        \   [ (zVectorHi zVectorLo zVectorBot) ]
                         \
-                        \   * scaleFactor is a scale factor for (A *) ???
+                        \ traceStepCounter times, knowing that togther, these
+                        \ steps will stop over every tile between the player and
+                        \ the tile corner in the process (we may stop over some
+                        \ tiles more than once, but that's OK)
                         \
-                        \ This is for just one axis
+                        \ I'll refer to this vector as the player's gaze, as it
+                        \ represents the line-of-sight from the player to the
+                        \ tile corner we are analysing
+                        \
+                        \ So now we step along the player's gaze, checking on
+                        \ each step whether the gaze is passing over a tile that
+                        \ has a high enough altitude to block the player's view
+                        \ of the tile corner we are analysing
 
 .rvis6
 
@@ -12684,28 +12872,41 @@ L23E3 = C23E2+1
 
 .rvis7
 
- LDA xObjCoordBot,X     \ For the y-axis calculation, we include the bottom byte
- ADC xSightsVectorBot,X \ for more accuracy, so we calculate the following:
- STA xObjCoordBot,X     \
-                        \   (xObjCoordHi xObjCoordLo xObjCoordBot) +=
-                        \            (xDeltaHi xSightsVectorLo xSightsVectorBot)
+ LDA xCoordBot,X        \ For the y-axis calculation, we include the bottom byte
+ ADC xVectorBot,X       \ for more accuracy, so we calculate the following:
+ STA xCoordBot,X        \
+                        \   (xCoordHi xCoordLo xCoordBot) +=
+                        \                       (xVectorHi xVectorLo xVectorBot)
+
 .rvis8
 
- LDA xObjCoordLo,X      \ Set (xObjCoordHi xObjCoordLo) +=
- ADC xSightsVectorLo,X  \                             (xDeltaHi xSightsVectorLo)
- STA xObjCoordLo,X
- LDA xObjCoordHi,X
- ADC xDeltaHi,X
- STA xObjCoordHi,X
+                        \ This is where we join the loop to add the next step to
+                        \ the vector containing the current position along the
+                        \ player's gaze towards the tile corner we're analysing
 
-                        \ The calculations above add the scaled vector from the
-                        \ player to the tile corner, which is in xSightsVector,
-                        \ to the player's object coordinates in xObjCoord
+ LDA xCoordLo,X         \ Set (xCoordHi xCoordLo) += (xVectorHi xVectorLo)
+ ADC xVectorLo,X 
+ STA xCoordLo,X
+ LDA xCoordHi,X
+ ADC xVectorHi,X
+ STA xCoordHi,X
+
+                        \ The calculation above adds the scaled vector from the
+                        \ player to the tile corner, which is in xVector, to the
+                        \ player's object coordinates, which is in xCoord
                         \
                         \ So this calculation effectively follows the player's
-                        \ gaze
+                        \ gaze towards the tile corner, adding one of the steps
+                        \ to the vector x-coordinate in:
+                        \
+                        \   (xVectorHi xVectorLo)
+                        \
+                        \ We repeat this for all three axes, calculating the
+                        \ x- and z-axes with 16-bit accuracy, and the y-axis
+                        \ with 24-bit accuracy (as y-coordinates are stored in
+                        \ this way)
 
- CLC                    \ Clear the C flag for the next additions
+ CLC                    \ Clear the C flag so the following additions work
 
  DEX                    \ Decrement the axis counter
 
@@ -12715,24 +12916,56 @@ L23E3 = C23E2+1
  BPL rvis7              \ If we are about to calculate the y-axis, jump back to
                         \ rvis7 to include the bottom byte
 
- LDA zObjCoordHi        \ Set the top byte of (S R) to the address we set up in
- STA S                  \ zObjCoordHi in part 1, which will point to the &xx20
-                        \ table of altitude data for the tile row, which
-                        \ contains the altitude of the highest tile corner for
-                        \ each tile in the row
+                        \ We now work out whether this step has made the
+                        \ player's gaze pass over a tile that is high enough to
+                        \ block the player's view of the tile corner that we are
+                        \ heading for
 
- LDY xObjCoordHi        \ Set Y to the tile x-coordinate of the tile we are
-                        \ analysing, so (S R) + Y will point to the altitude of
-                        \ the highest tile corner for the tile we are analysing
+ LDA zCoordHi           \ Set the top byte of (S R) to the high byte of the
+ STA S                  \ z-coordinate of our current step along gaze vector
+                        \
+                        \ Because we added &60 to the starting z-coordinate in
+                        \ part 1, this will point to the &xx20 table of altitude
+                        \ data for the tile row over which the gaze is passing
+                        \
+                        \ TheExtractTileData routine populates the &xx20 table
+                        \ with the altitude of the highest tile corner for each
+                        \ tile, so (S R) now points to this data for the row
+                        \ over which we are passing
 
- LDA yObjCoordHi        \ If yObjCoordHi < (S R) + Y then not visible ???
- CMP (R),Y
- BCC rvis9
+ LDY xCoordHi           \ Set Y to the high byte of the x-coordinate of our
+                        \ current step along gaze vector, which is the tile
+                        \ x-coordinate of the tile that the gaze vector is
+                        \ currently passing over
+                        \
+                        \ This means that (S R) + Y will contain the altitude
+                        \ of the highest tile corner for the tile that we are
+                        \ passing over
 
- DEC scaleFactor        \ Work through scale factors ???
+ LDA yCoordHi           \ Set A to the high byte of the y-coordinate of our
+                        \ current step along gaze vector
 
- BNE rvis6              \ If scaleFactor > 0, loop back to rvis6 to repeat the
-                        \ process ???
+ CMP (R),Y              \ If yCoordHi < (S R) + Y then the altitude of the gaze
+ BCC rvis9              \ vector is lower than the altitude of the highest point
+                        \ of the landscape on the tile over which we are
+                        \ passing, which means the gaze vector has hit the
+                        \ landscape before reaching the end
+                        \
+                        \ So jump to rvis9 to record that this tile corner is
+                        \ not visible from the player's perspective, as it is
+                        \ hidden behind a higher part of the landscape between
+                        \ the player and the tile corner
+
+ DEC traceStepCounter   \ Otherwise decrement the step counter to keep moving
+                        \ along the vector
+
+ BNE rvis6              \ If we haven't yet done all the steps, loop back to
+                        \ rvis6 to do the next step in the ray-trace
+
+                        \ If we get here then we have finished the ray-tracing
+                        \ process and we didn't bump into any tiles on the way,
+                        \ so the tile corner is not obscured by the landscape
+                        \ and is therefore deemed to be visible
 
  CLC                    \ Clear the C flag so we store &FF in the visibility
                         \ table to indicate that this tile corner is visible
@@ -12751,20 +12984,21 @@ L23E3 = C23E2+1
  ORA storeResultsOffset \
  TAY                    \ The value of storeResultsOffset is either 0 or 32, so
                         \ this creates an index in Y that we can use to store
-                        \ the result in either oddTileData (when it is 0) or
-                        \ evenTileData when it is 32)
+                        \ the result in either oddVisibility (when it is 0) or
+                        \ evenVisibility when it is 32)
 
  LDA #0                 \ Set A = 0 - 0 - (1 - C)
  SBC #0                 \       = C - 1
                         \
                         \ so this sets:
                         \
-                        \   * A = 0 if the C flag is set
+                        \   * A = 0 if the C flag is set (not visible)
                         \
-                        \   * A = &FF if the C flag is clear
+                        \   * A = &FF if the C flag is clear (visible)
 
- STA oddTileData,Y      \ Store the result in the oddTileData or evenTileData
-                        \ table, as determined by storeResultsOffset
+ STA oddVisibility,Y    \ Store the result in either the oddVisibility or
+                        \ evenVisibility table, as determined by the value of
+                        \ storeResultsOffset
 
  DEC xTileRow           \ Decrement xTileRow to move left along the tile row we
                         \ are analysing
@@ -13088,7 +13322,7 @@ L23E3 = C23E2+1
  LDA #&40
  STA L003C
  LDA #&0C
- STA sightsYawAngleLo
+ STA vectorYawAngleLo
  LDA objectYawAngle,X
  CLC
  ADC #&20
@@ -14068,7 +14302,7 @@ L23E3 = C23E2+1
  BCS C2A90
  JSR sub_C2299
  LDY L0010
- LDA xSightsVectorBot,Y
+ LDA xVectorBot,Y
  CMP #&01
  BEQ CRE18
 
@@ -15925,11 +16159,11 @@ L23E3 = C23E2+1
 
  LDA #0
  STA tileAltitude
- STA zSightsVectorLo
+ STA zVectorLo
  STA L001E
  LDA #&FF
  STA L0004
- STA ySightsVectorLo
+ STA yVectorLo
  STA L007F
  LDY #0
 
@@ -15994,11 +16228,11 @@ L23E3 = C23E2+1
  LDA L000C
  BEQ C2E96
  LDA L0AE0,Y
- STA sightsYawAngleHi
+ STA vectorYawAngleHi
  LDA L0A80,Y
  STA L001A
  LDA L0AE0,X
- STA sightsPitchAngleLo
+ STA vectorPitchAngleLo
  LDA L0A80,X
  STA L0016
  LDA L54A0,Y
@@ -16032,9 +16266,9 @@ L23E3 = C23E2+1
  BCS C2E88
  STY L0004
  STY tileAltitude
- LDA ySightsVectorLo
+ LDA yVectorLo
  STA L5A00,Y
- LDA zSightsVectorLo
+ LDA zVectorLo
  STA L5B00,Y
  LDA #0
  STA L007F
@@ -16057,15 +16291,15 @@ L23E3 = C23E2+1
 .C2E96
 
  LDA L54A0,X
- CMP zSightsVectorLo
+ CMP zVectorLo
  BCC C2E9F
- STA zSightsVectorLo
+ STA zVectorLo
 
 .C2E9F
 
- CMP ySightsVectorLo
+ CMP yVectorLo
  BCS C2EA5
- STA ySightsVectorLo
+ STA yVectorLo
 
 .C2EA5
 
@@ -16091,7 +16325,7 @@ L23E3 = C23E2+1
 
 .sub_C2EAE
 
- LDA sightsPitchAngleLo
+ LDA vectorPitchAngleLo
  BMI C2EC2
  BNE CRE25
  LDA L0016
@@ -16112,7 +16346,7 @@ L23E3 = C23E2+1
 
 .C2EC6
 
- LDA sightsYawAngleHi
+ LDA vectorYawAngleHi
  BMI CRE25
  BNE C2EDA
  LDA L001A
@@ -16170,7 +16404,7 @@ L23E3 = C23E2+1
  LSR A
  EOR #&FF
  CLC
- LDX sightsYawAngleHi
+ LDX vectorYawAngleHi
  BNE C2F80
  LDX L0018
  JMP C2F29
@@ -16242,7 +16476,7 @@ L2F2B = C2F29+2
  LSR A
  EOR #&FF
  CLC
- LDX sightsYawAngleHi
+ LDX vectorYawAngleHi
  BNE C2FA6
  LDX L0018
  JMP C2F77
@@ -16337,7 +16571,7 @@ L2F79 = C2F77+2
 
  STX L000E
  LDA #0
- STA sightsPitchAngleHi
+ STA vectorPitchAngleHi
  LDA L54A0,Y
  SEC
  SBC L54A0,X
@@ -16359,7 +16593,7 @@ L2F79 = C2F77+2
  LSR U
  ROR T
  SEC
- ROL sightsPitchAngleHi
+ ROL vectorPitchAngleHi
  LSR A
  BNE C2FEC
 
@@ -16384,10 +16618,10 @@ L2F79 = C2F77+2
  LDA L0B40,Y
  STA L0042
  LDA L0AE0,Y
- STA sightsPitchAngleLo
+ STA vectorPitchAngleLo
  LDA L0A80,Y
  STA L0016
- LDA sightsPitchAngleHi
+ LDA vectorPitchAngleHi
  BEQ C3054
 
 .C302B
@@ -16397,10 +16631,10 @@ L2F79 = C2F77+2
  SEC
  SBC L000C
  STA L0016
- LDA sightsPitchAngleLo
- STA sightsYawAngleHi
+ LDA vectorPitchAngleLo
+ STA vectorYawAngleHi
  SBC #&00
- STA sightsPitchAngleLo
+ STA vectorPitchAngleLo
  LDA L0039
  STA L0018
  SEC
@@ -16411,15 +16645,15 @@ L2F79 = C2F77+2
  SBC L0043
  STA L0042
  JSR sub_C2EAE
- DEC sightsPitchAngleHi
+ DEC vectorPitchAngleHi
  BNE C302B
 
 .C3054
 
  LDA L0016
  STA L001A
- LDA sightsPitchAngleLo
- STA sightsYawAngleHi
+ LDA vectorPitchAngleLo
+ STA vectorYawAngleHi
  LDA L0039
  STA L0018
  LDA L0042
@@ -16428,7 +16662,7 @@ L2F79 = C2F77+2
  LDA L0A80,X
  STA L0016
  LDA L0AE0,X
- STA sightsPitchAngleLo
+ STA vectorPitchAngleLo
  LDA L54A0,X
  STA L0039
  LDA L0B40,X
@@ -16475,7 +16709,7 @@ L2F79 = C2F77+2
  BCS C3112
  STA L30EB
  STX C30E3
- LDA sightsYawAngleHi
+ LDA vectorYawAngleHi
  BEQ C30C3
  INY
 
@@ -16525,7 +16759,7 @@ L30EB = C30E9+2
 
 .C30F8
 
- DEC sightsYawAngleHi
+ DEC vectorYawAngleHi
  BPL C30FF
  JMP CRE26
 
@@ -16546,7 +16780,7 @@ L30EB = C30E9+2
 
  STA L314A
  STX C3137
- LDA sightsYawAngleHi
+ LDA vectorYawAngleHi
  BEQ C311D
  INY
 
@@ -16593,7 +16827,7 @@ L314A = C3148+2
 
 .C3152
 
- DEC sightsYawAngleHi
+ DEC vectorYawAngleHi
  BPL C3159
  JMP CRE26
 
@@ -16641,7 +16875,7 @@ L314A = C3148+2
 .sub_C316E
 
  PHA
- LDA sightsYawAngleHi
+ LDA vectorYawAngleHi
  BEQ C3177
  LDA #&2C
  BNE C318C
@@ -24988,7 +25222,7 @@ L314A = C3148+2
  LDA L4FE0,Y
  STA L003C
  LDA L5120,Y
- STA sightsYawAngleLo
+ STA vectorYawAngleLo
  JSR sub_C2A79
  LDY L004E
 
@@ -25009,7 +25243,7 @@ L314A = C3148+2
  LDA #&40
  STA L003C
  LDA #&0C
- STA sightsYawAngleLo
+ STA vectorYawAngleLo
  LSR L0C7A
  LDY L006F
  RTS
