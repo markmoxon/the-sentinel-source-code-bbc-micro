@@ -218,6 +218,8 @@
      005D
 .tileDataPage
      005E
+.considerObjects
+     0060
 .secondAxis
      0060
 .L0061
@@ -5129,7 +5131,7 @@
      1DE3   02
      1DE4   02
      1DE5   03
-.ExtractTileData
+.GetTileAltitude
      1DE6   20 78 2B   JSR &2B78
      1DE9   B0 3D      BCS &1E28
      1DEB   48         PHA
@@ -5229,7 +5231,7 @@
      1E92   B0 94      BCS &1E28
      1E94   B9 40 09   LDA &0940,Y
      1E97   60         RTS
-.GetMaxXZCoordLo
+.CheckForTileCentre
      1E98   A5 37      LDA &37
      1E9A   38         SEC
      1E9B   E9 80      SBC #&80

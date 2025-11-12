@@ -664,6 +664,12 @@
  SKIP 2                 \ The address of the tileData page containing the
                         \ current tile's data
 
+.considerObjects
+
+ SKIP 0                 \ Controls whether the GetTileAltitude routine takes
+                        \ objects into consideration when calculating tile
+                        \ altitudes
+
 .secondAxis
 
  SKIP 1                 \ The number of the second axis to calculate in the
@@ -8881,8 +8887,7 @@ L1145 = C1144+1
                         \   [ (yVectorLo yVectorBot) ]
                         \   [ (zVectorLo zVectorBot) ]
 
- JSR sub_C1CCC          \ Something to do with vectors? (secondAxis is involved)
-                        \ Is it working out if we are able to see the tile ???
+ JSR sub_C1CCC          \ Does this work out if we are able to see the tile ???
                         \
                         \ This also calls GetObjectCoords which sets (L003A, L003C)
                         \ which we use below as the tile coordinates where we
@@ -9811,12 +9816,12 @@ L1145 = C1144+1
  CMP #&1F
  BCS C1D33
  LDA #&80
- STA secondAxis
+ STA considerObjects
  STA L000C
  LDA #0
  STA L0079
  STA L0C67
- JSR ExtractTileData
+ JSR GetTileAltitude
  BCS C1D35
  TAX
  LDA L0079
@@ -9830,7 +9835,7 @@ L1145 = C1144+1
  LDA L0079
  CMP L000C
  BCS C1D33
- BIT secondAxis
+ BIT considerObjects
  BVS C1D33
 
  LDA L0C6E              \ If bit 7 is set in one or both of L0C6E and L0C67,
@@ -9864,15 +9869,15 @@ L1145 = C1144+1
 
  STA S
  STA W
- LSR secondAxis
+ LSR considerObjects
  INC xTile
- JSR ExtractTileData
+ JSR GetTileAltitude
  STA V
  INC zTile
- JSR ExtractTileData
+ JSR GetTileAltitude
  STA U
  DEC xTile
- JSR ExtractTileData
+ JSR GetTileAltitude
  STA T
  DEC zTile
 
@@ -10010,10 +10015,11 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: ExtractTileData
+\       Name: GetTileAltitude
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: ???
+\    Summary: Calculate the altitude of a tile, optionally including objects in
+\             the calculation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10021,9 +10027,10 @@ L1145 = C1144+1
 \
 \   (xTile, zTile)      The coordinates of the tile to analyse
 \
-\   secondAxis          The data to extract:
+\   considerObjects     The data to extract:
 \
-\                         * Bit 7 clear = extract the tile's altitude and shape
+\                         * Bit 7 clear = extract the tile's altitude and
+\                                         flatness
 \
 \                         * Bit 7 set = if the tile contains an object, then ???
 \                                       otherwise extract the tile's altitude
@@ -10046,7 +10053,7 @@ L1145 = C1144+1
 \
 \ ******************************************************************************
 
-.ExtractTileData
+.GetTileAltitude
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), setting the C flag if the tile
@@ -10096,9 +10103,9 @@ L1145 = C1144+1
                         \ If we get here then the tile contains the Sentinel's
                         \ tower in object #Y
 
- JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+ JSR CheckForTileCentre \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
-                        \ and return the same value in A
+                        \ and return the same value in A ???
 
  CMP #100               \ If A >= 100 then jump to data6 to ???
  BCS data6
@@ -10125,22 +10132,22 @@ L1145 = C1144+1
  TAY                    \ data contains the existing object's number in bits 0
                         \ to 5, so extract the object number into Y
 
- BIT secondAxis         \ If bit 7 of secondAxis is clear, jump to data7 to get
- BPL data7              \ the altitude of the bottom object on the tile (which
-                        \ will the altitude of the tile itself) and return that
-                        \ as the tile's data
+ BIT considerObjects    \ If bit 7 of considerObjects is clear, jump to data7 to
+ BPL data7              \ get the altitude of the bottom object on the tile
+                        \ (which will also be the altitude of the tile itself)
+                        \ and return that as the tile's data
 
- BMI data1              \ Otherwise bit 7 of secondAxis is set, so jump to data1
-                        \ to do calculations involving xCoord ???
+ BMI data1              \ Otherwise bit 7 of considerObjects is set, so jump to
+                        \ data1 to do calculations involving xCoord ???
 
 .data4
 
                         \ If we get here then the tile contains a tree or a
                         \ boulder in object #Y
 
- JSR GetMaxXZCoordLo    \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
+ JSR CheckForTileCentre \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
-                        \ and return the same value in A
+                        \ and return the same value in A ???
 
  CMP #64                \ If A >= 64 then jump to data6 to ???
  BCS data6
@@ -10208,7 +10215,7 @@ L1145 = C1144+1
  BEQ data7
 
  LDA #%11000000
- STA secondAxis
+ STA considerObjects
 
 .data7
 
@@ -10229,14 +10236,14 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: GetMaxXZCoordLo
+\       Name: CheckForTileCentre
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate max(|xCoordLo - 128|, |zCoordLo - 128|)
 \
 \ ******************************************************************************
 
-.GetMaxXZCoordLo
+.CheckForTileCentre
 
  LDA xCoordLo           \ Set A = |xCoordLo - 128|
  SEC
@@ -10618,7 +10625,7 @@ L1145 = C1144+1
                         \ the y-coordinate of the object, as the y-axis goes up
                         \ and down in our 3D world)
                         \
-                        \ Boulder are defined with a height of 0.5 coordinates
+                        \ Boulders are defined with a height of 0.5 coordinates
                         \ (where a tile-sized cube is one coordinate across)
                         \
                         \ Object y-coordinates are stored as 16-bit numbers in
@@ -12258,9 +12265,14 @@ L23E3 = C23E2+1
  LDA hyperspaceEndsGame \ If bit 7 of hyperspaceEndsGame is set then the game
  BMI tvis5              \ has ended because of a hyperspace, so jump to tvis5
                         \ to return from the subroutine
+                        \
+                        \ This check appears to be unnecessary, as we only call
+                        \ GetTileVisibility from game2 in MainGameLoop, and we
+                        \ only reach game2 when bit 7 of hyperspaceEndsGame is
+                        \ clear, so this BMI will never be taken
 
- LDA #0                 \ Set A = 0 to use when we zero the L3E80 and L3EC0
-                        \ variables
+ LDA #0                 \ Set A = 0 to use when we zero the tables at L3E80 and
+                        \ L3EC0
 
  STA storeResultsOffset \ Set storeResultsOffset = 0 so the call to first call
                         \ to GetRowVisibility (for tile row 31) will populate
@@ -12281,14 +12293,29 @@ L23E3 = C23E2+1
  JSR GetTileAltitudes   \ Calculate tile corner altitudes and maximum tile
                         \ corner altitudes for each tile in the landscape
                         \
-                        \ This also sets P to zero, so (Q P) is of the form
-                        \ &xx00, and it also sets R to &20, so (S R) is of the
-                        \ form &xx20
+                        \ This also sets the following:
+                        \
+                        \   * (Q P) = &6000
+                        \
+                        \   * (S R) = &6020
+                        \
+                        \ So we have P = 0 and R = &20, ready to pass to the
+                        \ GetRowVisibility routine (which expects these values)
 
  LDA #31                \ Set zTileRow = 31 so the call to GetRowVisibility
  STA zTileRow           \ analyses the back row of tiles
 
- JSR GetRowVisibility   \ ???
+ JSR GetRowVisibility   \ Calculate whether each tile corner in the rearmost row
+                        \ is obscured from the player by any intervening
+                        \ landscape, putting the results into 32 entries in the
+                        \ table at oddVisibility (as storeResultsOffset = 0) as
+                        \ follows:
+                        \
+                        \   * 0 if the tile corner is not visible from the
+                        \     player's position
+                        \
+                        \   * &FF if the tile corner is visible from the
+                        \     player's position
 
  DEC zTileRow           \ Decrement zTileRow to move forward by one tile row
 
@@ -12307,29 +12334,70 @@ L23E3 = C23E2+1
                         \ oddVisibility to point to the correct table for
                         \ storing the results
 
- JSR GetRowVisibility   \ ???
+ JSR GetRowVisibility   \ Calculate whether each tile corner in the row at
+                        \ zTileRow is obscured from the player by any
+                        \ intervening landscape, putting the results into 32
+                        \ entries in the table at either oddVisibility or
+                        \ evenVisibility (depending on the parity of zTileRow)
+                        \ as follows:
+                        \
+                        \   * 0 if the tile corner is not visible from the
+                        \     player's position
+                        \
+                        \   * &FF if the tile corner is visible from the
+                        \     player's position
+                        \
+                        \ So the current row is in either oddVisibility or
+                        \ evenVisibility and the previous row is in the other
+                        \
+                        \ The call also sets (Q P) to the address of the table
+                        \ that contains the altitude and flatness data for tile
+                        \ corner row zTileRow, as follows:
+                        \
+                        \   (Q P) = &6000 + (zTileRow 0)
+                        \
+                        \ Each value in the table at (Q P) contains the flatness
+                        \ of the tile in bit 0 and the altitude of the tile
+                        \ corner in bits 1-4
 
- LDX playerObject
- LDA yObjectHi,X
+ LDX playerObject       \ Set V to the high byte of the y-coordinate of the
+ LDA yObjectHi,X        \ player object
  STA V
- LDX #&1E
+
+ LDX #30                \ Set X = 30 to use as the column number, so we start
+                        \ iterating from the right, skipping the rightmost
+                        \ column as the tile corners in that column do not
+                        \ anchor any tiles (so X iterates from 30 to 0 in the
+                        \ following loop)
 
 .tvis3
 
- TXA
- TAY
- LDA (P),Y
- LDY #&FF
- LSR A
- BCS tvis4
- CMP V
- BCC tvis4
- BEQ tvis4
- INY
+ TXA                    \ Set A to the X-th entry from (Q P), which contains the
+ TAY                    \ altitude and flatness of the X-th tile in the row at
+ LDA (P),Y              \ zTileRow
+
+ LDY #%11111111         \ Set Y to a bit mask containing all set bits, to use
+                        \ for ???
+
+ LSR A                  \ Shift bit 0 into the C flag, so it contains the shape,
+                        \ and set A as the altitude of the tile
+
+ BCS tvis4              \ If the tile is not flat then the C flag will be set, so
+                        \ jump to tvis4 to skip the following
+
+ CMP V                  \ If A <= V then the tile is at the same altitude or
+ BCC tvis4              \ lower than the high byte of the player object, so
+ BEQ tvis4              \ jump to tvis4 ???
+
+                        \ If we get here then the tile is flat and it is at a
+                        \ higher altitude than the player's tile, so ???
+
+ INY                    \ Set Y to a bit mask containing all clear bits
 
 .tvis4
 
- STY W
+ STY W                  \ Store the bit mask we just calculated in W, so ???
+
  TXA
  ASL A
  ASL A
@@ -12338,13 +12406,16 @@ L23E3 = C23E2+1
  ORA zTileRow
  LSR A
  STA T
+
  TXA
  AND #&03
  ROL A
  TAY
+
  LDA L24E2,Y
  EOR #&FF
  STA bitMask
+
  LDA oddVisibility,X
  ORA oddVisibility+1,X
  ORA evenVisibility,X
@@ -12352,13 +12423,18 @@ L23E3 = C23E2+1
  AND W
  AND L24E2,Y
  STA U
+
  LDY T
  LDA L3E80,Y
  AND bitMask
  ORA U
  STA L3E80,Y
- DEX
- BPL tvis3
+
+ DEX                    \ Decrement the column number to move left to the next
+                        \ tile in the row
+
+ BPL tvis3              \ Loop back until we have processed all the tiles in the
+                        \ row
 
  DEC zTileRow           \ Decrement zTileRow to move forward by one tile row
 
@@ -12392,11 +12468,16 @@ L23E3 = C23E2+1
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine populates a specified table with the vibility of each tile corner
+\ in a row, populating the table with 32 entries as follows:
+\
+\   * 0 if the tile corner is not visible from the player's position
+\
+\   * &FF if the tile corner is visible from the player's position
+\
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
-\
-\   P                   P is always zero, so (Q P) is of the form &xx00
-\
-\   R                   R is always &20, so (S R) is of the form &xx20
 \
 \   zTileRow            The tile z-coordinate of the tile row to analyse
 \
@@ -12405,6 +12486,20 @@ L23E3 = C23E2+1
 \                         * oddVisibility when storeResultsOffset = 0
 \
 \                         * evenVisibility when storeResultsOffset = 32
+\
+\   P                   P is always zero, so (Q P) is of the form &xx00
+\
+\   R                   R is always &20, so (S R) is of the form &xx20
+\
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   (Q P)               The address of the table that contains the altitude and
+\                       shape data for tile row zTileRow, like this:
+\
+\                         * (Q P) = &6000 + (zTileRow 0)
 \
 \ ******************************************************************************
 
@@ -12928,7 +13023,7 @@ L23E3 = C23E2+1
                         \ part 1, this will point to the &xx20 table of altitude
                         \ data for the tile row over which the gaze is passing
                         \
-                        \ TheExtractTileData routine populates the &xx20 table
+                        \ The GetTileAltitude routine populates the &xx20 table
                         \ with the altitude of the highest tile corner for each
                         \ tile, so (S R) now points to this data for the row
                         \ over which we are passing
@@ -13046,9 +13141,9 @@ L23E3 = C23E2+1
 \
 \ Returns:
 \
-\   P                   P is set to 0, so (Q P) is of the form &xx00
+\   (Q P)               (Q P) is set to &6000
 \
-\   R                   P is set to &20, so (S R) is of the form &xx20
+\   (S R)               (Q P) is set to &6020
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13063,9 +13158,10 @@ L23E3 = C23E2+1
  LDA #0                 \ Set the low byte of (Q P) = &7F00
  STA P
 
- STA secondAxis         \ Clear bit 7 of secondAxis so ExtractTileData will only
-                        \ extract the altitude and shape of the landscape tiles
-                        \ when we call it below
+ STA considerObjects    \ Clear bit 7 of considerObjects so GetTileAltitude will
+                        \ only extract the altitude and flatness of the tiles
+                        \ when we call it below, ignoring any objects on the
+                        \ landscape
 
  LDA #&7F               \ Set the high byte of (Q P) = &7F00
  STA Q                  \
@@ -13104,8 +13200,8 @@ L23E3 = C23E2+1
 
 .talt3
 
- JSR ExtractTileData    \ Call ExtractTileData with bit 7 of secondAxis clear
-                        \ to extract the following tile data:
+ JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
+                        \ clear to extract the following tile data:
                         \
                         \   * A = the high byte of the tile's altitude (which
                         \         is also the altitude of the tile corner)
@@ -13163,6 +13259,8 @@ L23E3 = C23E2+1
  BPL talt1              \ Loop back until we have processed all the tile rows in
                         \ the landscape, working from the back row of the
                         \ landscape all the way to the front row
+                        \
+                        \ This leaves (Q P) set to &6000
 
                         \ We now iterate through each tile to calculate the
                         \ altitude of the highest tile corner, so we can store
@@ -13304,6 +13402,8 @@ L23E3 = C23E2+1
 
  BPL talt4              \ Loop back to process the next row until we have
                         \ processed all tiles in all rows in the landscape
+                        \
+                        \ This leaves (S R) set to &6020
 
  RTS                    \ Return from the subroutine
 
