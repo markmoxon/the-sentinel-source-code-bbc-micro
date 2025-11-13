@@ -74,6 +74,8 @@
      001A
 .L001B
      001B
+.L001C
+     001C
 .processAction
      001C
 .L001D
@@ -124,9 +126,13 @@
      0030
 .zVectorLo
      0031
-.cosSightsPitchLo
+.L0032
      0032
-.cosSightsPitchHi
+.cosVectorPitchLo
+     0032
+.L0033
+     0033
+.cosVectorPitchHi
      0033
 .xCoordBot
      0034
@@ -228,6 +234,8 @@
      0062
 .toAddr
      0064
+.L0066
+     0066
 .smoothingAction
      0066
 .H

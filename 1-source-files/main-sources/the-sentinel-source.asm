@@ -259,6 +259,10 @@
 
  SKIP 1                 \ ???
 
+.L001C
+
+ SKIP 0                 \ ???
+
 .processAction
 
  SKIP 1                 \ Defines the following:
@@ -442,12 +446,20 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.cosSightsPitchLo
+.L0032
+
+ SKIP 0                 \ ???
+
+.cosVectorPitchLo
 
  SKIP 1                 \ The low byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
-.cosSightsPitchHi
+.L0033
+
+ SKIP 0                 \ ???
+
+.cosVectorPitchHi
 
  SKIP 1                 \ The high byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
@@ -540,7 +552,8 @@
 
 .L003C
 
- SKIP 1                 \ ???
+ SKIP 1                 \ ??? An address that uses vectorYawAngleLo for the high
+                        \ byte
 
 .vectorYawAngleLo
 
@@ -688,6 +701,10 @@
 
  SKIP 2                 \ An address, typically used as a destination address
                         \ when copying
+
+.L0066
+
+ SKIP 0                 \ ???
 
 .smoothingAction
 
@@ -4797,11 +4814,13 @@ L1145 = C1144+1
 
 .ResetVariables2
 
-                        \ We now set the following variable block to %11111111:
+                        \ We now set the following variable block to %11111111
+                        \ to indicate that all tiles are visible:
                         \
                         \   * tileVisibility to tileVisibility+127
                         \
-                        \ and the following variable block to %10000000:
+                        \ and the following variable block to %10000000 to
+                        \ deallocate all the object numbers:
                         \
                         \   * objectFlags to objectFlags+63
 
@@ -9387,11 +9406,11 @@ L1145 = C1144+1
 \
 \ The calculation is this:
 \
-\   yVector = sinSightsPitchAngle / 16
+\   yVector = sinVectorPitchAngle / 16
 \
-\   zVector = cosSightsPitchAngle * cosSightsYawAngle / 16
+\   zVector = cosVectorPitchAngle * cosVectorYawAngle / 16
 \
-\   xVector = cosSightsPitchAngle * sinSightsYawAngle / 16
+\   xVector = cosVectorPitchAngle * sinVectorYawAngle / 16
 \
 \ ******************************************************************************
 
@@ -9463,9 +9482,9 @@ L1145 = C1144+1
                         \ Revs routine calculates the values that we do need
                         \ here, specifically:
                         \
-                        \   cosSightsPitchAngle = cos(vectorPitchAngle)
+                        \   cosVectorPitchAngle = cos(vectorPitchAngle)
                         \
-                        \   sinSightsPitchAngle = sin(vectorPitchAngle)
+                        \   sinVectorPitchAngle = sin(vectorPitchAngle)
                         \
                         \ These calculations return 16-bit sign-magnitude
                         \ numbers with the sign in bit 0, which the DivideBy16
@@ -9477,16 +9496,16 @@ L1145 = C1144+1
                         \ yawAngle variables, but for simplicity let's pretend
                         \ they are returned as above
 
- LDY #1                 \ Set (A X) = cosSightsPitchAngle / 16
+ LDY #1                 \ Set (A X) = cosVectorPitchAngle / 16
  JSR DivideBy16
 
- STA cosSightsPitchHi   \ Set (cosSightsPitchHi cosSightsPitchLo)
- STX cosSightsPitchLo   \                             = cosSightsPitchAngle / 16
+ STA cosVectorPitchHi   \ Set (cosVectorPitchHi cosVectorPitchLo)
+ STX cosVectorPitchLo   \                             = cosVectorPitchAngle / 16
 
- LDY #0                 \ Set (A X) = sinSightsPitchAngle / 16
+ LDY #0                 \ Set (A X) = sinVectorPitchAngle / 16
  JSR DivideBy16
 
- STA yVectorLo          \ Set (yVectorLo yVectorBot) = sinSightsPitchAngle / 16
+ STA yVectorLo          \ Set (yVectorLo yVectorBot) = sinVectorPitchAngle / 16
  STX yVectorBot         \                           
                         \ So we now have the y-coordinate of the sights vector
                         \ as follows:
@@ -9575,9 +9594,9 @@ L1145 = C1144+1
 
  JSR GetRotationMatrix  \ Calculate the following:
                         \
-                        \   cosSightsYawAngle = cos(vectorYawAngle)
+                        \   cosVectorYawAngle = cos(vectorYawAngle)
                         \
-                        \   sinSightsYawAngle = sin(vectorYawAngle)
+                        \   sinVectorYawAngle = sin(vectorYawAngle)
                         \
                         \ Again these are returned as 16-bit sign-magnitude
                         \ numbers with the sign in bit 0, which the
@@ -9588,13 +9607,13 @@ L1145 = C1144+1
  LDX #2                 \ the following:
  JSR MultiplyCoords     \
                         \   (zVectorLo zVectorBot)
-                        \       = cosSightsPitchAngle * cosSightsYawAngle / 16
+                        \       = cosVectorPitchAngle * cosVectorYawAngle / 16
 
  LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
  LDX #0                 \ calculate the following:
                         \
                         \   (xVectorLo xVectorBot)
-                        \        = cosSightsPitchAngle * sinSightsYawAngle / 16
+                        \        = cosVectorPitchAngle * sinVectorYawAngle / 16
                         \
                         \ and return from the subroutine using a tail call
 
@@ -9612,15 +9631,15 @@ L1145 = C1144+1
 \
 \ When Y = 0, it calculates:
 \
-\   (cosSightsPitchHi cosSightsPitchLo) * (sinAngleHi sinAngleLo)
+\   (cosVectorPitchHi cosVectorPitchLo) * (sinAngleHi sinAngleLo)
 \
-\ i.e. cosSightsPitch * sinAngle
+\ i.e. cosVectorPitch * sinAngle
 \
 \ When Y = 1, it calculates:
 \
-\   (cosSightsPitchHi cosSightsPitchLo) * (cosAngleHi cosAngleLo)
+\   (cosVectorPitchHi cosVectorPitchLo) * (cosAngleHi cosAngleLo)
 \
-\ i.e. cosSightsPitch * cosAngle
+\ i.e. cosVectorPitch * cosAngle
 \
 \ When X = 0, store the result in (xVectorLo xVectorBot).
 \
@@ -9630,9 +9649,9 @@ L1145 = C1144+1
 \
 \ Arguments:
 \
-\   cosSightsPitchHi    The 16-bit signed number to multiply (high byte)
+\   cosVectorPitchHi    The 16-bit signed number to multiply (high byte)
 \
-\   cosSightsPitchLo    The 16-bit signed number to multiply (low byte)
+\   cosVectorPitchLo    The 16-bit signed number to multiply (low byte)
 \
 \   Y                   Offset of the 16-bit sign-magnitude value to multiply:
 \
@@ -9654,9 +9673,9 @@ L1145 = C1144+1
  STA H                  \ (in bit 7), so setting H  0 ensures that that the
                         \ result is positive
 
- LDA cosSightsPitchLo   \ Set (QQ PP) = (cosSightsPitchHi cosSightsPitchLo)
+ LDA cosVectorPitchLo   \ Set (QQ PP) = (cosVectorPitchHi cosVectorPitchLo)
  STA PP                 \
- LDA cosSightsPitchHi   \ where (QQ PP) is a 16-bit signed number
+ LDA cosVectorPitchHi   \ where (QQ PP) is a 16-bit signed number
  STA QQ
 
  LDA sinAngleLo,Y       \ Set (SS RR) to the 16-bit sign-magnitude number
@@ -13527,31 +13546,39 @@ L23E3 = C23E2+1
 
 .DrawLandscapeView
 
- LDX anotherObject
- LDA #&40
+ LDX anotherObject      \ Set X to the anotherObject number (the object viewing
+                        \ the landscape) ???
+
+ LDA #LO(L0C40)         \ Set L003C(1 0) = L0C40 ???
  STA L003C
- LDA #&0C
- STA vectorYawAngleLo
- LDA objectYawAngle,X
- CLC
- ADC #&20
- STA processAction
- AND #&3F
+ LDA #HI(L0C40)
+ STA L003C+1
+
+ LDA objectYawAngle,X   \ Set A to the yaw angle of the viewer's object
+
+ CLC                    \ Set L001C = yaw angle + 32
+ ADC #32
+ STA L001C
+
+ AND #63                \ Set T = (yaw angle + 32) mod 64 - 32
  SEC
- SBC #&20
+ SBC #32
  STA T
- LDA processAction
+
+ LDA L001C              \ Set bits 0-1 of Y to bits 6-7 of L001C
  ASL A
  ROL A
  ROL A
- AND #&03
+ AND #3
  TAY
+
  LDA L27AB,Y
  STA L001B
  TYA
  ASL A
  ASL A
- STA smoothingAction
+ STA L0066
+
  TYA
  SEC
  SBC #&02
@@ -13560,13 +13587,15 @@ L23E3 = C23E2+1
  SEC
  SBC #&0A
  STA L0020
- BIT processAction
+ BIT L001C
  BMI C267F
  BVS C266F
+
  LDA xObject,X
  STA L0003
  LDA zObject,X
  STA L001D
+
  JMP C26A1
 
 .C266F
@@ -13606,11 +13635,11 @@ L23E3 = C23E2+1
  LDA #&1F
  STA zTile
  LDA L0C48
- STA cosSightsPitchLo
+ STA L0032
  LDA #0
  STA L0005
  JSR sub_C27AF
- LDA cosSightsPitchLo
+ LDA L0032
  STA L0C48
 
 .C26B6
@@ -13618,9 +13647,9 @@ L23E3 = C23E2+1
  LDA L0005
  EOR #&20
  STA L0005
- LDA cosSightsPitchLo
+ LDA L0032
  STA L0037
- LDA cosSightsPitchHi
+ LDA L0033
  STA L0038
 
  JSR ProcessSound       \ Process any sounds or music that are being made
@@ -13640,7 +13669,7 @@ L23E3 = C23E2+1
 .C26D6
 
  JSR sub_C27AF
- LDY cosSightsPitchLo
+ LDY L0032
  CPY L0037
  BEQ C2707
  BCC C26EB
@@ -13665,7 +13694,7 @@ L23E3 = C23E2+1
 
  DEY
  JSR sub_C2815
- CPY cosSightsPitchLo
+ CPY L0032
  BNE P26F5
  STY L0037
  DEC zTile
@@ -13675,7 +13704,7 @@ L23E3 = C23E2+1
 
 .C2707
 
- LDY cosSightsPitchHi
+ LDY L0033
  CPY L0038
  BEQ C2735
  BCS C2719
@@ -13700,7 +13729,7 @@ L23E3 = C23E2+1
 
  INY
  JSR sub_C2815
- CPY cosSightsPitchHi
+ CPY L0033
  BNE P2723
  STY L0038
  DEC zTile
@@ -13816,7 +13845,7 @@ L23E3 = C23E2+1
 
 .sub_C27AF
 
- LDY cosSightsPitchLo
+ LDY L0032
  JSR sub_C2815
  BEQ C27E9
  CMP #&80
@@ -13825,7 +13854,7 @@ L23E3 = C23E2+1
 .P27BA
 
  LDA xTile
- STA cosSightsPitchLo
+ STA L0032
  JSR sub_C280E
  BCS C27D2
  CMP #&81
@@ -13842,13 +13871,13 @@ L23E3 = C23E2+1
 .C27D2
 
  LDA xTile
- STA cosSightsPitchHi
+ STA L0033
  RTS
 
 .C27D7
 
  LDA xTile
- STA cosSightsPitchHi
+ STA L0033
  JSR sub_C2806
  BCS C27FF
  CMP #&80
@@ -13865,8 +13894,8 @@ L23E3 = C23E2+1
 .C27F0
 
  LDA xTile
- STA cosSightsPitchHi
- LDA cosSightsPitchLo
+ STA L0033
+ LDA L0032
  STA xTile
 
 .P27F8
@@ -13881,7 +13910,7 @@ L23E3 = C23E2+1
 .C27FF
 
  LDA xTile
- STA cosSightsPitchLo
+ STA L0032
  RTS
 
 .C2804
@@ -13986,7 +14015,7 @@ L23E3 = C23E2+1
  SBC L0020
  STA L5500,Y
  JSR GetHypotenuse
- BIT processAction
+ BIT L001C
  BMI C288B
  BVS C2880
  LDX xTile
@@ -14456,7 +14485,7 @@ L23E3 = C23E2+1
 
  TAX
  SEC
- SBC smoothingAction
+ SBC L0066
  AND #&0F
  TAY
  AND #&03
