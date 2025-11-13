@@ -4791,30 +4791,29 @@ L1145 = C1144+1
 \       Name: ResetVariables2
 \       Type: Subroutine
 \   Category: Main title Loop
-\    Summary: Reset the L3E80, L3EC0 and objectFlags variable blocks ???
+\    Summary: Reset the tileVisibility and objectFlags tables
 \
 \ ******************************************************************************
 
 .ResetVariables2
 
-                        \ We now set the following variable blocks to &FF:
+                        \ We now set the following variable block to %11111111:
                         \
-                        \   * &3E80 to &3EBF
+                        \   * tileVisibility to tileVisibility+127
                         \
-                        \   * &3EC0 to &3EFF
-                        \
-                        \ and set the following variable block to %10000000:
+                        \ and the following variable block to %10000000:
                         \
                         \   * objectFlags to objectFlags+63
 
- LDX #&3F               \ Set X to use as a byte counter to run from &3F to 0
+ LDX #63                \ Set X to use as a byte counter to run from 63 to 0,
+                        \ so we can initialise the 64-byte objectFlags table and
+                        \ the 128-byte tileVisibility table
 
 .resv1
 
- LDA #&FF               \ Set the X-th byte of L3E80 to &FF ???
- STA L3E80,X
-
- STA L3EC0,X            \ Set the X-th byte of L3EC0 to &FF ???
+ LDA #%11111111         \ Set the X-th and X+64-th bytes of tileVisibility to
+ STA tileVisibility,X   \ all set bits, to visible tiles
+ STA tileVisibility+64,X
 
  LDA #%10000000         \ Set bit 7 of the X-th byte of objectFlags, to denote
  STA objectFlags,X      \ that object #X is not allocated to an object
@@ -6011,7 +6010,7 @@ L1145 = C1144+1
 
 .P13F4
 
- STA L3E80,X
+ STA tileVisibility,X
  DEX
  BPL P13F4
 
@@ -12258,6 +12257,16 @@ L23E3 = C23E2+1
 \    Summary: For each tile in the landscape, calculate whether the player can
 \             see that tile, to speed up the process of drawing the landscape
 \
+\ ------------------------------------------------------------------------------
+\
+\ This routine sets a single bit in the tileVisibility table that records the
+\ visibility of that tile from the player's perspective (where 1 = visible,
+\ 0 = hidden).
+\
+\ The position of the bit within the tileVisibility table is calculated in a
+\ rather complicated manner, resumably to make it harder to follow what's going
+\ on.
+\
 \ ******************************************************************************
 
 .GetTileVisibility
@@ -12271,20 +12280,19 @@ L23E3 = C23E2+1
                         \ only reach game2 when bit 7 of hyperspaceEndsGame is
                         \ clear, so this BMI will never be taken
 
- LDA #0                 \ Set A = 0 to use when we zero the tables at L3E80 and
-                        \ L3EC0
+ LDA #0                 \ Set A = 0 to use when we zero the tileVisibility table
 
  STA storeResultsOffset \ Set storeResultsOffset = 0 so the call to first call
                         \ to GetRowVisibility (for tile row 31) will populate
                         \ the table at oddVisibility with the tile visibilities
                         \ of the row being analysed
 
- LDX #127               \ We now zero 64 bytes at L3E80 and 64 bytes at L3EC0,
-                        \ so set a counter in X for zeroing 128 bytes
+ LDX #127               \ We now zero the tileVisibility table, so set a counter
+                        \ in X for zeroing 128 bytes
 
 .tvis1
 
- STA L3E80,X            \ Zero the X-th byte of L3E80
+ STA tileVisibility,X   \ Zero the X-th byte of the tileVisibility table
 
  DEX                    \ Decrement the byte counter
 
@@ -12311,10 +12319,10 @@ L23E3 = C23E2+1
                         \ table at oddVisibility (as storeResultsOffset = 0) as
                         \ follows:
                         \
-                        \   * 0 if the tile corner is not visible from the
-                        \     player's position
+                        \   * %00000000 if the tile corner is not visible from
+                        \     the player's position
                         \
-                        \   * &FF if the tile corner is visible from the
+                        \   * %11111111 if the tile corner is visible from the
                         \     player's position
 
  DEC zTileRow           \ Decrement zTileRow to move forward by one tile row
@@ -12341,10 +12349,10 @@ L23E3 = C23E2+1
                         \ evenVisibility (depending on the parity of zTileRow)
                         \ as follows:
                         \
-                        \   * 0 if the tile corner is not visible from the
-                        \     player's position
+                        \   * %00000000 if the tile corner is not visible from
+                        \     the player's position
                         \
-                        \   * &FF if the tile corner is visible from the
+                        \   * %11111111 if the tile corner is visible from the
                         \     player's position
                         \
                         \ So the current row is in either oddVisibility or
@@ -12377,58 +12385,151 @@ L23E3 = C23E2+1
  LDA (P),Y              \ zTileRow
 
  LDY #%11111111         \ Set Y to a bit mask containing all set bits, to use
-                        \ for ???
+                        \ for flagging tiles as being visible in the calculation
+                        \ below
 
  LSR A                  \ Shift bit 0 into the C flag, so it contains the shape,
                         \ and set A as the altitude of the tile
 
- BCS tvis4              \ If the tile is not flat then the C flag will be set, so
-                        \ jump to tvis4 to skip the following
+ BCS tvis4              \ If the tile is not flat then the C flag will be set,
+                        \ so jump to tvis4 with Y set to the bit mask for
+                        \ visible tiles
 
  CMP V                  \ If A <= V then the tile is at the same altitude or
- BCC tvis4              \ lower than the high byte of the player object, so
- BEQ tvis4              \ jump to tvis4 ???
+ BCC tvis4              \ lower than the high byte of the player object's
+ BEQ tvis4              \ altitude (which is the player's altitude rounded down
+                        \ to the nearest integer), so jump to tvis4 with Y set
+                        \ to the bit mask for visible tiles
 
                         \ If we get here then the tile is flat and it is at a
-                        \ higher altitude than the player's tile, so ???
+                        \ higher altitude than the player object, so
 
- INY                    \ Set Y to a bit mask containing all clear bits
+ INY                    \ Increment Y to zero to get a bit mask containing all
+                        \ clear bits, to use for flagging tiles as not being
+                        \ visible in the calculation below
 
 .tvis4
 
- STY W                  \ Store the bit mask we just calculated in W, so ???
+ STY W                  \ Store the bit mask we just calculated in W
 
- TXA
- ASL A
- ASL A
- ASL A
- AND #&E0
- ORA zTileRow
- LSR A
- STA T
+                        \ We now store this tile's vibility as a single bit in
+                        \ in the tileVisibility table
+                        \
+                        \ First we need to calculate the location of this tile's
+                        \ bit in the table, which we do by encoding the tile
+                        \ column number in X and row number in zTileRow into an
+                        \ offset into the table (in T) and a bit mask lookup
+                        \ (in Y)
+                        \
+                        \ Presumably this calculation is complex to make it
+                        \ harder for people to work out what's going on (at
+                        \ least, I can't figure out why it's done this way)
 
- TXA
- AND #&03
- ROL A
- TAY
+ TXA                    \ X is the column number of the tile we are analysing,
+ ASL A                  \ in the range 0 to 30 (%00000 to %11110), so shift that
+ ASL A                  \ number into the top five bits of A and clear the last
+ ASL A                  \ two bits, so that bits 5-7 contain bits 2-4 of the
+ AND #%11100000         \ column number
 
- LDA L24E2,Y
- EOR #&FF
- STA bitMask
+ ORA zTileRow           \ zTileRow is the row number of the tile we are
+ LSR A                  \ analysing, again in the range 0 to 30 (%00000 to
+                        \ %11110), so put this into bits 0 to 4 of A and shift
+                        \ the whole thing to the right, so we lose bit 0 of the
+                        \ row number into the C flag (which we capture below)
+                        \ and bits 0 to 3 contain bits 1 to 4 of zTileRow
 
- LDA oddVisibility,X
- ORA oddVisibility+1,X
- ORA evenVisibility,X
- ORA evenVisibility+1,X
- AND W
- AND L24E2,Y
- STA U
+ STA T                  \ Set T to the value of A, so we now have the following
+                        \ in T:
+                        \
+                        \   * Bit 7 is clear
+                        \
+                        \   * Bits 4-6 contain bits 2-4 of the column number
+                        \
+                        \   * Bits 0-3 contain bits 1-4 of the row number
+                        \
+                        \ We have now encoded the tile number in T, which we can
+                        \ use as an index into the tileVisibility table when
+                        \ storing the tile's visibility
 
- LDY T
- LDA L3E80,Y
- AND bitMask
- ORA U
- STA L3E80,Y
+ TXA                    \ Set bits 0 to 2 of Y as follows:
+ AND #%00000011         \
+ ROL A                  \    * Bit 0 contains bit 0 of the of the tile row (via
+ TAY                    \      the C flag from above)
+                        \
+                        \    * Bits 1-2 contain bits 0-1 of the column number
+
+ LDA visibileBitMask,Y  \ Set bitMask to a byte with all bits set except the
+ EOR #%11111111         \ Y-th bit, counting from the left (so when Y is 0, bit
+ STA bitMask            \ 7 is clear, when Y is 1, bit 6 is clear and so on)
+
+ LDA oddVisibility,X    \ Set A to the combined visibility of the four tile
+ ORA oddVisibility+1,X  \ corners for the tile we are analysing, by OR'ing the
+ ORA evenVisibility,X   \ visibility bytes that we set for the four corners in
+ ORA evenVisibility+1,X \ the call to GetRowVisibility:
+                        \
+                        \   * oddVisibility+X contains the visibility for the
+                        \     tile's anchor (i.e. the X-th corner)
+                        \
+                        \   * oddVisibility+X+1 contains the visibility for the
+                        \     corner to the right of the tile's anchor
+                        \
+                        \   * evenVisibility+X contains the visibility for the
+                        \     corner behind the tile's anchor (i.e. the corner
+                        \     on the same x-coordinate but from the previous
+                        \     row's analysis)
+                        \
+                        \   * evenVisibility+X+1 contains the visibility for the
+                        \     corner just to the right of the last one
+                        \
+                        \ The GetRowVisibility routine sets visibility in the
+                        \ oddVisibility and evenVisibility tables as follows:
+                        \
+                        \   * %00000000 if the tile corner is not visible
+                        \
+                        \   * %11111111 if the tile corner is visible
+                        \
+                        \ So OR'ing the four tile corners will give %11111111 if
+                        \ any of the tile corners are visible, and %00000000 if
+                        \ none of them are visible
+
+ AND W                  \ Apply the W bit mask from above, which we set to
+                        \ %0000000 for tiles that are flat and above the level
+                        \ of the player, and %11111111 otherwise
+                        \
+                        \ So this forces A to 0 (to indicate a hidden tile) for
+                        \ tiles that are flat and too high to be seen by the
+                        \ player, and leaves A alone for other tiles
+
+ AND visibileBitMask,Y  \ At this point A is either %00000000 for a hidden tile
+                        \ or %11111111 for a visible tile, so AND'ing it with
+                        \ the Y-th entry in visibileBitMask (which is a bit mask
+                        \ with all bits set except the Y-th bit, counting from
+                        \ the left) will clear all bits except the Y-th bit,
+                        \ which will be 0 for non-visible tiles and 1 for
+                        \ visible tiles
+
+ STA U                  \ Store A in U, so U contains all clear bits apart from
+                        \ the Y-th bit, which contains the visibility of the
+                        \ tile we are processing
+
+ LDY T                  \ Set A to the T-th byte in the tileVisibility table,
+ LDA tileVisibility,Y   \ which is where we want to store our visibility bit for
+                        \ the tile we are processing
+
+ AND bitMask            \ We set bitMask above to a byte with all bits set
+                        \ except the Y-th bit, counting from the left, which
+                        \ matches the bit that we used in U to store the tile's
+                        \ visibility bit, so this AND clears that bit in the
+                        \ byte we just fetched from the tileVisibility table
+
+ ORA U                  \ U contains all clear bits apart from the Y-th bit,
+                        \ which contains the visibility of the tile we are
+                        \ processing, so this inserts that bit into the byte
+                        \ we just fetched from the tileVisibility table
+
+ STA tileVisibility,Y   \ Store the updated byte in the tileVisibility table so
+                        \ it contains the visibility bit for the tile in column
+                        \ X on row zTileRow
 
  DEX                    \ Decrement the column number to move left to the next
                         \ tile in the row
@@ -12447,16 +12548,24 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: L24E2
+\       Name: visibileBitMask
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: A table for converting a number in the range 0 to 7 into a bit
+\             mask with only that bit set, when counting from the left
 \
 \ ******************************************************************************
 
-.L24E2
+.visibileBitMask
 
- EQUB &80, &40, &20, &10, &08, &04, &02, &01
+ EQUB %10000000
+ EQUB %01000000
+ EQUB %00100000
+ EQUB %00010000
+ EQUB %00001000
+ EQUB %00000100
+ EQUB %00000010
+ EQUB %00000001
 
 \ ******************************************************************************
 \
@@ -12471,9 +12580,9 @@ L23E3 = C23E2+1
 \ This routine populates a specified table with the vibility of each tile corner
 \ in a row, populating the table with 32 entries as follows:
 \
-\   * 0 if the tile corner is not visible from the player's position
+\   * %00000000 if the tile corner is not visible from the player's position
 \
-\   * &FF if the tile corner is visible from the player's position
+\   * %11111111 if the tile corner is visible from the player's position
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12490,7 +12599,6 @@ L23E3 = C23E2+1
 \   P                   P is always zero, so (Q P) is of the form &xx00
 \
 \   R                   R is always &20, so (S R) is of the form &xx20
-\
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13062,16 +13170,17 @@ L23E3 = C23E2+1
                         \ so the tile corner is not obscured by the landscape
                         \ and is therefore deemed to be visible
 
- CLC                    \ Clear the C flag so we store &FF in the visibility
-                        \ table to indicate that this tile corner is visible
+ CLC                    \ Clear the C flag so we store %11111111 in the
+                        \ visibilitytable to indicate that this tile corner is
+                        \ visible
 
  BCC rvis10             \ Jump to rvis10 to store the result (this BCC is
                         \ effectively a JMP as the C flag is always clear)
 
 .rvis9
 
- SEC                    \ Set the C flag so we store 0 in the visibility table
-                        \ to indicate that this tile corner is not visible
+ SEC                    \ Set the C flag so we store %00000000 in the visibility
+                        \ table to indicate that this tile corner is not visible
 
 .rvis10
 
@@ -13087,9 +13196,9 @@ L23E3 = C23E2+1
                         \
                         \ so this sets:
                         \
-                        \   * A = 0 if the C flag is set (not visible)
+                        \   * A = %00000000 if the C flag is set (not visible)
                         \
-                        \   * A = &FF if the C flag is clear (visible)
+                        \   * A = %11111111 if the C flag is clear (visible)
 
  STA oddVisibility,Y    \ Store the result in either the oddVisibility or
                         \ evenVisibility table, as determined by the value of
@@ -14001,9 +14110,9 @@ L23E3 = C23E2+1
  LSR A
  TAY
  ROL T
- LDA L3E80,Y
+ LDA tileVisibility,Y
  LDY T
- AND L24E2,Y
+ AND visibileBitMask,Y
  BNE C28EE
  STA L0180,X
 
@@ -21994,14 +22103,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3E80
+\       Name: tileVisibility
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: A table for storing the visibility of each tile from the player's
+\             point of view, with one bit per tile (1 = visible, 0 = hidden)
 \
 \ ******************************************************************************
 
-.L3E80
+.tileVisibility
 
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
@@ -22011,18 +22121,6 @@ L314A = C3148+2
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
-
-\ ******************************************************************************
-\
-\       Name: L3EC0
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L3EC0
-
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF

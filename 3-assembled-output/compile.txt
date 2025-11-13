@@ -6142,7 +6142,7 @@
      24DF   10 9F      BPL &2480
 .tvis5
      24E1   60         RTS
-.L24E2
+.visibileBitMask
      24E2   80
      24E3   40
      24E4   20
@@ -10331,7 +10331,7 @@
      3E7D   CC
      3E7E   EE
      3E7F   FF
-.L3E80
+.tileVisibility
      3E80   FF
      3E81   FF
      3E82   FF
@@ -10396,7 +10396,6 @@
      3EBD   FF
      3EBE   FF
      3EBF   FF
-.L3EC0
      3EC0   FF
      3EC1   FF
      3EC2   FF
