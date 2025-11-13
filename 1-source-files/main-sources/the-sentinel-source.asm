@@ -13537,10 +13537,10 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: DrawLandscapeView
+\       Name: DrawLandscapeView (Part 1 of ?)
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Draw the landscape view
 \
 \ ******************************************************************************
 
@@ -13557,88 +13557,125 @@ L23E3 = C23E2+1
  LDA objectYawAngle,X   \ Set A to the yaw angle of the viewer's object
 
  CLC                    \ Set L001C = yaw angle + 32
- ADC #32
- STA L001C
+ ADC #32                \
+ STA L001C              \ Right edge of viewing arc, arc is 64 (90 deg) wide?
 
  AND #63                \ Set T = (yaw angle + 32) mod 64 - 32
- SEC
- SBC #32
+ SEC                    \
+ SBC #32                \ Left edge of viewing arc, arc is 64 (90 deg) wide?
  STA T
 
  LDA L001C              \ Set bits 0-1 of Y to bits 6-7 of L001C
- ASL A
- ROL A
+ ASL A                  \
+ ROL A                  \ Quadrant of viewing arc, 0-3 ???
  ROL A
  AND #3
  TAY
 
- LDA L27AB,Y
- STA L001B
- TYA
+ LDA L27AB,Y            \ Set L001B to &00, &01, &21, &20 depending on quadrant
+ STA L001B              \ of viewing arc ???
+
+ TYA                    \ L0066 = Y * 4, quadrant of viewing arc * 4
  ASL A
  ASL A
  STA L0066
 
- TYA
+ TYA                    \ L004B = quadrant - 2 (opposite quadrant)
  SEC
- SBC #&02
+ SBC #2
  STA L004B
- LDA T
- SEC
- SBC #&0A
- STA L0020
- BIT L001C
- BMI C267F
- BVS C266F
 
- LDA xObject,X
- STA L0003
- LDA zObject,X
+ LDA T                  \ L0020 = T - 10
+ SEC
+ SBC #10
+ STA L0020
+
+ BIT L001C              \ Bit 7 of quadrant of viewing arc set, jump to C267F
+ BMI C267F
+
+ BVS C266F              \ Bit 6 of quadrant of viewing arc set, jump to C266F
+
+                        \ Bit 7 of quadrant of viewing arc clear
+                        \ Bit 6 of quadrant of viewing arc clear
+                        \ Looking in the 10.30 - 1.30 clock quadrant (north)
+
+ LDA xObject,X          \ Set (L0003, L001D) = (x, z)
+ STA L0003              \
+ LDA zObject,X          \ where object #X is on tile (x, z)
  STA L001D
 
- JMP C26A1
+ JMP C26A1              \ Jump to C26A1 to keep going
 
 .C266F
 
- CLC
- LDA #&1F
- SBC zObject,X
+                        \ Bit 7 of quadrant of viewing arc clear
+                        \ Bit 6 of quadrant of viewing arc set
+                        \ Looking in the 1.30 - 4.30 clock quadrant (east)
+
+ CLC                    \ Set (L0003, L001D) = (32 - z, x)
+ LDA #31                \
+ SBC zObject,X          \ where object #X is on tile (x, z)
  STA L0003
  LDA xObject,X
  STA L001D
- JMP C26A1
+
+ JMP C26A1              \ Jump to C26A1 to keep going
 
 .C267F
 
- BVS C2694
- CLC
- LDA #&1F
- SBC xObject,X
+                        \ Bit 7 of quadrant of viewing arc set
+
+ BVS C2694              \ Bit 6 of quadrant of viewing arc set, jump to C2694
+
+                        \ Bit 7 of quadrant of viewing arc set
+                        \ Bit 6 of quadrant of viewing arc clear
+                        \ Looking in the 4.30 - 7.30 clock quadrant (south)
+
+ CLC                    \ Set (L0003, L001D) = (32 - x, 32 - z)
+ LDA #31                \
+ SBC xObject,X          \ where object #X is on tile (x, z)
  STA L0003
  CLC
- LDA #&1F
+ LDA #31
  SBC zObject,X
  STA L001D
- JMP C26A1
+
+ JMP C26A1              \ Jump to C26A1 to keep going
 
 .C2694
 
- LDA zObject,X
- STA L0003
- CLC
- LDA #&1F
+                        \ Bit 7 of quadrant of viewing arc set
+                        \ Bit 6 of quadrant of viewing arc set
+                        \ Looking in the 7.30 - 10.30 clock quadrant (west)
+
+ LDA zObject,X          \ Set (L0003, L001D) = (z, 32 - x)
+ STA L0003              \
+ CLC                    \ where object #X is on tile (x, z)
+ LDA #31
  SBC xObject,X
  STA L001D
 
+\ ******************************************************************************
+\
+\       Name: DrawLandscapeView (Part 2 of ?)
+\       Type: Subroutine
+\   Category: Graphics
+\    Summary: ???
+\
+\ ******************************************************************************
+
 .C26A1
 
- LDA #&1F
+ LDA #31
  STA zTile
+
  LDA L0C48
  STA L0032
+
  LDA #0
  STA L0005
  JSR sub_C27AF
+
  LDA L0032
  STA L0C48
 
