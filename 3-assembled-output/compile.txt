@@ -302,9 +302,9 @@
      0084
 .zDeltaAbsoluteHi
      0085
-.xVectorHi
-     0086
 .xDeltaHi
+     0086
+.xVectorHi
      0086
 .yVectorHi
      0087
@@ -14038,7 +14038,7 @@
      5562   85 8A      STA &8A
      5564   85 8B      STA &8B
      5566   60         RTS
-.sub_C5567
+.GetHypotenuseAngle
      5567   A5 85      LDA &85
      5569   C5 83      CMP &83
      556B   90 08      BCC &5575

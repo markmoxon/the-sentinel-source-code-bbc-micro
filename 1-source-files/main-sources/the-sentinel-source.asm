@@ -840,16 +840,16 @@
  SKIP 1                 \ The absolute difference between two z-coordinates
                         \ (high byte), i.e. |zDeltaHi|
 
+.xDeltaHi
+
+ SKIP 0                 \ The difference between two x-coordinates (high byte)
+
 .xVectorHi
 
- SKIP 0                 \ The x-coordinate of a vector (high byte)
+ SKIP 1                 \ The x-coordinate of a vector (high byte)
                         \
                         \ For example, this is used to when ray-tracing from the
                         \ player to tile corners in GetRowVisibility
-
-.xDeltaHi
-
- SKIP 1                 \ The difference between two x-coordinates (high byte)
 
 .yVectorHi
 
@@ -2658,7 +2658,6 @@
                         \ We now have the division result that we want:
                         \
                         \   T = 256 * (A T) / (V W)
-                        \
                         \
                         \ but with bit 5 clear rather than the actual result
                         \
@@ -13530,12 +13529,18 @@ L23E3 = C23E2+1
 \   Category: Drawing the landscape
 \    Summary: Set up a number of variables for drawing the landscape view
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   anotherObject       The number of the object that is viewing the landscape
+\
 \ ******************************************************************************
 
 .DrawLandscapeView
 
- LDX anotherObject      \ Set X to the anotherObject number (the object viewing
-                        \ the landscape) ???
+ LDX anotherObject      \ Set X to the number of the object that is viewing the
+                        \ landscape
 
  LDA #LO(L0C40)         \ Set L003C(1 0) = L0C40 ???
  STA L003C
@@ -13676,14 +13681,17 @@ L23E3 = C23E2+1
 
 .dlan4
 
- LDA #31
+ LDA #31                \ zTile iterates through tile rows, back to front ???
  STA zTile
 
- LDA L0C48
- STA L0032
+ LDA L0C48              \ Set L0032 = L0C48, something to do with xTile ???
+ STA L0032              \ is this the number of the tile in the row to check,
+                        \ starting from 0 and being incremented in sub_C27AF
+                        \ somehow?
 
- LDA #0
- STA L0005
+ LDA #0                 \ Set L0005 = 0, flips between 0 and 32 like
+ STA L0005              \ storeResultsOffset in GetTileVisibility
+
  JSR sub_C27AF
 
  LDA L0032
@@ -13702,7 +13710,9 @@ L23E3 = C23E2+1
  JSR ProcessSound       \ Process any sounds or music that are being made
 
  DEC zTile
+
  BMI dlan6
+
  LDY zTile
  CPY zTileViewer
  BNE dlan7
@@ -13892,12 +13902,24 @@ L23E3 = C23E2+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   L0032               Tile column ???
+\
+\   zTile               Tile row ???
+\
+\   L0005               0 or 32 to use as an offset into L0180, L0BA0, L5500
+\
 \ ******************************************************************************
 
 .sub_C27AF
 
- LDY L0032
+ LDY L0032              \ Set Y to the tile column to pass to sub_C2815
+
  JSR sub_C2815
+
  BEQ C27E9
  CMP #&80
  BEQ C27D7
@@ -14008,55 +14030,122 @@ L23E3 = C23E2+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   Tile column ???
+\
+\   zTile               Tile row ???
+\
+\   L0005               0 or 32 to use as an offset into L0180, L0BA0, L5500
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   Y                   Y is preserved
+\
 \ ******************************************************************************
 
 .sub_C2815
 
- STY xTile
- STY L000F
- TYA
+ STY xTile              \ Store the tile column in xTile
+
+ STY L000F              \ Store Y in L000F so it can be preserved
+
+ TYA                    \ Set L0021 = Y + L0005
  ORA L0005
  STA L0021
- LDA #0
+
+ LDA #0                 \ Set L007F = 0
  STA L007F
- LDX anotherObject
- LDA #&80
+
+ LDX anotherObject      \ Set X to the number of the object that is viewing the
+                        \ landscape
+
+ LDA #128               \ Set the low byte of (xDeltaHi xDeltaLo) to 128
  STA xDeltaLo
- CLC
- LDA xTile
- SBC xTileViewer
- SEC
- SBC xTitleOffset
- STA xDeltaHi
- BPL C2840
- LDA #0
- SEC
- SBC xDeltaLo
+
+ CLC                    \ Set the high byte of (xDeltaHi xDeltaLo) to the
+ LDA xTile              \ following:
+ SBC xTileViewer        \
+ SEC                    \   xTile - xTileViewer - 1 - xTitleOffset
+ SBC xTitleOffset       \
+ STA xDeltaHi           \ Note that xTitleOffset is zero during gameplay, and is
+                        \ only non-zero when we are drawing a title screen, so
+                        \ let's ignore it for now
+                        \
+                        \ Setting the low byte to 128 effectively adds 0.5 to
+                        \ the result, so we get this:
+                        \
+                        \   (xDeltaHi xDeltaLo) = xTile - xTileViewer - 0.5
+                        \
+                        \ So this is the delta along the x-axis between the
+                        \ viewer and the tile that we are analysing
+
+ BPL C2840              \ If the result is positive then jump to C2840 to skip
+                        \ the following
+
+ LDA #0                 \ Negate the result to make it positive, so we now have:
+ SEC                    \
+ SBC xDeltaLo           \   (A xDeltaLo) = |xTile - xTileViewer - 0.5|
  STA xDeltaLo
  LDA #0
  SBC xDeltaHi
 
 .C2840
 
- STA xDeltaAbsoluteHi
- LDA #&80
+ STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = |xDeltaHi|
+                        \
+                        \ So we now have the absolute z-axis length in:
+                        \
+                        \   (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \ and the original high byte of the signed x-axis length
+                        \ is still in xDeltaHi
+
+                        \ We now do the same thing, but with the z-coordinates
+
+ LDA #128               \ Set the low byte of (zDeltaHi zDeltaLo) to 128
  STA zDeltaLo
- CLC
- LDA zTile
- SBC zTileViewer
- STA zDeltaHi
- BPL C285A
- LDA #0
- SEC
- SBC zDeltaLo
+
+ CLC                    \ Set the high byte of (zDeltaHi zDeltaLo) to the
+ LDA zTile              \ following:
+ SBC zTileViewer        \
+ STA zDeltaHi           \   zTile - zTileViewer - 1
+                        \
+                        \ Setting the low byte to 128 effectively adds 0.5 to
+                        \ the result, so we get this:
+                        \
+                        \   (zDeltaHi zDeltaLo) = zTile - zTileViewer - 0.5
+                        \
+                        \ So this is the delta along the z-axis between the
+                        \ viewer and the tile that we are analysing
+
+ BPL C285A              \ If the result is positive then jump to C285A to skip
+                        \ the following
+
+ LDA #0                 \ Negate the result to make it positive, so we now have:
+ SEC                    \
+ SBC zDeltaLo           \   (A zDeltaLo) = |zTile - zTileViewer - 0.5|
  STA zDeltaLo
  LDA #0
  SBC zDeltaHi
 
 .C285A
 
- STA zDeltaAbsoluteHi
- JSR sub_C5567
+ STA zDeltaAbsoluteHi   \ Set zDeltaAbsoluteHi = |zDeltaHi|
+                        \
+                        \ So we now have the absolute z-axis length in:
+                        \
+                        \   (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and the original high byte of the signed z-axis length
+                        \ is still in zDeltaHi
+
+ JSR GetHypotenuseAngle
+
  LDY L0021
  LDA angleLo
  SEC
@@ -14229,10 +14318,13 @@ L23E3 = C23E2+1
 
 .C2927
 
- LDY L000F
+ LDY L000F              \ Restore Y
+
  LDA L007F
+
  CLC
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -23299,85 +23391,220 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5567
+\       Name: GetHypotenuseAngle
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Calculate the angle of the hypotenuse in a right-angle triangle
+\             given the two non-hypotenuse sides (i.e. two orthogonal axes)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Calculate the tangent of the angle in a right-angle triangle, i.e. the angle
+\ of the hypotenuse, given the two non-hypotenuse sides (typically orthogonal
+\ coordinate axes).
+\
+\ The arguments are as follows:
+\
+\   * Absolute x-axis length in (xDeltaAbsoluteHi xDeltaLo)
+\
+\   * Sign of the x-axis length in xDeltaHi
+\
+\   * Absolute z-axis length in (zDeltaAbsoluteHi zDeltaLo)
+\
+\   * Sign of the z-axis length in zDeltaHi
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   xDeltaAbsoluteHi    High byte of the absolute x-axis length
+\
+\   xDeltaLo            Low byte of the absolute x-axis length
+\
+\   xDeltaHi            High byte of the signed x-axis length
+\
+\   zDeltaAbsoluteHi    High byte of the absolute z-axis length
+\
+\   zDeltaLo            Low byte of the absolute z-axis length
+\
+\   zDeltaHi            High byte of the signed z-axis length
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   angleTangent        The tangent of the angle of the hypotenuse
+\
+\   (angleHi angleLo)   The angle of the hypotenuse
 \
 \ ******************************************************************************
 
 .C5560
 
- STA angleTangent
- STA angleLo
+                        \ If we get here then A = 0
+
+ STA angleTangent       \ Set angleTangent = 0
+
+ STA angleLo            \ Set (angleHi angleLo) = 0
  STA angleHi
- RTS
 
-.sub_C5567
+ RTS                    \ Return from the subroutine
 
- LDA zDeltaAbsoluteHi
+.GetHypotenuseAngle
+
+                        \ We are going to be calculating the angle in a
+                        \ right-angled triangle with the following opposite and
+                        \ adjacent sides:
+                        \
+                        \   (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \   (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \ We start by working out which is the longer of the two
+                        \ non-hypotenuse sides
+
+ LDA zDeltaAbsoluteHi   \ If zDeltaAbsoluteHi < xDeltaAbsoluteHi, jump to C5575
  CMP xDeltaAbsoluteHi
  BCC C5575
- BNE C5588
- LDA zDeltaLo
+
+ BNE C5588              \ If zDeltaAbsoluteHi > xDeltaAbsoluteHi, jump to C5588
+
+                        \ If we get here then the high bytes in zDeltaAbsoluteHi
+                        \ and xDeltaAbsoluteHi are the same, so now we compare
+                        \ the low bytes
+
+ LDA zDeltaLo           \ If zDeltaLo >= xDeltaLo, jump to C5588
  CMP xDeltaLo
  BCS C5588
 
 .C5575
 
- LDA zDeltaAbsoluteHi
- STA bHi
- LDA zDeltaLo
+                        \ If we get here then:
+                        \
+                        \   (zDeltaAbsoluteHi zDeltaLo) <
+                        \                            (xDeltaAbsoluteHi xDeltaLo)
+
+ LDA zDeltaAbsoluteHi   \ Set (bHi bLo) = (zDeltaAbsoluteHi zDeltaLo)
+ STA bHi                \
+ LDA zDeltaLo           \ So (bHi bLo) is the shorter side
  STA bLo
- LDA xDeltaLo
- STA aLo
- LDA xDeltaAbsoluteHi
+
+ LDA xDeltaLo           \ Set (aHi aLo) = (xDeltaAbsoluteHi xDeltaLo)
+ STA aLo                \
+ LDA xDeltaAbsoluteHi   \ So (aHi aLo) is the longer side
  STA aHi
- JMP C55A5
+
+ JMP C55A5              \ Jump to C55A5 to keep going
 
 .C5588
 
- LDA xDeltaAbsoluteHi
- STA bHi
- LDA xDeltaLo
+                        \ If we get here then:
+                        \
+                        \   (zDeltaAbsoluteHi zDeltaLo) >=
+                        \                            (xDeltaAbsoluteHi xDeltaLo)
+
+ LDA xDeltaAbsoluteHi   \ Set (bHi bLo) = (xDeltaAbsoluteHi xDeltaLo)
+ STA bHi                \
+ LDA xDeltaLo           \ So (bHi bLo) is the shorter side
  STA bLo
- LDA zDeltaLo
- STA aLo
- LDA zDeltaAbsoluteHi
+
+ LDA zDeltaLo           \ Set (aHi aLo) = (zDeltaAbsoluteHi zDeltaLo)
+ STA aLo                \
+ LDA zDeltaAbsoluteHi   \ So (aHi aLo) is the longer side
  STA aHi
- ORA zDeltaLo
- BEQ C5560
- LDA zDeltaAbsoluteHi
- JMP C55E3
+
+ ORA zDeltaLo           \ If both zDeltaAbsoluteHi and zDeltaLo are zero then
+ BEQ C5560              \ (aHi aLo) = 0, so jump to C5560 to return from the
+                        \ subroutine with the following:
+                        \
+                        \   * angleTangent = 0
+                        \
+                        \   * (angleHi angleLo) = 0
+
+ LDA zDeltaAbsoluteHi   \ Set A to zDeltaAbsoluteHi once again
+
+ JMP C55E3              \ Jump to C55E3 to keep going
 
 .P55A1
 
- ASL zDeltaLo
- ROL zDeltaAbsoluteHi
+ ASL zDeltaLo           \ Shift (zDeltaAbsoluteHi zDeltaLo) left by one place to
+ ROL zDeltaAbsoluteHi   \ scale it up
 
 .C55A5
 
- ASL xDeltaLo
+                        \ If we jump here then:
+                        \
+                        \   * (zDeltaAbsoluteHi zDeltaLo) <
+                        \                            (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \   * (aHi aLo) is the longer side
+                        \
+                        \   * (bHi bLo) is the shorter side
+                        \
+                        \   * A = xDeltaAbsoluteHi
+                        \
+                        \ The last one means that the length of the x-axis side
+                        \ is currently in (A xDeltaLo)
+
+                        \ We start by shifting the lengths of both sides to the
+                        \ left until bit 7 of A is set
+                        \
+                        \ As we know that (A xDeltaLo) is the longest side, this
+                        \ scales both lengths up by the same amount until they
+                        \ are as large as theycan be while still fitting into a
+                        \ 16-bit number
+
+ ASL xDeltaLo           \ Shift (A xDeltaLo) left by one place to scale it up
  ROL A
- BCC P55A1
- ROR A
- ROR xDeltaLo
- STA V
- LDA zDeltaLo
+
+ BCC P55A1              \ If we just shifted a zero out of bit 7 of (A xDeltaLo)
+                        \ then jump back to P55A1 to scale the x-axis length and
+                        \ keep scaling until we shift a 1 out of bit 7, at which
+                        \ point we have scaled (A xDeltaLo) as far as we can
+
+ ROR A                  \ Shift the 1 back into bit 7 of (A xDeltaLo) to undo
+ ROR xDeltaLo           \ the last left-shift, so (A xDeltaLo) is now as large
+                        \ as it can be
+
+ STA V                  \ Set V to the high byte of the scaled x-axis length
+
+ LDA zDeltaLo           \ Set T to the low byte of the scaled z-axis length
  STA T
- LDA xDeltaLo
- AND #&FC
- STA W
- LDA zDeltaAbsoluteHi
+
+ LDA xDeltaLo           \ Set W to the low byte of the scaled x-axis length,
+ AND #%11111100         \ with bits 0 and 1 cleared
+ STA W                  \
+                        \ Bits 0 and 1 of xDeltaLo will only be non-zero if the
+                        \ x-axis length has not been scaled up or has only been
+                        \ scaled up by one place, as scaling it up by two places
+                        \ will clear these bits anyway
+                        \
+                        \ Is this a requirement for W so it can be passed to
+                        \ GetAngleFromCoords ???
+
+ LDA zDeltaAbsoluteHi   \ Set A to the high byte of the scaled z-axis length
+
+                        \ So by this point we have:
+                        \
+                        \   * (A T) = the scaled z-axis length
+                        \
+                        \   * (V W) = the scaled x-axis length
 
  JSR GetAngleFromCoords \ Calculate the following angle:
                         \
                         \   (angleHi angleLo) = arctan( (A T) / (V W) )
+                        \                     = arctan( z-axis / x-axis )
+                        \
+                        \ This works because the x-axis length is greater than
+                        \ the z-axis length, so the x-axis is the adjacent side
+                        \ and the z-axis is the opposite side
 
- LDA xDeltaHi
- EOR zDeltaHi
- BMI C55D1
- LDA #0
+ LDA xDeltaHi           \ If xDeltaHi and zDeltaHi have different sign bits in
+ EOR zDeltaHi           \ bit 7, then EOR'ing them will produce a 1, so jump to
+ BMI C55D1              \ C55D1 to skip the following, as the sign of the angle
+                        \ is already correct ???
+
+ LDA #0                 \ Negate (angleHi angleLo) to give it the correct sign
  SEC
  SBC angleLo
  STA angleLo
@@ -23387,46 +23614,93 @@ L314A = C3148+2
 
 .C55D1
 
- LDA #&40
- BIT xDeltaHi
+ LDA #%01000000         \ If bit 7 of xDeltaHi is clear then set A = %01000000
+ BIT xDeltaHi           \ otherwise set A = %11000000
  BPL C55D9
- LDA #&C0
+ LDA #%11000000
 
 .C55D9
 
- CLC
- ADC angleHi
- STA angleHi
- RTS
+ CLC                    \ Set angleHi = angleHi + A
+ ADC angleHi            \
+ STA angleHi            \ So this sets bits 6 and 7 of the angle correctly so it
+                        \ is in the correct quadrant ???
+
+ RTS                    \ Return from the subroutine
 
 .P55DF
 
- ASL xDeltaLo
- ROL xDeltaAbsoluteHi
+ ASL xDeltaLo           \ Shift (xDeltaAbsoluteHi xDeltaLo) left by one place to
+ ROL xDeltaAbsoluteHi   \ scale it up
 
 .C55E3
 
- ASL zDeltaLo
+                        \ If we jump here then:
+                        \
+                        \   * (zDeltaAbsoluteHi zDeltaLo) >=
+                        \                            (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \   * (aHi aLo) is the longer side
+                        \
+                        \   * (bHi bLo) is the shorter side
+                        \
+                        \   * A = zDeltaAbsoluteHi
+                        \
+                        \ The last one means that the length of the z-axis side
+                        \ is currently in (A zDeltaLo)
+
+                        \ We start by shifting the lengths of both sides to the
+                        \ left until bit 7 of A is set
+                        \
+                        \ As we know that (A zDeltaLo) is the longest side, this
+                        \ scales both lengths up by the same amount until they
+                        \ are as large as theycan be while still fitting into a
+                        \ 16-bit number
+
+ ASL zDeltaLo           \ Shift (A zDeltaLo) left by one place to scale it up
  ROL A
- BCC P55DF
- ROR A
- ROR zDeltaLo
- STA V
- LDA xDeltaLo
+
+ BCC P55DF              \ If we just shifted a zero out of bit 7 of (A zDeltaLo)
+                        \ then jump back to P55DF to scale the z-axis length and
+                        \ keep scaling until we shift a 1 out of bit 7, at which
+                        \ point we have scaled (A zDeltaLo) as far as we can
+
+ ROR A                  \ Shift the 1 back into bit 7 of (A zDeltaLo) to undo
+ ROR zDeltaLo           \ the last left-shift, so (A zDeltaLo) is now as large
+                        \ as it can be
+
+ STA V                  \ Set V to the high byte of the scaled z-axis length
+
+ LDA xDeltaLo           \ Set T to the low byte of the scaled x-axis length
  STA T
- LDA zDeltaLo
- AND #&FC
+
+ LDA zDeltaLo           \ Set W to the low byte of the scaled z-axis length,
+ AND #&FC               \ with bits 0 and 1 cleared
  STA W
- LDA xDeltaAbsoluteHi
+
+ LDA xDeltaAbsoluteHi   \ Set A to the high byte of the scaled x-axis length
+
+                        \ So by this point we have:
+                        \
+                        \   * (A T) = the scaled x-axis length
+                        \
+                        \   * (V W) = the scaled z-axis length
 
  JSR GetAngleFromCoords \ Calculate the following angle:
                         \
                         \   (angleHi angleLo) = arctan( (A T) / (V W) )
+                        \                     = arctan( z-axis / x-axis )
+                        \
+                        \ This works because the z-axis length is greater than
+                        \ the x-axis length, so the z-axis is the adjacent side
+                        \ and the x-axis is the opposite side
 
- LDA xDeltaHi
- EOR zDeltaHi
- BPL C560F
- LDA #0
+ LDA xDeltaHi           \ If xDeltaHi and zDeltaHi have the same sign bits in
+ EOR zDeltaHi           \ bit 7, then EOR'ing them will produce a 0, so jump to
+ BPL C560F              \ C560F to skip the following, as the sign of the angle
+                        \ is already correct ???
+
+ LDA #0                 \ Negate (angleHi angleLo) to give it the correct sign
  SEC
  SBC angleLo
  STA angleLo
@@ -23436,17 +23710,19 @@ L314A = C3148+2
 
 .C560F
 
- LDA #0
- BIT zDeltaHi
+ LDA #%00000000         \ If bit 7 of zDeltaHi is clear then set A = %00000000
+ BIT zDeltaHi           \ otherwise set A = %10000000
  BPL C5617
- LDA #&80
+ LDA #%10000000
 
 .C5617
 
- CLC
+ CLC                    \ Set angleHi = angleHi + A
  ADC angleHi
- STA angleHi
- RTS
+ STA angleHi            \ So this sets bits 6 and 7 of the angle correctly so it
+                        \ is in the correct quadrant ???
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -23478,7 +23754,7 @@ L314A = C3148+2
  STA zDeltaAbsoluteHi
  LDA #0
  STA zDeltaHi
- JSR sub_C5567
+ JSR GetHypotenuseAngle
  LDA angleLo
  SEC
  SBC #&20
@@ -25238,6 +25514,9 @@ L314A = C3148+2
                         \
                         \ So this calculates the difference in both horizontal
                         \ axes between object #X and object #Y
+                        \
+                        \ Note that xTitleOffset is zero during gameplay, and is
+                        \ only non-zero when we are drawing a title screen
 
  JSR GetVerticalDelta   \ Calculate the following:
                         \
@@ -25247,7 +25526,7 @@ L314A = C3148+2
                         \ So this calculates the difference in altitude between
                         \ object #X and object #Y
 
- JSR sub_C5567
+ JSR GetHypotenuseAngle
  LDX anotherObject
  LDA angleLo
  SEC
@@ -25378,7 +25657,7 @@ L314A = C3148+2
  STA xDeltaAbsoluteHi
  LDA H
  STA xDeltaHi
- JSR sub_C5567
+ JSR GetHypotenuseAngle
  LDY L0021
  LDA angleLo
  CLC
