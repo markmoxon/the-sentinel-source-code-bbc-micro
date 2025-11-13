@@ -89,7 +89,7 @@
 
  SKIP 1                 \ ???
 
-.L0003
+.xTileViewer
 
  SKIP 1                 \ ???
 
@@ -255,11 +255,11 @@
  SKIP 1                 \ Used to store the tile z-coordinate of the tile we are
                         \ analysing when calculating the highest tile in a block
 
-.L001B
+.quadrantOffset
 
  SKIP 1                 \ ???
 
-.L001C
+.viewingArcRightYaw
 
  SKIP 0                 \ ???
 
@@ -276,7 +276,7 @@
                         \ See the ProcessTileData and SmoothTileData routines
                         \ for details
 
-.L001D
+.zTileViewer
 
  SKIP 1                 \ ???
 
@@ -339,21 +339,9 @@
  SKIP 0                 \ A counter for the number of columns to fill in the
                         \ FillScreen routine
 
-.yTile
+.L0025
 
- SKIP 1                 \ Tile corner y-coordinate
-                        \
-                        \ The tile corner coordinate along the y-axis, where the
-                        \ y-axis goes up the screen (so this is also the corner
-                        \ number along the axis)
-                        \
-                        \ Each tile in the landscape is defined by a tile
-                        \ corner (the "anchor") and the tile shape, with the
-                        \ anchor being in the front-left corner of the tile,
-                        \ nearest the origin
-                        \
-                        \ As a result we tend to use the terms "tile" and "tile
-                        \ corner" interchangeably, depending on the context
+ SKIP 1                 \ ???
 
 .screenRowNumber
 
@@ -603,7 +591,7 @@
 
  SKIP 1                 \ ???
 
-.L004B
+.viewingQuadrantOpp
 
  SKIP 1                 \ ???
 
@@ -702,7 +690,7 @@
  SKIP 2                 \ An address, typically used as a destination address
                         \ when copying
 
-.L0066
+.viewingQuadrantx4
 
  SKIP 0                 \ ???
 
@@ -10524,7 +10512,7 @@ L1145 = C1144+1
 
 .PlaceObjectOnTile
 
- LDA xTile              \ Set the 3D coordinate for object #X to (xTile, yTile)
+ LDA xTile              \ Set the 3D coordinate for object #X to (xTile, zTile)
  STA xObject,X          \ by updating the X-th entries in the xObject and
  LDA zTile              \ zObject tables
  STA zObject,X          \
@@ -12272,7 +12260,7 @@ L23E3 = C23E2+1
 \
 \       Name: GetTileVisibility
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Drawing the landscape
 \    Summary: For each tile in the landscape, calculate whether the player can
 \             see that tile, to speed up the process of drawing the landscape
 \
@@ -12569,7 +12557,7 @@ L23E3 = C23E2+1
 \
 \       Name: visibileBitMask
 \       Type: Variable
-\   Category: Landscape
+\   Category: Drawing the landscape
 \    Summary: A table for converting a number in the range 0 to 7 into a bit
 \             mask with only that bit set, when counting from the left
 \
@@ -12590,7 +12578,7 @@ L23E3 = C23E2+1
 \
 \       Name: GetRowVisibility (Part 1 of 2)
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Drawing the landscape
 \    Summary: Set up the calculations to determine whether each tile corner in a
 \             tile row is obscured from the player by any intervening landscape
 \
@@ -13043,7 +13031,7 @@ L23E3 = C23E2+1
 \
 \       Name: GetRowVisibility (Part 2 of 2)
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Drawing the landscape
 \    Summary: Calculate whether each tile corner in a tile row is obscured from
 \             the player by any intervening landscape
 \
@@ -13240,7 +13228,7 @@ L23E3 = C23E2+1
 \
 \       Name: GetTileAltitudes
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Drawing the landscape
 \    Summary: Calculate tile corner altitudes and maximum tile corner altitudes
 \             for each tile in the landscape
 \
@@ -13539,8 +13527,8 @@ L23E3 = C23E2+1
 \
 \       Name: DrawLandscapeView (Part 1 of ?)
 \       Type: Subroutine
-\   Category: Graphics
-\    Summary: Draw the landscape view
+\   Category: Drawing the landscape
+\    Summary: Set up a number of variables for drawing the landscape view
 \
 \ ******************************************************************************
 
@@ -13556,115 +13544,137 @@ L23E3 = C23E2+1
 
  LDA objectYawAngle,X   \ Set A to the yaw angle of the viewer's object
 
- CLC                    \ Set L001C = yaw angle + 32
+ CLC                    \ Set viewingArcRightYaw = yaw angle + 32
  ADC #32                \
- STA L001C              \ Right edge of viewing arc, arc is 64 (90 deg) wide?
+ STA viewingArcRightYaw \ This gives us the yaw angle of the right edge of the
+                        \ viewing arc, where the arc is 90 degrees wide (as a
+                        \ full circle is represented by 256)
 
  AND #63                \ Set T = (yaw angle + 32) mod 64 - 32
  SEC                    \
- SBC #32                \ Left edge of viewing arc, arc is 64 (90 deg) wide?
- STA T
+ SBC #32                \ This gives us the yaw angle of the left edge of the
+ STA T                  \ viewing arc, but limited to the first quadrant ???
 
- LDA L001C              \ Set bits 0-1 of Y to bits 6-7 of L001C
+ LDA viewingArcRightYaw \ Set bits 0-1 of Y to bits 6-7 of viewingArcRightYaw
  ASL A                  \
- ROL A                  \ Quadrant of viewing arc, 0-3 ???
- ROL A
- AND #3
- TAY
+ ROL A                  \ This gives us a value in the range 0 to 3, giving
+ ROL A                  \ the number of the quadrant that contains the right
+ AND #3                 \ edge of the viewing arc, numbered clockwise and
+ TAY                    \ starting from 12 o'clock to 3pm
 
- LDA L27AB,Y            \ Set L001B to &00, &01, &21, &20 depending on quadrant
- STA L001B              \ of viewing arc ???
+ LDA quadrantOffsets,Y  \ Set quadrantOffset to 0, 1, 33 or 32 depending on the
+ STA quadrantOffset     \ quadrant containing the right edge of the viewing arc
+                        \ ???
 
- TYA                    \ L0066 = Y * 4, quadrant of viewing arc * 4
- ASL A
- ASL A
- STA L0066
+ TYA                    \ Set viewingQuadrantx4 = Y * 4
+ ASL A                  \
+ ASL A                  \ So viewingQuadrantx4 contains the quadrant number
+ STA viewingQuadrantx4  \ containing the right edge of the viewing arc,
+                        \ multiplied by 4 ???
 
- TYA                    \ L004B = quadrant - 2 (opposite quadrant)
- SEC
- SBC #2
- STA L004B
+ TYA                    \ Set viewingQuadrantOpp = Y - 2
+ SEC                    \
+ SBC #2                 \ So it viewingQuadrantOpp contains the number of the
+ STA viewingQuadrantOpp \ quadrant opposite the quadrant containing the right
+                        \ edge of the viewing arc ???
 
  LDA T                  \ L0020 = T - 10
- SEC
- SBC #10
- STA L0020
+ SEC                    \
+ SBC #10                \ So it contains the yaw angle of the left edge of the
+ STA L0020              \ viewing arc, less 14.0625 degrees (360*10/256) ???
 
- BIT L001C              \ Bit 7 of quadrant of viewing arc set, jump to C267F
- BMI C267F
+                        \ We now set (xTileViewer, zTileViewer) to the tile
+                        \ coordinate of the viewer, but with the coordinates
+                        \ updated according to the quadrant of the viewing arc
+                        \ ???
 
- BVS C266F              \ Bit 6 of quadrant of viewing arc set, jump to C266F
+ BIT viewingArcRightYaw \ Bit 7 of quadrant of viewing arc set, jump to dlan2
+ BMI dlan2
+
+ BVS dlan1              \ Bit 6 of quadrant of viewing arc set, jump to dlan1
 
                         \ Bit 7 of quadrant of viewing arc clear
                         \ Bit 6 of quadrant of viewing arc clear
-                        \ Looking in the 10.30 - 1.30 clock quadrant (north)
+                        \
+                        \ Right edge of arc is in 12-3 clock quadrant
+                        \ So viewing direction (clock) is between 10.30 and 1.30
+                        \ (i.e. looking into the screen/north)
 
- LDA xObject,X          \ Set (L0003, L001D) = (x, z)
- STA L0003              \
+ LDA xObject,X          \ Set (xTileViewer, zTileViewer) = (x, z)
+ STA xTileViewer        \
  LDA zObject,X          \ where object #X is on tile (x, z)
- STA L001D
+ STA zTileViewer
 
- JMP C26A1              \ Jump to C26A1 to keep going
+ JMP dlan4              \ Jump to dlan4 to keep going
 
-.C266F
+.dlan1
 
                         \ Bit 7 of quadrant of viewing arc clear
                         \ Bit 6 of quadrant of viewing arc set
-                        \ Looking in the 1.30 - 4.30 clock quadrant (east)
+                        \
+                        \ Right edge of arc is in 3-6 clock quadrant
+                        \ So viewing direction (clock) is between 1.30 and 4.30
+                        \ (i.e. looking right/east)
 
- CLC                    \ Set (L0003, L001D) = (32 - z, x)
+ CLC                    \ Set (xTileViewer, zTileViewer) = (32 - z, x)
  LDA #31                \
  SBC zObject,X          \ where object #X is on tile (x, z)
- STA L0003
+ STA xTileViewer
  LDA xObject,X
- STA L001D
+ STA zTileViewer
 
- JMP C26A1              \ Jump to C26A1 to keep going
+ JMP dlan4              \ Jump to dlan4 to keep going
 
-.C267F
+.dlan2
 
                         \ Bit 7 of quadrant of viewing arc set
 
- BVS C2694              \ Bit 6 of quadrant of viewing arc set, jump to C2694
+ BVS dlan3              \ Bit 6 of quadrant of viewing arc set, jump to dlan3
 
                         \ Bit 7 of quadrant of viewing arc set
                         \ Bit 6 of quadrant of viewing arc clear
-                        \ Looking in the 4.30 - 7.30 clock quadrant (south)
+                        \
+                        \ Right edge of arc is in 6-9 clock quadrant
+                        \ So viewing direction (clock) is between 4.30 and 7.30
+                        \ (i.e. looking out of the screen/south)
 
- CLC                    \ Set (L0003, L001D) = (32 - x, 32 - z)
+ CLC                    \ Set (xTileViewer, zTileViewer) = (32 - x, 32 - z)
  LDA #31                \
  SBC xObject,X          \ where object #X is on tile (x, z)
- STA L0003
+ STA xTileViewer
  CLC
  LDA #31
  SBC zObject,X
- STA L001D
+ STA zTileViewer
 
- JMP C26A1              \ Jump to C26A1 to keep going
+ JMP dlan4              \ Jump to dlan4 to keep going
 
-.C2694
+.dlan3
 
                         \ Bit 7 of quadrant of viewing arc set
                         \ Bit 6 of quadrant of viewing arc set
-                        \ Looking in the 7.30 - 10.30 clock quadrant (west)
+                        \
+                        \ Right edge of arc is in 9-12 clock quadrant
+                        \ So viewing direction (clock) is between 7.30 and 10.30
+                        \ (i.e. looking left/west)
 
- LDA zObject,X          \ Set (L0003, L001D) = (z, 32 - x)
- STA L0003              \
+ LDA zObject,X          \ Set (xTileViewer, zTileViewer) = (z, 32 - x)
+ STA xTileViewer        \
  CLC                    \ where object #X is on tile (x, z)
  LDA #31
  SBC xObject,X
- STA L001D
+ STA zTileViewer
 
 \ ******************************************************************************
 \
 \       Name: DrawLandscapeView (Part 2 of ?)
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Drawing the landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.C26A1
+.dlan4
 
  LDA #31
  STA zTile
@@ -13679,7 +13689,7 @@ L23E3 = C23E2+1
  LDA L0032
  STA L0C48
 
-.C26B6
+.dlan5
 
  LDA L0005
  EOR #&20
@@ -13692,34 +13702,34 @@ L23E3 = C23E2+1
  JSR ProcessSound       \ Process any sounds or music that are being made
 
  DEC zTile
- BMI C26D4
+ BMI dlan6
  LDY zTile
- CPY L001D
- BNE C26D6
- JMP C2747
+ CPY zTileViewer
+ BNE dlan7
+ JMP dlan18
 
-.C26D4
+.dlan6
 
  CLC
  RTS
 
-.C26D6
+.dlan7
 
  JSR sub_C27AF
  LDY L0032
  CPY L0037
- BEQ C2707
- BCC C26EB
+ BEQ dlan11
+ BCC dlan9
 
-.P26E1
+.dlan8
 
  DEY
  JSR sub_C2815
  CPY L0037
- BNE P26E1
- BEQ C2707
+ BNE dlan8
+ BEQ dlan11
 
-.C26EB
+.dlan9
 
  LDA L0005
  EOR #&20
@@ -13727,34 +13737,34 @@ L23E3 = C23E2+1
  INC zTile
  LDY L0037
 
-.P26F5
+.dlan10
 
  DEY
  JSR sub_C2815
  CPY L0032
- BNE P26F5
+ BNE dlan10
  STY L0037
  DEC zTile
  LDA L0005
  EOR #&20
  STA L0005
 
-.C2707
+.dlan11
 
  LDY L0033
  CPY L0038
- BEQ C2735
- BCS C2719
+ BEQ dlan15
+ BCS dlan13
 
-.P270F
+.dlan12
 
  INY
  JSR sub_C2815
  CPY L0038
- BNE P270F
- BEQ C2735
+ BNE dlan12
+ BEQ dlan15
 
-.C2719
+.dlan13
 
  LDA L0005
  EOR #&20
@@ -13762,62 +13772,63 @@ L23E3 = C23E2+1
  INC zTile
  LDY L0038
 
-.P2723
+.dlan14
 
  INY
  JSR sub_C2815
  CPY L0033
- BNE P2723
+ BNE dlan14
+
  STY L0038
  DEC zTile
  LDA L0005
  EOR #&20
  STA L0005
 
-.C2735
+.dlan15
 
  JSR sub_C292D
 
- BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to C2742
- BPL C2742              \ to jump back to C26B6 ??? (i.e. pretend that the same
+ BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to dlan16
+ BPL dlan16             \ to jump back to dlan5 ??? (i.e. pretend that the same
                         \ pan key is being held down)
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
 
- BNE C2745              \ If the same pan key is not being held down, jump to
-                        \ C2745 to return from the subroutine with the C flag
+ BNE dlan17             \ If the same pan key is not being held down, jump to
+                        \ dlan17 to return from the subroutine with the C flag
                         \ set ???
 
-.C2742
+.dlan16
 
- JMP C26B6
+ JMP dlan5
 
-.C2745
+.dlan17
 
  SEC
  RTS
 
-.C2747
+.dlan18
 
  LDY L0037
  INY
- CPY L0003
- BNE C2753
+ CPY xTileViewer
+ BNE dlan19
  STY L0038
- JMP C275E
+ JMP dlan20
 
-.C2753
+.dlan19
 
  LDY L0038
  DEY
  DEY
- CPY L0003
- BNE C276B
+ CPY xTileViewer
+ BNE dlan21
  INY
  STY L0037
 
-.C275E
+.dlan20
 
  LDY L0037
  JSR sub_C2815
@@ -13825,16 +13836,16 @@ L23E3 = C23E2+1
  JSR sub_C2815
  JSR sub_C292D
 
-.C276B
+.dlan21
 
  LDA #0
  STA L0005
  INC zTile
- LDY L0003
+ LDY xTileViewer
  JSR sub_C2815
  LDA L0AE0,Y
  CMP #&02
- BCS C27A9
+ BCS dlan22
  STA L0AE0+1,Y
  LDA L0A80,Y
  STA L0A80+1,Y
@@ -13849,27 +13860,30 @@ L23E3 = C23E2+1
  LDA #&14
  STA L5520+1,Y
  STA L5500+1,Y
- LDA L0003
- STA yTile
+ LDA xTileViewer
+ STA L0025
  JSR sub_C2A1B
 
-.C27A9
+.dlan22
 
  CLC
  RTS
 
 \ ******************************************************************************
 \
-\       Name: L27AB
+\       Name: quadrantOffsets
 \       Type: Variable
-\   Category: ???
+\   Category: Drawing the landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L27AB
+.quadrantOffsets
 
- EQUB &00, &01, &21, &20
+ EQUB 0
+ EQUB 1
+ EQUB 33
+ EQUb 32
 
 \ ******************************************************************************
 \
@@ -14010,7 +14024,7 @@ L23E3 = C23E2+1
  STA xDeltaLo
  CLC
  LDA xTile
- SBC L0003
+ SBC xTileViewer
  SEC
  SBC xTitleOffset
  STA xDeltaHi
@@ -14029,7 +14043,7 @@ L23E3 = C23E2+1
  STA zDeltaLo
  CLC
  LDA zTile
- SBC L001D
+ SBC zTileViewer
  STA zDeltaHi
  BPL C285A
  LDA #0
@@ -14052,7 +14066,7 @@ L23E3 = C23E2+1
  SBC L0020
  STA L5500,Y
  JSR GetHypotenuse
- BIT L001C
+ BIT viewingArcRightYaw
  BMI C288B
  BVS C2880
  LDX xTile
@@ -14232,17 +14246,17 @@ L23E3 = C23E2+1
 .sub_C292D
 
  LDA L0037
- STA yTile
+ STA L0025
 
 .P2931
 
  CMP L0038
  BCS CRE16
- CMP L0003
+ CMP xTileViewer
  BCS C2943
  JSR sub_C29E2
- INC yTile
- LDA yTile
+ INC L0025
+ LDA L0025
  JMP P2931
 
 .C2943
@@ -14254,13 +14268,13 @@ L23E3 = C23E2+1
  SEC
  SBC #&01
  BMI CRE16
- STA yTile
+ STA L0025
  CMP L0037
  BCC CRE16
- CMP L0003
+ CMP xTileViewer
  BCC CRE16
  JSR sub_C29E2
- LDA yTile
+ LDA L0025
  JMP P2945
 
 .CRE16
@@ -14434,7 +14448,7 @@ L23E3 = C23E2+1
  AND #&0F
  STA objectTypes+63
  BEQ CRE17
- LDA yTile
+ LDA L0025
  STA xObject+63
  LDA zTile
  STA zObject+63
@@ -14454,10 +14468,10 @@ L23E3 = C23E2+1
 
  JSR ProcessSound       \ Process any sounds or music that are being made
 
- LDA yTile
+ LDA L0025
  ORA L0005
  CLC
- ADC L001B
+ ADC quadrantOffset
  AND #&3F
  TAX
  BIT drawingTitleScreen
@@ -14483,7 +14497,7 @@ L23E3 = C23E2+1
 .C2A11
 
  PHA
- LDA L004B
+ LDA viewingQuadrantOpp
  AND #&01
  STA L0045
  PLA
@@ -14501,7 +14515,7 @@ L23E3 = C23E2+1
 .sub_C2A1B
 
  LDX #0
- LDA yTile
+ LDA L0025
  EOR zTile
  AND #&01
  BEQ C2A2D
@@ -14522,7 +14536,7 @@ L23E3 = C23E2+1
 
  TAX
  SEC
- SBC L0066
+ SBC viewingQuadrantx4
  AND #&0F
  TAY
  AND #&03
@@ -14535,7 +14549,7 @@ L23E3 = C23E2+1
  LSR A
  LSR A
  CLC
- ADC L004B
+ ADC viewingQuadrantOpp
  CMP #&02
  TXA
  BCS C2A5A
@@ -16344,7 +16358,7 @@ L23E3 = C23E2+1
 
 .sub_C2D36
 
- LDA yTile
+ LDA L0025
  ORA L0005
  BIT L003B
  BMI C2D13

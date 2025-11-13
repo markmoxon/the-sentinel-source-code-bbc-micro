@@ -4,7 +4,7 @@
      0001
 .L0002
      0002
-.L0003
+.xTileViewer
      0003
 .L0004
      0004
@@ -72,13 +72,13 @@
      001A
 .zBlock
      001A
-.L001B
+.quadrantOffset
      001B
-.L001C
+.viewingArcRightYaw
      001C
 .processAction
      001C
-.L001D
+.zTileViewer
      001D
 .moreColumnsToFill
      001E
@@ -98,7 +98,7 @@
      0024
 .columnCounter
      0025
-.yTile
+.L0025
      0025
 .screenRowNumber
      0026
@@ -188,7 +188,7 @@
      0045
 .L004A
      004A
-.L004B
+.viewingQuadrantOpp
      004B
 .L004C
      004C
@@ -234,7 +234,7 @@
      0062
 .toAddr
      0064
-.L0066
+.viewingQuadrantx4
      0066
 .smoothingAction
      0066
@@ -6393,7 +6393,7 @@
      2667   BD 80 09   LDA &0980,X
      266A   85 1D      STA &1D
      266C   4C A1 26   JMP &26A1
-.C266F
+.dlan1
      266F   18         CLC
      2670   A9 1F      LDA #&1F
      2672   FD 80 09   SBC &0980,X
@@ -6401,7 +6401,7 @@
      2677   BD 00 09   LDA &0900,X
      267A   85 1D      STA &1D
      267C   4C A1 26   JMP &26A1
-.C267F
+.dlan2
      267F   70 13      BVS &2694
      2681   18         CLC
      2682   A9 1F      LDA #&1F
@@ -6412,14 +6412,14 @@
      268C   FD 80 09   SBC &0980,X
      268F   85 1D      STA &1D
      2691   4C A1 26   JMP &26A1
-.C2694
+.dlan3
      2694   BD 80 09   LDA &0980,X
      2697   85 03      STA &03
      2699   18         CLC
      269A   A9 1F      LDA #&1F
      269C   FD 00 09   SBC &0900,X
      269F   85 1D      STA &1D
-.C26A1
+.dlan4
      26A1   A9 1F      LDA #&1F
      26A3   85 26      STA &26
      26A5   AD 48 0C   LDA &0C48
@@ -6429,7 +6429,7 @@
      26AE   20 AF 27   JSR &27AF
      26B1   A5 32      LDA &32
      26B3   8D 48 0C   STA &0C48
-.C26B6
+.dlan5
      26B6   A5 05      LDA &05
      26B8   49 20      EOR #&20
      26BA   85 05      STA &05
@@ -6444,28 +6444,28 @@
      26CD   C4 1D      CPY &1D
      26CF   D0 05      BNE &26D6
      26D1   4C 47 27   JMP &2747
-.C26D4
+.dlan6
      26D4   18         CLC
      26D5   60         RTS
-.C26D6
+.dlan7
      26D6   20 AF 27   JSR &27AF
      26D9   A4 32      LDY &32
      26DB   C4 37      CPY &37
      26DD   F0 28      BEQ &2707
      26DF   90 0A      BCC &26EB
-.P26E1
+.dlan8
      26E1   88         DEY
      26E2   20 15 28   JSR &2815
      26E5   C4 37      CPY &37
      26E7   D0 F8      BNE &26E1
      26E9   F0 1C      BEQ &2707
-.C26EB
+.dlan9
      26EB   A5 05      LDA &05
      26ED   49 20      EOR #&20
      26EF   85 05      STA &05
      26F1   E6 26      INC &26
      26F3   A4 37      LDY &37
-.P26F5
+.dlan10
      26F5   88         DEY
      26F6   20 15 28   JSR &2815
      26F9   C4 32      CPY &32
@@ -6475,24 +6475,24 @@
      2701   A5 05      LDA &05
      2703   49 20      EOR #&20
      2705   85 05      STA &05
-.C2707
+.dlan11
      2707   A4 33      LDY &33
      2709   C4 38      CPY &38
      270B   F0 28      BEQ &2735
      270D   B0 0A      BCS &2719
-.P270F
+.dlan12
      270F   C8         INY
      2710   20 15 28   JSR &2815
      2713   C4 38      CPY &38
      2715   D0 F8      BNE &270F
      2717   F0 1C      BEQ &2735
-.C2719
+.dlan13
      2719   A5 05      LDA &05
      271B   49 20      EOR #&20
      271D   85 05      STA &05
      271F   E6 26      INC &26
      2721   A4 38      LDY &38
-.P2723
+.dlan14
      2723   C8         INY
      2724   20 15 28   JSR &2815
      2727   C4 33      CPY &33
@@ -6502,25 +6502,25 @@
      272F   A5 05      LDA &05
      2731   49 20      EOR #&20
      2733   85 05      STA &05
-.C2735
+.dlan15
      2735   20 2D 29   JSR &292D
      2738   2C 1B 0C   BIT &0C1B
      273B   10 05      BPL &2742
      273D   20 0F 12   JSR &120F
      2740   D0 03      BNE &2745
-.C2742
+.dlan16
      2742   4C B6 26   JMP &26B6
-.C2745
+.dlan17
      2745   38         SEC
      2746   60         RTS
-.C2747
+.dlan18
      2747   A4 37      LDY &37
      2749   C8         INY
      274A   C4 03      CPY &03
      274C   D0 05      BNE &2753
      274E   84 38      STY &38
      2750   4C 5E 27   JMP &275E
-.C2753
+.dlan19
      2753   A4 38      LDY &38
      2755   88         DEY
      2756   88         DEY
@@ -6528,13 +6528,13 @@
      2759   D0 10      BNE &276B
      275B   C8         INY
      275C   84 37      STY &37
-.C275E
+.dlan20
      275E   A4 37      LDY &37
      2760   20 15 28   JSR &2815
      2763   A4 38      LDY &38
      2765   20 15 28   JSR &2815
      2768   20 2D 29   JSR &292D
-.C276B
+.dlan21
      276B   A9 00      LDA #&00
      276D   85 05      STA &05
      276F   E6 26      INC &26
@@ -6560,10 +6560,10 @@
      27A2   A5 03      LDA &03
      27A4   85 25      STA &25
      27A6   20 1B 2A   JSR &2A1B
-.C27A9
+.dlan22
      27A9   18         CLC
      27AA   60         RTS
-.L27AB
+.quadrantOffsets
      27AB   00
      27AC   01
      27AD   21
