@@ -13589,21 +13589,66 @@ L23E3 = C23E2+1
  STA L0020              \ viewing arc, less 14.0625 degrees (360*10/256) ???
 
                         \ We now set (xTileViewer, zTileViewer) to the tile
-                        \ coordinate of the viewer, but with the coordinates
-                        \ updated according to the quadrant of the viewing arc
-                        \ ???
-
- BIT viewingArcRightYaw \ Bit 7 of quadrant of viewing arc set, jump to dlan2
- BMI dlan2
-
- BVS dlan1              \ Bit 6 of quadrant of viewing arc set, jump to dlan1
-
-                        \ Bit 7 of quadrant of viewing arc clear
-                        \ Bit 6 of quadrant of viewing arc clear
+                        \ coordinate of the viewer (object #X), but with the
+                        \ axes rotated to match the orientation of the viewer,
+                        \ so the x- and z-coordinate axes are from the
+                        \ perspective of the viewer rather than of the 3D world
                         \
-                        \ Right edge of arc is in 12-3 clock quadrant
-                        \ So viewing direction (clock) is between 10.30 and 1.30
-                        \ (i.e. looking into the screen/north)
+                        \ As a reminder, the degree system in the Sentinel looks
+                        \ like this, with the z-axis pointing into the screen
+                        \ and the x-axis pointing right:
+                        \
+                        \            0
+                        \      -32   |   +32         Overhead view of player
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \             ^           x-axis left -->
+                        \         /  |  \            |             to right
+                        \      -96   |   +96         z-axis
+                        \           128              into screen
+                        \
+                        \ To make this easier to describe, let's label it like a
+                        \ clock:
+                        \
+                        \            12
+                        \    10.30   |    1.30
+                        \         \  |  /
+                        \          \ | /
+                        \           \|/
+                        \     9 -----+----- 3
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \     7.30   |   4.30
+                        \            6
+                        \
+                        \ We now work out which quadrant contains the viewing arc
+                        \ and set the tile coordinates of the viewer accordingly
+
+ BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
+ BMI dlan2              \ the viewing arc is set, jump to dlan2
+
+ BVS dlan1              \ If bit 6 of the quadrant containing the right edge of
+                        \ the viewing arc is set, jump to dlan1
+
+                        \ If we get here then:
+                        \
+                        \   * Bit 7 of the right edge's quadrant is clear
+                        \   * Bit 6 of the right edge's quadrant is clear
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 12 o'clock to 3 o'clock quadrant
+                        \
+                        \ So the viewing direction in the middle of the arc is
+                        \ between 10.30 and 1.30, or broadly in the direction of
+                        \ 12 o'clock
+                        \
+                        \ This is the standard orientation of the landscape,
+                        \ so we can simply set the viewer coordinates to those
+                        \ of object #X
 
  LDA xObject,X          \ Set (xTileViewer, zTileViewer) = (x, z)
  STA xTileViewer        \
@@ -13614,12 +13659,37 @@ L23E3 = C23E2+1
 
 .dlan1
 
-                        \ Bit 7 of quadrant of viewing arc clear
-                        \ Bit 6 of quadrant of viewing arc set
+                        \ If we get here then:
                         \
-                        \ Right edge of arc is in 3-6 clock quadrant
-                        \ So viewing direction (clock) is between 1.30 and 4.30
-                        \ (i.e. looking right/east)
+                        \   * Bit 7 of the right edge's quadrant is clear
+                        \   * Bit 6 of the right edge's quadrant is set
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 3 o'clock to 6 o'clock quadrant
+                        \
+                        \ So the viewing direction in the middle of the arc is
+                        \ between 1.30 and 4.30, or broadly in the direction of
+                        \ 3 o'clock
+                        \
+                        \ If you imagine the standard 3D world, with the z-axis
+                        \ going into the screen and the x-axis going from left
+                        \ to right, then turning right means that from our new
+                        \ perspective:
+                        \
+                        \   * The axis we now see running from left to right is
+                        \     the 3D world z-axis, but in the opposite direction
+                        \
+                        \   * The axis we now see going away from us is the 3D
+                        \     world x-axis
+                        \
+                        \ Therefore, from the perspective of the viewer:
+                        \
+                        \   * The x-axis is the 3D world z-axis in the opposite
+                        \     direction, which is 32 - z
+                        \
+                        \   * The z-axis is the 3D world x-axis, which is x
+                        \
+                        \ So that's what we set now
 
  CLC                    \ Set (xTileViewer, zTileViewer) = (32 - z, x)
  LDA #31                \
@@ -13632,16 +13702,44 @@ L23E3 = C23E2+1
 
 .dlan2
 
-                        \ Bit 7 of quadrant of viewing arc set
+                        \ If we get here then bit 7 of the quadrant containing
+                        \ the right edge of the viewing arc is set
 
- BVS dlan3              \ Bit 6 of quadrant of viewing arc set, jump to dlan3
+ BVS dlan3              \ If bit 6 of the quadrant containing the right edge of
+                        \ the viewing arc is set, jump to dlan3
 
-                        \ Bit 7 of quadrant of viewing arc set
-                        \ Bit 6 of quadrant of viewing arc clear
+                        \ If we get here then:
                         \
-                        \ Right edge of arc is in 6-9 clock quadrant
-                        \ So viewing direction (clock) is between 4.30 and 7.30
-                        \ (i.e. looking out of the screen/south)
+                        \   * Bit 7 of the right edge's quadrant is set
+                        \   * Bit 6 of the right edge's quadrant is clear
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 6 o'clock to 9 o'clock quadrant
+                        \
+                        \ So the viewing direction in the middle of the arc is
+                        \ between 4.30 and 7.30, or broadly in the direction of
+                        \ 6 o'clock
+                        \
+                        \ If you imagine the standard 3D world, with the z-axis
+                        \ going into the screen and the x-axis going from left
+                        \ to right, then turning around to face out of the
+                        \ screen means that from our new perspective:
+                        \
+                        \   * The axis we now see running from left to right is
+                        \     the 3D world x-axis, but in the opposite direction
+                        \
+                        \   * The axis we now see going away from us is the 3D
+                        \     world z-axis, but in the opposite direction
+                        \
+                        \ Therefore, from the perspective of the viewer:
+                        \
+                        \   * The x-axis is the 3D world x-axis in the opposite
+                        \     direction, which is 32 - x
+                        \
+                        \   * The z-axis is the 3D world z-axis in the opposite
+                        \     direction, which is 32 - z
+                        \
+                        \ So that's what we set now
 
  CLC                    \ Set (xTileViewer, zTileViewer) = (32 - x, 32 - z)
  LDA #31                \
@@ -13656,12 +13754,37 @@ L23E3 = C23E2+1
 
 .dlan3
 
-                        \ Bit 7 of quadrant of viewing arc set
-                        \ Bit 6 of quadrant of viewing arc set
+                        \ If we get here then:
                         \
-                        \ Right edge of arc is in 9-12 clock quadrant
-                        \ So viewing direction (clock) is between 7.30 and 10.30
-                        \ (i.e. looking left/west)
+                        \   * Bit 7 of the right edge's quadrant is set
+                        \   * Bit 6 of the right edge's quadrant is set
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 9 o'clock to 12 o'clock quadrant
+                        \
+                        \ So the viewing direction in the middle of the arc is
+                        \ between 7.30 and 10.30, or broadly in the direction of
+                        \ 9 o'clock
+                        \
+                        \ If you imagine the standard 3D world, with the z-axis
+                        \ going into the screen and the x-axis going from left
+                        \ to right, then turning left means that from our new
+                        \ perspective:
+                        \
+                        \   * The axis we now see running from left to right is
+                        \     the 3D world z-axis
+                        \
+                        \   * The axis we now see going away from us is the 3D
+                        \     world x-axis, but in the opposite direction
+                        \
+                        \ Therefore, from the perspective of the viewer:
+                        \
+                        \   * The x-axis is the 3D world z-axis, which is z
+                        \
+                        \   * The z-axis is the 3D world x-axis in the opposite
+                        \     direction, which is 32 - x
+                        \
+                        \ So that's what we set now
 
  LDA zObject,X          \ Set (xTileViewer, zTileViewer) = (z, 32 - x)
  STA xTileViewer        \
@@ -13681,8 +13804,9 @@ L23E3 = C23E2+1
 
 .dlan4
 
- LDA #31                \ zTile iterates through tile rows, back to front ???
- STA zTile
+ LDA #31                \ We now iterate through all the tile rows, from back to
+ STA zTile              \ front, so set a row counter in zTile to iterate from
+                        \ 31 to 0
 
  LDA L0C48              \ Set L0032 = L0C48, something to do with xTile ???
  STA L0032              \ is this the number of the tile in the row to check,
