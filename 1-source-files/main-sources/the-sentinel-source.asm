@@ -301,11 +301,11 @@
  SKIP 1                 \ Used as a loop counter when adding trees to the
                         \ landscape
 
-.L001F
+.screenLeftYawLo
 
  SKIP 1                 \ ???
 
-.L0020
+.screenLeftYawHi
 
  SKIP 1                 \ ???
 
@@ -1448,6 +1448,9 @@
  EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7        \ noise and have no meaning
  EQUB &5E, &D3, &50, &C3, &35, &AE, &1D, &8A
  EQUB &FF, &6A, &D5, &44, &AC, &12, &77, &E2
+
+.L0BC0
+
  EQUB &1D, &A4, &2B, &B0, &35, &B8, &3B, &BC
  EQUB &46, &C6, &44, &C2, &3E, &B9, &32, &AB
  EQUB &2B, &A1, &16, &8A, &FC, &6E, &DE, &4C
@@ -10828,7 +10831,7 @@ L1145 = C1144+1
  LDA #0
  LSR L2095
  ROR A
- STA L001F
+ STA screenLeftYawLo
  LDA L2095
  ADC objectYawAngle,X
  STA objectYawAngle,X
@@ -10856,7 +10859,7 @@ L1145 = C1144+1
  JSR SetViewBufferAddr
  LDX anotherObject
  LDA #0
- STA L001F
+ STA screenLeftYawLo
  SEC
  LDA objectYawAngle,X
  SBC L2095
@@ -11908,7 +11911,7 @@ L1145 = C1144+1
 \
 \       Name: L2293
 \       Type: Variable
-\   Category: Graphics
+\   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -13557,8 +13560,9 @@ L23E3 = C23E2+1
 
  AND #63                \ Set T = (yaw angle + 32) mod 64 - 32
  SEC                    \
- SBC #32                \ This gives us the yaw angle of the left edge of the
- STA T                  \ viewing arc, but limited to the first quadrant ???
+ SBC #32                \ This gives us the yaw angle of the centre of the
+ STA T                  \ viewing arc (i.e. the direction of gaze), reduced
+                        \ into the range of a single 90-degree quadrant
 
  LDA viewingArcRightYaw \ Set bits 0-1 of Y to bits 6-7 of viewingArcRightYaw
  ASL A                  \
@@ -13583,10 +13587,14 @@ L23E3 = C23E2+1
  STA viewingQuadrantOpp \ quadrant opposite the quadrant containing the right
                         \ edge of the viewing arc ???
 
- LDA T                  \ L0020 = T - 10
+ LDA T                  \ screenLeftYawHi = T - 10
  SEC                    \
- SBC #10                \ So it contains the yaw angle of the left edge of the
- STA L0020              \ viewing arc, less 14.0625 degrees (360*10/256) ???
+ SBC #10                \ So screenLeftYawHi contains the yaw angle of the
+ STA screenLeftYawHi    \ gaze in the centre of the viewing arc, less 14.0625
+                        \ degrees (i.e. 360 * 10 / 256)
+                        \
+                        \ So it contains the yaw angle of the left edge of the
+                        \ screen ???
 
                         \ We now set (xTileViewer, zTileViewer) to the tile
                         \ coordinate of the viewer (object #X), but with the
@@ -13625,8 +13633,10 @@ L23E3 = C23E2+1
                         \     7.30   |   4.30
                         \            6
                         \
-                        \ We now work out which quadrant contains the viewing arc
-                        \ and set the tile coordinates of the viewer accordingly
+                        \ We now work out which quadrant contains the viewing
+                        \ arc and set (xTileViewer, zTileViewer) to the tile
+                        \ coordinates of the viewer, but using the axes from the
+                        \ viewer's frame of reference/point of view
 
  BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
  BMI dlan2              \ the viewing arc is set, jump to dlan2
@@ -14030,11 +14040,17 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   L0032               Tile column ???
+\   L0032               The tile column of the tile we are analysing, from the
+\                       perspective of the viewer ???
 \
-\   zTile               Tile row ???
+\   zTile               The tile row of the tile we are analysing, from the
+\                       perspective of the viewer ???
 \
-\   L0005               0 or 32 to use as an offset into L0180, L0BA0, L5500
+\   L0005               Defines where we store the results of the analysis:
+\
+\                         * L0180/L0BA0/L5500 when L0005 = 0
+\
+\                         * L01A0/L0BC0/L5520 when L0005 = 32
 \
 \ ******************************************************************************
 
@@ -14149,20 +14165,26 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2815
+\       Name: sub_C2815 (Part 1 of 3)
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing the landscape
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   Y                   Tile column ???
+\   Y                   The tile column of the tile we are analysing, from the
+\                       perspective of the viewer ???
 \
-\   zTile               Tile row ???
+\   zTile               The tile row of the tile we are analysing, from the
+\                       perspective of the viewer ???
 \
-\   L0005               0 or 32 to use as an offset into L0180, L0BA0, L5500
+\   L0005               Defines where we store the results of the analysis:
+\
+\                         * L0180/L0BA0/L5500 when L0005 = 0
+\
+\                         * L01A0/L0BC0/L5520 when L0005 = 32
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14179,8 +14201,9 @@ L23E3 = C23E2+1
  STY L000F              \ Store Y in L000F so it can be preserved
 
  TYA                    \ Set L0021 = Y + L0005
- ORA L0005
- STA L0021
+ ORA L0005              \
+ STA L0021              \ So L0021 is the index into the correct odd/even table
+                        \ for the tile
 
  LDA #0                 \ Set L007F = 0
  STA L007F
@@ -14268,63 +14291,190 @@ L23E3 = C23E2+1
                         \ and the original high byte of the signed z-axis length
                         \ is still in zDeltaHi
 
- JSR GetHypotenuseAngle
+ JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
+                        \ with the following non-hypotenuse sides:
+                        \
+                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and return the angle in (angleHi angleLo) and the
+                        \ tangent in angleTangent
 
- LDY L0021
- LDA angleLo
- SEC
- SBC L001F
- STA L0BA0,Y
- LDA angleHi
- SBC L0020
+ LDY L0021              \ Set Y to the storage index offset for this tile ???
+
+ LDA angleLo            \ Set the relevant entry in (L0BA0 L5500) to:
+ SEC                    \
+ SBC screenLeftYawLo    \   (angleHi angleLo) - (screenLeftYawHi screenLeftYawLo)
+ STA L0BA0,Y            \
+                        \ starting with the high bytes
+
+ LDA angleHi            \ And then the low bytes
+ SBC screenLeftYawHi
  STA L5500,Y
- JSR GetHypotenuse
- BIT viewingArcRightYaw
- BMI C288B
- BVS C2880
- LDX xTile
- LDY zTile
- JMP C28A4
+
+ JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
+                        \ in (hypotenuseHi hypotenuseLo)
+
+                        \ Fall through into part 2 to ???
+
+\ ******************************************************************************
+\
+\       Name: sub_C2815 (Part 2 of 3)
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: ???
+\
+\ ******************************************************************************
+
+                        \ We now set (X, Y) to the tile coordinate of the tile
+                        \ we are analysing, i.e (xTile, zTile), but with the
+                        \ axes rotated to match the orientation of the 3D world
+                        \ rather than the viewer
+                        \
+                        \ This is the reverse of the process described in part 1
+                        \ of the DrawLandscapeView routine, which changed the
+                        \ frame of reference from the 3D world to the viewer
+                        \
+                        \ In that routine, we mapped the following coordinate
+                        \ changes, depending on the direction in which the
+                        \ viewer is facing compared to the 3D world's default
+                        \ axes:
+                        \
+                        \    * If the viewer has not turned:
+                        \      (x, z) maps to (x, z)
+                        \
+                        \    * If the viewer has turned right:
+                        \      (x, z) maps to (32 - z, x)
+                        \
+                        \    * If the viewer has turned around:
+                        \      (x, z) maps to (32 - x, 32 - z)
+                        \
+                        \    * If the viewer has turned left:
+                        \      (x, z) maps to (z, 32 - x)
+                        \
+                        \ So we apply the same logic, but in the reverse
+                        \ direction, as we want to move from the viewer's frame
+                        \ of reference into the 3D world's frame of reference
+                        \
+                        \ Note that as these are tile coordinates rather than
+                        \ tile corners, we subtract from 31 rather than 32 ???
+
+ BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
+ BMI C288B              \ the viewing arc is set, jump to C288B
+
+ BVS C2880              \ If bit 6 of the quadrant containing the right edge of
+                        \ the viewing arc is set, jump to C2880
+
+                        \ If we get here then:
+                        \
+                        \   * Bit 7 of the right edge's quadrant is clear
+                        \   * Bit 6 of the right edge's quadrant is clear
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 12 o'clock to 3 o'clock quadrant
+                        \
+                        \ This means that the viewer has not turned, so we can
+                        \ use the tile coordinates unchanged
+
+ LDX xTile              \ Set X = xTile
+
+ LDY zTile              \ Set Y = zTile
+
+ JMP C28A4              \ Jump to C28A4 to keep going
 
 .C2880
 
- LDX zTile
- LDA #&1F
+                        \ If we get here then:
+                        \
+                        \   * Bit 7 of the right edge's quadrant is clear
+                        \   * Bit 6 of the right edge's quadrant is set
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 3 o'clock to 6 o'clock quadrant
+                        \
+                        \ This means that the viewer has turned right, so we can
+                        \ turn left to go back to the 3D world
+                        \
+                        \ Turning left maps (x, z) maps to (z, 31 - x), so
+                        \ that's what we do now
+
+ LDX zTile              \ Set X = zTile
+
+ LDA #31                \ Set Y = 31 - xTile
  SEC
  SBC xTile
  TAY
- JMP C28A4
+
+ JMP C28A4              \ Jump to C28A4 to keep going
 
 .C288B
 
- BVS C289C
- LDA #&1F
+                        \ If we get here then bit 7 of the quadrant containing
+                        \ the right edge of the viewing arc is set
+
+ BVS C289C              \ If bit 6 of the quadrant containing the right edge of
+                        \ the viewing arc is set, jump to C289C
+
+                        \ If we get here then:
+                        \
+                        \   * Bit 7 of the right edge's quadrant is set
+                        \   * Bit 6 of the right edge's quadrant is clear
+                        \
+                        \ This means that the viewer has turned around, so we
+                        \ turn back around to go back to the 3D world
+                        \
+                        \ Turning around maps (x, z) maps to (31 - x, 31 - z),
+                        \ so that's what we do now
+
+ LDA #31                \ Set X = 31 - xTile
  SEC
  SBC xTile
  TAX
- LDA #&1F
+
+ LDA #31                \ Set Y = 31 - zTile
  SEC
  SBC zTile
  TAY
- JMP C28A4
+
+ JMP C28A4              \ Jump to C28A4 to keep going
 
 .C289C
 
- LDA #&1F
+                        \ If we get here then:
+                        \
+                        \   * Bit 7 of the right edge's quadrant is set
+                        \   * Bit 6 of the right edge's quadrant is set
+                        \
+                        \ This means that the right edge of the viewing arc is
+                        \ in the 9 o'clock to 12 o'clock quadrant
+                        \
+                        \ This means that the viewer has turned left, so we can
+                        \ turn right to go back to the 3D world
+                        \
+                        \ Turning right maps (x, z) maps to (31 - z, x), so
+                        \ that's what we do now
+
+ LDA #31                \ Set X = 31 - xTile
  SEC
  SBC zTile
  TAX
- LDY xTile
+
+ LDY xTile              \ Set Y = yTile
 
 .C28A4
 
-                        \ We now fetch the tile data for the tile anchored at
-                        \ (X, Y), using code that's very similar to the
-                        \ GetTileData routine
+                        \ We now have the tile coordinates for the tile that we
+                        \ are analysing, but in 3D world coordinates, so we can
+                        \ now fetch the tile data
+                        \
+                        \ The 3D world coordinates for the tile are in (X, Y),
+                        \ so we can fetch the tile data using code that's very
+                        \ similar to the GetTileData routine
                         \
                         \ In the following comments I will refer to (X, Y) as
-                        \ (xTile, zTile), just as in GetTileData, as that's
-                        \ easier to follow
+                        \ (xTile, zTile), just as in GetTileData, as that's a
+                        \ bit easier to follow than X and Y
 
  STY T                  \ Store zTile in T, so we can use it in the following
                         \ calculation
@@ -14376,8 +14526,17 @@ L23E3 = C23E2+1
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- LDX L0021
- STA L0180,X
+ LDX L0021              \ Store the tile data in the correct place in the
+ STA L0180,X            \ L0180/L01A0 table ???
+
+\ ******************************************************************************
+\
+\       Name: sub_C2815 (Part 3 of 3)
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: ???
+\
+\ ******************************************************************************
  CMP #&C0
  BCC C28D6
 
@@ -23509,6 +23668,7 @@ L314A = C3148+2
  EQUB &09, &09, &0A, &0A, &0A, &0B, &0B, &0C
  EQUB &0C, &0D, &0D, &0E, &0E, &0E, &0F, &0F
  EQUB &0D, &0D, &0D, &0D, &0D, &0D, &0D, &0D
+
  EQUB &14, &15, &14, &12, &12, &13, &12, &11
  EQUB &11, &12, &11, &11, &10, &13, &11, &11
  EQUB &12, &11, &12, &11, &11, &12, &FF, &FF
@@ -23934,6 +24094,10 @@ L314A = C3148+2
 \ Returns:
 \
 \   Y                   Y is preserved
+\
+\   hypotenuseHi        The high byte of the length of the hypotenuse
+\
+\   hypotenuseLo        The low byte of the length of the hypotenuse
 \
 \ ******************************************************************************
 
@@ -25654,7 +25818,7 @@ L314A = C3148+2
  LDX anotherObject
  LDA angleLo
  SEC
- SBC L001F
+ SBC screenLeftYawLo
  STA L0C59
  LDA angleHi
  SBC objectYawAngle,X

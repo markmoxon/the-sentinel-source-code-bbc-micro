@@ -86,9 +86,9 @@
      001E
 .L001E
      001E
-.L001F
+.screenLeftYawLo
      001F
-.L0020
+.screenLeftYawHi
      0020
 .L0021
      0021
@@ -2330,6 +2330,7 @@
      0BBD   12
      0BBE   77
      0BBF   E2
+.L0BC0
      0BC0   1D
      0BC1   A4
      0BC2   2B
