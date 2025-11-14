@@ -8,9 +8,7 @@
      0003
 .L0004
      0004
-.storeResultsOffset
-     0005
-.L0005
+.drawingTableOffset
      0005
 .tileAltitude
      0006
@@ -90,7 +88,7 @@
      001F
 .screenLeftYawHi
      0020
-.L0021
+.drawingTableIndex
      0021
 .screenAddr
      0022

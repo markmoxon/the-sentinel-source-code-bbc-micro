@@ -97,14 +97,10 @@
 
  SKIP 1                 \ ???
 
-.storeResultsOffset
+.drawingTableOffset
 
- SKIP 0                 \ The offset to use when storing results from the
-                        \ GetRowVisibility routine
-
-.L0005
-
- SKIP 1                 \ ???
+ SKIP 1                 \ The offset to use within the various drawing data
+                        \ tables for the tile we are analysing
 
 .tileAltitude
 
@@ -309,9 +305,10 @@
 
  SKIP 1                 \ ???
 
-.L0021
+.drawingTableIndex
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The index into the drawing tables for the tile being
+                        \ analysed
 
 .screenAddr
 
@@ -4821,7 +4818,7 @@ L1145 = C1144+1
 .resv1
 
  LDA #%11111111         \ Set the X-th and X+64-th bytes of tileVisibility to
- STA tileVisibility,X   \ all set bits, to visible tiles
+ STA tileVisibility,X   \ all set bits, to indicate visible tiles
  STA tileVisibility+64,X
 
  LDA #%10000000         \ Set bit 7 of the X-th byte of objectFlags, to denote
@@ -10229,12 +10226,13 @@ L1145 = C1144+1
 
  LDA objectFlags,Y      \ Set A to the object flags for object #Y
 
- CMP #%01000000         \ If both bits 6 and 7 of the object flags for object #Y
- BCS data3              \ are set then object #Y is stacked on top of another
-                        \ object, so jump to data3 to look at that object
-                        \ instead
+ CMP #%01000000         \ If bit 6 of the object flags for object #Y is set
+ BCS data3              \ then object #Y is stacked on top of another object,
+                        \ so jump to data3 with the object number in bits 0 to
+                        \ 5 of the object flags in A, so we can process that
+                        \ object instead
 
- LDA yObjectHi,Y        \ Otherwise we have reached the object on the tile
+ LDA yObjectHi,Y        \ Bt this point we have reached the object on the tile
                         \ itself, so set A to the y-coordinate of that object,
                         \ which will be the tile altitude, and return from the
                         \ subroutine with the C flag clear to denote a flat
@@ -12291,7 +12289,7 @@ L23E3 = C23E2+1
 
  LDA #0                 \ Set A = 0 to use when we zero the tileVisibility table
 
- STA storeResultsOffset \ Set storeResultsOffset = 0 so the call to first call
+ STA drawingTableOffset \ Set drawingTableOffset = 0 so the call to first call
                         \ to GetRowVisibility (for tile row 31) will populate
                         \ the table at oddVisibility with the tile visibilities
                         \ of the row being analysed
@@ -12301,7 +12299,8 @@ L23E3 = C23E2+1
 
 .tvis1
 
- STA tileVisibility,X   \ Zero the X-th byte of the tileVisibility table
+ STA tileVisibility,X   \ Zero the X-th byte of the tileVisibility table to
+                        \ indicate hidden tiles
 
  DEX                    \ Decrement the byte counter
 
@@ -12325,7 +12324,7 @@ L23E3 = C23E2+1
  JSR GetRowVisibility   \ Calculate whether each tile corner in the rearmost row
                         \ is obscured from the player by any intervening
                         \ landscape, putting the results into 32 entries in the
-                        \ table at oddVisibility (as storeResultsOffset = 0) as
+                        \ table at oddVisibility (as drawingTableOffset = 0) as
                         \ follows:
                         \
                         \   * %00000000 if the tile corner is not visible from
@@ -12338,16 +12337,16 @@ L23E3 = C23E2+1
 
 .tvis2
 
- LDA storeResultsOffset \ Flip storeResultsOffset between 0 and 32, so each
+ LDA drawingTableOffset \ Flip drawingTableOffset between 0 and 32, so each
  EOR #32                \ call to GetRowVisibility alternates between storing
- STA storeResultsOffset \ the tile visibilities in oddVisibility and
+ STA drawingTableOffset \ the tile visibilities in oddVisibility and
                         \ evenVisibility
                         \
                         \ We EOR with 32 because:
                         \
                         \   evenVisibility - oddVisibility = 32
                         \
-                        \ So we can add the result in storeResultsOffset to
+                        \ So we can add the result in drawingTableOffset to
                         \ oddVisibility to point to the correct table for
                         \ storing the results
 
@@ -12421,7 +12420,7 @@ L23E3 = C23E2+1
 
  STY W                  \ Store the bit mask we just calculated in W
 
-                        \ We now store this tile's vibility as a single bit in
+                        \ We now store this tile's visibility as a single bit in
                         \ in the tileVisibility table
                         \
                         \ First we need to calculate the location of this tile's
@@ -12599,11 +12598,11 @@ L23E3 = C23E2+1
 \
 \   zTileRow            The tile z-coordinate of the tile row to analyse
 \
-\   storeResultsOffset  Defines where we store the results of the analysis:
+\   drawingTableOffset  Defines where we store the results of the analysis:
 \
-\                         * oddVisibility when storeResultsOffset = 0
+\                         * oddVisibility when drawingTableOffset = 0
 \
-\                         * evenVisibility when storeResultsOffset = 32
+\                         * evenVisibility when drawingTableOffset = 32
 \
 \   P                   P is always zero, so (Q P) is of the form &xx00
 \
@@ -13193,9 +13192,9 @@ L23E3 = C23E2+1
 
 .rvis10
 
- LDA xTileRow           \ Set Y = storeResultsOffset + xTileRow
- ORA storeResultsOffset \
- TAY                    \ The value of storeResultsOffset is either 0 or 32, so
+ LDA xTileRow           \ Set Y = drawingTableOffset + xTileRow
+ ORA drawingTableOffset \
+ TAY                    \ The value of drawingTableOffset is either 0 or 32, so
                         \ this creates an index in Y that we can use to store
                         \ the result in either oddVisibility (when it is 0) or
                         \ evenVisibility when it is 32)
@@ -13211,7 +13210,7 @@ L23E3 = C23E2+1
 
  STA oddVisibility,Y    \ Store the result in either the oddVisibility or
                         \ evenVisibility table, as determined by the value of
-                        \ storeResultsOffset
+                        \ drawingTableOffset
 
  DEC xTileRow           \ Decrement xTileRow to move left along the tile row we
                         \ are analysing
@@ -13823,8 +13822,8 @@ L23E3 = C23E2+1
                         \ starting from 0 and being incremented in sub_C27AF
                         \ somehow?
 
- LDA #0                 \ Set L0005 = 0, flips between 0 and 32 like
- STA L0005              \ storeResultsOffset in GetTileVisibility
+ LDA #0                 \ Set drawingTableOffset = 0 for sub_C27AF flipping
+ STA drawingTableOffset \ like GetTileVisibility ???
 
  JSR sub_C27AF
 
@@ -13833,9 +13832,9 @@ L23E3 = C23E2+1
 
 .dlan5
 
- LDA L0005
- EOR #&20
- STA L0005
+ LDA drawingTableOffset
+ EOR #32
+ STA drawingTableOffset
  LDA L0032
  STA L0037
  LDA L0033
@@ -13875,9 +13874,9 @@ L23E3 = C23E2+1
 
 .dlan9
 
- LDA L0005
- EOR #&20
- STA L0005
+ LDA drawingTableOffset
+ EOR #32
+ STA drawingTableOffset
  INC zTile
  LDY L0037
 
@@ -13889,9 +13888,9 @@ L23E3 = C23E2+1
  BNE dlan10
  STY L0037
  DEC zTile
- LDA L0005
- EOR #&20
- STA L0005
+ LDA drawingTableOffset
+ EOR #32
+ STA drawingTableOffset
 
 .dlan11
 
@@ -13910,9 +13909,9 @@ L23E3 = C23E2+1
 
 .dlan13
 
- LDA L0005
- EOR #&20
- STA L0005
+ LDA drawingTableOffset
+ EOR #32
+ STA drawingTableOffset
  INC zTile
  LDY L0038
 
@@ -13925,9 +13924,9 @@ L23E3 = C23E2+1
 
  STY L0038
  DEC zTile
- LDA L0005
- EOR #&20
- STA L0005
+ LDA drawingTableOffset
+ EOR #32
+ STA drawingTableOffset
 
 .dlan15
 
@@ -13983,7 +13982,7 @@ L23E3 = C23E2+1
 .dlan21
 
  LDA #0
- STA L0005
+ STA drawingTableOffset
  INC zTile
  LDY xTileViewer
  JSR sub_C2815
@@ -13993,8 +13992,8 @@ L23E3 = C23E2+1
  STA L0AE0+1,Y
  LDA L0A80,Y
  STA L0A80+1,Y
- LDA #&20
- STA L0005
+ LDA #32
+ STA drawingTableOffset
  DEC zTile
  LDA #&FF
  STA L0B00,Y
@@ -14046,11 +14045,12 @@ L23E3 = C23E2+1
 \   zTile               The tile row of the tile we are analysing, from the
 \                       perspective of the viewer ???
 \
-\   L0005               Defines where we store the results of the analysis:
+\   drawingTableOffset  Defines where we store the results of the analysis in
+\                       the various drawing data tables:
 \
-\                         * L0180/L0BA0/L5500 when L0005 = 0
+\                         * L0180/L0BA0/L5500 when drawingTableOffset = 0
 \
-\                         * L01A0/L0BC0/L5520 when L0005 = 32
+\                         * L01A0/L0BC0/L5520 when drawingTableOffset = 32
 \
 \ ******************************************************************************
 
@@ -14180,11 +14180,12 @@ L23E3 = C23E2+1
 \   zTile               The tile row of the tile we are analysing, from the
 \                       perspective of the viewer ???
 \
-\   L0005               Defines where we store the results of the analysis:
+\   drawingTableOffset  Defines where we store the results of the analysis in
+\                       the various drawing data tables:
 \
-\                         * L0180/L0BA0/L5500 when L0005 = 0
+\                         * L0180/L0BA0/L5500 when drawingTableOffset = 0
 \
-\                         * L01A0/L0BC0/L5520 when L0005 = 32
+\                         * L01A0/L0BC0/L5520 when drawingTableOffset = 32
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14200,10 +14201,10 @@ L23E3 = C23E2+1
 
  STY L000F              \ Store Y in L000F so it can be preserved
 
- TYA                    \ Set L0021 = Y + L0005
- ORA L0005              \
- STA L0021              \ So L0021 is the index into the correct odd/even table
-                        \ for the tile
+ TYA                    \ Set drawingTableIndex = Y + drawingTableOffset
+ ORA drawingTableOffset \
+ STA drawingTableIndex  \ So drawingTableIndex is the index into the drawing
+                        \ tables for the tile we are analysing
 
  LDA #0                 \ Set L007F = 0
  STA L007F
@@ -14301,7 +14302,7 @@ L23E3 = C23E2+1
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
 
- LDY L0021              \ Set Y to the storage index offset for this tile ???
+ LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
  LDA angleLo            \ Set the relevant entry in (L0BA0 L5500) to:
  SEC                    \
@@ -14490,7 +14491,8 @@ L23E3 = C23E2+1
  TXA                    \ Set A = bits 0-1 of xTile
  AND #%00000011         \       = xTile mod 4
 
- STA T                  \ Store A in T so we can use it later ???
+ STA T                  \ Store A in T so we can use it in part 3 to calculate
+                        \ the address of the tila's visibility bit
 
                         \ The low byte of tileDataPage(1 0) gets set to zero in
                         \ ResetVariables and is never changed
@@ -14526,7 +14528,7 @@ L23E3 = C23E2+1
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- LDX L0021              \ Store the tile data in the correct place in the
+ LDX drawingTableIndex  \ Store the tile data in the correct place in the
  STA L0180,X            \ L0180/L01A0 table ???
 
 \ ******************************************************************************
@@ -14537,48 +14539,125 @@ L23E3 = C23E2+1
 \    Summary: ???
 \
 \ ******************************************************************************
- CMP #&C0
- BCC C28D6
+
+                        \ By this point, A contains the tile data for the tile
+                        \ we are analysing and Y contains the index offset of
+                        \ the tile data from tileDataPage(1 0)
+
+ CMP #%11000000         \ If both bits 6 and 7 are set in the tile data then the
+ BCC C28D6              \ tile we are analysing contains an object, in which
+                        \ case keep going, otherwise there is no object on the
+                        \ tile so jump to C28D6
 
 .P28C4
 
- AND #&3F
- TAY
- LDA objectFlags,Y
- CMP #&40
- BCS P28C4
- LDA yObjectHi,Y
- STA U
- JMP C28EE
+                        \ If we get here then the tile we are analysing contains
+                        \ an object and the tile data is in A
+
+ AND #%00111111         \ Bits 0 to 5 of the tile data contain the number of the
+ TAY                    \ object on the tile, to extract this into Y
+
+ LDA objectFlags,Y      \ Set A to the object flags for the object on the tile
+
+ CMP #%01000000         \ If bit 6 of the object flags for object #Y is set
+ BCS P28C4              \ then object #Y is stacked on top of another object,
+                        \ and that object number is in bits 0 to 5 of the object
+                        \ flags, so jump to P28C4 to extract that object number
+                        \ from A and check for flags again (so this works down
+                        \ through the stack of objects until we reach the object
+                        \ at the bottom of the stack)
+
+ LDA yObjectHi,Y        \ Bt this point we have reached the object on the tile
+ STA U                  \ itself, so set U to the y-coordinate of that object,
+                        \ which will be the tile altitude, and return from the
+                        \ subroutine with the C flag clear to denote a flat
+                        \ tile, as objects are only ever placed on flat tiles
+
+ JMP C28EE              \ Jump to C28EE to keep going, leaving the tile's entry
+                        \ in the L0180 table alone (so it still contains the
+                        \ tile data that we stored in part 2)
 
 .C28D6
 
- LSR A
- LSR A
+                        \ If we get here then the tile we are analysing does not
+                        \ contain an object and the tile data is in A, with Y
+                        \ containing the index offset of the tile data from
+                        \ tileDataPage(1 0)
+                        \
+                        \ From part 2, we have:
+                        \
+                        \   * T = bits 0-1 of xTile
+                        \
+                        \   * Y = (xTile div 4) * &20 + zTile
+
+ LSR A                  \ The high nibble of the tile data contains the altitude
+ LSR A                  \ of the tile's anchor, so shift this into U
  LSR A
  LSR A
  STA U
- TYA
- LSR A
- TAY
- ROL T
- LDA tileVisibility,Y
- LDY T
- AND visibileBitMask,Y
- BNE C28EE
- STA L0180,X
+
+                        \ We now fetch the tile's visiblility bit from the
+                        \ tileVisibility table, using the reverse of the logic
+                        \ in the GetTileVisibility routine for calculating the
+                        \ address of the visiblility bit
+
+ TYA                    \ Shift Y right by one place, so the C flag is set to
+ LSR A                  \ bit 0 of zTile (the row number), and Y contains the
+ TAY                    \ following:
+                        \
+                        \   * Bits 4 to 6 contain bits 2 to 4 of xTile (the
+                        \     column number)
+                        \
+                        \   * Bits 0 to 3 contain bits 1 to 4 of zTile (the
+                        \     row number)
+                        \
+                        \ This therefore gives us the offset in the visibility
+                        \ table for the tile's visibility byte, as per the
+                        \ GetTileVisibility routine
+
+ ROL T                  \ In part 2 we set T to bits 0-1 of xTile (the column
+                        \ number), so this sets T as follows:
+                        \
+                        \    * Bit 0 contains bit 0 of the of the tile row in
+                        \      zTile (via the C flag from above)
+                        \
+                        \    * Bits 1-2 contain bits 0-1 of the column number in
+                        \      xTile
+                        \
+                        \ This therefore gives us the bit number within the byte
+                        \ in the visibility table for the tile's visibility, as
+                        \ per the GetTileVisibility routine
+
+ LDA tileVisibility,Y   \ Set A to the visibility byte that contains the
+                        \ visibility bit for this tile
+
+ LDY T                  \ Fetch the Y-th bit from the visibility byte, which
+ AND visibileBitMask,Y  \ contains the specific visibility bit for this tile
+
+ BNE C28EE              \ If the visibility bit is set then A will be non-zero,
+                        \ so skip the following instruction, leaving the entry
+                        \ for this tile to contain the non-zero tile data that
+                        \ we stored in L0180,X at the end of part 2
+
+ STA L0180,X            \ The visibility bit is zero, so zero the entry in the
+                        \ L0180 table for this tile (which otherwise would
+                        \ contain the tile data that we set in part 2)
 
 .C28EE
 
- LDX anotherObject
- LDA #0
- SEC
- SBC yObjectLo,X
- STA xDeltaLo
- LDA U
- SBC yObjectHi,X
+ LDX anotherObject      \ Set X to the number of the object that is viewing the
+                        \ landscape
+
+ LDA #0                 \ Set (A xDeltaLo) = (U 0) - y-coordinate of object #X
+ SEC                    \
+ SBC yObjectLo,X        \ We set U above to the altitude of the tile that we are
+ STA xDeltaLo           \ analysing, so (A xDeltaLo) now contains the vertical
+ LDA U                  \ distance between the viewer and the tile we are
+ SBC yObjectHi,X        \ analysing
+
  JSR sub_C561D
- LDY L0021
+
+ LDY drawingTableIndex
  LDA L008D
  STA L0AE0,Y
  LDA L0050
@@ -14844,7 +14923,7 @@ L23E3 = C23E2+1
  JSR ProcessSound       \ Process any sounds or music that are being made
 
  LDA L0025
- ORA L0005
+ ORA drawingTableOffset
  CLC
  ADC quadrantOffset
  AND #&3F
@@ -16734,7 +16813,7 @@ L23E3 = C23E2+1
 .sub_C2D36
 
  LDA L0025
- ORA L0005
+ ORA drawingTableOffset
  BIT L003B
  BMI C2D13
  BVS C2D93
@@ -25879,7 +25958,7 @@ L314A = C3148+2
 
  LDX L004C
  LDA #&40
- STA L0021
+ STA drawingTableIndex
  LDA L49A0+1,X
  STA L004F
  LDY L49A0,X
@@ -25946,7 +26025,7 @@ L314A = C3148+2
  LDA H
  STA xDeltaHi
  JSR GetHypotenuseAngle
- LDY L0021
+ LDY drawingTableIndex
  LDA angleLo
  CLC
  ADC L0C59
@@ -25975,13 +26054,13 @@ L314A = C3148+2
  ADC L0C5C
  LDX anotherObject
  JSR sub_C561D
- LDY L0021
+ LDY drawingTableIndex
  LDA L008D
  STA L0AE0,Y
  LDA L0050
  STA L0A80,Y
  INC L004E
- INC L0021
+ INC drawingTableIndex
  LDY L004E
  CPY L004F
  BEQ CRE39
