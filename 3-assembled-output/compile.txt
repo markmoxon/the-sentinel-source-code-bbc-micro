@@ -84,9 +84,9 @@
      001E
 .L001E
      001E
-.screenLeftYawLo
+.angle2Lo
      001F
-.screenLeftYawHi
+.angle2Hi
      0020
 .drawingTableIndex
      0021

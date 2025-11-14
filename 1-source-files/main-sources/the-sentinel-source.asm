@@ -294,14 +294,13 @@
 
 .L001E
 
- SKIP 1                 \ Used as a loop counter when adding trees to the
-                        \ landscape
+ SKIP 1                 \ ???
 
-.screenLeftYawLo
+.angle2Lo
 
  SKIP 1                 \ ???
 
-.screenLeftYawHi
+.angle2Hi
 
  SKIP 1                 \ ???
 
@@ -10829,7 +10828,7 @@ L1145 = C1144+1
  LDA #0
  LSR L2095
  ROR A
- STA screenLeftYawLo
+ STA angle2Lo
  LDA L2095
  ADC objectYawAngle,X
  STA objectYawAngle,X
@@ -10857,7 +10856,7 @@ L1145 = C1144+1
  JSR SetViewBufferAddr
  LDX anotherObject
  LDA #0
- STA screenLeftYawLo
+ STA angle2Lo
  SEC
  LDA objectYawAngle,X
  SBC L2095
@@ -13586,14 +13585,14 @@ L23E3 = C23E2+1
  STA viewingQuadrantOpp \ quadrant opposite the quadrant containing the right
                         \ edge of the viewing arc ???
 
- LDA T                  \ screenLeftYawHi = T - 10
+ LDA T                  \ Set angle2Hi = T - 10
  SEC                    \
- SBC #10                \ So screenLeftYawHi contains the yaw angle of the
- STA screenLeftYawHi    \ gaze in the centre of the viewing arc, less 14.0625
-                        \ degrees (i.e. 360 * 10 / 256)
+ SBC #10                \ So angle2Hi contains the yaw angle of the gaze in the
+ STA angle2Hi           \ the centre of the viewing arc, less 14.0625 degrees
+                        \ (i.e. 360 * 10 / 256)
                         \
-                        \ So it contains the yaw angle of the left edge of the
-                        \ screen ???
+                        \ So it contains some kind of yaw angle to the left of
+                        \ the view being seen ???
 
                         \ We now set (xTileViewer, zTileViewer) to the tile
                         \ coordinate of the viewer (object #X), but with the
@@ -14306,12 +14305,12 @@ L23E3 = C23E2+1
 
  LDA angleLo            \ Set the relevant entry in (L0BA0 L5500) to:
  SEC                    \
- SBC screenLeftYawLo    \   (angleHi angleLo) - (screenLeftYawHi screenLeftYawLo)
+ SBC angle2Lo           \   (angleHi angleLo) - (angle2Hi angle2Lo)
  STA L0BA0,Y            \
-                        \ starting with the high bytes
+                        \ starting with the high bytes ???
 
  LDA angleHi            \ And then the low bytes
- SBC screenLeftYawHi
+ SBC angle2Hi
  STA L5500,Y
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
@@ -14655,27 +14654,37 @@ L23E3 = C23E2+1
  LDA U                  \ distance between the viewer and the tile we are
  SBC yObjectHi,X        \ analysing
 
- JSR sub_C561D
+ JSR sub_C561D          \ Sets L008D and L0050 ???
 
- LDY drawingTableIndex
+ LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
+
  LDA L008D
  STA L0AE0,Y
+
  LDA L0050
  STA L0A80,Y
+
  LDA L5500,Y
+
  CMP L0007
  BCC C2927
+
  BNE C291F
+
  LDA L0BA0,Y
+
  CMP L0028
  BCC C2927
+
  LDA L5500,Y
 
 .C291F
 
  ROR L007F
+
  CMP L0012
  BCC C2927
+
  INC L007F
 
 .C2927
@@ -24094,38 +24103,75 @@ L314A = C3148+2
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A xDeltaLo)        A vertical delta
+\
+\   hypotenuseHi        The high byte of the length of the hypotenuse
+\
+\   hypotenuseLo        The low byte of the length of the hypotenuse
+\
+\   X                   An object number
+\
 \ ******************************************************************************
 
 .sub_C561D
 
- STA xDeltaHi
- TAY
- BPL C562D
- LDA #0
- SEC
- SBC xDeltaLo
+ STA xDeltaHi           \ Set (xDeltaHi xDeltaLo) to the vertical delta passed
+                        \ to the routine
+
+ TAY                    \ If the high byte is positive, jump to C562D to skip
+ BPL C562D              \ the following
+
+ LDA #0                 \ Negate the result to make it positive, so we now have:
+ SEC                    \
+ SBC xDeltaLo           \   (A xDeltaLo) = |xDeltaHi xDeltaLo|
  STA xDeltaLo
  LDA #0
  SBC xDeltaHi
 
 .C562D
 
- STA xDeltaAbsoluteHi
- LDA hypotenuseLo
- STA zDeltaLo
+ STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = |xDeltaHi|
+                        \
+                        \ So we now have the absolute delta in:
+                        \
+                        \   (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \ and the original high byte of the signed delta is
+                        \ still in xDeltaHi
+
+ LDA hypotenuseLo       \ Set (zDeltaAbsoluteHi zDeltaLo) to the length of the
+ STA zDeltaLo           \ hypotenuse (hypotenuseHi hypotenuseLo)
  LDA hypotenuseHi
  STA zDeltaAbsoluteHi
- LDA #0
- STA zDeltaHi
- JSR GetHypotenuseAngle
- LDA angleLo
- SEC
- SBC #&20
- STA L0050
- LDA angleHi
+
+ LDA #0                 \ Set zDeltaHi to make the sign of zDelta positive in
+ STA zDeltaHi           \ the call to GetHypotenuseAngle
+
+ JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
+                        \ with the following non-hypotenuse sides:
+                        \
+                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and return the angle in (angleHi angleLo) and the
+                        \ tangent in angleTangent
+
+ LDA angleLo            \ Set (A L0050) = (angleHi angleLo) - pitch angle of
+ SEC                    \                                     object + 32/256
+ SBC #32                \
+ STA L0050              \ Starting with the low bytes
+
+ LDA angleHi            \ And then the high bytes
  SBC objectPitchAngle,X
- PHP
- LSR A
+
+ PHP                    \ Store the status flags from the calculation
+
+ LSR A                  \ Set (A L0050) = (A L0050) >> 4
  ROR L0050
  LSR A
  ROR L0050
@@ -24133,14 +24179,16 @@ L314A = C3148+2
  ROR L0050
  LSR A
  ROR L0050
- PLP
+
+ PLP                    \ If result is negative, set top four bits of A
  BPL C565C
- ORA #&F0
+ ORA #%11110000
 
 .C565C
 
- STA L008D
- RTS
+ STA L008D              \ Store result in L008D
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -25893,11 +25941,20 @@ L314A = C3148+2
                         \ So this calculates the difference in altitude between
                         \ object #X and object #Y
 
- JSR GetHypotenuseAngle
+ JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
+                        \ with the following non-hypotenuse sides:
+                        \
+                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and return the angle in (angleHi angleLo) and the
+                        \ tangent in angleTangent
+
  LDX anotherObject
  LDA angleLo
  SEC
- SBC screenLeftYawLo
+ SBC angle2Lo
  STA L0C59
  LDA angleHi
  SBC objectYawAngle,X
@@ -26024,7 +26081,17 @@ L314A = C3148+2
  STA xDeltaAbsoluteHi
  LDA H
  STA xDeltaHi
- JSR GetHypotenuseAngle
+
+ JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
+                        \ with the following non-hypotenuse sides:
+                        \
+                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and return the angle in (angleHi angleLo) and the
+                        \ tangent in angleTangent
+
  LDY drawingTableIndex
  LDA angleLo
  CLC
