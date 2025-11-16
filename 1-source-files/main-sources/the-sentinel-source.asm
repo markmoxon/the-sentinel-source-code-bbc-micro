@@ -603,7 +603,7 @@
 
  SKIP 1                 \ ???
 
-.L0050
+.pitchDeltaLo
 
  SKIP 1                 \ ???
 
@@ -806,6 +806,10 @@
 
  SKIP 1                 \ Used to store a tangent angle
 
+.tileIsOnScreen
+
+ SKIP 0                 \ ???
+
 .L007F
 
  SKIP 1                 \ ???
@@ -877,7 +881,7 @@
 
  SKIP 1                 \ This byte appears to be unused
 
-.L008D
+.pitchDeltaHi
 
  SKIP 1                 \ ???
 
@@ -932,9 +936,13 @@
  SKIP 64                \ The pitch angle for each object (i.e. the vertical
                         \ direction in which they are facing)
 
-.L0180
+.tileViewData
 
- SKIP 0                 \ ???
+ SKIP 0                 \ Storage for the tile data of tiles in the current
+                        \ landscape view
+                        \
+                        \ This shares the same memory location as oddVisibility
+                        \ and evenVisibility
 
 .oddVisibility
 
@@ -1347,14 +1355,15 @@
 
 \ ******************************************************************************
 \
-\       Name: L0A80
+\       Name: tileViewPitchLo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Storage for the pitch angles of tiles in the current landscape
+\             view (low bytes)
 \
 \ ******************************************************************************
 
-.L0A80
+.tileViewPitchLo
 
  EQUB &6F, &70, &71, &73, &74, &75, &76, &78        \ These values are workspace
  EQUB &79, &7B, &7C, &7E, &7F, &81, &82, &84        \ noise and have no meaning
@@ -1371,33 +1380,22 @@
 
 \ ******************************************************************************
 \
-\       Name: L0AE0
+\       Name: tileViewPitchHi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Storage for the pitch angles of tiles in the current landscape
+\             view (high bytes)
 \
 \ ******************************************************************************
 
-.L0AE0
+.tileViewPitchHi
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
-
-\ ******************************************************************************
-\
-\       Name: L0B00
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L0B00
-
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1431,22 +1429,20 @@
 
 \ ******************************************************************************
 \
-\       Name: L0BA0
+\       Name: tileViewYawLo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Storage for the yaw angles of tiles in the current landscape view
+\             (low bytes)
 \
 \ ******************************************************************************
 
-.L0BA0
+.tileViewYawLo
 
  EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB        \ These values are workspace
  EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7        \ noise and have no meaning
  EQUB &5E, &D3, &50, &C3, &35, &AE, &1D, &8A
  EQUB &FF, &6A, &D5, &44, &AC, &12, &77, &E2
-
-.L0BC0
-
  EQUB &1D, &A4, &2B, &B0, &35, &B8, &3B, &BC
  EQUB &46, &C6, &44, &C2, &3E, &B9, &32, &AB
  EQUB &2B, &A1, &16, &8A, &FC, &6E, &DE, &4C
@@ -8121,7 +8117,7 @@ L1145 = C1144+1
 
 .C18E1
 
- JSR sub_C561D
+ JSR GetPitchAngleDelta
  LDA angleLo
  STA vectorPitchAngleLo
  STA T
@@ -11057,7 +11053,7 @@ L1145 = C1144+1
  STA xDeltaLo
  LDA #0
  STA L0CD4
- JSR sub_C561D
+ JSR GetPitchAngleDelta
  LDA L0C59
  SEC
  SBC angleLo
@@ -13818,13 +13814,13 @@ L23E3 = C23E2+1
 
  LDA L0C48              \ Set L0032 = L0C48, something to do with xTile ???
  STA L0032              \ is this the number of the tile in the row to check,
-                        \ starting from 0 and being incremented in sub_C27AF
-                        \ somehow?
+                        \ starting from 0 and being incremented in
+                        \ GetTileViewEdges somehow?
 
- LDA #0                 \ Set drawingTableOffset = 0 for sub_C27AF flipping
- STA drawingTableOffset \ like GetTileVisibility ???
+ LDA #0                 \ Set drawingTableOffset = 0 for GetTileViewEdges
+ STA drawingTableOffset \ flipping like GetTileVisibility ???
 
- JSR sub_C27AF
+ JSR GetTileViewEdges
 
  LDA L0032
  STA L0C48
@@ -13857,7 +13853,7 @@ L23E3 = C23E2+1
 
 .dlan7
 
- JSR sub_C27AF
+ JSR GetTileViewEdges
  LDY L0032
  CPY L0037
  BEQ dlan11
@@ -13866,7 +13862,7 @@ L23E3 = C23E2+1
 .dlan8
 
  DEY
- JSR sub_C2815
+ JSR GetTileViewAngles
  CPY L0037
  BNE dlan8
  BEQ dlan11
@@ -13882,7 +13878,7 @@ L23E3 = C23E2+1
 .dlan10
 
  DEY
- JSR sub_C2815
+ JSR GetTileViewAngles
  CPY L0032
  BNE dlan10
  STY L0037
@@ -13901,7 +13897,7 @@ L23E3 = C23E2+1
 .dlan12
 
  INY
- JSR sub_C2815
+ JSR GetTileViewAngles
  CPY L0038
  BNE dlan12
  BEQ dlan15
@@ -13917,7 +13913,7 @@ L23E3 = C23E2+1
 .dlan14
 
  INY
- JSR sub_C2815
+ JSR GetTileViewAngles
  CPY L0033
  BNE dlan14
 
@@ -13973,9 +13969,9 @@ L23E3 = C23E2+1
 .dlan20
 
  LDY L0037
- JSR sub_C2815
+ JSR GetTileViewAngles
  LDY L0038
- JSR sub_C2815
+ JSR GetTileViewAngles
  JSR sub_C292D
 
 .dlan21
@@ -13984,24 +13980,24 @@ L23E3 = C23E2+1
  STA drawingTableOffset
  INC zTile
  LDY xTileViewer
- JSR sub_C2815
- LDA L0AE0,Y
+ JSR GetTileViewAngles
+ LDA tileViewPitchHi,Y
  CMP #&02
  BCS dlan22
- STA L0AE0+1,Y
- LDA L0A80,Y
- STA L0A80+1,Y
+ STA tileViewPitchHi+1,Y
+ LDA tileViewPitchLo,Y
+ STA tileViewPitchLo+1,Y
  LDA #32
  STA drawingTableOffset
  DEC zTile
  LDA #&FF
- STA L0B00,Y
- STA L0B00+1,Y
- STA L5520,Y
- STA L5500,Y
+ STA tileViewPitchHi+32,Y
+ STA tileViewPitchHi+33,Y
+ STA tileViewYawHi+32,Y
+ STA tileViewYawHi,Y
  LDA #&14
- STA L5520+1,Y
- STA L5500+1,Y
+ STA tileViewYawHi+33,Y
+ STA tileViewYawHi+1,Y
  LDA xTileViewer
  STA L0025
  JSR sub_C2A1B
@@ -14029,9 +14025,9 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C27AF
+\       Name: GetTileViewEdges
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing the landscape
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -14045,126 +14041,131 @@ L23E3 = C23E2+1
 \                       perspective of the viewer ???
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
-\                       the various drawing data tables:
+\                       the tileViewData, tileViewYawHi and tileViewYawLo
+\                       drawing data tables; each table contains two complete
+\                       tables, the first table at offset 0 and and the second
+\                       table at offset 32, so we store the results as follows:
 \
-\                         * L0180/L0BA0/L5500 when drawingTableOffset = 0
+\                         * 0 = store the results in the first table
+\                               e.g. in the 32-byte table at tileViewData
 \
-\                         * L01A0/L0BC0/L5520 when drawingTableOffset = 32
+\                         * 32 = store the results in the second table
+\                               e.g. in the 32-byte table at tileViewData+32
 \
 \ ******************************************************************************
 
-.sub_C27AF
+.GetTileViewEdges
 
- LDY L0032              \ Set Y to the tile column to pass to sub_C2815
+ LDY L0032              \ Set Y to the tile column to pass to GetTileViewAngles
 
- JSR sub_C2815
+ JSR GetTileViewAngles
 
- BEQ C27E9
+ BEQ edge5
  CMP #&80
- BEQ C27D7
+ BEQ edge4
 
-.P27BA
+.edge1
 
  LDA xTile
  STA L0032
- JSR sub_C280E
- BCS C27D2
+ JSR CheckNextTile
+ BCS edge3
  CMP #&81
- BEQ P27BA
+ BEQ edge1
  CMP #&80
- BEQ C27D2
+ BEQ edge3
 
-.P27CB
+.edge2
 
- JSR sub_C280E
- BCS C27D2
- BEQ P27CB
+ JSR CheckNextTile
+ BCS edge3
+ BEQ edge2
 
-.C27D2
+.edge3
 
  LDA xTile
  STA L0033
  RTS
 
-.C27D7
+.edge4
 
  LDA xTile
  STA L0033
- JSR sub_C2806
- BCS C27FF
+ JSR CheckPreviousTile
+ BCS edge9
  CMP #&80
- BEQ C27D7
+ BEQ edge4
  CMP #&00
- JMP C27FD
+ JMP edge8
 
-.C27E9
+.edge5
 
- JSR sub_C280E
- BCS C27F0
- BEQ C27E9
+ JSR CheckNextTile
+ BCS edge6
+ BEQ edge5
 
-.C27F0
+.edge6
 
  LDA xTile
  STA L0033
  LDA L0032
  STA xTile
 
-.P27F8
+.edge7
 
- JSR sub_C2806
- BCS C27FF
+ JSR CheckPreviousTile
+ BCS edge9
 
-.C27FD
+.edge8
 
- BEQ P27F8
+ BEQ edge7
 
-.C27FF
+.edge9
 
  LDA xTile
  STA L0032
  RTS
 
-.C2804
+\ ******************************************************************************
+\
+\       Name: CheckPreviousTile
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.prev1
 
  SEC
  RTS
 
-\ ******************************************************************************
-\
-\       Name: sub_C2806
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.sub_C2806
+.CheckPreviousTile
 
  LDY xTile
- BEQ C2804
+ BEQ prev1
  DEY
- JMP sub_C2815
+ JMP GetTileViewAngles
 
 \ ******************************************************************************
 \
-\       Name: sub_C280E
+\       Name: CheckNextTile
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing the landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C280E
+.CheckNextTile
 
  LDY xTile
  INY
  CPY #&20
- BEQ C2804
+ BEQ prev1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2815 (Part 1 of 3)
+\       Name: GetTileViewAngles (Part 1 of 3)
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: ???
@@ -14180,11 +14181,16 @@ L23E3 = C23E2+1
 \                       perspective of the viewer ???
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
-\                       the various drawing data tables:
+\                       the tileViewData, tileViewYawHi and tileViewYawLo
+\                       drawing data tables; each table contains two complete
+\                       tables, the first table at offset 0 and and the second
+\                       table at offset 32, so we store the results as follows:
 \
-\                         * L0180/L0BA0/L5500 when drawingTableOffset = 0
+\                         * 0 = store the results in the first table
+\                               e.g. in the 32-byte table at tileViewData
 \
-\                         * L01A0/L0BC0/L5520 when drawingTableOffset = 32
+\                         * 32 = store the results in the second table
+\                               e.g. in the 32-byte table at tileViewData+32
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14194,7 +14200,7 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.sub_C2815
+.GetTileViewAngles
 
  STY xTile              \ Store the tile column in xTile
 
@@ -14205,8 +14211,8 @@ L23E3 = C23E2+1
  STA drawingTableIndex  \ So drawingTableIndex is the index into the drawing
                         \ tables for the tile we are analysing
 
- LDA #0                 \ Set L007F = 0
- STA L007F
+ LDA #0                 \ Set tileIsOnScreen = 0
+ STA tileIsOnScreen
 
  LDX anotherObject      \ Set X to the number of the object that is viewing the
                         \ landscape
@@ -14231,7 +14237,7 @@ L23E3 = C23E2+1
                         \ So this is the delta along the x-axis between the
                         \ viewer and the tile that we are analysing
 
- BPL C2840              \ If the result is positive then jump to C2840 to skip
+ BPL tang1              \ If the result is positive then jump to tang1 to skip
                         \ the following
 
  LDA #0                 \ Negate the result to make it positive, so we now have:
@@ -14241,7 +14247,7 @@ L23E3 = C23E2+1
  LDA #0
  SBC xDeltaHi
 
-.C2840
+.tang1
 
  STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = |xDeltaHi|
                         \
@@ -14270,7 +14276,7 @@ L23E3 = C23E2+1
                         \ So this is the delta along the z-axis between the
                         \ viewer and the tile that we are analysing
 
- BPL C285A              \ If the result is positive then jump to C285A to skip
+ BPL tang2              \ If the result is positive then jump to tang2 to skip
                         \ the following
 
  LDA #0                 \ Negate the result to make it positive, so we now have:
@@ -14280,7 +14286,7 @@ L23E3 = C23E2+1
  LDA #0
  SBC zDeltaHi
 
-.C285A
+.tang2
 
  STA zDeltaAbsoluteHi   \ Set zDeltaAbsoluteHi = |zDeltaHi|
                         \
@@ -14303,15 +14309,15 @@ L23E3 = C23E2+1
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
- LDA angleLo            \ Set the relevant entry in (L0BA0 L5500) to:
+ LDA angleLo            \ Set (tileViewYawHi tileViewYawLo) for this tile to:
  SEC                    \
  SBC angle2Lo           \   (angleHi angleLo) - (angle2Hi angle2Lo)
- STA L0BA0,Y            \
-                        \ starting with the high bytes ???
+ STA tileViewYawLo,Y    \
+                        \ starting with the low bytes ???
 
- LDA angleHi            \ And then the low bytes
+ LDA angleHi            \ And then the high bytes
  SBC angle2Hi
- STA L5500,Y
+ STA tileViewYawHi,Y
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
                         \ in (hypotenuseHi hypotenuseLo)
@@ -14320,7 +14326,7 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2815 (Part 2 of 3)
+\       Name: GetTileViewAngles (Part 2 of 3)
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: ???
@@ -14361,10 +14367,10 @@ L23E3 = C23E2+1
                         \ tile corners, we subtract from 31 rather than 32 ???
 
  BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
- BMI C288B              \ the viewing arc is set, jump to C288B
+ BMI tang4              \ the viewing arc is set, jump to tang4
 
- BVS C2880              \ If bit 6 of the quadrant containing the right edge of
-                        \ the viewing arc is set, jump to C2880
+ BVS tang3              \ If bit 6 of the quadrant containing the right edge of
+                        \ the viewing arc is set, jump to tang3
 
                         \ If we get here then:
                         \
@@ -14381,9 +14387,9 @@ L23E3 = C23E2+1
 
  LDY zTile              \ Set Y = zTile
 
- JMP C28A4              \ Jump to C28A4 to keep going
+ JMP tang6              \ Jump to tang6 to keep going
 
-.C2880
+.tang3
 
                         \ If we get here then:
                         \
@@ -14406,15 +14412,15 @@ L23E3 = C23E2+1
  SBC xTile
  TAY
 
- JMP C28A4              \ Jump to C28A4 to keep going
+ JMP tang6              \ Jump to tang6 to keep going
 
-.C288B
+.tang4
 
                         \ If we get here then bit 7 of the quadrant containing
                         \ the right edge of the viewing arc is set
 
- BVS C289C              \ If bit 6 of the quadrant containing the right edge of
-                        \ the viewing arc is set, jump to C289C
+ BVS tang5              \ If bit 6 of the quadrant containing the right edge of
+                        \ the viewing arc is set, jump to tang5
 
                         \ If we get here then:
                         \
@@ -14437,9 +14443,9 @@ L23E3 = C23E2+1
  SBC zTile
  TAY
 
- JMP C28A4              \ Jump to C28A4 to keep going
+ JMP tang6              \ Jump to tang6 to keep going
 
-.C289C
+.tang5
 
                         \ If we get here then:
                         \
@@ -14462,7 +14468,7 @@ L23E3 = C23E2+1
 
  LDY xTile              \ Set Y = yTile
 
-.C28A4
+.tang6
 
                         \ We now have the tile coordinates for the tile that we
                         \ are analysing, but in 3D world coordinates, so we can
@@ -14528,11 +14534,11 @@ L23E3 = C23E2+1
                         \ (xTile, zTile)
 
  LDX drawingTableIndex  \ Store the tile data in the correct place in the
- STA L0180,X            \ L0180/L01A0 table ???
+ STA tileViewData,X     \ tileViewData/L01A0 table ???
 
 \ ******************************************************************************
 \
-\       Name: sub_C2815 (Part 3 of 3)
+\       Name: GetTileViewAngles (Part 3 of 3)
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: ???
@@ -14544,11 +14550,11 @@ L23E3 = C23E2+1
                         \ the tile data from tileDataPage(1 0)
 
  CMP #%11000000         \ If both bits 6 and 7 are set in the tile data then the
- BCC C28D6              \ tile we are analysing contains an object, in which
+ BCC tang8              \ tile we are analysing contains an object, in which
                         \ case keep going, otherwise there is no object on the
-                        \ tile so jump to C28D6
+                        \ tile so jump to tang8
 
-.P28C4
+.tang7
 
                         \ If we get here then the tile we are analysing contains
                         \ an object and the tile data is in A
@@ -14559,9 +14565,9 @@ L23E3 = C23E2+1
  LDA objectFlags,Y      \ Set A to the object flags for the object on the tile
 
  CMP #%01000000         \ If bit 6 of the object flags for object #Y is set
- BCS P28C4              \ then object #Y is stacked on top of another object,
+ BCS tang7              \ then object #Y is stacked on top of another object,
                         \ and that object number is in bits 0 to 5 of the object
-                        \ flags, so jump to P28C4 to extract that object number
+                        \ flags, so jump to tang7 to extract that object number
                         \ from A and check for flags again (so this works down
                         \ through the stack of objects until we reach the object
                         \ at the bottom of the stack)
@@ -14572,11 +14578,11 @@ L23E3 = C23E2+1
                         \ subroutine with the C flag clear to denote a flat
                         \ tile, as objects are only ever placed on flat tiles
 
- JMP C28EE              \ Jump to C28EE to keep going, leaving the tile's entry
-                        \ in the L0180 table alone (so it still contains the
-                        \ tile data that we stored in part 2)
+ JMP tang9              \ Jump to tang9 to keep going, leaving the tile's entry
+                        \ in the tileViewData table alone (so it still contains
+                        \ the tile data that we stored in part 2)
 
-.C28D6
+.tang8
 
                         \ If we get here then the tile we are analysing does not
                         \ contain an object and the tile data is in A, with Y
@@ -14633,16 +14639,16 @@ L23E3 = C23E2+1
  LDY T                  \ Fetch the Y-th bit from the visibility byte, which
  AND visibileBitMask,Y  \ contains the specific visibility bit for this tile
 
- BNE C28EE              \ If the visibility bit is set then A will be non-zero,
+ BNE tang9              \ If the visibility bit is set then A will be non-zero,
                         \ so skip the following instruction, leaving the entry
                         \ for this tile to contain the non-zero tile data that
-                        \ we stored in L0180,X at the end of part 2
+                        \ we stored in tileViewData,X at the end of part 2
 
- STA L0180,X            \ The visibility bit is zero, so zero the entry in the
-                        \ L0180 table for this tile (which otherwise would
-                        \ contain the tile data that we set in part 2)
+ STA tileViewData,X     \ The visibility bit is zero, so zero the entry in the
+                        \ tileViewData table for this tile (which otherwise
+                        \ would contain the tile data that we set in part 2)
 
-.C28EE
+.tang9
 
  LDX anotherObject      \ Set X to the number of the object that is viewing the
                         \ landscape
@@ -14654,44 +14660,44 @@ L23E3 = C23E2+1
  LDA U                  \ distance between the viewer and the tile we are
  SBC yObjectHi,X        \ analysing
 
- JSR sub_C561D          \ Sets L008D and L0050 ???
+ JSR GetPitchAngleDelta \ Sets pitchDeltaHi and pitchDeltaLo ???
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
- LDA L008D
- STA L0AE0,Y
+ LDA pitchDeltaHi
+ STA tileViewPitchHi,Y
 
- LDA L0050
- STA L0A80,Y
+ LDA pitchDeltaLo
+ STA tileViewPitchLo,Y
 
- LDA L5500,Y
+ LDA tileViewYawHi,Y
 
  CMP L0007
- BCC C2927
+ BCC tang11
 
- BNE C291F
+ BNE tang10
 
- LDA L0BA0,Y
+ LDA tileViewYawLo,Y
 
  CMP L0028
- BCC C2927
+ BCC tang11
 
- LDA L5500,Y
+ LDA tileViewYawHi,Y
 
-.C291F
+.tang10
 
- ROR L007F
+ ROR tileIsOnScreen
 
  CMP L0012
- BCC C2927
+ BCC tang11
 
- INC L007F
+ INC tileIsOnScreen
 
-.C2927
+.tang11
 
  LDY L000F              \ Restore Y
 
- LDA L007F
+ LDA tileIsOnScreen
 
  CLC
 
@@ -14907,7 +14913,7 @@ L23E3 = C23E2+1
 
 .C29C9
 
- LDA L0180,X
+ LDA tileViewData,X
  AND #&0F
  STA objectTypes+63
  BEQ CRE17
@@ -14939,7 +14945,7 @@ L23E3 = C23E2+1
  TAX
  BIT drawingTitleScreen
  BMI C29C9
- LDA L0180,X
+ LDA tileViewData,X
  BEQ CRE17
  CMP #&C0
  BCC C2A05
@@ -16852,11 +16858,11 @@ L23E3 = C23E2+1
 
  LDA (L003C),Y
  TAX
- LDA L0BA0,X
+ LDA tileViewYawLo,X
  CLC
  ADC L0029
  STA T
- LDA L5500,X
+ LDA tileViewYawHi,X
  ADC L0011
  ASL T
  ROL A
@@ -16889,11 +16895,11 @@ L23E3 = C23E2+1
 
  LDA (L003C),Y
  TAX
- LDA L0BA0,X
+ LDA tileViewYawLo,X
  CLC
  ADC L0029
  STA T
- LDA L5500,X
+ LDA tileViewYawHi,X
  ADC L0011
  CMP #&20
  BCS C2D5D
@@ -16929,12 +16935,12 @@ L23E3 = C23E2+1
  TAY
  LDA #&5A
  STA L0002
- LDA L0A80,Y
+ LDA tileViewPitchLo,Y
  SEC
- SBC L0A80,X
+ SBC tileViewPitchLo,X
  STA L000C
- LDA L0AE0,Y
- SBC L0AE0,X
+ LDA tileViewPitchHi,Y
+ SBC tileViewPitchHi,X
  BPL C2E03
  STA V
  INC L0002
@@ -16979,13 +16985,13 @@ L23E3 = C23E2+1
 
  LDA L000C
  BEQ C2E96
- LDA L0AE0,Y
+ LDA tileViewPitchHi,Y
  STA vectorYawAngleHi
- LDA L0A80,Y
+ LDA tileViewPitchLo,Y
  STA L001A
- LDA L0AE0,X
+ LDA tileViewPitchHi,X
  STA vectorPitchAngleLo
- LDA L0A80,X
+ LDA tileViewPitchLo,X
  STA L0016
  LDA L54A0,Y
  STA L0018
@@ -17009,9 +17015,9 @@ L23E3 = C23E2+1
  LDA L001E
  CMP L0017
  BNE C2E88
- LDA L0AE0,X
+ LDA tileViewPitchHi,X
  BNE C2E88
- LDY L0A80,X
+ LDY tileViewPitchLo,X
  CPY L0052
  BCC C2E88
  CPY L0051
@@ -17369,9 +17375,9 @@ L2F79 = C2F77+2
  STA L0039
  LDA L0B40,Y
  STA L0042
- LDA L0AE0,Y
+ LDA tileViewPitchHi,Y
  STA vectorPitchAngleLo
- LDA L0A80,Y
+ LDA tileViewPitchLo,Y
  STA L0016
  LDA vectorPitchAngleHi
  BEQ C3054
@@ -17411,9 +17417,9 @@ L2F79 = C2F77+2
  LDA L0042
  STA L0041
  LDX L000E
- LDA L0A80,X
+ LDA tileViewPitchLo,X
  STA L0016
- LDA L0AE0,X
+ LDA tileViewPitchHi,X
  STA vectorPitchAngleLo
  LDA L54A0,X
  STA L0039
@@ -23726,37 +23732,25 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5500
+\       Name: tileViewYawHi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Storage for the yaw angles of tiles in the current landscape view
+\             (high bytes)
 \
 \ ******************************************************************************
 
-.L5500
+.tileViewYawHi
 
  EQUB &01, &01, &02, &02, &03, &03, &04, &04
  EQUB &05, &05, &06, &06, &07, &07, &08, &08
  EQUB &09, &09, &0A, &0A, &0B, &0B, &0C, &0C
  EQUB &0C, &0D, &0D, &0E, &0E, &0F, &0F, &0F
-
-\ ******************************************************************************
-\
-\       Name: L5520
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L5520
-
  EQUB &01, &01, &02, &02, &03, &03, &04, &04
  EQUB &05, &05, &06, &06, &07, &07, &08, &08
  EQUB &09, &09, &0A, &0A, &0A, &0B, &0B, &0C
  EQUB &0C, &0D, &0D, &0E, &0E, &0E, &0F, &0F
  EQUB &0D, &0D, &0D, &0D, &0D, &0D, &0D, &0D
-
  EQUB &14, &15, &14, &12, &12, &13, &12, &11
  EQUB &11, &12, &11, &11, &10, &13, &11, &11
  EQUB &12, &11, &12, &11, &11, &12, &FF, &FF
@@ -24098,9 +24092,9 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C561D
+\       Name: GetPitchAngleDelta
 \       Type: Subroutine
-\   Category: ???
+\   Category: Maths (Geometry)
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -24115,15 +24109,23 @@ L314A = C3148+2
 \
 \   X                   An object number
 \
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   pitchDeltaHi        The high byte of the pitch angle delta
+\
+\   pitchDeltaLo        The low byte of the pitch angle delta
+\
 \ ******************************************************************************
 
-.sub_C561D
+.GetPitchAngleDelta
 
  STA xDeltaHi           \ Set (xDeltaHi xDeltaLo) to the vertical delta passed
                         \ to the routine
 
- TAY                    \ If the high byte is positive, jump to C562D to skip
- BPL C562D              \ the following
+ TAY                    \ If the high byte is positive, jump to pdel1 to skip
+ BPL pdel1              \ the following
 
  LDA #0                 \ Negate the result to make it positive, so we now have:
  SEC                    \
@@ -24132,7 +24134,7 @@ L314A = C3148+2
  LDA #0
  SBC xDeltaHi
 
-.C562D
+.pdel1
 
  STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = |xDeltaHi|
                         \
@@ -24161,32 +24163,32 @@ L314A = C3148+2
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
 
- LDA angleLo            \ Set (A L0050) = (angleHi angleLo) - pitch angle of
- SEC                    \                                     object + 32/256
+ LDA angleLo            \ Set (A pitchDeltaLo) = (angleHi angleLo) - pitch angle
+ SEC                    \                                     of object + 32/256
  SBC #32                \
- STA L0050              \ Starting with the low bytes
+ STA pitchDeltaLo       \ Starting with the low bytes ???
 
  LDA angleHi            \ And then the high bytes
  SBC objectPitchAngle,X
 
  PHP                    \ Store the status flags from the calculation
 
- LSR A                  \ Set (A L0050) = (A L0050) >> 4
- ROR L0050
+ LSR A                  \ Set (A pitchDeltaLo) = (A pitchDeltaLo) >> 4
+ ROR pitchDeltaLo
  LSR A
- ROR L0050
+ ROR pitchDeltaLo
  LSR A
- ROR L0050
+ ROR pitchDeltaLo
  LSR A
- ROR L0050
+ ROR pitchDeltaLo
 
  PLP                    \ If result is negative, set top four bits of A
- BPL C565C
+ BPL pdel2
  ORA #%11110000
 
-.C565C
+.pdel2
 
- STA L008D              \ Store result in L008D
+ STA pitchDeltaHi       \ Store result in (pitchDeltaHi pitchDeltaLo)
 
  RTS                    \ Return from the subroutine
 
@@ -26096,10 +26098,10 @@ L314A = C3148+2
  LDA angleLo
  CLC
  ADC L0C59
- STA L0BA0,Y
+ STA tileViewYawLo,Y
  LDA angleHi
  ADC L0C57
- STA L5500,Y
+ STA tileViewYawHi,Y
  JSR GetHypotenuse
  LDY L004E
  LDA L4C20,Y
@@ -26120,12 +26122,12 @@ L314A = C3148+2
  LDA U
  ADC L0C5C
  LDX anotherObject
- JSR sub_C561D
+ JSR GetPitchAngleDelta
  LDY drawingTableIndex
- LDA L008D
- STA L0AE0,Y
- LDA L0050
- STA L0A80,Y
+ LDA pitchDeltaHi
+ STA tileViewPitchHi,Y
+ LDA pitchDeltaLo
+ STA tileViewPitchLo,Y
  INC L004E
  INC drawingTableIndex
  LDY L004E

@@ -194,7 +194,7 @@
      004E
 .L004F
      004F
-.L0050
+.pitchDeltaLo
      0050
 .L0051
      0051
@@ -286,6 +286,8 @@
      007D
 .angleTangent
      007E
+.tileIsOnScreen
+     007F
 .L007F
      007F
 .xDeltaLo
@@ -316,7 +318,7 @@
 .angleHi
      008B
      008C
-.L008D
+.pitchDeltaHi
      008D
 .sinA
      008E
@@ -326,7 +328,7 @@
      0100
 .objectPitchAngle
      0140
-.L0180
+.tileViewData
      0180
 .oddVisibility
      0180
@@ -2003,7 +2005,7 @@
      0A7D   00
      0A7E   00
      0A7F   09
-.L0A80
+.tileViewPitchLo
      0A80   6F
      0A81   70
      0A82   71
@@ -2100,7 +2102,7 @@
      0ADD   C4
      0ADE   00
      0ADF   00
-.L0AE0
+.tileViewPitchHi
      0AE0   00
      0AE1   00
      0AE2   00
@@ -2133,7 +2135,6 @@
      0AFD   00
      0AFE   00
      0AFF   00
-.L0B00
      0B00   00
      0B01   00
      0B02   00
@@ -2295,7 +2296,7 @@
      0B9D   10
      0B9E   10
      0B9F   10
-.L0BA0
+.tileViewYawLo
      0BA0   3B
      0BA1   C1
      0BA2   48
@@ -2328,7 +2329,6 @@
      0BBD   12
      0BBE   77
      0BBF   E2
-.L0BC0
      0BC0   1D
      0BC1   A4
      0BC2   2B
@@ -6567,13 +6567,13 @@
      27AC   01
      27AD   21
      27AE   20
-.sub_C27AF
+.GetTileViewEdges
      27AF   A4 32      LDY &32
      27B1   20 15 28   JSR &2815
      27B4   F0 33      BEQ &27E9
      27B6   C9 80      CMP #&80
      27B8   F0 1D      BEQ &27D7
-.P27BA
+.edge1
      27BA   A5 24      LDA &24
      27BC   85 32      STA &32
      27BE   20 0E 28   JSR &280E
@@ -6582,15 +6582,15 @@
      27C5   F0 F3      BEQ &27BA
      27C7   C9 80      CMP #&80
      27C9   F0 07      BEQ &27D2
-.P27CB
+.edge2
      27CB   20 0E 28   JSR &280E
      27CE   B0 02      BCS &27D2
      27D0   F0 F9      BEQ &27CB
-.C27D2
+.edge3
      27D2   A5 24      LDA &24
      27D4   85 33      STA &33
      27D6   60         RTS
-.C27D7
+.edge4
      27D7   A5 24      LDA &24
      27D9   85 33      STA &33
      27DB   20 06 28   JSR &2806
@@ -6599,38 +6599,38 @@
      27E2   F0 F3      BEQ &27D7
      27E4   C9 00      CMP #&00
      27E6   4C FD 27   JMP &27FD
-.C27E9
+.edge5
      27E9   20 0E 28   JSR &280E
      27EC   B0 02      BCS &27F0
      27EE   F0 F9      BEQ &27E9
-.C27F0
+.edge6
      27F0   A5 24      LDA &24
      27F2   85 33      STA &33
      27F4   A5 32      LDA &32
      27F6   85 24      STA &24
-.P27F8
+.edge7
      27F8   20 06 28   JSR &2806
      27FB   B0 02      BCS &27FF
-.C27FD
+.edge8
      27FD   F0 F9      BEQ &27F8
-.C27FF
+.edge9
      27FF   A5 24      LDA &24
      2801   85 32      STA &32
      2803   60         RTS
-.C2804
+.prev1
      2804   38         SEC
      2805   60         RTS
-.sub_C2806
+.CheckPreviousTile
      2806   A4 24      LDY &24
      2808   F0 FA      BEQ &2804
      280A   88         DEY
      280B   4C 15 28   JMP &2815
-.sub_C280E
+.CheckNextTile
      280E   A4 24      LDY &24
      2810   C8         INY
      2811   C0 20      CPY #&20
      2813   F0 EF      BEQ &2804
-.sub_C2815
+.GetTileViewAngles
      2815   84 24      STY &24
      2817   84 0F      STY &0F
      2819   98         TYA
@@ -6654,7 +6654,7 @@
      283A   85 80      STA &80
      283C   A9 00      LDA #&00
      283E   E5 86      SBC &86
-.C2840
+.tang1
      2840   85 83      STA &83
      2842   A9 80      LDA #&80
      2844   85 82      STA &82
@@ -6669,7 +6669,7 @@
      2854   85 82      STA &82
      2856   A9 00      LDA #&00
      2858   E5 88      SBC &88
-.C285A
+.tang2
      285A   85 85      STA &85
      285C   20 67 55   JSR &5567
      285F   A4 21      LDY &21
@@ -6687,14 +6687,14 @@
      2879   A6 24      LDX &24
      287B   A4 26      LDY &26
      287D   4C A4 28   JMP &28A4
-.C2880
+.tang3
      2880   A6 26      LDX &26
      2882   A9 1F      LDA #&1F
      2884   38         SEC
      2885   E5 24      SBC &24
      2887   A8         TAY
      2888   4C A4 28   JMP &28A4
-.C288B
+.tang4
      288B   70 0F      BVS &289C
      288D   A9 1F      LDA #&1F
      288F   38         SEC
@@ -6705,13 +6705,13 @@
      2896   E5 26      SBC &26
      2898   A8         TAY
      2899   4C A4 28   JMP &28A4
-.C289C
+.tang5
      289C   A9 1F      LDA #&1F
      289E   38         SEC
      289F   E5 26      SBC &26
      28A1   AA         TAX
      28A2   A4 24      LDY &24
-.C28A4
+.tang6
      28A4   84 74      STY &74
      28A6   8A         TXA
      28A7   0A         ASL A
@@ -6731,7 +6731,7 @@
      28BD   9D 80 01   STA &0180,X
      28C0   C9 C0      CMP #&C0
      28C2   90 12      BCC &28D6
-.P28C4
+.tang7
      28C4   29 3F      AND #&3F
      28C6   A8         TAY
      28C7   B9 00 01   LDA &0100,Y
@@ -6740,7 +6740,7 @@
      28CE   B9 40 09   LDA &0940,Y
      28D1   85 75      STA &75
      28D3   4C EE 28   JMP &28EE
-.C28D6
+.tang8
      28D6   4A         LSR A
      28D7   4A         LSR A
      28D8   4A         LSR A
@@ -6755,7 +6755,7 @@
      28E6   39 E2 24   AND &24E2,Y
      28E9   D0 03      BNE &28EE
      28EB   9D 80 01   STA &0180,X
-.C28EE
+.tang9
      28EE   A6 6E      LDX &6E
      28F0   A9 00      LDA #&00
      28F2   38         SEC
@@ -6777,12 +6777,12 @@
      2918   C5 28      CMP &28
      291A   90 0B      BCC &2927
      291C   B9 00 55   LDA &5500,Y
-.C291F
+.tang10
      291F   66 7F      ROR &7F
      2921   C5 12      CMP &12
      2923   90 02      BCC &2927
      2925   E6 7F      INC &7F
-.C2927
+.tang11
      2927   A4 0F      LDY &0F
      2929   A5 7F      LDA &7F
      292B   18         CLC
@@ -13934,7 +13934,7 @@
      54FD   A3
      54FE   00
      54FF   00
-.L5500
+.tileViewYawHi
      5500   01
      5501   01
      5502   02
@@ -13967,7 +13967,6 @@
      551D   0F
      551E   0F
      551F   0F
-.L5520
      5520   01
      5521   01
      5522   02
@@ -14142,7 +14141,7 @@
      5618   65 8B      ADC &8B
      561A   85 8B      STA &8B
      561C   60         RTS
-.sub_C561D
+.GetPitchAngleDelta
      561D   85 86      STA &86
      561F   A8         TAY
      5620   10 0B      BPL &562D
@@ -14152,7 +14151,7 @@
      5627   85 80      STA &80
      5629   A9 00      LDA #&00
      562B   E5 86      SBC &86
-.C562D
+.pdel1
      562D   85 83      STA &83
      562F   A5 7C      LDA &7C
      5631   85 82      STA &82
@@ -14179,7 +14178,7 @@
      5657   28         PLP
      5658   10 02      BPL &565C
      565A   09 F0      ORA #&F0
-.C565C
+.pdel2
      565C   85 8D      STA &8D
      565E   60         RTS
 .GetHypotenuse
