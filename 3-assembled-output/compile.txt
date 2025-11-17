@@ -14031,7 +14031,7 @@
      555D   12
      555E   FF
      555F   FF
-.C5560
+.ghyp1
      5560   85 7E      STA &7E
      5562   85 8A      STA &8A
      5564   85 8B      STA &8B
@@ -14044,7 +14044,7 @@
      556F   A5 82      LDA &82
      5571   C5 80      CMP &80
      5573   B0 13      BCS &5588
-.C5575
+.ghyp2
      5575   A5 85      LDA &85
      5577   85 5D      STA &5D
      5579   A5 82      LDA &82
@@ -14054,7 +14054,7 @@
      5581   A5 83      LDA &83
      5583   85 7B      STA &7B
      5585   4C A5 55   JMP &55A5
-.C5588
+.ghyp3
      5588   A5 83      LDA &83
      558A   85 5D      STA &5D
      558C   A5 80      LDA &80
@@ -14067,10 +14067,10 @@
      559A   F0 C4      BEQ &5560
      559C   A5 85      LDA &85
      559E   4C E3 55   JMP &55E3
-.P55A1
+.ghyp4
      55A1   06 82      ASL &82
      55A3   26 85      ROL &85
-.C55A5
+.ghyp5
      55A5   06 80      ASL &80
      55A7   2A         ROL A
      55A8   90 F7      BCC &55A1
@@ -14094,20 +14094,20 @@
      55CB   A9 00      LDA #&00
      55CD   E5 8B      SBC &8B
      55CF   85 8B      STA &8B
-.C55D1
+.ghyp6
      55D1   A9 40      LDA #&40
      55D3   24 86      BIT &86
      55D5   10 02      BPL &55D9
      55D7   A9 C0      LDA #&C0
-.C55D9
+.ghyp7
      55D9   18         CLC
      55DA   65 8B      ADC &8B
      55DC   85 8B      STA &8B
      55DE   60         RTS
-.P55DF
+.ghyp8
      55DF   06 80      ASL &80
      55E1   26 83      ROL &83
-.C55E3
+.ghyp9
      55E3   06 82      ASL &82
      55E5   2A         ROL A
      55E6   90 F7      BCC &55DF
@@ -14131,12 +14131,12 @@
      5609   A9 00      LDA #&00
      560B   E5 8B      SBC &8B
      560D   85 8B      STA &8B
-.C560F
+.ghyp10
      560F   A9 00      LDA #&00
      5611   24 88      BIT &88
      5613   10 02      BPL &5617
      5615   A9 80      LDA #&80
-.C5617
+.ghyp11
      5617   18         CLC
      5618   65 8B      ADC &8B
      561A   85 8B      STA &8B

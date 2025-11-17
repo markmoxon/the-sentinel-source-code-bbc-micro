@@ -9429,7 +9429,7 @@ L1145 = C1144+1
                         \                   _.-´           |
                         \               _.-´               |  y
                         \           _.-´                   |
-                        \        .-´vectorPitchAngle       |
+                        \        .-´ vectorPitchAngle      |
                         \   eye +--------------------------+
                         \                   p
                         \
@@ -14300,9 +14300,9 @@ L23E3 = C23E2+1
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \   * (xDeltaHi xDeltaLo)
                         \
-                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \   * (zDeltaHi zDeltaLo)
                         \
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
@@ -14660,15 +14660,37 @@ L23E3 = C23E2+1
  LDA U                  \ distance between the viewer and the tile we are
  SBC yObjectHi,X        \ analysing
 
- JSR GetPitchAngleDelta \ Sets pitchDeltaHi and pitchDeltaLo ???
+ JSR GetPitchAngleDelta \ Set (pitchDeltaHi pitchDeltaLo) to the pitch angle of
+                        \ the vector relative to the viewer's pitch angle
+                        \
+                        \ The vector in question has x- and z-axis elements from
+                        \ part 1:
+                        \
+                        \   * (xDeltaHi xDeltaLo)
+                        \
+                        \   * (zDeltaHi zDeltaLo)
+                        \
+                        \ and we calculated the (hypotenuseHi hypotenuseLo) for
+                        \ this in part 1
+                        \
+                        \ The vector also has y-axis element of (A xDeltaLo),
+                        \ which we just calculated
+                        \
+                        \ So this call calculates the relative pitch angle for
+                        \ the vector between the viewer and the tile that we are
+                        \ analysing
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
- LDA pitchDeltaHi
- STA tileViewPitchHi,Y
+ LDA pitchDeltaHi       \ Store the high byte of the pitch vector in the correct
+ STA tileViewPitchHi,Y  \ part of the tileViewPitchHi table
 
- LDA pitchDeltaLo
- STA tileViewPitchLo,Y
+ LDA pitchDeltaLo       \ Store the low byte of the pitch vector in the correct
+ STA tileViewPitchLo,Y  \ part of the tileViewPitchLo table
+
+                        \ By this point we have pitch and yaw angles for the
+                        \ vector between the viewer and the tile that we are
+                        \ analysing
 
  LDA tileViewYawHi,Y
 
@@ -23805,7 +23827,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.C5560
+.ghyp1
 
                         \ If we get here then A = 0
 
@@ -23829,21 +23851,21 @@ L314A = C3148+2
                         \ We start by working out which is the longer of the two
                         \ non-hypotenuse sides
 
- LDA zDeltaAbsoluteHi   \ If zDeltaAbsoluteHi < xDeltaAbsoluteHi, jump to C5575
+ LDA zDeltaAbsoluteHi   \ If zDeltaAbsoluteHi < xDeltaAbsoluteHi, jump to ghyp2
  CMP xDeltaAbsoluteHi
- BCC C5575
+ BCC ghyp2
 
- BNE C5588              \ If zDeltaAbsoluteHi > xDeltaAbsoluteHi, jump to C5588
+ BNE ghyp3              \ If zDeltaAbsoluteHi > xDeltaAbsoluteHi, jump to ghyp3
 
                         \ If we get here then the high bytes in zDeltaAbsoluteHi
                         \ and xDeltaAbsoluteHi are the same, so now we compare
                         \ the low bytes
 
- LDA zDeltaLo           \ If zDeltaLo >= xDeltaLo, jump to C5588
+ LDA zDeltaLo           \ If zDeltaLo >= xDeltaLo, jump to ghyp3
  CMP xDeltaLo
- BCS C5588
+ BCS ghyp3
 
-.C5575
+.ghyp2
 
                         \ If we get here then:
                         \
@@ -23860,9 +23882,9 @@ L314A = C3148+2
  LDA xDeltaAbsoluteHi   \ So (aHi aLo) is the longer side
  STA aHi
 
- JMP C55A5              \ Jump to C55A5 to keep going
+ JMP ghyp5              \ Jump to ghyp5 to keep going
 
-.C5588
+.ghyp3
 
                         \ If we get here then:
                         \
@@ -23880,7 +23902,7 @@ L314A = C3148+2
  STA aHi
 
  ORA zDeltaLo           \ If both zDeltaAbsoluteHi and zDeltaLo are zero then
- BEQ C5560              \ (aHi aLo) = 0, so jump to C5560 to return from the
+ BEQ ghyp1              \ (aHi aLo) = 0, so jump to ghyp1 to return from the
                         \ subroutine with the following:
                         \
                         \   * angleTangent = 0
@@ -23889,14 +23911,14 @@ L314A = C3148+2
 
  LDA zDeltaAbsoluteHi   \ Set A to zDeltaAbsoluteHi once again
 
- JMP C55E3              \ Jump to C55E3 to keep going
+ JMP ghyp9              \ Jump to ghyp9 to keep going
 
-.P55A1
+.ghyp4
 
  ASL zDeltaLo           \ Shift (zDeltaAbsoluteHi zDeltaLo) left by one place to
  ROL zDeltaAbsoluteHi   \ scale it up
 
-.C55A5
+.ghyp5
 
                         \ If we jump here then:
                         \
@@ -23923,8 +23945,8 @@ L314A = C3148+2
  ASL xDeltaLo           \ Shift (A xDeltaLo) left by one place to scale it up
  ROL A
 
- BCC P55A1              \ If we just shifted a zero out of bit 7 of (A xDeltaLo)
-                        \ then jump back to P55A1 to scale the x-axis length and
+ BCC ghyp4              \ If we just shifted a zero out of bit 7 of (A xDeltaLo)
+                        \ then jump back to ghyp4 to scale the x-axis length and
                         \ keep scaling until we shift a 1 out of bit 7, at which
                         \ point we have scaled (A xDeltaLo) as far as we can
 
@@ -23967,7 +23989,7 @@ L314A = C3148+2
 
  LDA xDeltaHi           \ If xDeltaHi and zDeltaHi have different sign bits in
  EOR zDeltaHi           \ bit 7, then EOR'ing them will produce a 1, so jump to
- BMI C55D1              \ C55D1 to skip the following, as the sign of the angle
+ BMI ghyp6              \ ghyp6 to skip the following, as the sign of the angle
                         \ is already correct ???
 
  LDA #0                 \ Negate (angleHi angleLo) to give it the correct sign
@@ -23978,14 +24000,14 @@ L314A = C3148+2
  SBC angleHi
  STA angleHi
 
-.C55D1
+.ghyp6
 
  LDA #%01000000         \ If bit 7 of xDeltaHi is clear then set A = %01000000
  BIT xDeltaHi           \ otherwise set A = %11000000
- BPL C55D9
+ BPL ghyp7
  LDA #%11000000
 
-.C55D9
+.ghyp7
 
  CLC                    \ Set angleHi = angleHi + A
  ADC angleHi            \
@@ -23994,12 +24016,12 @@ L314A = C3148+2
 
  RTS                    \ Return from the subroutine
 
-.P55DF
+.ghyp8
 
  ASL xDeltaLo           \ Shift (xDeltaAbsoluteHi xDeltaLo) left by one place to
  ROL xDeltaAbsoluteHi   \ scale it up
 
-.C55E3
+.ghyp9
 
                         \ If we jump here then:
                         \
@@ -24026,8 +24048,8 @@ L314A = C3148+2
  ASL zDeltaLo           \ Shift (A zDeltaLo) left by one place to scale it up
  ROL A
 
- BCC P55DF              \ If we just shifted a zero out of bit 7 of (A zDeltaLo)
-                        \ then jump back to P55DF to scale the z-axis length and
+ BCC ghyp8              \ If we just shifted a zero out of bit 7 of (A zDeltaLo)
+                        \ then jump back to ghyp8 to scale the z-axis length and
                         \ keep scaling until we shift a 1 out of bit 7, at which
                         \ point we have scaled (A zDeltaLo) as far as we can
 
@@ -24063,7 +24085,7 @@ L314A = C3148+2
 
  LDA xDeltaHi           \ If xDeltaHi and zDeltaHi have the same sign bits in
  EOR zDeltaHi           \ bit 7, then EOR'ing them will produce a 0, so jump to
- BPL C560F              \ C560F to skip the following, as the sign of the angle
+ BPL ghyp10             \ ghyp10 to skip the following, as the sign of the angle
                         \ is already correct ???
 
  LDA #0                 \ Negate (angleHi angleLo) to give it the correct sign
@@ -24074,14 +24096,14 @@ L314A = C3148+2
  SBC angleHi
  STA angleHi
 
-.C560F
+.ghyp10
 
  LDA #%00000000         \ If bit 7 of zDeltaHi is clear then set A = %00000000
  BIT zDeltaHi           \ otherwise set A = %10000000
- BPL C5617
+ BPL ghyp11
  LDA #%10000000
 
-.C5617
+.ghyp11
 
  CLC                    \ Set angleHi = angleHi + A
  ADC angleHi
@@ -24095,19 +24117,53 @@ L314A = C3148+2
 \       Name: GetPitchAngleDelta
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: ???
+\    Summary: Calculate the pitch angle of a vector relative to an objects's
+\             pitch angle
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine calculates the following pitch angle delta:
+\
+\   (pitchDeltaHi pitchDeltaLo) = (angleHi angleLo) - (objectPitchAngle 32)
+\
+\ where (angleHi angleLo) is the angle of this triangle:
+\
+\                                  _.-+             ^
+\                              _.-´   |             |
+\                 vector   _.-´       |         y-axis (up)
+\                      _.-´           |
+\                  _.-´               |  (A xDeltaLo)
+\              _.-´                   |
+\           .-´ (angleHi angleLo)     |
+\   viewer +--------------------------+
+\           (hypotenuseHi hypotenuseLo)
+\
+\ This triangle is typically a viewing vector from the player's eyes to a
+\ coordinate in the 3D world. The hypotenuse is the projection of the vector
+\ down onto the ground (i.e. y = 0), and it has already been calculated by this
+\ point from the x- and z-axis elements of the vector.
+\
+\ So this routine takes the hypotenuse length and the y-axis element of the
+\ vector in (A xDeltaLo) and calculates the vector's pitch angle in (angleHi
+\ angleLo), and then it calculates the difference between the vector's pitch
+\ angle and the pitch angle for object #X (i.e. the viewer).
+\
+\ In other words, this calculates the pitch angle of the viewer's gaze towards
+\ a coordinate (typically a tile), relative to the pitch angle of the viewer, so
+\ that's relative to the current viewing direction. This is used to calculate
+\ player-relative pitch angles for tiles in the current tile view, for example.
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   (A xDeltaLo)        A vertical delta
+\   (A xDeltaLo)        A vertical delta (i.e. a y-axis element)
 \
 \   hypotenuseHi        The high byte of the length of the hypotenuse
 \
 \   hypotenuseLo        The low byte of the length of the hypotenuse
 \
-\   X                   An object number
+\   X                   The object number
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24156,17 +24212,23 @@ L314A = C3148+2
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \   * (xDeltaHi xDeltaLo)
                         \
-                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \   * (zDeltaHi zDeltaLo)
+                        \
+                        \ which are set as follows:
+                        \
+                        \   * (A xDeltaLo)
+                        \
+                        \   * (hypotenuseHi hypotenuseLo)
                         \
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
 
- LDA angleLo            \ Set (A pitchDeltaLo) = (angleHi angleLo) - pitch angle
- SEC                    \                                     of object + 32/256
+ LDA angleLo            \ Set (A pitchDeltaLo) = (angleHi angleLo)
+ SEC                    \                        - (objectPitchAngle 32)
  SBC #32                \
- STA pitchDeltaLo       \ Starting with the low bytes ???
+ STA pitchDeltaLo       \ Starting with the low bytes
 
  LDA angleHi            \ And then the high bytes
  SBC objectPitchAngle,X
@@ -25946,9 +26008,9 @@ L314A = C3148+2
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \   * (xDeltaHi xDeltaLo)
                         \
-                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \   * (zDeltaHi zDeltaLo)
                         \
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
@@ -26087,9 +26149,9 @@ L314A = C3148+2
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaAbsoluteHi xDeltaLo)
+                        \   * (xDeltaHi xDeltaLo)
                         \
-                        \   * (zDeltaAbsoluteHi zDeltaLo)
+                        \   * (zDeltaHi zDeltaLo)
                         \
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
