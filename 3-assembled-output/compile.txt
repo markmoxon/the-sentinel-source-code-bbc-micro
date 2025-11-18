@@ -6789,10 +6789,10 @@
      2929   A5 7F      LDA &7F
      292B   18         CLC
      292C   60         RTS
-.sub_C292D
+.DrawTileRow
      292D   A5 37      LDA &37
      292F   85 25      STA &25
-.P2931
+.draw1
      2931   C5 38      CMP &38
      2933   B0 27      BCS &295C
      2935   C5 03      CMP &03
@@ -6801,9 +6801,9 @@
      293C   E6 25      INC &25
      293E   A5 25      LDA &25
      2940   4C 31 29   JMP &2931
-.C2943
+.draw2
      2943   A5 38      LDA &38
-.P2945
+.draw3
      2945   38         SEC
      2946   E9 01      SBC #&01
      2948   30 12      BMI &295C
@@ -6815,7 +6815,7 @@
      2954   20 E2 29   JSR &29E2
      2957   A5 25      LDA &25
      2959   4C 45 29   JMP &2945
-.CRE16
+.draw4
      295C   60         RTS
 .sub_C295D
      295D   A5 10      LDA &10

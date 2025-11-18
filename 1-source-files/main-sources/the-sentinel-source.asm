@@ -13985,7 +13985,7 @@ L23E3 = C23E2+1
 
 .dlan15
 
- JSR sub_C292D
+ JSR DrawTileRow
 
  BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to dlan16
  BPL dlan16             \ to jump back to dlan5 ??? (i.e. pretend that the same
@@ -14054,7 +14054,7 @@ L23E3 = C23E2+1
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- JSR sub_C292D
+ JSR DrawTileRow
 
 .dlan21
 
@@ -14339,7 +14339,7 @@ L23E3 = C23E2+1
 
 .edge5
 
-                        \ If we get here then we keep moving left until:
+                        \ If we get here then we keep moving right until:
                         \
                         \   * We find a tile that's on-screen or reach the end
                         \     of the tile row, in which case we jump to edge6 to
@@ -15187,50 +15187,70 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C292D
+\       Name: DrawTileRow
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Draw a row of tiles between the left visible edge and the right
+\             visible, in two parts towards each side of the the viewer
 \
 \ ******************************************************************************
 
-.sub_C292D
+.DrawTileRow
 
- LDA xTileViewLeftEdge
- STA L0025
+ LDA xTileViewLeftEdge  \ Set columnCounter to the column number of the tile at
+ STA columnCounter      \ the left edge of the visible row we want to draw
 
-.P2931
+.draw1
 
- CMP xTileViewRightEdge
- BCS CRE16
- CMP xTileViewer
- BCS C2943
- JSR sub_C29E2
- INC L0025
- LDA L0025
- JMP P2931
+ CMP xTileViewRightEdge \ If we have gone past the right edge, jump to draw4 to
+ BCS draw4              \ return from the subroutine
 
-.C2943
+ CMP xTileViewer        \ If we have gone past the viewer's tile column, jump to
+ BCS draw2              \ draw2 to draw the second half
 
- LDA xTileViewRightEdge
+ JSR sub_C29E2          \ Draw the tile and any objects stacked on it
 
-.P2945
+ INC columnCounter      \ Increment the column counter to move right along the
+                        \ row
 
- SEC
- SBC #&01
- BMI CRE16
- STA L0025
- CMP xTileViewLeftEdge
- BCC CRE16
- CMP xTileViewer
- BCC CRE16
- JSR sub_C29E2
- LDA L0025
- JMP P2945
+ LDA columnCounter      \ Set A to the new column number
 
-.CRE16
+ JMP draw1              \ Loop back to draw1 the next tile to the right until we
+                        \ reach the viewer's tile column or reach the end of the
+                        \ row
 
- RTS
+.draw2
+
+ LDA xTileViewRightEdge \ Set A to the column number of the tile at the right
+                        \ edge of the visible row we want to draw
+
+.draw3
+
+ SEC                    \ Decrement the column counter in A to move left along
+ SBC #1                 \ the row
+
+ BMI draw4              \ If we have reached the start of the row, jump to draw4
+                        \ to return from the subroutine
+
+ STA columnCounter      \ Store the updated column counter in columnCounter
+
+ CMP xTileViewLeftEdge  \ If we have gone past the left edge, jump to draw4 to
+ BCC draw4              \ return from the subroutine
+
+ CMP xTileViewer        \ If we have gone past the viewer's tile column, jump to
+ BCC draw4              \ draw4 to return from the subroutine
+
+ JSR sub_C29E2          \ Draw the tile and any objects stacked on it
+
+ LDA columnCounter      \ Set A to the new column number
+
+ JMP draw3              \ Loop back to draw1 the next tile to the left until we
+                        \ reach the viewer's tile column or reach the end of the
+                        \ row
+
+.draw4
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
