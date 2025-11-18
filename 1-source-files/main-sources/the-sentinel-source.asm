@@ -13888,7 +13888,7 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
-                        \   * tileIsOnScreen
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
 
  CPY xTileViewLeftEdge
  BNE dlan8
@@ -13905,7 +13905,18 @@ L23E3 = C23E2+1
 .dlan10
 
  DEY
- JSR GetTileViewAngles
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+
  CPY xTileViewLeft
  BNE dlan10
  STY xTileViewLeftEdge
@@ -13924,7 +13935,18 @@ L23E3 = C23E2+1
 .dlan12
 
  INY
- JSR GetTileViewAngles
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+
  CPY xTileViewRightEdge
  BNE dlan12
  BEQ dlan15
@@ -13940,7 +13962,18 @@ L23E3 = C23E2+1
 .dlan14
 
  INY
- JSR GetTileViewAngles
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+
  CPY xTileViewRight
  BNE dlan14
 
@@ -13996,9 +14029,31 @@ L23E3 = C23E2+1
 .dlan20
 
  LDY xTileViewLeftEdge
- JSR GetTileViewAngles
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+
  LDY xTileViewRightEdge
- JSR GetTileViewAngles
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+
  JSR sub_C292D
 
 .dlan21
@@ -14007,7 +14062,18 @@ L23E3 = C23E2+1
  STA drawingTableOffset
  INC zTile
  LDY xTileViewer
- JSR GetTileViewAngles
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+
  LDA tileViewPitchHi,Y
  CMP #&02
  BCS dlan22
@@ -14062,7 +14128,8 @@ L23E3 = C23E2+1
 \ Arguments:
 \
 \   xTileViewLeft       The tile column of the tile we are analysing, from the
-\                       perspective of the viewer
+\                       perspective of the viewer, to be used as a starting
+\                       point for working out the visible edges of the row
 \
 \   zTile               The tile row of the tile we are analysing, from the
 \                       perspective of the viewer
@@ -14079,80 +14146,281 @@ L23E3 = C23E2+1
 \                         * 32 = store the results in the second table
 \                               e.g. in the 32-byte table at tileViewData+32
 \
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   xTileViewLeft       The number of the tile column on this row that appears
+\                       at the left edge of the screen
+\
+\   xTileViewRight      The number of the tile column on this row that appears
+\                       at the right edge of the screen
+\
 \ ******************************************************************************
 
 .GetTileViewEdges
 
- LDY xTileViewLeft      \ Set Y to the tile column to pass to GetTileViewAngles
+ LDY xTileViewLeft      \ Set Y to the tile column so we can pass it to the
+                        \ GetTileViewAngles routine
 
- JSR GetTileViewAngles
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
 
- BEQ edge5              \ Flags set on tileIsOnScreen ???
+ BEQ edge5              \ If A = %00000000 then the tile is not on-screen and is
+                        \ past the left edge of the screen, so jump to edge5 to
+                        \ move right from this point, looking for a tile that's
+                        \ on-screen
 
- CMP #&80
- BEQ edge4
+                        \ If we get here then our chosen starting tile is either
+                        \ on-screen or off the right edge of the screen
+
+ CMP #%10000000         \ If A = %10000000 then the tile is on-screen, so jump
+ BEQ edge4              \ to edge4 to update xTileViewRight to this position and
+                        \ start moving left, so we work through the portion to
+                        \ the left of the starting point
+
+                        \ If we get here then tileIsOnScreen = %10000001 and the
+                        \ tile is not on-screen and is past the right edge of
+                        \ the screen, so fall through into edge1 to start moving
+                        \ right
 
 .edge1
 
- LDA xTile
+                        \ If we get here then we keep moving right, updating
+                        \ xTileViewLeft as we go
+                        \
+                        \ We keep moving until:
+                        \
+                        \   * We find a tile that's on-screen or reach the end
+                        \     of the tile row, in which case we jump to edge3 to
+                        \     set xTileViewRight and return from the subroutine
+                        \
+                        \   * We find a tile that's off the left of the screen,
+                        \     in which case we fall through into edge2
+
+ LDA xTile              \ Store the current column number in xTileViewLeft
  STA xTileViewLeft
- JSR GetTileEdgeToRight
- BCS edge3
- CMP #&81
- BEQ edge1
- CMP #&80
- BEQ edge3
+
+ JSR GetTileEdgeToRight \ Move one tile to the right and calculate the pitch and
+                        \ yaw angles for the tile corner from the perspective of
+                        \ the viewer, and store them in the following tables in
+                        \ the relevant entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+                        \
+                        \ The C flag is set if we have already reached the end
+                        \ of the row and can't move any further right
+
+ BCS edge3              \ If we just moved off the right end of the row then the
+                        \ right end of the row is visible on-screen, so jump to
+                        \ edge3 to set xTileViewRight accordingly and return
+                        \ from the subroutine
+
+ CMP #%10000001         \ If A = %10000001 then the tile is past the right edge
+ BEQ edge1              \ of the screen, so loop back to move right by one more
+                        \ tile
+
+ CMP #%10000000         \ If A = %10000000 then the tile is on-screen, so jump
+ BEQ edge3              \ to edge3 to set xTileViewRight accordingly and return
+                        \ from the subroutine
+
+                        \ If we get here then A must be %00000000 and the tile
+                        \ is off the left edge of the screen, so fall through
+                        \ into edge2 to keep moving right
 
 .edge2
 
- JSR GetTileEdgeToRight
- BCS edge3
- BEQ edge2
+                        \ If we get here then we keep moving right until:
+                        \
+                        \   * We find a tile that's on-screen or reach the end
+                        \     of the tile row, in which case we jump to edge3 to
+                        \     set xTileViewRight and return from the subroutine
+
+ JSR GetTileEdgeToRight \ Move one tile to the right and calculate the pitch and
+                        \ yaw angles for the tile corner from the perspective of
+                        \ the viewer, and store them in the following tables in
+                        \ the relevant entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+                        \
+                        \ The C flag is set if we have already reached the end
+                        \ of the row and can't move any further right
+
+ BCS edge3              \ If we just moved off the right end of the row then the
+                        \ right end of the row is visible on-screen, so jump to
+                        \ edge3 to set xTileViewRight accordingly and return
+                        \ from the subroutine
+
+ BEQ edge2              \ If A = %00000000 then the new tile is not visible, so
+                        \ loop back to edge2 to keep moving right
+
+                        \ Otherwise the tile is either visible or off the right
+                        \ edge, so fall through into edge3 to set xTileViewRight
+                        \ accordingly and return from the subroutine
 
 .edge3
 
- LDA xTile
+ LDA xTile              \ Store the current column number in xTileViewRight
  STA xTileViewRight
- RTS
+
+ RTS                    \ Return from the subroutine
 
 .edge4
 
- LDA xTile
+                        \ If we get here then we keep moving left, updating
+                        \ xTileViewRight as we go
+                        \
+                        \ We keep moving until:
+                        \
+                        \   * We reach the start of the tile row, in which case
+                        \     we jump to edge9 to set xTileViewLeft and return
+                        \     from the subroutine
+                        \
+                        \   * We find a tile that's on-screen, in which case we
+                        \     jump to edge4 to update xTileViewRight and keep
+                        \     moving left
+                        \
+                        \   * We find a tile that's off the right of the screen,
+                        \     in which case jump to edge9 to set xTileViewLeft
+                        \     and return from the subroutine
+                        \
+                        \   * We find a tile that's off the left of the screen,
+                        \     in which case jump to edge7 to move left until we
+                        \     find a visible tile or run out of row
+
+ LDA xTile              \ Store the current column number in xTileViewRight
  STA xTileViewRight
- JSR GetTileEdgeToLeft
- BCS edge9
- CMP #&80
- BEQ edge4
- CMP #&00
- JMP edge8
+
+ JSR GetTileEdgeToLeft  \ Move one tile to the left and calculate the pitch and
+                        \ yaw angles for the tile corner from the perspective of
+                        \ the viewer, and store them in the following tables in
+                        \ the relevant entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+                        \
+                        \ The C flag is set if we have already reached the start
+                        \ of the row and can't move any further left
+
+ BCS edge9              \ If we just moved off the left end of the row then the
+                        \ left end of the row is visible on-screen, so jump to
+                        \ edge9 to set xTileViewLeft accordingly and return from
+                        \ the subroutine
+
+ CMP #%10000000         \ If A = %10000000 then the tile is on-screen, so jump
+ BEQ edge4              \ to edge4 to update xTileViewRight and keep moving left
+
+ CMP #%00000000         \ If A = %10000001 then the tile is off the right edge
+ JMP edge8              \ of the screen, so jump to edge8 to set xTileViewLeft
+                        \ accordingly and return from the subroutine
+                        \
+                        \ If A = %00000000 then the tile is off the left edge of
+                        \ the screen, so jump to edge8 and on to edge7 to move
+                        \ left until we find a visible tile or run out of row
 
 .edge5
 
- JSR GetTileEdgeToRight
- BCS edge6
- BEQ edge5
+                        \ If we get here then we keep moving left until:
+                        \
+                        \   * We find a tile that's on-screen or reach the end
+                        \     of the tile row, in which case we jump to edge6 to
+                        \     set xTileViewRight and start working left from
+                        \     xTileViewLeft until we find a visible tile or run
+                        \     out of row
+
+ JSR GetTileEdgeToRight \ Move one tile to the right and calculate the pitch and
+                        \ yaw angles for the tile corner from the perspective of
+                        \ the viewer, and store them in the following tables in
+                        \ the relevant entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+                        \
+                        \ The C flag is set if we have already reached the end
+                        \ of the row and can't move any further right
+
+ BCS edge6              \ If we just moved off the right end of the row then the
+                        \ right end of the row is visible on-screen, so jump to
+                        \ edge3 to set xTileViewRight accordingly and start
+                        \ moving left from the current left edge value in
+                        \ xTileViewLeft
+
+ BEQ edge5              \ If the new tile is not visible and off to the left of
+                        \ the screen then loop back to edge5 to keep moving
+                        \ right
+
+                        \ If we get here then we have now found a visible tile
+                        \ by moving right, so store that in xTileViewRight and
+                        \ start moving left
 
 .edge6
 
- LDA xTile
+ LDA xTile              \ Store the current column number in xTileViewRight
  STA xTileViewRight
- LDA xTileViewLeft
- STA xTile
+
+ LDA xTileViewLeft      \ Set xTile to the value of xTileViewLeft so we can
+ STA xTile              \ start moving left from this point
 
 .edge7
 
- JSR GetTileEdgeToLeft
- BCS edge9
+                        \ If we get here then we keep moving left until:
+                        \
+                        \   * We find a tile that's on-screen or reach the end
+                        \     of the tile row, in which case we set
+                        \     xTileViewLeft and return from the subroutine
+
+ JSR GetTileEdgeToLeft  \ Move one tile to the left and calculate the pitch and
+                        \ yaw angles for the tile corner from the perspective of
+                        \ the viewer, and store them in the following tables in
+                        \ the relevant entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen (also returned in A and the Z flag)
+                        \
+                        \ The C flag is set if we have already reached the start
+                        \ of the row and can't move any further left
+
+ BCS edge9              \ If we just moved off the left end of the row then the
+                        \ left end of the row is visible on-screen, so jump to
+                        \ edge9 to set xTileViewLeft accordingly and return from
+                        \ the subroutine
 
 .edge8
 
- BEQ edge7
+ BEQ edge7              \ If the new tile is not visible then loop back to edge7
+                        \ to keep moving left
 
 .edge9
 
- LDA xTile
+ LDA xTile              \ Store the current column number in xTileViewLeft
  STA xTileViewLeft
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -14271,16 +14539,16 @@ L23E3 = C23E2+1
 \   tileViewPitchLo     Low byte of the pitch angle, stored in the relevant
 \                       entry for this tile corner
 \
-\   tileIsOnScreen      Determines whether the tile corner is on-screen:
+\   tileIsOnScreen      Determines whether the tile corner is on-screen (i.e.
+\                       within the max and min yaw angle limits):
 \
-\                         * 0 = tile is not on-screen (i.e. within the max and
-\                               min yaw limits)
+\                         * %00000000 = tile is not on-screen and is past the
+\                                       left edge of the screen
 \
-\                         * Bit 7 set = tile is on-screen and to the right of
-\                                       the left yaw limit
+\                         * %10000000 = tile is on-screen
 \
-\                         * Bit 0 set = tile is on-screen and to the left of
-\                                       the right yaw limit
+\                         * %10000001 = tile is not on-screen and is past the
+\                                       right edge of the screen
 \
 \   A                   The value of tileIsOnScreen is also returned in A
 \
@@ -14843,8 +15111,8 @@ L23E3 = C23E2+1
 
                         \ By this point we have pitch and yaw angles for the
                         \ vector between the viewer and the tile that we are
-                        \ analysing, so we now need to work out the value of
-                        \ tileIsOnScreen to return
+                        \ analysing, relative to the viewing gaze, so we now
+                        \ need to work out the value of tileIsOnScreen to return
                         \
                         \ We set tileIsOnScreen to zero at the start of the
                         \ routine, to indicate that the tile is not on-screen
@@ -14853,7 +15121,7 @@ L23E3 = C23E2+1
                         \
                         \   * Set bit 7 when tileViewYaw >= minYawAngle
                         \
-                        \   * Set bit 0 when tileViewYawHi < maxYawAngleHi
+                        \   * Set bit 0 when tileViewYawHi >= maxYawAngleHi
                         \
                         \ where tileViewYaw is (tileViewYawHi tileViewYawLo)
                         \ and minYawAngle is (minYawAngleHi minYawAngleLo)
@@ -14885,17 +15153,23 @@ L23E3 = C23E2+1
 
 .tang10
 
- ROR tileIsOnScreen     \ Set bit 7 of tileIsOnScreen to the C flag, so bit 7 is
-                        \ set if the tile is on or within the minimum yaw limit,
-                        \ i.e. the left edge of the tile is on-screen
+                        \ If we get here then the C flag is set, as we have to
+                        \ pass through a BCC to get here
+
+ ROR tileIsOnScreen     \ Set bit 7 of tileIsOnScreen, so bit 7 is set if the
+                        \ tile is on or to the right of the minimum yaw limit,
+                        \ i.e. to the right of the left edge of the screen
 
  CMP maxYawAngleHi      \ If tileViewYawHi < maxYawAngleHi, jump to tang11 to
  BCC tang11             \ return from the routine with bit 0 of tileIsOnScreen
                         \ clear
 
+                        \ If we get here then tileViewYawHi >= maxYawAngleHi,
+                        \ so the tile is off-screen to the right
+
  INC tileIsOnScreen     \ Set bit 0 of tileIsOnScreen to indicate that the tile
-                        \ is within the maximum yaw limit, i.e. the right edge
-                        \ of the tile is on-screen
+                        \ is to the right of the maximum yaw limit, i.e. to the
+                        \ right of the right edge of the screen
 
 .tang11
 
@@ -14994,12 +15268,12 @@ L23E3 = C23E2+1
 
  TAY
 
- LDA L2994,Y
+ LDA L2994,Y            \ Set minYawAngleHi = 20 or 8
  STA minYawAngleHi
 
- LSR A
- EOR #&80
- STA maxYawAngleHi
+ LSR A                  \ Set maxYawAngleHi = 138 or 132
+ EOR #%10000000         \                   = -118 or -124
+ STA maxYawAngleHi      \ ???
 
  LDA L298B,Y
  STA L0011
