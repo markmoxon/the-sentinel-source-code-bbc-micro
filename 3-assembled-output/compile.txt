@@ -12,7 +12,7 @@
      0005
 .tileAltitude
      0006
-.L0007
+.minYawAngleHi
      0007
 .lastPanKeyPressed
      0008
@@ -34,13 +34,15 @@
      000D
 .L000E
      000E
+.yStoreTileView
+     000F
 .L000F
      000F
 .L0010
      0010
 .L0011
      0011
-.L0012
+.maxYawAngleHi
      0012
 .L0013
      0013
@@ -104,7 +106,7 @@
      0026
 .bitMask
      0027
-.L0028
+.minYawAngleLo
      0028
 .L0029
      0029
@@ -124,11 +126,11 @@
      0030
 .zVectorLo
      0031
-.L0032
+.xTileViewLeft
      0032
 .cosVectorPitchLo
      0032
-.L0033
+.xTileViewRight
      0033
 .cosVectorPitchHi
      0033
@@ -146,11 +148,11 @@
      0036
 .xCoordLo
      0037
-.L0037
+.xTileViewLeftEdge
      0037
 .yCoordLo
      0038
-.L0038
+.xTileViewRightEdge
      0038
 .zCoordLo
      0039
@@ -2497,7 +2499,7 @@
      0C46   00
 .L0C47
      0C47   00
-.L0C48
+.xTileLeftPrevious
      0C48   02
 .L0C49
      0C49   20
@@ -6620,12 +6622,12 @@
 .prev1
      2804   38         SEC
      2805   60         RTS
-.CheckPreviousTile
+.GetTileEdgeToLeft
      2806   A4 24      LDY &24
      2808   F0 FA      BEQ &2804
      280A   88         DEY
      280B   4C 15 28   JMP &2815
-.CheckNextTile
+.GetTileEdgeToRight
      280E   A4 24      LDY &24
      2810   C8         INY
      2811   C0 20      CPY #&20

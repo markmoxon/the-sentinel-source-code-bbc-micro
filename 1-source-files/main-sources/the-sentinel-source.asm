@@ -106,7 +106,7 @@
 
  SKIP 1                 \ Used to store a tile altitude
 
-.L0007
+.minYawAngleHi
 
  SKIP 1                 \ ???
 
@@ -172,6 +172,11 @@
 
  SKIP 1                 \ ???
 
+.yStoreTileView
+
+ SKIP 0                 \ Temporary storage for Y so it can be preserved through
+                        \ calls to GetTileViewAngles
+
 .L000F
 
  SKIP 1                 \ ???
@@ -184,7 +189,7 @@
 
  SKIP 1                 \ ???
 
-.L0012
+.maxYawAngleHi
 
  SKIP 1                 \ ???
 
@@ -367,7 +372,7 @@
                         \ routine that has a matching number of leading zeroes
                         \ as the number of tile blocks at a specific altitude
 
-.L0028
+.minYawAngleLo
 
  SKIP 1                 \ ???
 
@@ -430,7 +435,7 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L0032
+.xTileViewLeft
 
  SKIP 0                 \ ???
 
@@ -439,7 +444,7 @@
  SKIP 1                 \ The low byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
 
-.L0033
+.xTileViewRight
 
  SKIP 0                 \ ???
 
@@ -484,7 +489,7 @@
                         \
                         \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
 
-.L0037
+.xTileViewLeftEdge
 
  SKIP 1                 \ ???
 
@@ -494,7 +499,7 @@
                         \
                         \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
 
-.L0038
+.xTileViewRightEdge
 
  SKIP 1                 \ ???
 
@@ -1654,9 +1659,13 @@
 
  EQUB 0                 \ ???
 
-.L0C48
+.xTileLeftPrevious
 
- EQUB 2                 \ ???
+ EQUB 2                 \ Storage for the previous value of xTileViewLeft
+                        \
+                        \ This makes the search for edges more efficient in the
+                        \ DrawLandscapeView routine as the edges in neighbouring
+                        \ rows will be close together
 
 .L0C49
 
@@ -13631,6 +13640,10 @@ L23E3 = C23E2+1
                         \ arc and set (xTileViewer, zTileViewer) to the tile
                         \ coordinates of the viewer, but using the axes from the
                         \ viewer's frame of reference/point of view
+                        \
+                        \ Note that in the following, we subtract from 30 rather
+                        \ than 31 because we are working with tiles rather than
+                        \ tile corners ???
 
  BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
  BMI dlan2              \ the viewing arc is set, jump to dlan2
@@ -13689,13 +13702,13 @@ L23E3 = C23E2+1
                         \ Therefore, from the perspective of the viewer:
                         \
                         \   * The x-axis is the 3D world z-axis in the opposite
-                        \     direction, which is 32 - z
+                        \     direction, which is 30 - z
                         \
                         \   * The z-axis is the 3D world x-axis, which is x
                         \
                         \ So that's what we set now
 
- CLC                    \ Set (xTileViewer, zTileViewer) = (32 - z, x)
+ CLC                    \ Set (xTileViewer, zTileViewer) = (30 - z, x)
  LDA #31                \
  SBC zObject,X          \ where object #X is on tile (x, z)
  STA xTileViewer
@@ -13738,14 +13751,14 @@ L23E3 = C23E2+1
                         \ Therefore, from the perspective of the viewer:
                         \
                         \   * The x-axis is the 3D world x-axis in the opposite
-                        \     direction, which is 32 - x
+                        \     direction, which is 30 - x
                         \
                         \   * The z-axis is the 3D world z-axis in the opposite
-                        \     direction, which is 32 - z
+                        \     direction, which is 30 - z
                         \
                         \ So that's what we set now
 
- CLC                    \ Set (xTileViewer, zTileViewer) = (32 - x, 32 - z)
+ CLC                    \ Set (xTileViewer, zTileViewer) = (30 - x, 30 - z)
  LDA #31                \
  SBC xObject,X          \ where object #X is on tile (x, z)
  STA xTileViewer
@@ -13786,11 +13799,11 @@ L23E3 = C23E2+1
                         \   * The x-axis is the 3D world z-axis, which is z
                         \
                         \   * The z-axis is the 3D world x-axis in the opposite
-                        \     direction, which is 32 - x
+                        \     direction, which is 30 - x
                         \
                         \ So that's what we set now
 
- LDA zObject,X          \ Set (xTileViewer, zTileViewer) = (z, 32 - x)
+ LDA zObject,X          \ Set (xTileViewer, zTileViewer) = (z, 30 - x)
  STA xTileViewer        \
  CLC                    \ where object #X is on tile (x, z)
  LDA #31
@@ -13812,28 +13825,31 @@ L23E3 = C23E2+1
  STA zTile              \ front, so set a row counter in zTile to iterate from
                         \ 31 to 0
 
- LDA L0C48              \ Set L0032 = L0C48, something to do with xTile ???
- STA L0032              \ is this the number of the tile in the row to check,
-                        \ starting from 0 and being incremented in
-                        \ GetTileViewEdges somehow?
+ LDA xTileLeftPrevious  \ Set xTileViewLeft = xTileLeftPrevious, so we start
+ STA xTileViewLeft      \ checking for the view edges, starting from the left
+                        \ edge from the previous calculation (or from tile zero
+                        \ if this is the first time)
+                        \
+                        \ This makes the search for edges more efficient as the
+                        \ edges in neighbouring rows will be close together
 
  LDA #0                 \ Set drawingTableOffset = 0 for GetTileViewEdges
  STA drawingTableOffset \ flipping like GetTileVisibility ???
 
  JSR GetTileViewEdges
 
- LDA L0032
- STA L0C48
+ LDA xTileViewLeft
+ STA xTileLeftPrevious
 
 .dlan5
 
  LDA drawingTableOffset
  EOR #32
  STA drawingTableOffset
- LDA L0032
- STA L0037
- LDA L0033
- STA L0038
+ LDA xTileViewLeft
+ STA xTileViewLeftEdge
+ LDA xTileViewRight
+ STA xTileViewRightEdge
 
  JSR ProcessSound       \ Process any sounds or music that are being made
 
@@ -13854,16 +13870,27 @@ L23E3 = C23E2+1
 .dlan7
 
  JSR GetTileViewEdges
- LDY L0032
- CPY L0037
+ LDY xTileViewLeft
+ CPY xTileViewLeftEdge
  BEQ dlan11
  BCC dlan9
 
 .dlan8
 
  DEY
- JSR GetTileViewAngles
- CPY L0037
+
+ JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
+                        \ at (Y, zTile), from the perspective of the viewer, and
+                        \ store them in the following tables in the relevant
+                        \ entry for this tile corner:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileIsOnScreen
+
+ CPY xTileViewLeftEdge
  BNE dlan8
  BEQ dlan11
 
@@ -13873,15 +13900,15 @@ L23E3 = C23E2+1
  EOR #32
  STA drawingTableOffset
  INC zTile
- LDY L0037
+ LDY xTileViewLeftEdge
 
 .dlan10
 
  DEY
  JSR GetTileViewAngles
- CPY L0032
+ CPY xTileViewLeft
  BNE dlan10
- STY L0037
+ STY xTileViewLeftEdge
  DEC zTile
  LDA drawingTableOffset
  EOR #32
@@ -13889,8 +13916,8 @@ L23E3 = C23E2+1
 
 .dlan11
 
- LDY L0033
- CPY L0038
+ LDY xTileViewRight
+ CPY xTileViewRightEdge
  BEQ dlan15
  BCS dlan13
 
@@ -13898,7 +13925,7 @@ L23E3 = C23E2+1
 
  INY
  JSR GetTileViewAngles
- CPY L0038
+ CPY xTileViewRightEdge
  BNE dlan12
  BEQ dlan15
 
@@ -13908,16 +13935,16 @@ L23E3 = C23E2+1
  EOR #32
  STA drawingTableOffset
  INC zTile
- LDY L0038
+ LDY xTileViewRightEdge
 
 .dlan14
 
  INY
  JSR GetTileViewAngles
- CPY L0033
+ CPY xTileViewRight
  BNE dlan14
 
- STY L0038
+ STY xTileViewRightEdge
  DEC zTile
  LDA drawingTableOffset
  EOR #32
@@ -13949,28 +13976,28 @@ L23E3 = C23E2+1
 
 .dlan18
 
- LDY L0037
+ LDY xTileViewLeftEdge
  INY
  CPY xTileViewer
  BNE dlan19
- STY L0038
+ STY xTileViewRightEdge
  JMP dlan20
 
 .dlan19
 
- LDY L0038
+ LDY xTileViewRightEdge
  DEY
  DEY
  CPY xTileViewer
  BNE dlan21
  INY
- STY L0037
+ STY xTileViewLeftEdge
 
 .dlan20
 
- LDY L0037
+ LDY xTileViewLeftEdge
  JSR GetTileViewAngles
- LDY L0038
+ LDY xTileViewRightEdge
  JSR GetTileViewAngles
  JSR sub_C292D
 
@@ -14034,11 +14061,11 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   L0032               The tile column of the tile we are analysing, from the
-\                       perspective of the viewer ???
+\   xTileViewLeft       The tile column of the tile we are analysing, from the
+\                       perspective of the viewer
 \
 \   zTile               The tile row of the tile we are analysing, from the
-\                       perspective of the viewer ???
+\                       perspective of the viewer
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
 \                       the tileViewData, tileViewYawHi and tileViewYawLo
@@ -14056,19 +14083,20 @@ L23E3 = C23E2+1
 
 .GetTileViewEdges
 
- LDY L0032              \ Set Y to the tile column to pass to GetTileViewAngles
+ LDY xTileViewLeft      \ Set Y to the tile column to pass to GetTileViewAngles
 
  JSR GetTileViewAngles
 
- BEQ edge5
+ BEQ edge5              \ Flags set on tileIsOnScreen ???
+
  CMP #&80
  BEQ edge4
 
 .edge1
 
  LDA xTile
- STA L0032
- JSR CheckNextTile
+ STA xTileViewLeft
+ JSR GetTileEdgeToRight
  BCS edge3
  CMP #&81
  BEQ edge1
@@ -14077,21 +14105,21 @@ L23E3 = C23E2+1
 
 .edge2
 
- JSR CheckNextTile
+ JSR GetTileEdgeToRight
  BCS edge3
  BEQ edge2
 
 .edge3
 
  LDA xTile
- STA L0033
+ STA xTileViewRight
  RTS
 
 .edge4
 
  LDA xTile
- STA L0033
- JSR CheckPreviousTile
+ STA xTileViewRight
+ JSR GetTileEdgeToLeft
  BCS edge9
  CMP #&80
  BEQ edge4
@@ -14100,20 +14128,20 @@ L23E3 = C23E2+1
 
 .edge5
 
- JSR CheckNextTile
+ JSR GetTileEdgeToRight
  BCS edge6
  BEQ edge5
 
 .edge6
 
  LDA xTile
- STA L0033
- LDA L0032
+ STA xTileViewRight
+ LDA xTileViewLeft
  STA xTile
 
 .edge7
 
- JSR CheckPreviousTile
+ JSR GetTileEdgeToLeft
  BCS edge9
 
 .edge8
@@ -14123,62 +14151,94 @@ L23E3 = C23E2+1
 .edge9
 
  LDA xTile
- STA L0032
+ STA xTileViewLeft
  RTS
 
 \ ******************************************************************************
 \
-\       Name: CheckPreviousTile
+\       Name: GetTileEdgeToLeft
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Move one tile to the left along the tile row that we are analysing
+\             for view edges and tile angles
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   prev1               Return from the subroutine with the C flag set
 \
 \ ******************************************************************************
 
 .prev1
 
- SEC
- RTS
+ SEC                    \ Set the C flag to indicate that we have reached the
+                        \ end of the tile row
 
-.CheckPreviousTile
+ RTS                    \ Return from the subroutine
 
- LDY xTile
- BEQ prev1
- DEY
- JMP GetTileViewAngles
+.GetTileEdgeToLeft
+
+ LDY xTile              \ Set Y to the column of the tile corner we are
+                        \ currently analysing when looking for the view edges
+                        \ and calculating the tile's pitch and yaw angles
+
+ BEQ prev1              \ If Y = 0 then we are already at the left end of the
+                        \ tile row and can't move any further left, so jump to
+                        \ prev1 to return from the subroutine with the C flag
+                        \ set
+
+ DEY                    \ Otherwise decrement Y to move one tile to the left
+
+ JMP GetTileViewAngles  \ Jump to GetTileViewAngles to analyse the new corner to
+                        \ look for the view edges and calculate the tile's pitch
+                        \ and yaw angles, and return from the subroutine with
+                        \ the C flag clear
 
 \ ******************************************************************************
 \
-\       Name: CheckNextTile
+\       Name: GetTileEdgeToRight
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Move one tile to the right along the tile row that we are
+\             analysing for view edges and tile angles
 \
 \ ******************************************************************************
 
-.CheckNextTile
+.GetTileEdgeToRight
 
- LDY xTile
- INY
- CPY #&20
- BEQ prev1
+ LDY xTile              \ Set Y to the column of the tile corner we are
+                        \ currently analysing when looking for the view edges
+                        \ and calculating the tile's pitch and yaw angles
+
+ INY                    \ Increment Y to move one tile to the right
+
+ CPY #32                \ If Y = 32 then we have gone past the end of the tile
+ BEQ prev1              \ row and can't move any further tight, so jump to prev1
+                        \ to return from the subroutine with the C flag set
+
+                        \ Otherwise fall through into GetTileViewAngles to
+                        \ analyse the new corner to look for the view edges and
+                        \ calculate the tile's pitch and yaw angles, and return
+                        \ from the subroutine with the C flag clear
 
 \ ******************************************************************************
 \
-\       Name: GetTileViewAngles (Part 1 of 3)
+\       Name: GetTileViewAngles (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Calculate the pitch and yaw angles for a tile corner, relative to
+\             a viewer object (e.g. the player), and whether it is on-screen
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
 \   Y                   The tile column of the tile we are analysing, from the
-\                       perspective of the viewer ???
+\                       perspective of the viewer
 \
 \   zTile               The tile row of the tile we are analysing, from the
-\                       perspective of the viewer ???
+\                       perspective of the viewer
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
 \                       the tileViewData, tileViewYawHi and tileViewYawLo
@@ -14196,26 +14256,69 @@ L23E3 = C23E2+1
 \
 \ Returns:
 \
+\   tileViewData        Tile data for this tile corner, stored in the relevant
+\                       entry for this tile corner
+\
+\   tileViewYawHi       High byte of the yaw angle, stored in the relevant entry
+\                       for this tile corner
+\
+\   tileViewYawLo       Low byte of the yaw angle, stored in the relevant entry
+\                       for this tile corner
+\
+\   tileViewPitchHi     High byte of the pitch angle, stored in the relevant
+\                       entry for this tile corner
+\
+\   tileViewPitchLo     Low byte of the pitch angle, stored in the relevant
+\                       entry for this tile corner
+\
+\   tileIsOnScreen      Determines whether the tile corner is on-screen:
+\
+\                         * 0 = tile is not on-screen (i.e. within the max and
+\                               min yaw limits)
+\
+\                         * Bit 7 set = tile is on-screen and to the right of
+\                                       the left yaw limit
+\
+\                         * Bit 0 set = tile is on-screen and to the left of
+\                                       the right yaw limit
+\
+\   A                   The value of tileIsOnScreen is also returned in A
+\
+\   Z flag              The Z flag is set according to the value of
+\                       tileIsOnScreen, so a BNE or BEQ following the call to
+\                       GetTileViewAngles will act accordingly
+\
+\   C flag              The C flag is clear to indicate that we have not gone
+\                       past the end of the tile row, which is used when calling
+\                       this routine via GetTileEdgeToLeft or GetTileEdgeToRight
+\
 \   Y                   Y is preserved
 \
 \ ******************************************************************************
 
 .GetTileViewAngles
 
- STY xTile              \ Store the tile column in xTile
+ STY xTile              \ Store the tile column in xTile, so we can analyse the
+                        \ tile at (xTile, zTile)
 
- STY L000F              \ Store Y in L000F so it can be preserved
+ STY yStoreTileView     \ Store Y in yStoreTileView so it can be preserved
+                        \ across calls to the routine
 
  TYA                    \ Set drawingTableIndex = Y + drawingTableOffset
  ORA drawingTableOffset \
  STA drawingTableIndex  \ So drawingTableIndex is the index into the drawing
                         \ tables for the tile we are analysing
 
- LDA #0                 \ Set tileIsOnScreen = 0
- STA tileIsOnScreen
+ LDA #0                 \ Set tileIsOnScreen = 0, so the default is that the
+ STA tileIsOnScreen     \ tile is not on-screen (we change this in part 3 if it
+                        \ is on-screen)
 
  LDX anotherObject      \ Set X to the number of the object that is viewing the
                         \ landscape
+
+                        \ We start by calculating the difference (the delta) in
+                        \ the x-axis between the viewer and the tile we are
+                        \ analysing
 
  LDA #128               \ Set the low byte of (xDeltaHi xDeltaLo) to 128
  STA xDeltaLo
@@ -14258,7 +14361,10 @@ L23E3 = C23E2+1
                         \ and the original high byte of the signed x-axis length
                         \ is still in xDeltaHi
 
-                        \ We now do the same thing, but with the z-coordinates
+                        \ We now do the same thing but for the z-axis, so that
+                        \ zDelta contains the difference (the delta) in the
+                        \ z-axis between the viewer and the tile we are
+                        \ analysing
 
  LDA #128               \ Set the low byte of (zDeltaHi zDeltaLo) to 128
  STA zDeltaLo
@@ -14297,6 +14403,14 @@ L23E3 = C23E2+1
                         \ and the original high byte of the signed z-axis length
                         \ is still in zDeltaHi
 
+                        \ We now have both deltas, so we now can calculate the
+                        \ angle of the hypotenuse of the triangle formed by
+                        \ these axes, which is the projection of the 3D vector
+                        \ from the viewer to the tile down onto the ground plane
+                        \ (so imagine a light shining down from above, casting
+                        \ the vector's shadow onto the y = 0 plane - that's the
+                        \ hypotenuse)
+
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
@@ -14307,42 +14421,63 @@ L23E3 = C23E2+1
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
 
+                        \ The angle of the hypotenuse is the yaw angle of the
+                        \ 3D vector from the viewer to the tile corner we are
+                        \ analysing, so store it in the table at (tileViewYawHi
+                        \ tileViewYawLo)
+                        \
+                        \ We subtract (angle2Hi angle2Lo) because ???
+
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
  LDA angleLo            \ Set (tileViewYawHi tileViewYawLo) for this tile to:
  SEC                    \
  SBC angle2Lo           \   (angleHi angleLo) - (angle2Hi angle2Lo)
  STA tileViewYawLo,Y    \
-                        \ starting with the low bytes ???
+                        \ starting with the low bytes
 
  LDA angleHi            \ And then the high bytes
  SBC angle2Hi
  STA tileViewYawHi,Y
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
-                        \ in (hypotenuseHi hypotenuseLo)
+                        \ in (hypotenuseHi hypotenuseLo), so we can use it to
+                        \ calculate the pitch angle of the viewer-to-tile vector
+                        \ in part 3
 
-                        \ Fall through into part 2 to ???
+                        \ Fall through into part 2 to start the pitch angle
+                        \ calculations
 
 \ ******************************************************************************
 \
-\       Name: GetTileViewAngles (Part 2 of 3)
+\       Name: GetTileViewAngles (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Fetch the tile data for the tile corner we are analysing
 \
 \ ******************************************************************************
 
-                        \ We now set (X, Y) to the tile coordinate of the tile
-                        \ we are analysing, i.e (xTile, zTile), but with the
-                        \ axes rotated to match the orientation of the 3D world
-                        \ rather than the viewer
+                        \ We have calculated the yaw angle of the vector from
+                        \ the viewer to the tile corner we are analysing, so
+                        \ now for the pitch angle
+                        \
+                        \ We start by fetching the tile data for the tile corner
+                        \ we are analysing, and for that we need to know the
+                        \ tile coordinates in terms of the 3D world, as that's
+                        \ how the tileData table is organised
+                        \
+                        \ The following code sets (X, Y) to the coordinate of
+                        \ the tile corner we are analysing, i.e (xTile, zTile),
+                        \ but with the axes rotated to match the orientation of
+                        \ the 3D world rather than the viewer (as xTile and
+                        \ zTile contain the coordinates from the perspective of
+                        \ the viewer, not the 3D world)
                         \
                         \ This is the reverse of the process described in part 1
-                        \ of the DrawLandscapeView routine, which changed the
+                        \ of the DrawLandscapeView routine, which changes the
                         \ frame of reference from the 3D world to the viewer
                         \
-                        \ In that routine, we mapped the following coordinate
+                        \ In that routine, we map the following coordinate
                         \ changes, depending on the direction in which the
                         \ viewer is facing compared to the 3D world's default
                         \ axes:
@@ -14351,20 +14486,22 @@ L23E3 = C23E2+1
                         \      (x, z) maps to (x, z)
                         \
                         \    * If the viewer has turned right:
-                        \      (x, z) maps to (32 - z, x)
+                        \      (x, z) maps to (30 - z, x)
                         \
                         \    * If the viewer has turned around:
-                        \      (x, z) maps to (32 - x, 32 - z)
+                        \      (x, z) maps to (30 - x, 30 - z)
                         \
                         \    * If the viewer has turned left:
-                        \      (x, z) maps to (z, 32 - x)
+                        \      (x, z) maps to (z, 30 - x)
                         \
-                        \ So we apply the same logic, but in the reverse
+                        \ So we apply the same logic here, but in the reverse
                         \ direction, as we want to move from the viewer's frame
                         \ of reference into the 3D world's frame of reference
                         \
-                        \ Note that as these are tile coordinates rather than
-                        \ tile corners, we subtract from 31 rather than 32 ???
+                        \ Note that the logic in DrawLandscapeView subtracts
+                        \ from 30, while here we subtract from 31, because this
+                        \ logic is working with tile corners, while the logic in
+                        \ DrawLandscapeView is working with tiles
 
  BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
  BMI tang4              \ the viewing arc is set, jump to tang4
@@ -14534,14 +14671,17 @@ L23E3 = C23E2+1
                         \ (xTile, zTile)
 
  LDX drawingTableIndex  \ Store the tile data in the correct place in the
- STA tileViewData,X     \ tileViewData/L01A0 table ???
+ STA tileViewData,X     \ tileViewData table
+
+                        \ Fall through into part 3 to finish the pitch angle
+                        \ calculations
 
 \ ******************************************************************************
 \
-\       Name: GetTileViewAngles (Part 3 of 3)
+\       Name: GetTileViewAngles (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Calculate the pitch angle for the tile corner
 \
 \ ******************************************************************************
 
@@ -14678,7 +14818,8 @@ L23E3 = C23E2+1
                         \
                         \ So this call calculates the relative pitch angle for
                         \ the vector between the viewer and the tile that we are
-                        \ analysing
+                        \ analysing, so store it in the table at (tileViewPitchHi
+                        \ tileViewPitchLo)
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
@@ -14688,40 +14829,85 @@ L23E3 = C23E2+1
  LDA pitchDeltaLo       \ Store the low byte of the pitch vector in the correct
  STA tileViewPitchLo,Y  \ part of the tileViewPitchLo table
 
+                        \ Fall through into part 4 to work out how much of the
+                        \ tile is on-screen
+
+\ ******************************************************************************
+\
+\       Name: GetTileViewAngles (Part 4 of 4)
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: Calculate how much of the tile is on-screen
+\
+\ ******************************************************************************
+
                         \ By this point we have pitch and yaw angles for the
                         \ vector between the viewer and the tile that we are
-                        \ analysing
+                        \ analysing, so we now need to work out the value of
+                        \ tileIsOnScreen to return
+                        \
+                        \ We set tileIsOnScreen to zero at the start of the
+                        \ routine, to indicate that the tile is not on-screen
+                        \
+                        \ We now set the following bits if applicable:
+                        \
+                        \   * Set bit 7 when tileViewYaw >= minYawAngle
+                        \
+                        \   * Set bit 0 when tileViewYawHi < maxYawAngleHi
+                        \
+                        \ where tileViewYaw is (tileViewYawHi tileViewYawLo)
+                        \ and minYawAngle is (minYawAngleHi minYawAngleLo)
+                        \
+                        \ So bit 7 is set when the tile corner is inside the
+                        \ minimum yaw limit, and bit 0 is set when the tile
+                        \ corner is inside (but not on) the maximum yaw limit
+                        \
+                        \ If the yaw limit is the screen size, then the two bits
+                        \ determine whether the tile is on-screen
 
- LDA tileViewYawHi,Y
+ LDA tileViewYawHi,Y    \ If tileViewYawHi < minYawAngleHi, jump to tang11 to
+ CMP minYawAngleHi      \ return with tileIsOnScreen = 0, as the tile is off the
+ BCC tang11             \ left of the screen edge
 
- CMP L0007
+ BNE tang10             \ If tileViewYawHi > minYawAngleHi, jump to tang10 with
+                        \ the C flag set to set bit 7 of tileIsOnScreen
+
+                        \ If we get here then tileViewYawHi = minYawAngleHi, so
+                        \ we now check the low bytes
+
+ LDA tileViewYawLo,Y    \ If tileViewYawLo < minYawAngleLo, jump to tang11 to
+ CMP minYawAngleLo      \ return with tileIsOnScreen = 0
  BCC tang11
 
- BNE tang10
-
- LDA tileViewYawLo,Y
-
- CMP L0028
- BCC tang11
-
- LDA tileViewYawHi,Y
+ LDA tileViewYawHi,Y    \ If we get here then tileViewYawLo >= minYawAngleLo, so
+                        \ the C flag is set, and we set A to tileViewYawHi for
+                        \ the comparison below
 
 .tang10
 
- ROR tileIsOnScreen
+ ROR tileIsOnScreen     \ Set bit 7 of tileIsOnScreen to the C flag, so bit 7 is
+                        \ set if the tile is on or within the minimum yaw limit,
+                        \ i.e. the left edge of the tile is on-screen
 
- CMP L0012
- BCC tang11
+ CMP maxYawAngleHi      \ If tileViewYawHi < maxYawAngleHi, jump to tang11 to
+ BCC tang11             \ return from the routine with bit 0 of tileIsOnScreen
+                        \ clear
 
- INC tileIsOnScreen
+ INC tileIsOnScreen     \ Set bit 0 of tileIsOnScreen to indicate that the tile
+                        \ is within the maximum yaw limit, i.e. the right edge
+                        \ of the tile is on-screen
 
 .tang11
 
- LDY L000F              \ Restore Y
+ LDY yStoreTileView     \ Restore Y so that it's preserved
 
- LDA tileIsOnScreen
+ LDA tileIsOnScreen     \ Set A to the value of tileIsOnScreen, to return from
+                        \ the subroutine
 
- CLC
+ CLC                    \ Clear the C flag to indicate that we have not gone
+                        \ past the end of the tile row, which is used when
+                        \ calling this routine via GetTileEdgeToLeft or
+                        \ GetTileEdgeToRight
 
  RTS                    \ Return from the subroutine
 
@@ -14736,12 +14922,12 @@ L23E3 = C23E2+1
 
 .sub_C292D
 
- LDA L0037
+ LDA xTileViewLeftEdge
  STA L0025
 
 .P2931
 
- CMP L0038
+ CMP xTileViewRightEdge
  BCS CRE16
  CMP xTileViewer
  BCS C2943
@@ -14752,7 +14938,7 @@ L23E3 = C23E2+1
 
 .C2943
 
- LDA L0038
+ LDA xTileViewRightEdge
 
 .P2945
 
@@ -14760,7 +14946,7 @@ L23E3 = C23E2+1
  SBC #&01
  BMI CRE16
  STA L0025
- CMP L0037
+ CMP xTileViewLeftEdge
  BCC CRE16
  CMP xTileViewer
  BCC CRE16
@@ -14809,11 +14995,11 @@ L23E3 = C23E2+1
  TAY
 
  LDA L2994,Y
- STA L0007
+ STA minYawAngleHi
 
  LSR A
  EOR #&80
- STA L0012
+ STA maxYawAngleHi
 
  LDA L298B,Y
  STA L0011
@@ -14829,7 +15015,7 @@ L23E3 = C23E2+1
  STA L0036
 
  LDA #0
- STA L0028
+ STA minYawAngleLo
 
  STA L0029
 
@@ -14900,14 +15086,14 @@ L23E3 = C23E2+1
 
  STA T
  LSR A
- STA L0007
+ STA minYawAngleHi
  LDA #0
  ROR A
- STA L0028
- LDA L0007
+ STA minYawAngleLo
+ LDA minYawAngleHi
  LSR A
  EOR #&80
- STA L0012
+ STA maxYawAngleHi
  LDA T
  ASL A
  ASL A
