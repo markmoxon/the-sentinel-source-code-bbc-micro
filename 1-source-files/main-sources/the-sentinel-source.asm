@@ -1677,12 +1677,12 @@
 
 .drawingTitleScreen
 
- EQUB %10000000         \ A flag to indicate whether we are currently drawing
-                        \ the title screen in the DrawTitleScreen routine
+ EQUB %10000000         \ A flag to indicate whether we are currently drawing a
+                        \ title screen in the DrawTitleScreen routine
                         \
-                        \   * Bit 7 clear = we are not drawing the title screen
+                        \   * Bit 7 clear = we are not drawing a title screen
                         \
-                        \   * Bit 7 set = we are drawing the title screen
+                        \   * Bit 7 set = we are drawing a title screen
 
 .screenBackground
 
@@ -1781,7 +1781,7 @@
                         \ set of generated values for later checking in the
                         \ GetRowVisibility routine
                         \
-                        \ sub_C2A1B writes a value to this location ???
+                        \ DrawFlatTile writes a value to this location ???
                         \
                         \ e.g. &8D for landscape 0, &BF for landscape 1
                         \
@@ -5448,7 +5448,8 @@ L1145 = C1144+1
  JSR ProcessPauseKeys   \ Pause or unpause the game when COPY or DELETE are
                         \ pressed
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
  JSR ProcessVolumeKeys  \ Adjust the volume of the sound envelopes when the
                         \ volume keys are pressed
@@ -8749,7 +8750,7 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: ProcessActionKeys
+\       Name: ProcessActionKeys (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Process an action key press from key logger entry 1 (absorb,
@@ -8870,9 +8871,9 @@ L1145 = C1144+1
  STA objectYawAngle,X
 
  LDA #40                \ Set A = 40 to pass to the PlayMusic routine after we
-                        \ jump to pkey6, so it plays the music for a U-turn
+                        \ jump to pkey4, so it plays the music for a U-turn
 
- BNE pkey6              \ Jump to pkey6 to play the U-turn music and return from
+ BNE pkey4              \ Jump to pkey4 to play the U-turn music and return from
                         \ the subroutine with the C flag set (this BNE is
                         \ effectively a JMP as A is never zero)
 
@@ -8903,13 +8904,13 @@ L1145 = C1144+1
                         \ create objects, so is (L003A, L003C) the tile that the
                         \ player is looking at ???
 
- BCS pkey9              \ If the C flag is set then this means ???, so jump to
-                        \ pkey9 to make an error sound and return from the
+ BCS pkey7              \ If the C flag is set then this means ???, so jump to
+                        \ pkey7 to make an error sound and return from the
                         \ subroutine as we can't see the tile ???
 
  LDA keyPress           \ If bit 5 of keypress is clear then A is not 32 or 33,
  AND #%00100000         \ so A must be 0, 2 or 3 (one of the create keys), so
- BEQ pkey10             \ jump to pkey10 to spawn a robot, tree or boulder
+ BEQ pkey8              \ jump to pkey8 to spawn a robot, tree or boulder
 
                         \ If we get here then A must be 32 or 33, so the key
                         \ press is either absorb or transfer
@@ -8918,7 +8919,7 @@ L1145 = C1144+1
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCC pkey9              \ The tile does not contain an object, so jump to pkey9
+ BCC pkey7              \ The tile does not contain an object, so jump to pkey7
                         \ to make an error sound and return from the subroutine
                         \ as we can't absorb or transfer to an empty tile
 
@@ -8926,8 +8927,8 @@ L1145 = C1144+1
  TAX                    \ of the tile data, so extract this into X
 
  LDA keyPress           \ If bit 0 of keypress is clear then A must be 32, which
- LSR A                  \ is absorb, so jump to pkey7 to absorb the object on
- BCC pkey7              \ the tile anchored at (xTile, zTile)
+ LSR A                  \ is absorb, so jump to pkey5 to absorb the object on
+ BCC pkey5              \ the tile anchored at (xTile, zTile)
 
                         \ If we get here then A must be 33, so the key press is
                         \ transfer and the player is trying to transfer to the
@@ -8936,8 +8937,8 @@ L1145 = C1144+1
 
  LDY objectTypes,X      \ Set Y to the type of object #X
 
- BNE pkey9              \ If object #X is not a robot (i.e. not an object of
-                        \ type 0), jump to pkey9 to make an error sound and
+ BNE pkey7              \ If object #X is not a robot (i.e. not an object of
+                        \ type 0), jump to pkey7 to make an error sound and
                         \ return from the subroutine as the player can only
                         \ transfer into other robots
 
@@ -8947,6 +8948,20 @@ L1145 = C1144+1
                         \ on the tile anchored at (xTile, zTile), so this
                         \ effectively performs the transfer across to the new
                         \ robot
+
+                        \ We now take a short interlude to set the value of
+                        \ playerIsOnTower, as part of the game's anti-cracker
+                        \ code, and we pick up the robot transfer code in part 2
+
+\ ******************************************************************************
+\
+\       Name: SetPlayerIsOnTower
+\       Type: Subroutine
+\   Category: Cracker protection
+\    Summary: Set up the playerIsOnTower value for checking the game is won, as
+\             part of the anti-cracker code
+\
+\ ******************************************************************************
 
                         \ We now work out whether the player just transferred
                         \ into a robot on the Sentinel's tower
@@ -8972,16 +8987,16 @@ L1145 = C1144+1
                         \ setting playerIsOnTower to 6, then the wrong code will
                         \ be generated in the DrawSecretCode routine
 
-.pkey4
+.ptow1
 
  LDA objectFlags,X      \ Set A to the object flags for object #X
 
  CMP #%01000000         \ If both bits 6 and 7 of the object flags for object #X
- BCC pkey5              \ are clear then object #X is not stacked on top of
+ BCC ptow2              \ are clear then object #X is not stacked on top of
                         \ another object (so if we have looped back here from
                         \ below, we have reached the bottom of the stack), so
-                        \ jump to pkey5 to stop looping through the object stack
-                        \ and move on to the next task
+                        \ jump to ptow2 to stop looping through the object stack
+                        \ and go back to the ProcessActionKeys routine
 
                         \ If we get here then object #X is stacked on top of
                         \ another object, and the number of the object below
@@ -8993,7 +9008,7 @@ L1145 = C1144+1
                         \ down in the stack
 
  EOR #%00111111         \ If the object number in A is not the Sentinel's tower
- BNE pkey4              \ (i.e. it is not 63, or %111111), then loop back to
+ BNE ptow1              \ (i.e. it is not 63, or %111111), then loop back to
                         \ check the next object down in the stack
 
                         \ If we get here then the player has just transferred
@@ -9002,7 +9017,20 @@ L1145 = C1144+1
  LDA objectTypes,X      \ Set playerIsOnTower = 6 (which is the object type of
  STA playerIsOnTower    \ the Sentinel's tower, whose object number is in X)
 
-.pkey5
+.ptow2
+
+                        \ Fall through into part 2 of ProcessActionKeys to
+                        \ continue with the robot transfer
+
+\ ******************************************************************************
+\
+\       Name: ProcessActionKeys (Part 2 of 2)
+\       Type: Subroutine
+\   Category: Keyboard
+\    Summary: Process an action key press from key logger entry 1 (absorb,
+\             transfer, create, hyperspace, U-turn)
+\
+\ ******************************************************************************
 
                         \ If we get here then the player has just transferred
                         \ into a robot
@@ -9011,7 +9039,7 @@ L1145 = C1144+1
                         \ plays the music for when the player transfers into a
                         \ new robot
 
-.pkey6
+.pkey4
 
  JSR PlayMusic          \ Call PlayMusic to play the music specified in A (so
                         \ that's either the music for transferring into a new
@@ -9025,31 +9053,31 @@ L1145 = C1144+1
 
  RTS                    \ Return from the subroutine
 
-.pkey7
+.pkey5
 
                         \ If we get here then we are absorbing an object of type
                         \ X from the tile anchored at (xTile, zTile)
 
  LDA objectFlags        \ The Sentinel is always object #0, so this checks
- BMI pkey9              \ whether bit 7 of the Sentinel's object is set, which
+ BMI pkey7              \ whether bit 7 of the Sentinel's object is set, which
                         \ indicates that the Sentinel's object number is not
                         \ allocated
                         \
                         \ This means that the Sentinel no longer exists and has
                         \ been absorbed by the player, at which point the player
                         \ is no longer allowed to absorb other objects, so jump
-                        \ to pkey9 to make an error sound and return from the
+                        \ to pkey7 to make an error sound and return from the
                         \ subroutine
 
  LDA objectTypes,X      \ If the player is trying to absorb a meanie (an object
- CMP #4                 \ of type 4), jump to pkey13 to implement this
- BEQ pkey13
+ CMP #4                 \ of type 4), jump to pkey11 to implement this
+ BEQ pkey11
 
  CMP #6                 \ If the player is trying to absorb the Sentinel's tower
- BEQ pkey9              \ (an object of type 6), jump to pkey9 to make an error
+ BEQ pkey7              \ (an object of type 6), jump to pkey7 to make an error
                         \ sound and return from the subroutine
 
-.pkey8
+.pkey6
 
  JSR DeleteObject       \ Delete object #X and remove it from the landscape
 
@@ -9064,7 +9092,7 @@ L1145 = C1144+1
 
  RTS                    \ Return from the subroutine
 
-.pkey9
+.pkey7
 
                         \ If we get here then the player has tried to:
                         \
@@ -9108,7 +9136,7 @@ L1145 = C1144+1
 
  RTS                    \ Return from the subroutine
 
-.pkey10
+.pkey8
 
                         \ If we get here then the player is trying to create an
                         \ object of the type given in keyPress
@@ -9116,9 +9144,9 @@ L1145 = C1144+1
  JSR SpawnObject+3      \ Spawn an object of type keyPress, returning the object
                         \ number of the new object in X and currentObject
 
- BCS pkey9              \ If there are no free object numbers then the call to
+ BCS pkey7              \ If there are no free object numbers then the call to
                         \ SpawnObject will return with the C flag set and the
-                        \ object will not have been created, so jump to pkey9 to
+                        \ object will not have been created, so jump to pkey7 to
                         \ make an error sound and return from the subroutine
 
  SEC                    \ Call UpdatePlayerEnergy with the C flag set to
@@ -9126,9 +9154,9 @@ L1145 = C1144+1
                         \ player's energy, so this subtracts the energy required
                         \ to create the object from the player
 
- BCS pkey9              \ If the creation of object #X reduces the player's
+ BCS pkey7              \ If the creation of object #X reduces the player's
                         \ energy below zero, then the call to UpdatePlayerEnergy
-                        \ will return with the C flag set, so jump to pkey9 to
+                        \ will return with the C flag set, so jump to pkey7 to
                         \ make an error sound and return from the subroutine
 
  LDX currentObject      \ Set X to the object number of the object we just
@@ -9141,26 +9169,26 @@ L1145 = C1144+1
 
  JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
 
- BCC pkey11             \ If the object was successfully placed on the tile then
+ BCC pkey9              \ If the object was successfully placed on the tile then
                         \ the call to PlaceObjectOnTile will return with the C
-                        \ flag clear, so jump to pkey11 to keep going
+                        \ flag clear, so jump to pkey9 to keep going
 
  CLC                    \ Otherwise we failed to add the object to the tile, so
  JSR UpdatePlayerEnergy \ call UpdatePlayerEnergy with the C flag clear to
                         \ refund the energy that we used to create the object
                         \ back to the player
 
- JMP pkey9              \ We failed to place the object on the tile, so jump to
-                        \ pkey9 to make an error sound and return from the
+ JMP pkey7              \ We failed to place the object on the tile, so jump to
+                        \ pkey7 to make an error sound and return from the
                         \ subroutine
 
-.pkey11
+.pkey9
 
                         \ If we get here then a new object has been successfully
                         \ created and added to a tile, as object #X
 
  LDA objectTypes,X      \ If the type of object that was added is not a robot
- BNE pkey12             \ (type 0), jump to pkey12 to return from the subroutine
+ BNE pkey10             \ (type 0), jump to pkey10 to return from the subroutine
                         \ with the C flag clear
 
                         \ We just created a robot, so we now rotate it so that
@@ -9193,14 +9221,14 @@ L1145 = C1144+1
                         \ player's yaw angle rotated through 180 degrees, so the
                         \ new robot faces the player
 
-.pkey12
+.pkey10
 
  CLC                    \ Clear the C flag to denote that an object has been
                         \ added by the routine
 
  RTS                    \ Return from the subroutine
 
-.pkey13
+.pkey11
 
                         \ If we get here then the player is trying to absorb a
                         \ meanie in object #X
@@ -9215,22 +9243,22 @@ L1145 = C1144+1
                         \ a counter in Y to work through the enemy object
                         \ numbers
 
-.pkey14
+.pkey12
 
  LDA objectFlags,Y      \ If bit 7 is set for object #Y then this object number
- BMI pkey16             \ is not allocated to an object, so jump to pkey16 to
+ BMI pkey14             \ is not allocated to an object, so jump to pkey14 to
                         \ move on to the next enemy object
 
  LDA objectTypes,Y      \ Set A to the object type for object #Y
 
  CMP #1                 \ If object #Y is a sentry (object type 1), jump to
- BEQ pkey15             \ pkey15
+ BEQ pkey13             \ pkey13
 
- CMP #5                 \ If object #Y is not the Sentinel, jump to pkey16 to
- BNE pkey16             \ move on to the next enemy object
+ CMP #5                 \ If object #Y is not the Sentinel, jump to pkey14 to
+ BNE pkey14             \ move on to the next enemy object
 
 
-.pkey15
+.pkey13
 
                         \ If we get here then object #Y is the Sentinel or a
                         \ sentry
@@ -9238,26 +9266,26 @@ L1145 = C1144+1
  TXA                    \ Set A to the object number of the meanie that the
                         \ player is trying to absorb
 
- CMP enemyData5,Y       \ If A <> enemyData5 for object #Y, jump to pkey16 to
- BNE pkey16             \ move on to the next enemy object ???
+ CMP enemyData5,Y       \ If A <> enemyData5 for object #Y, jump to pkey14 to
+ BNE pkey14             \ move on to the next enemy object ???
 
  LDA #%10000000         \ Set bit 7 of enemyData5 for object #Y (the sentry or
  STA enemyData5,Y       \ Sentinel) ???
 
- BNE pkey8              \ Jump to pkey8 to delete the meanie in object #X, add
+ BNE pkey6              \ Jump to pkey6 to delete the meanie in object #X, add
                         \ the meanie's energy to the player's energy, and return
                         \ from the subroutine with the C flag clear (this BNE is
                         \ effectively a JMP as A is never zero)
 
-.pkey16
+.pkey14
 
  DEY                    \ Decrement the counter in Y to move on to the next
                         \ enemy object number
 
- BPL pkey14             \ Loop back until we have processed all eight possible
+ BPL pkey12             \ Loop back until we have processed all eight possible
                         \ enemy objects
 
- BMI pkey8              \ Jump to pkey8 to delete the meanie in object #X, add
+ BMI pkey6              \ Jump to pkey6 to delete the meanie in object #X, add
                         \ the meanie's energy to the player's energy, and return
                         \ from the subroutine with the C flag clear
 
@@ -12645,7 +12673,8 @@ L23E3 = C23E2+1
 
 .rvis1
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
  LDY #0                 \ Set T = 0, so we can use it to capture the longest
  STY T                  \ axis in the vector calculation below
@@ -12889,7 +12918,7 @@ L23E3 = C23E2+1
 \
 \       Name: CheckSecretStash
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Cracker protection
 \    Summary: Check whether the secret code stash is correctly set up, as part
 \             of the anti-cracker code
 \
@@ -13530,7 +13559,7 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: DrawLandscapeView (Part 1 of ?)
+\       Name: DrawLandscapeView (Part 1 of 3)
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Set up a number of variables for drawing the landscape view
@@ -13540,6 +13569,17 @@ L23E3 = C23E2+1
 \ Arguments:
 \
 \   anotherObject       The number of the object that is viewing the landscape
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              The status of the drawing operation:
+\
+\                         * Clear = the whole landscape has been drawn
+\
+\                         * Set = the whole landscape has not been drawn as the
+\                                 panning key is no longer being held down
 \
 \ ******************************************************************************
 
@@ -13576,19 +13616,24 @@ L23E3 = C23E2+1
 
  LDA quadrantOffsets,Y  \ Set quadrantOffset to 0, 1, 33 or 32 depending on the
  STA quadrantOffset     \ quadrant containing the right edge of the viewing arc
-                        \ ???
+                        \
+                        \ This is used by the DrawTileAndObjects routine ???
 
  TYA                    \ Set viewingQuadrantx4 = Y * 4
  ASL A                  \
  ASL A                  \ So viewingQuadrantx4 contains the quadrant number
  STA viewingQuadrantx4  \ containing the right edge of the viewing arc,
-                        \ multiplied by 4 ???
+                        \ multiplied by 4
+                        \
+                        \ This is used by the sub_C2A39 routine ???
 
  TYA                    \ Set viewingQuadrantOpp = Y - 2
  SEC                    \
  SBC #2                 \ So it viewingQuadrantOpp contains the number of the
  STA viewingQuadrantOpp \ quadrant opposite the quadrant containing the right
-                        \ edge of the viewing arc ???
+                        \ edge of the viewing arc
+                        \
+                        \ This is used by the DrawTileAndObjects routine ???
 
  LDA T                  \ Set angle2Hi = T - 10
  SEC                    \
@@ -13812,18 +13857,19 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: DrawLandscapeView (Part 2 of ?)
+\       Name: DrawLandscapeView (Part 2 of 3)
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Work through the landscape, drawing one row of tiles/objects at a
+\             time, from the back row to the front row
 \
 \ ******************************************************************************
 
 .dlan4
 
  LDA #31                \ We now iterate through all the tile rows, from back to
- STA zTile              \ front, so set a row counter in zTile to iterate from
-                        \ 31 to 0
+ STA zTile              \ front towards the viewer, so set a row counter in
+                        \ zTile to iterate from 31 to 0
 
  LDA xTileLeftPrevious  \ Set xTileViewLeft = xTileLeftPrevious, so we start
  STA xTileViewLeft      \ checking for the view edges, starting from the left
@@ -13833,51 +13879,132 @@ L23E3 = C23E2+1
                         \ This makes the search for edges more efficient as the
                         \ edges in neighbouring rows will be close together
 
- LDA #0                 \ Set drawingTableOffset = 0 for GetTileViewEdges
- STA drawingTableOffset \ flipping like GetTileVisibility ???
+ LDA #0                 \ Set drawingTableOffset = 0 so the call to first call
+ STA drawingTableOffset \ GetTileViewEdges (for tile row 31) will populate the
+                        \ the tables at tileViewData+0, tileViewYaw+0 and
+                        \ tileViewPitch+0 with the angles of the tile being
+                        \ analysed
 
- JSR GetTileViewEdges
+ JSR GetTileViewEdges   \ For the row of tile corners at the very back of the
+                        \ landscape from the point of view of the viewer, work
+                        \ out the edges of the visible portion of the row in
+                        \ the current player view, as left to right tile
+                        \ numbers in xTileViewLeft and xTileViewRight
+                        \
+                        \ We don't draw this row as it doesn't have any tiles
+                        \ anchored by the corners, but we generate the data so
+                        \ we can use it when drawing the tile rows below
 
- LDA xTileViewLeft
- STA xTileLeftPrevious
+ LDA xTileViewLeft      \ Store the column number for the left edge of the
+ STA xTileLeftPrevious  \ visible portion of the row in xTileLeftPrevious, so 
+                        \ we can refer to it above when we move on to the next
+                        \ row in front
+
+                        \ We now loop through each row of tile corners that has
+                        \ a row of tiles anchored, drawing each row in turn,
+                        \ from the back of the view to the front
 
 .dlan5
 
- LDA drawingTableOffset
- EOR #32
- STA drawingTableOffset
- LDA xTileViewLeft
- STA xTileViewLeftEdge
- LDA xTileViewRight
- STA xTileViewRightEdge
+ LDA drawingTableOffset \ Flip drawingTableOffset between 0 and 32, so each call
+ EOR #32                \ to GetTileViewEdges and GetTileViewAngles alternates
+ STA drawingTableOffset \ between storing the tile view data in:
+                        \
+                        \   * (tileViewYawHi tileViewYawLo)
+                        \
+                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
+                        \
+                        \ and storing it in:
+                        \
+                        \   * (tileViewYawHi+32 tileViewYawLo+32)
+                        \
+                        \   * (tileViewPitchHi+32 tileViewPitchLo+32)
+                        \
+                        \   * tileViewData+32
+                        \
+                        \ This lets us store tile view data for both the current
+                        \ row that we are drawing and the previously drawn row
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ LDA xTileViewLeft      \ Set xTileViewLeftEdge to the tile number of the left
+ STA xTileViewLeftEdge  \ edge of the visible portion of the row we are
+                        \ analysing (i.e. zTile) so that we can generate results
+                        \ for other rows without losing this information
 
- DEC zTile
+ LDA xTileViewRight     \ Set xTileViewRightEdge to the tile number of the right
+ STA xTileViewRightEdge \ edge of the visible portion of the row we are
+                        \ analysing (i.e. zTile) so that we can generate results
+                        \ for other rows without losing this information
 
- BMI dlan6
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
- LDY zTile
- CPY zTileViewer
+ DEC zTile              \ Decrement zTile to the z-coordinate of the next tile
+                        \ row forward, towards the viewerm so we can draw this
+                        \ new row
+
+ BMI dlan6              \ If we have already drawn all the rows from 31 to 0,
+                        \ jump to dlan6 to return from the subroutine with the
+                        \ C flag clear
+
+ LDY zTile              \ If the new tile row is not the tile row that contains
+ CPY zTileViewer        \ the viewer, jump to dlan7 to draw it
  BNE dlan7
- JMP dlan18
+
+ JMP dlan18             \ The new tile row contains the viewer, so jump to
+                        \ dlan18 to draw it in two parts
 
 .dlan6
 
- CLC
- RTS
+ CLC                    \ Clear the C flag to indicate that we have drawn the
+                        \ whole landscape
+
+ RTS                    \ Return from the subroutine
 
 .dlan7
 
- JSR GetTileViewEdges
- LDY xTileViewLeft
- CPY xTileViewLeftEdge
- BEQ dlan11
- BCC dlan9
+                        \ We now check whether the new row, which we are about
+                        \ to draw, has the same visible portion as the
+                        \ previously drawn row, or if whether the new row's
+                        \ visible portion extends beyond the previous visible
+                        \ row or doesn't extend as far
+                        \
+                        \ If the visaible portions don't match, then we either
+                        \ need to extend the tile data for the current row to
+                        \ match, or we need to go back and extend the tile data
+                        \ on the previous row to match the current row
+                        \
+                        \ This is so we can draw the tiles properly, as tiles
+                        \ are made up of tiles from both the current and
+                        \ previous rows of tile corners, so the calculate tile
+                        \ view data needs to match between the two rows
+
+ JSR GetTileViewEdges   \ For the new tile row, work out the edges of the
+                        \ visible portion of the row in the current player view,
+                        \ as left to right tile numbers in xTileViewLeft and
+                        \ xTileViewRight
+
+ LDY xTileViewLeft      \ If xTileViewLeft = xTileViewLeftEdge then the left
+ CPY xTileViewLeftEdge  \ edge of the visible row in this new row is at the same
+ BEQ dlan11             \ place as in the previous row, so jump to dlan11 to
+                        \ do the same check on the right edge
+
+ BCC dlan9              \ If xTileViewLeft < xTileViewLeftEdge then the left
+                        \ edge of the visible row in this new row is less than
+                        \ (i.e. to the left of) the edge in the previous row, so
+                        \ jump to dlan9 to go back to the previous row to fetch
+                        \ the tile data needed to make the datasets match
+
+                        \ Otherwise xTileViewLeft > xTileViewLeftEdge and the
+                        \ left edge of the visible row in this new row is
+                        \ greater (i.e. to the right of) the edge in the
+                        \ previous row, so we need to fetch more data on the
+                        \ left end of the current row to make the datasets match
 
 .dlan8
 
- DEY
+ DEY                    \ Decrement Y to move left along the row by one tile
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -13888,23 +14015,51 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- CPY xTileViewLeftEdge
- BNE dlan8
- BEQ dlan11
+ CPY xTileViewLeftEdge  \ Loop back until we have moved left along the tile row
+ BNE dlan8              \ all the way to the left edge in the previous row
+
+ BEQ dlan11             \ Jump to dlan11 to move on to the checks on the right
+                        \ edge (this BEQ is effectively a JMP as we just passed
+                        \ through a BNE)
 
 .dlan9
 
- LDA drawingTableOffset
- EOR #32
- STA drawingTableOffset
- INC zTile
- LDY xTileViewLeftEdge
+                        \ If we get here then xTileViewLeft < xTileViewLeftEdge,
+                        \ so we need to go back to the previous row to fetch
+                        \ more tile data for the left end of the row, so we can
+                        \ use it to work out what to draw for the left end of
+                        \ the new row we are trying to draw
+                        \
+                        \ This is because the visible part of the new row (the
+                        \ row in front) is extending left beyond the left edge
+                        \ of the visible part of the previous row (the one
+                        \ behind), so we won't have calculated the required
+                        \ tile data for the non-visible part of the previous
+                        \ row
+                        \
+                        \ So we do that now by switching back to the previous
+                        \ row and calculating all the tile data for the tiles on
+                        \ the left of the previous row that have visible tiles
+                        \ in front of them in the new row
+
+ LDA drawingTableOffset \ Flip drawingTableOffset between 0 and 32, so the calls
+ EOR #32                \ to GetTileViewEdges and GetTileViewAngles store their
+ STA drawingTableOffset \ data into the storage area that we used for the
+                        \ previous row, so we effectively extend the data to the
+                        \ left for the previous row
+
+ INC zTile              \ Increment xTile to the tile row number behind the one
+                        \ we are drawing, i.e. the previous row in this process
+
+ LDY xTileViewLeftEdge  \ Set Y to the left edge for the previous row
 
 .dlan10
 
- DEY
+ DEY                    \ Decrement Y to move left along the row by one tile
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -13915,26 +14070,53 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- CPY xTileViewLeft
- BNE dlan10
- STY xTileViewLeftEdge
- DEC zTile
- LDA drawingTableOffset
- EOR #32
- STA drawingTableOffset
+ CPY xTileViewLeft      \ Loop back until we have moved left along the tile row
+ BNE dlan10             \ all the way to the left edge in the new row in front
+
+ STY xTileViewLeftEdge  \ Update xTileViewLeftEdge to store the newly moved edge
+                        \ for the previous row
+
+ DEC zTile              \ Decrement zTile once again to move back to the row
+                        \ that we are drawing
+
+ LDA drawingTableOffset \ Flip drawingTableOffset back again, so the calls
+ EOR #32                \ to GetTileViewEdges and GetTileViewAngles once again
+ STA drawingTableOffset \ store data in the new row's storage area
 
 .dlan11
 
- LDY xTileViewRight
- CPY xTileViewRightEdge
- BEQ dlan15
- BCS dlan13
+                        \ By this point we have checked the left edges of the
+                        \ current and previous rows to fill in gaps in the tile
+                        \ data caused by the new row overlapping the previous
+                        \ row, and we now do the exact same thing for the right
+                        \ edges
+
+ LDY xTileViewRight     \ If xTileViewRight = xTileViewRightEdge then the right
+ CPY xTileViewRightEdge \ edge of the visible row in this new row is at the same
+ BEQ dlan15             \ place as in the previous row, so jump to dlan15 to
+                        \ draw the new row as we have all the tile information
+                        \ we need
+
+ BCS dlan13             \ If xTileViewRight > xTileViewRightEdge then the right
+                        \ edge of the visible row in this new row is greater
+                        \ then (i.e. to the right of) the edge in the previous
+                        \ row, so jump to dlan13 to go back to the previous row
+                        \ to fetch the tile data needed to make the datasets
+                        \ match
+
+                        \ Otherwise xTileViewRight < xTileViewRightEdge and the
+                        \ right edge of the visible row in this new row is less
+                        \ than (i.e. to the left of) the edge in the previous
+                        \ row, so we need to fetch more data on the right end of
+                        \ the current row to make the datasets match
 
 .dlan12
 
- INY
+ INY                    \ Increment Y to move right along the row by one tile
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -13945,23 +14127,51 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- CPY xTileViewRightEdge
- BNE dlan12
- BEQ dlan15
+ CPY xTileViewRightEdge \ Loop back until we have moved right along the tile row
+ BNE dlan12             \ all the way to the right edge in the previous row
+
+ BEQ dlan15             \ Jump to dlan15 to draw the new row as we have all the
+                        \ tile information we need (this BEQ is effectively a
+                        \ JMP as we just passed through a BNE)
 
 .dlan13
 
- LDA drawingTableOffset
- EOR #32
- STA drawingTableOffset
- INC zTile
- LDY xTileViewRightEdge
+                        \ If we get here, xTileViewRight > xTileViewRightEdge,
+                        \ so we need to go back to the previous row to fetch
+                        \ more tile data for the right end of the row, so we can
+                        \ use it to work out what to draw for the right end of
+                        \ the new row we are trying to draw
+                        \
+                        \ This is because the visible part of the new row (the
+                        \ row in front) is extending right beyond the right edge
+                        \ of the visible part of the previous row (the one
+                        \ behind), so we won't have calculated the required
+                        \ tile data for the non-visible part of the previous
+                        \ row
+                        \
+                        \ So we do that now by switching back to the previous
+                        \ row and calculating all the tile data for the tiles on
+                        \ the right of the previous row that have visible tiles
+                        \ in front of them in the new row
+
+ LDA drawingTableOffset \ Flip drawingTableOffset between 0 and 32, so the calls
+ EOR #32                \ to GetTileViewEdges and GetTileViewAngles store their
+ STA drawingTableOffset \ data into the storage area that we used for the
+                        \ previous row, so we effectively extend the data to the
+                        \ left for the previous row
+
+ INC zTile              \ Increment xTile to the tile row number behind the one
+                        \ we are drawing, i.e. the previous row in this process
+
+ LDY xTileViewRightEdge \ Set Y to the right edge for the previous row
 
 .dlan14
 
- INY
+ INY                    \ Increment Y to move right along the row by one tile
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -13972,42 +14182,70 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- CPY xTileViewRight
- BNE dlan14
+ CPY xTileViewRight     \ Loop back until we have moved right along the tile row
+ BNE dlan14             \ all the way to the right edge in the new row in front
 
- STY xTileViewRightEdge
- DEC zTile
- LDA drawingTableOffset
- EOR #32
- STA drawingTableOffset
+ STY xTileViewRightEdge \ Update xTileViewRightEdge to store the newly moved
+                        \ edge for the previous row
+
+ DEC zTile              \ Decrement zTile once again to move back to the row
+                        \ that we are drawing
+
+ LDA drawingTableOffset \ Flip drawingTableOffset back again, so the calls
+ EOR #32                \ to GetTileViewEdges and GetTileViewAngles once again
+ STA drawingTableOffset \ store data in the new row's storage area
 
 .dlan15
 
- JSR DrawLandscapeRow
+                        \ By this point we have ensured that we have all the
+                        \ tile data that we need to draw the new row
+
+ JSR DrawLandscapeRow   \ Draw the tile row at z-coordinate zTile, between tiles
+                        \ xTileViewLeftEdge and xTileViewRightEdge, including
+                        \ any objects on any of the tiles
 
  BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to dlan16
- BPL dlan16             \ to jump back to dlan5 ??? (i.e. pretend that the same
-                        \ pan key is being held down)
+ BPL dlan16             \ to jump back to dlan5 (i.e. pretend that the same pan
+                        \ key is being held down even if it isn't)
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
 
  BNE dlan17             \ If the same pan key is not being held down, jump to
                         \ dlan17 to return from the subroutine with the C flag
-                        \ set ???
+                        \ set to indicate that this is the case
 
 .dlan16
 
- JMP dlan5
+ JMP dlan5              \ Loop back to dlan5 to analyse and draw the next tile
+                        \ row forward, towards the viewer
 
 .dlan17
 
- SEC
- RTS
+ SEC                    \ Set the C flag to indicate that we are aborting the
+                        \ drawing of the landscape as the panning key is no
+                        \ longer being held down
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: DrawLandscapeView (Part 3 of 3)
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: Draw a tile row in two parts, one on either side of the viewer
+\
+\ ******************************************************************************
 
 .dlan18
+
+                        \ If we get here then the tile row we are drawing
+                        \ contains the viewer, so we draw it in two parts, on
+                        \ either side of the viewer, and from the outside in
 
  LDY xTileViewLeftEdge
  INY
@@ -14039,6 +14277,8 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
  LDY xTileViewRightEdge
@@ -14051,6 +14291,8 @@ L23E3 = C23E2+1
                         \   * (tileViewYawHi tileViewYawLo)
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
@@ -14071,6 +14313,8 @@ L23E3 = C23E2+1
                         \   * (tileViewYawHi tileViewYawLo)
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
@@ -14093,7 +14337,7 @@ L23E3 = C23E2+1
  STA tileViewYawHi+1,Y
  LDA xTileViewer
  STA L0025
- JSR sub_C2A1B
+ JSR DrawFlatTile
 
 .dlan22
 
@@ -14121,7 +14365,8 @@ L23E3 = C23E2+1
 \       Name: GetTileViewEdges
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: For a given tile row, work out the edges of the visible portion of
+\             the row in the current player view, as left to right tile numbers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14135,10 +14380,11 @@ L23E3 = C23E2+1
 \                       perspective of the viewer
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
-\                       the tileViewData, tileViewYawHi and tileViewYawLo
-\                       drawing data tables; each table contains two complete
-\                       tables, the first table at offset 0 and and the second
-\                       table at offset 32, so we store the results as follows:
+\                       the tileViewData, tileViewYaw and tileViewPitch drawing
+\                       data tables; each table contains two complete sets of
+\                       tile data, with the first table at offset 0 and and the
+\                       second table at offset 32, so we store the results
+\                       as follows:
 \
 \                         * 0 = store the results in the first table
 \                               e.g. in the 32-byte table at tileViewData
@@ -14156,6 +14402,25 @@ L23E3 = C23E2+1
 \   xTileViewRight      The number of the tile column on this row that appears
 \                       at the right edge of the screen
 \
+\   tileViewData        Tile data for all the tile corners analysed while
+\                       looking for the edges
+\
+\   tileViewYawHi       High byte of the yaw angles for all the tile corners
+\                       analysed while looking for the edges
+\
+\   tileViewYawLo       Low byte of the yaw angles for all the tile corners
+\                       analysed while looking for the edges
+\
+\   tileViewPitchHi     High byte of the pitch angles for all the tile corners
+\                       analysed while looking for the edges
+\
+\   tileViewPitchLo     Low byte of the pitch angles for all the tile corners
+\                       analysed while looking for the edges
+\
+\   tileIsOnScreen      Information on whether a tile corner is on-screen for
+\                       all the tile corners analysed while looking for the
+\                       edges
+\
 \ ******************************************************************************
 
 .GetTileViewEdges
@@ -14171,6 +14436,8 @@ L23E3 = C23E2+1
                         \   * (tileViewYawHi tileViewYawLo)
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
@@ -14218,6 +14485,8 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
                         \
                         \ The C flag is set if we have already reached the end
@@ -14256,6 +14525,8 @@ L23E3 = C23E2+1
                         \   * (tileViewYawHi tileViewYawLo)
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
                         \
@@ -14316,6 +14587,8 @@ L23E3 = C23E2+1
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
                         \
+                        \   * tileViewData
+                        \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
                         \
                         \ The C flag is set if we have already reached the start
@@ -14355,6 +14628,8 @@ L23E3 = C23E2+1
                         \   * (tileViewYawHi tileViewYawLo)
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
                         \
@@ -14399,6 +14674,8 @@ L23E3 = C23E2+1
                         \   * (tileViewYawHi tileViewYawLo)
                         \
                         \   * (tileViewPitchHi tileViewPitchLo)
+                        \
+                        \   * tileViewData
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
                         \
@@ -14509,10 +14786,11 @@ L23E3 = C23E2+1
 \                       perspective of the viewer
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
-\                       the tileViewData, tileViewYawHi and tileViewYawLo
-\                       drawing data tables; each table contains two complete
-\                       tables, the first table at offset 0 and and the second
-\                       table at offset 32, so we store the results as follows:
+\                       the tileViewData, tileViewYaw and tileViewPitch drawing
+\                       data tables; each table contains two complete sets of
+\                       tile data, with the first table at offset 0 and and the
+\                       second table at offset 32, so we store the results
+\                       as follows:
 \
 \                         * 0 = store the results in the first table
 \                               e.g. in the 32-byte table at tileViewData
@@ -15374,6 +15652,12 @@ L23E3 = C23E2+1
 \   Category: ???
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   CRE17               Contains an RTS
+\
 \ ******************************************************************************
 
 .sub_C2997
@@ -15413,19 +15697,6 @@ L23E3 = C23E2+1
 
  RTS
 
-.C29C9
-
- LDA tileViewData,X
- AND #&0F
- STA objectTypes+63
- BEQ CRE17
- LDA L0025
- STA xObject+63
- LDA zTile
- STA zObject+63
- LDY #&3F
- JMP DrawObject
-
 \ ******************************************************************************
 \
 \       Name: DrawTileAndObjects
@@ -15433,77 +15704,189 @@ L23E3 = C23E2+1
 \   Category: Drawing the landscape
 \    Summary: Draw a tile and any objects stacked on it
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   columnCounter       The tile x-coordinate (i.e. the tile column)
+\
+\   zTile               The tile z-coordinate (i.e. the tile row)
+\
 \ ******************************************************************************
-
-.DrawTileAndObjects
-
- JSR ProcessSound       \ Process any sounds or music that are being made
-
- LDA L0025
- ORA drawingTableOffset
- CLC
- ADC quadrantOffset
- AND #&3F
- TAX
- BIT drawingTitleScreen
- BMI C29C9
- LDA tileViewData,X
- BEQ CRE17
- CMP #&C0
- BCC tobj1
- PHA
- JSR sub_C2A1B
- PLA
- JMP DrawObjectStack
 
 .tobj1
 
- AND #&0F
- BEQ sub_C2A1B
- CMP #&0C
- BEQ tobj2
- CMP #&04
- BNE C2A39
+                        \ If we get here then we need to draw a block in the
+                        \ title screen's 3D text
+                        \
+                        \ We use object #63 for this purpose
+
+ LDA tileViewData,X     \ Set the object type for object #63 to the bottom
+ AND #%00001111         \ nibble of the tile data ???
+ STA objectTypes+63
+
+ BEQ CRE17              \ If the object type is zero then jump to CRE17 to
+                        \ return from the subroutine without drawing anything
+
+ LDA columnCounter      \ Set the x-coordinate for the block in object #63 to
+ STA xObject+63         \ the tile column in columnCounter
+
+ LDA zTile              \ Set the z-coordinate for the block in object #63 to
+ STA zObject+63         \ the tile row in zTile
+
+ LDY #63                \ Set Y = 63 to pass to the DrawObject routine so we
+                        \ draw object #63
+
+ JMP DrawObject         \ Jump to DrawObject to draw the 3D text block we've set
+                        \ up in object #63, returning from the subroutine using
+                        \ a tail call
+
+.DrawTileAndObjects
+
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
+
+ LDA columnCounter      \ Set X to the index of the tile data that we set up for
+ ORA drawingTableOffset \ this tile in part 2 of the GetTileViewAngles routine
+ CLC                    \ ???
+ ADC quadrantOffset
+ AND #%00111111
+ TAX
+
+ BIT drawingTitleScreen \ If bit 7 of drawingTitleScreen is set then we are
+ BMI tobj1              \ drawing a title screen, so jump up to tobj1 to draw
+                        \ this tile as a block in the title screen's 3D text
+
+ LDA tileViewData,X     \ Set A to the tile data for the current view, which we
+                        \ set in the GetTileViewAngles routine to the tile data
+                        \ for this tile, but zeroed if the tile is not visible
+                        \ (which will happen if the tile does not contain an
+                        \ object and is marked as not being visible from the
+                        \ player's point of view in the tileVisibility table)
+
+ BEQ CRE17              \ If A is zero then we marked this tile as being hidden
+                        \ in part 3 of the GetTileViewAngles routine, so jump to
+                        \ CRE17 to return from the subroutine without drawing
+                        \ anything
+
+ CMP #%11000000         \ If both bits 6 and 7 are set in the tile data then the
+ BCC tobj2              \ tile we are analysing contains an object, in which
+                        \ case keep going, otherwise there is no object on the
+                        \ tile so jump to tobj2
+
+                        \ If we get here then the tile we are drawing contains
+                        \ an object
+
+ PHA                    \ Store the tile data on the stack
+
+ JSR DrawFlatTile       \ Draw the flat tile that's beneath the object
+
+ PLA                    \ Retrieve the tile data from the stack
+
+ JMP DrawObjectStack    \ Draw the stack of objects on top of the tile, and
+                        \ return from the subroutine using a tail call
 
 .tobj2
 
- PHA
- LDA viewingQuadrantOpp
- AND #&01
+                        \ If we get here then the tile we are drawing does not
+                        \ contain an object
+
+ AND #%00001111         \ Set A to the tile shape for the tile, which is in the
+                        \ bottom nibble of the tile data
+
+ BEQ DrawFlatTile       \ If the tile shape is zero then the tile is flat, so
+                        \ jump to DrawFlatTile to draw the flat tile, returning
+                        \ from the subroutine using a tail call
+
+ CMP #12                \ If the tile shape is 12, jump to tobj3
+ BEQ tobj3
+
+ CMP #4                 \ If the tile shape is not 4, jump to sub_C2A39 to draw
+ BNE sub_C2A39          \ the tile, returning from the subroutine using a tail
+                        \ call
+
+.tobj3
+
+                        \ If we get here then the tile shape is 4 or 12
+
+ PHA                    \ Store the tile shape on the stack
+
+ LDA viewingQuadrantOpp \ Set L0045 to bit 0 of viewingQuadrantOpp to pass to
+ AND #1                 \ the sub_C2A5A routine ???
  STA L0045
- PLA
- BNE C2A5A
+
+ PLA                    \ Retrieve the tile shape from the stack
+
+ BNE sub_C2A5A          \ Jump to sub_C2A5A to draw the tile, returning from the
+                        \ subroutine using a tail call (this BNE is effectively
+                        \ a JMP as we know the tile shape is non-zero)
 
 \ ******************************************************************************
 \
-\       Name: sub_C2A1B
+\       Name: DrawFlatTile
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing the landscape
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2A1B
+.DrawFlatTile
 
  LDX #0
+
  LDA L0025
  EOR zTile
- AND #&01
- BEQ C2A2D
+ AND #1
+ BEQ sub_C2A2D
+
+\ ******************************************************************************
+\
+\       Name: SetSecretStash
+\       Type: Subroutine
+\   Category: Cracker protection
+\    Summary: Alter the secret code stash, as part of the anti-cracker code
+\
+\ ******************************************************************************
 
  LDX #8
  LDA seedNumberLFSR+2-8,X
  STA stashOffset-8,X
 
-.C2A2D
+\ ******************************************************************************
+\
+\       Name: sub_C2A2D
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C2A2D
 
  LDA L2CE3,X
  STA L0019
+
  LDA #0
  STA L003B
+
  JMP DrawPolygon
 
-.C2A39
+\ ******************************************************************************
+\
+\       Name: sub_C2A39
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: Draw a tile not of shape 0, 4 or 12 ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The shape of the tile to draw (not 0, 4 or 12)
+\
+\ ******************************************************************************
+
+.sub_C2A39
 
  TAX
  SEC
@@ -15512,7 +15895,8 @@ L23E3 = C23E2+1
  TAY
  AND #&03
  CMP #&01
- BEQ C2A2D
+ BEQ sub_C2A2D
+
  LDA L2D03,Y
  STA L0045
  TXA
@@ -15523,10 +15907,29 @@ L23E3 = C23E2+1
  ADC viewingQuadrantOpp
  CMP #&02
  TXA
- BCS C2A5A
+ BCS sub_C2A5A
  ORA #&10
 
-.C2A5A
+                        \ Fall through into sub_C2A5A to ???
+
+\ ******************************************************************************
+\
+\       Name: sub_C2A5A
+\       Type: Subroutine
+\   Category: Drawing the landscape
+\    Summary: Draw a tile of shape 4 or 12 ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The shape of the tile to draw (4 or 12)
+\
+\   L0045               ???
+\
+\ ******************************************************************************
+
+.sub_C2A5A
 
  STA L0034
  TAX
@@ -16791,9 +17194,27 @@ L23E3 = C23E2+1
                         \
                         \ This means that when we exit the loop, X = 32
 
+                        \ We now have a very short interlude to set up some of
+                        \ the anti-cracker code before continuing in part 4
+
+\ ******************************************************************************
+\
+\       Name: SetCrackerTile
+\       Type: Subroutine
+\   Category: Cracker protection
+\    Summary: Set up anti-cracker tile-related data that can be checked in the
+\             CheckCrackerTile routine
+\
+\ ******************************************************************************
+
+
  LDA tilesAtAltitude+14-32,X    \ Copy the contents of tilesAtAltitude+14 into
  STA GetAngleInRadians-1-32,X   \ the operand into GetAngleInRadians-1, which
-                                \ contains an unused LDA #0 instruction ???
+                                \ contains an unused LDA #0 instruction
+                                \
+                                \ This value is checked in the CheckCrackerTile
+                                \ routine that runs as part of the DrawLetter3D
+                                \ routine when drawing the title screen
 
 \ ******************************************************************************
 \
@@ -17301,6 +17722,12 @@ L23E3 = C23E2+1
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   L0045               ???
 \
 \ ******************************************************************************
 
@@ -18309,7 +18736,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DrawLetter3D
+\       Name: DrawLetter3D (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: ???
@@ -18348,18 +18775,29 @@ L314A = C3148+2
  LDA L0C4A
  STA zTile
 
- LDX #7                 \ Set A = L0C75 ???
- LDA L0C75-7,X
+ LDX #7
+
+\ ******************************************************************************
+\
+\       Name: CheckCrackerTile
+\       Type: Subroutine
+\   Category: Cracker protection
+\    Summary: ???
+\
+\ ******************************************************************************
+
+ LDA L0C75-7,X          \ Set A = L0C75 ???
 
  CMP GetAngleInRadians-1-7,X    \ If A >= the contents of GetAngleInRadians-1,
  BCS C3204                      \ jump to C3204 to skip the following
 
                         \ We set the contents of GetAngleInRadians-1 to the
-                        \ contents of tilesAtAltitude+14 in part 3 of the
-                        \ SmoothTileCorners routine when generating the
-                        \ landscape, so if we get here then something has gone
-                        \ wrong between then and now, presumably because
-                        \ something has been tampered with by crackers ???
+                        \ contents of tilesAtAltitude+14 in the SetCrackerTile
+                        \ routine between part 3 and 4 of the SmoothTileCorners
+                        \ routine when generating the landscape, so if we get
+                        \ here then something has gone wrong between then and
+                        \ now, presumably because something has been tampered
+                        \ with by crackers ???
 
  JSR CorruptSecretCode  \ At this point A < the contents of GetAngleInRadians-1
                         \ and the C flag is clear, so CorruptSecretCode will
@@ -18369,6 +18807,15 @@ L314A = C3148+2
                         \ of seed numbers
 
 .C3204
+
+\ ******************************************************************************
+\
+\       Name: DrawLetter3D (Part 1 of 2)
+\       Type: Subroutine
+\   Category: Title screen
+\    Summary: ???
+\
+\ ******************************************************************************
 
  ASL L0C10,X
  LDA L0C49
@@ -18481,7 +18928,7 @@ L314A = C3148+2
  STA yObjectHi+63
 
  SEC                    \ Set bit 7 of drawingTitleScreen to indicate that we
- ROR drawingTitleScreen \ are drawing the title screen
+ ROR drawingTitleScreen \ are drawing a title screen
 
  LDA #0                 \ Call ProcessTileData with A = 0 to zero the tile data
  JSR ProcessTileData    \ for the whole landscape
@@ -18532,7 +18979,7 @@ L314A = C3148+2
                         \ the secret code screen ???
 
  LSR drawingTitleScreen \ Clear bit 7 of drawingTitleScreen to indicate we are
-                        \ no longer drawing the title screen
+                        \ no longer drawing a title screen
 
  RTS                    \ Return from the subroutine
 
@@ -20126,8 +20573,8 @@ L314A = C3148+2
 \       Name: ProcessSound
 \       Type: Subroutine
 \   Category: Sound
-\    Summary: Process any sound effects that have been configured, such as the
-\             descending game over sound
+\    Summary: Process any sound effects that have been configured so they play
+\             in the background (this is called regularly throughout gameplay)
 \
 \ ******************************************************************************
 
@@ -20371,7 +20818,8 @@ L314A = C3148+2
 
 .game5
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
  LDA musicCounter       \ Loop back to keep calling ProcessSound until bit 7 of
  BPL game5              \ musicCounter is clear, so if any music is being
@@ -20464,7 +20912,8 @@ L314A = C3148+2
 
 .game9
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
  LDA musicCounter       \ Loop back to keep calling ProcessSound until bit 7 of
  BPL game9              \ musicCounter is clear, so if any music is being
@@ -20538,7 +20987,8 @@ L314A = C3148+2
                         \ following two instructions ???
 
  SEC                    \ Set bit 7 of L0C1B ??? This makes DrawLandscapeView
- ROR L0C1B              \ confirm that the pan key is still being held down
+ ROR L0C1B              \ think that the pan key is still being held down even
+                        \ if it isn't
 
 .game13
 
@@ -27330,7 +27780,8 @@ L314A = C3148+2
  DEC L0CD2
  BNE C5F20
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
  DEC L2094
  BEQ CRE41
@@ -27418,7 +27869,8 @@ L314A = C3148+2
                         \ colour 1 (black) to fade the screen to black in a
                         \ slowly decaying manner
 
- JSR ProcessSound       \ Process any sounds or music that are being made
+ JSR ProcessSound       \ Process any sounds or music that are being made in the
+                        \ background
 
  DEC loopCounter
  BNE deca2
@@ -27432,7 +27884,7 @@ L314A = C3148+2
 \
 \       Name: JumpToPreview
 \       Type: Subroutine
-\   Category: Main title loop
+\   Category: Cracker protection
 \    Summary: An intentionally confusing jump point for controlling the main
 \             title loop flow when returning from the GenerateLandscape routine
 \
