@@ -5660,11 +5660,11 @@
      219D   18         CLC
 .hypr4
      219E   60         RTS
-.sub_C219F
+.DrawObjectStack
      219F   29 3F      AND #&3F
      21A1   8D 6C 0C   STA &0C6C
      21A4   A2 00      LDX #&00
-.P21A6
+.stak1
      21A6   E8         INX
      21A7   29 3F      AND #&3F
      21A9   A8         TAY
@@ -5674,7 +5674,7 @@
      21B1   CA         DEX
      21B2   8E 6B 0C   STX &0C6B
      21B5   F0 3C      BEQ &21F3
-.C21B7
+.stak2
      21B7   A6 0B      LDX &0B
      21B9   BD 00 0A   LDA &0A00,X
      21BC   38         SEC
@@ -5688,31 +5688,31 @@
      21CE   B9 40 0A   LDA &0A40,Y
      21D1   C9 06      CMP #&06
      21D3   F0 1B      BEQ &21F0
-.C21D5
+.stak3
      21D5   20 33 5D   JSR &5D33
      21D8   AC 6C 0C   LDY &0C6C
      21DB   CE 6B 0C   DEC &0C6B
      21DE   30 21      BMI &2201
      21E0   AE 6B 0C   LDX &0C6B
      21E3   10 07      BPL &21EC
-.P21E5
+.stak4
      21E5   B9 00 01   LDA &0100,Y
      21E8   29 3F      AND #&3F
      21EA   A8         TAY
      21EB   CA         DEX
-.C21EC
+.stak5
      21EC   D0 F7      BNE &21E5
      21EE   F0 C7      BEQ &21B7
-.C21F0
+.stak6
      21F0   AC 6C 0C   LDY &0C6C
-.C21F3
+.stak7
      21F3   20 33 5D   JSR &5D33
      21F6   B9 00 01   LDA &0100,Y
      21F9   29 3F      AND #&3F
      21FB   A8         TAY
      21FC   CE 6B 0C   DEC &0C6B
      21FF   10 F2      BPL &21F3
-.CRE12
+.stak8
      2201   60         RTS
 .FillScreen
      2202   85 26      STA &26
@@ -6789,7 +6789,7 @@
      2929   A5 7F      LDA &7F
      292B   18         CLC
      292C   60         RTS
-.DrawTileRow
+.DrawLandscapeRow
      292D   A5 37      LDA &37
      292F   85 25      STA &25
 .draw1
@@ -6902,7 +6902,7 @@
      29DA   8D BF 09   STA &09BF
      29DD   A0 3F      LDY #&3F
      29DF   4C 33 5D   JMP &5D33
-.sub_C29E2
+.DrawTileAndObjects
      29E2   20 5A 35   JSR &355A
      29E5   A5 25      LDA &25
      29E7   05 05      ORA &05
@@ -6920,14 +6920,14 @@
      29FE   20 1B 2A   JSR &2A1B
      2A01   68         PLA
      2A02   4C 9F 21   JMP &219F
-.C2A05
+.tobj1
      2A05   29 0F      AND #&0F
      2A07   F0 12      BEQ &2A1B
      2A09   C9 0C      CMP #&0C
      2A0B   F0 04      BEQ &2A11
      2A0D   C9 04      CMP #&04
      2A0F   D0 28      BNE &2A39
-.C2A11
+.tobj2
      2A11   48         PHA
      2A12   A5 4B      LDA &4B
      2A14   29 01      AND #&01
@@ -6986,7 +6986,7 @@
      2A73   A5 3B      LDA &3B
      2A75   09 40      ORA #&40
      2A77   85 3B      STA &3B
-.sub_C2A79
+.DrawPolygon
      2A79   A4 10      LDY &10
      2A7B   C0 02      CPY #&02
      2A7D   B0 14      BCS &2A93
@@ -6997,13 +6997,13 @@
      2A89   B9 2C 00   LDA &002C,Y
      2A8C   C9 01      CMP #&01
      2A8E   F0 0B      BEQ &2A9B
-.C2A90
+.poly1
      2A90   20 5D 29   JSR &295D
-.C2A93
+.poly2
      2A93   20 36 2D   JSR &2D36
      2A96   B0 03      BCS &2A9B
      2A98   20 99 22   JSR &2299
-.CRE18
+.poly3
      2A9B   60         RTS
 .GenerateLandscape
      2A9C   A2 50      LDX #&50
@@ -15612,7 +15612,7 @@
      5D2F   4C 85 5C   JMP &5C85
 .CRE39
      5D32   60         RTS
-.sub_C5D33
+.DrawObject
      5D33   20 01 5C   JSR &5C01
      5D36   A5 7D      LDA &7D
      5D38   C9 0F      CMP #&0F
@@ -15631,31 +15631,31 @@
      5D55   A5 5A      LDA &5A
      5D57   69 C0      ADC #&C0
      5D59   4C 69 5D   JMP &5D69
-.C5D5C
+.drob1
      5D5C   AD 5C 0C   LDA &0C5C
      5D5F   D0 06      BNE &5D67
      5D61   AD 5B 0C   LDA &0C5B
      5D64   F0 09      BEQ &5D6F
      5D66   4A         LSR A
-.C5D67
+.drob2
      5D67   49 80      EOR #&80
-.C5D69
+.drob3
      5D69   10 04      BPL &5D6F
      5D6B   A9 02      LDA #&02
      5D6D   85 53      STA &53
-.C5D6F
+.drob4
      5D6F   A6 4C      LDX &4C
      5D71   BD AC 49   LDA &49AC,X
      5D74   85 4F      STA &4F
      5D76   BC AB 49   LDY &49AB,X
-.C5D79
+.drob5
      5D79   84 4E      STY &4E
      5D7B   B9 A0 4E   LDA &4EA0,Y
      5D7E   A6 53      LDX &53
      5D80   F0 05      BEQ &5D87
      5D82   4D 47 0C   EOR &0C47
      5D85   30 1D      BMI &5DA4
-.C5D87
+.drob6
      5D87   29 3C      AND #&3C
      5D89   85 19      STA &19
      5D8B   B9 A0 4E   LDA &4EA0,Y
@@ -15669,7 +15669,7 @@
      5D9D   85 3D      STA &3D
      5D9F   20 79 2A   JSR &2A79
      5DA2   A4 4E      LDY &4E
-.C5DA4
+.drob7
      5DA4   C8         INY
      5DA5   C4 4F      CPY &4F
      5DA7   90 D0      BCC &5D79
@@ -15679,7 +15679,7 @@
      5DAF   A9 80      LDA #&80
      5DB1   8D 47 0C   STA &0C47
      5DB4   30 B9      BMI &5D6F
-.C5DB6
+.drob8
      5DB6   A9 40      LDA #&40
      5DB8   85 3C      STA &3C
      5DBA   A9 0C      LDA #&0C
@@ -15916,12 +15916,12 @@
      5F60   20 84 1F   JSR &1F84
      5F63   A9 1E      LDA #&1E
      5F65   4C 68 5F   JMP &5F68
-.sub_C5F68
+.DecayScreenToBlack
      5F68   85 1E      STA &1E
-.P5F6A
+.deca1
      5F6A   A9 1E      LDA #&1E
      5F6C   85 15      STA &15
-.P5F6E
+.deca2
      5F6E   20 D9 56   JSR &56D9
      5F71   20 5A 35   JSR &355A
      5F74   C6 15      DEC &15

@@ -8898,7 +8898,7 @@ L1145 = C1144+1
 
  JSR sub_C1CCC          \ Does this work out if we are able to see the tile ???
                         \
-                        \ This also calls GetObjectCoords which sets (L003A, L003C)
+                        \ This also calls GetObjectCoords to set (L003A, L003C)
                         \ which we use below as the tile coordinates where we
                         \ create objects, so is (L003A, L003C) the tile that the
                         \ player is looking at ???
@@ -10848,7 +10848,7 @@ L1145 = C1144+1
  BIT L0C4D
  BPL C1FD2
  LDY currentObject
- JSR sub_C5D33
+ JSR DrawObject
  JMP C1FD5
 
 .C1FD2
@@ -11497,32 +11497,32 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C219F
+\       Name: DrawObjectStack
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C219F
+.DrawObjectStack
 
  AND #&3F
  STA L0C6C
  LDX #0
 
-.P21A6
+.stak1
 
  INX
  AND #&3F
  TAY
  LDA objectFlags,Y
  CMP #&40
- BCS P21A6
+ BCS stak1
  DEX
  STX L0C6B
- BEQ C21F3
+ BEQ stak7
 
-.C21B7
+.stak2
 
  LDX playerObject
  LDA yObjectLo,X
@@ -11531,48 +11531,48 @@ L1145 = C1144+1
  STA T
  LDA yObjectHi,X
  SBC yObjectHi,Y
- BMI C21F0
+ BMI stak6
  ORA T
- BNE C21D5
+ BNE stak3
  LDA objectTypes,Y
  CMP #&06
- BEQ C21F0
+ BEQ stak6
 
-.C21D5
+.stak3
 
- JSR sub_C5D33
+ JSR DrawObject
  LDY L0C6C
  DEC L0C6B
- BMI CRE12
+ BMI stak8
  LDX L0C6B
- BPL C21EC
+ BPL stak5
 
-.P21E5
+.stak4
 
  LDA objectFlags,Y
  AND #&3F
  TAY
  DEX
 
-.C21EC
+.stak5
 
- BNE P21E5
- BEQ C21B7
+ BNE stak4
+ BEQ stak2
 
-.C21F0
+.stak6
 
  LDY L0C6C
 
-.C21F3
+.stak7
 
- JSR sub_C5D33
+ JSR DrawObject
  LDA objectFlags,Y
  AND #&3F
  TAY
  DEC L0C6B
- BPL C21F3
+ BPL stak7
 
-.CRE12
+.stak8
 
  RTS
 
@@ -13125,8 +13125,8 @@ L23E3 = C23E2+1
 
  DEX                    \ Decrement the axis counter
 
- BEQ rvis8              \ If we are just about to calculate the x-axis, jump back
-                        \ to rvis8 to skip the bottom byte
+ BEQ rvis8              \ If we are just about to calculate the x-axis, jump
+                        \ back to rvis8 to skip the bottom byte
 
  BPL rvis7              \ If we are about to calculate the y-axis, jump back to
                         \ rvis7 to include the bottom byte
@@ -13985,7 +13985,7 @@ L23E3 = C23E2+1
 
 .dlan15
 
- JSR DrawTileRow
+ JSR DrawLandscapeRow
 
  BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to dlan16
  BPL dlan16             \ to jump back to dlan5 ??? (i.e. pretend that the same
@@ -14054,7 +14054,7 @@ L23E3 = C23E2+1
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- JSR DrawTileRow
+ JSR DrawLandscapeRow
 
 .dlan21
 
@@ -15086,8 +15086,8 @@ L23E3 = C23E2+1
                         \
                         \ So this call calculates the relative pitch angle for
                         \ the vector between the viewer and the tile that we are
-                        \ analysing, so store it in the table at (tileViewPitchHi
-                        \ tileViewPitchLo)
+                        \ analysing, so store it in the correct entry in the
+                        \ table at (tileViewPitchHi tileViewPitchLo)
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
@@ -15187,7 +15187,7 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: DrawTileRow
+\       Name: DrawLandscapeRow
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a row of tiles between the left visible edge and the right
@@ -15195,7 +15195,7 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.DrawTileRow
+.DrawLandscapeRow
 
  LDA xTileViewLeftEdge  \ Set columnCounter to the column number of the tile at
  STA columnCounter      \ the left edge of the visible row we want to draw
@@ -15208,7 +15208,7 @@ L23E3 = C23E2+1
  CMP xTileViewer        \ If we have gone past the viewer's tile column, jump to
  BCS draw2              \ draw2 to draw the second half
 
- JSR sub_C29E2          \ Draw the tile and any objects stacked on it
+ JSR DrawTileAndObjects \ Draw the tile and any objects stacked on it
 
  INC columnCounter      \ Increment the column counter to move right along the
                         \ row
@@ -15240,7 +15240,7 @@ L23E3 = C23E2+1
  CMP xTileViewer        \ If we have gone past the viewer's tile column, jump to
  BCC draw4              \ draw4 to return from the subroutine
 
- JSR sub_C29E2          \ Draw the tile and any objects stacked on it
+ JSR DrawTileAndObjects \ Draw the tile and any objects stacked on it
 
  LDA columnCounter      \ Set A to the new column number
 
@@ -15424,18 +15424,18 @@ L23E3 = C23E2+1
  LDA zTile
  STA zObject+63
  LDY #&3F
- JMP sub_C5D33
+ JMP DrawObject
 
 \ ******************************************************************************
 \
-\       Name: sub_C29E2
+\       Name: DrawTileAndObjects
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Draw a tile and any objects stacked on it
 \
 \ ******************************************************************************
 
-.sub_C29E2
+.DrawTileAndObjects
 
  JSR ProcessSound       \ Process any sounds or music that are being made
 
@@ -15450,22 +15450,22 @@ L23E3 = C23E2+1
  LDA tileViewData,X
  BEQ CRE17
  CMP #&C0
- BCC C2A05
+ BCC tobj1
  PHA
  JSR sub_C2A1B
  PLA
- JMP sub_C219F
+ JMP DrawObjectStack
 
-.C2A05
+.tobj1
 
  AND #&0F
  BEQ sub_C2A1B
  CMP #&0C
- BEQ C2A11
+ BEQ tobj2
  CMP #&04
  BNE C2A39
 
-.C2A11
+.tobj2
 
  PHA
  LDA viewingQuadrantOpp
@@ -15501,7 +15501,7 @@ L23E3 = C23E2+1
  STA L0019
  LDA #0
  STA L003B
- JMP sub_C2A79
+ JMP DrawPolygon
 
 .C2A39
 
@@ -15534,7 +15534,7 @@ L23E3 = C23E2+1
  STA L003B
  LDA L2CE3,X
  STA L0019
- JSR sub_C2A79
+ JSR DrawPolygon
  LDA L0034
  EOR #&10
  TAX
@@ -15546,37 +15546,37 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2A79
+\       Name: DrawPolygon
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2A79
+.DrawPolygon
 
  LDY L0010
  CPY #&02
- BCS C2A93
+ BCS poly2
  JSR sub_C2D36
- BCS C2A90
+ BCS poly1
  JSR sub_C2299
  LDY L0010
  LDA xVectorBot,Y
  CMP #&01
- BEQ CRE18
+ BEQ poly3
 
-.C2A90
+.poly1
 
  JSR sub_C295D
 
-.C2A93
+.poly2
 
  JSR sub_C2D36
- BCS CRE18
+ BCS poly3
  JSR sub_C2299
 
-.CRE18
+.poly3
 
  RTS
 
@@ -24981,8 +24981,8 @@ L314A = C3148+2
  STA screenAddr         \ Set the low byte of screenAddr(1 0) to the random
                         \ number in A
 
- LDA randomGenerator+1  \ Set randomPixel to the second byte of the random number
- STA randomPixel        \ generator, so this is also a random number
+ LDA randomGenerator+1  \ Set randomPixel to the second byte of the random
+ STA randomPixel        \ number generator, so this is also a random number
 
  AND #&1F               \ Reduce the random number to the range 0 to &1F
 
@@ -26683,14 +26683,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5D33
+\       Name: DrawObject
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Draw a 3D object
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   The number of the object to be drawn
 \
 \ ******************************************************************************
 
-.sub_C5D33
+.DrawObject
 
  JSR sub_C5C01
  LDA hypotenuseHi
@@ -26704,48 +26710,48 @@ L314A = C3148+2
  STA L0C47
  LDX L004C
  LDA L49B6,X
- BEQ C5D6F
+ BEQ drob4
  LSR A
- BCS C5D5C
+ BCS drob1
  LDA L005A
  ADC #&C0
- JMP C5D69
+ JMP drob3
 
-.C5D5C
+.drob1
 
  LDA L0C5C
- BNE C5D67
+ BNE drob2
  LDA L0C5B
- BEQ C5D6F
+ BEQ drob4
  LSR A
 
-.C5D67
+.drob2
 
  EOR #&80
 
-.C5D69
+.drob3
 
- BPL C5D6F
+ BPL drob4
  LDA #&02
  STA L0053
 
-.C5D6F
+.drob4
 
  LDX L004C
  LDA L49AB+1,X
  STA L004F
  LDY L49AB,X
 
-.C5D79
+.drob5
 
  STY L004E
  LDA L4EA0,Y
  LDX L0053
- BEQ C5D87
+ BEQ drob6
  EOR L0C47
- BMI C5DA4
+ BMI drob7
 
-.C5D87
+.drob6
 
  AND #&3C
  STA L0019
@@ -26758,22 +26764,22 @@ L314A = C3148+2
  STA L003C
  LDA L5120,Y
  STA vectorYawAngleLo
- JSR sub_C2A79
+ JSR DrawPolygon
  LDY L004E
 
-.C5DA4
+.drob7
 
  INY
  CPY L004F
- BCC C5D79
+ BCC drob5
  DEC L0053
- BMI C5DB6
- BEQ C5DB6
+ BMI drob8
+ BEQ drob8
  LDA #&80
  STA L0C47
- BMI C5D6F
+ BMI drob4
 
-.C5DB6
+.drob8
 
  LDA #&40
  STA L003C
@@ -26842,10 +26848,11 @@ L314A = C3148+2
 
  LDA #0                 \ Calculate the following:
  STA xDeltaLo           \
-                        \   (xDeltaHi xDeltaLo) =   (xObject+Y 0) - (xObject,X 0)
-                        \                         - (xTitleOffset 0)
+                        \   (xDeltaHi xDeltaLo) = (xObject+Y 0) - (xObject,X 0)
+                        \                                    - (xTitleOffset 0)
                         \
-                        \ starting with the low byte (which we know will be zero)
+                        \ starting with the low byte (which we know will be
+                        \ zero)
 
  SEC                    \ And then subtracting the high bytes
  LDA xObject,Y
@@ -26877,7 +26884,8 @@ L314A = C3148+2
  STA zDeltaLo           \
                         \   (zDeltaHi zDeltaLo) = (zObject+Y 0) - (zObject,X 0)
                         \
-                        \ starting with the low byte (which we know will be zero)
+                        \ starting with the low byte (which we know will be
+                        \ zero)
 
  SEC                    \ And then subtracting the high bytes
  LDA zObject,Y
@@ -27360,7 +27368,8 @@ L314A = C3148+2
  STA gameOverSoundPitch \ processing for the game over sound
 
  PLA
- JSR sub_C5F68
+ JSR DecayScreenToBlack
+
  LDY #0
  STY sightsByteCount
  STY sightsAreVisible
@@ -27381,28 +27390,29 @@ L314A = C3148+2
  JSR PlayMusic          \ game over music
 
  JSR sub_C1F84
- LDA #&1E
- JMP sub_C5F68
+
+ LDA #30
+ JMP DecayScreenToBlack
 
 \ ******************************************************************************
 \
-\       Name: sub_C5F68
+\       Name: DecayScreenToBlack
 \       Type: Subroutine
-\   Category: ???
+\   Category: Graphics
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C5F68
+.DecayScreenToBlack
 
  STA L001E
 
-.P5F6A
+.deca1
 
- LDA #&1E
+ LDA #30
  STA loopCounter
 
-.P5F6E
+.deca2
 
  JSR DrawBlackDots      \ Draw 80 randomly positioned dots on the screen in
                         \ colour 1 (black) to fade the screen to black in a
@@ -27411,9 +27421,11 @@ L314A = C3148+2
  JSR ProcessSound       \ Process any sounds or music that are being made
 
  DEC loopCounter
- BNE P5F6E
+ BNE deca2
+
  DEC L001E
- BNE P5F6A
+ BNE deca1
+
  RTS
 
 \ ******************************************************************************
@@ -27607,7 +27619,7 @@ L314A = C3148+2
 
  JSR sub_C5F80
  LDY #&01
- JMP sub_C5D33
+ JMP DrawObject
 
 \ ******************************************************************************
 \
