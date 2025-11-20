@@ -292,6 +292,11 @@
                         \                   that we need to fill beyond the 32
                         \                   columns already filled
 
+.blackDotCounter
+
+ SKIP 0                 \ A counter for black dots that are drawn in the screen
+                        \ decaying routine
+
 .treeCounter
 
  SKIP 0                 \ A counter for the number of trees that are added to
@@ -27964,26 +27969,36 @@ L314A = C3148+2
 
  JSR sub_C1F84
 
- LDA #30
- JMP DecayScreenToBlack
+ LDA #30                \ Smother the screen in 30 * 2400 = 72,000 randomly
+ JMP DecayScreenToBlack \ placed black dots to decay the screen to black,
+                        \ returning from the subroutine using a tail call
 
 \ ******************************************************************************
 \
 \       Name: DecayScreenToBlack
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Smother the screen in randomly placed black dots to decay the
+\             screen to black
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The number of 2400-dot plotting cycles to perform when
+\                       decaying the screen
 \
 \ ******************************************************************************
 
 .DecayScreenToBlack
 
- STA L001E
+ STA blackDotCounter    \ Set blackDotCounter to the number of 2400-dot
+                        \ plotting cycles we need to perform
 
 .deca1
 
- LDA #30
- STA loopCounter
+ LDA #30                \ Set loopCounter = 30 for the inner loop, so each
+ STA loopCounter        \ iteration of the inner loop draws 30 * 80 = 2400 dots
 
 .deca2
 
@@ -27994,13 +28009,14 @@ L314A = C3148+2
  JSR ProcessSound       \ Process any sounds or music that are being made in the
                         \ background
 
- DEC loopCounter
- BNE deca2
+ DEC loopCounter        \ Loop back to plot another 80 dots until we have done
+ BNE deca2              \ this 30 times (to give a total of 2400 dots)
 
- DEC L001E
- BNE deca1
+ DEC blackDotCounter    \ Loop back to plot 80 * 30 dots until we have done this
+ BNE deca1              \ blackDotCounter times (to give a total of
+                        \ 2400 * blackDotCounter dots)
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \

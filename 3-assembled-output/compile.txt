@@ -82,6 +82,8 @@
      001D
 .moreColumnsToFill
      001E
+.blackDotCounter
+     001E
 .treeCounter
      001E
 .L001E
