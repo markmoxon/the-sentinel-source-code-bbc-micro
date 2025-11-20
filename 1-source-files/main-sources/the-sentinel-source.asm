@@ -1576,9 +1576,19 @@
 
  EQUB 0                 \ The tile z-coordinate of the Sentinel
 
-.L0C1B
+.keepCheckingPanKey
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Controls whether the DrawLandscapeView routine aborts
+                        \ drawing if the pan key is released before it has
+                        \ finished
+                        \
+                        \   * Bit 7 clear = keep drawing the landscape view
+                        \                   irrespective of whether the pan key
+                        \                   is still being pressed
+                        \
+                        \   * Bit 7 set = check whether the same pan key is
+                        \                 being held down and abort the drawing
+                        \                 if it is no longer being pressed
 
 .titleObjectToDraw
 
@@ -14197,9 +14207,18 @@ L23E3 = C23E2+1
                         \ xTileViewLeftEdge and xTileViewRightEdge, including
                         \ any objects on any of the tiles
 
- BIT L0C1B              \ If bit 7 of L0C1B is clear then ??? so jump to dlan16
- BPL dlan16             \ to jump back to dlan5 (i.e. pretend that the same pan
-                        \ key is being held down even if it isn't)
+ BIT keepCheckingPanKey \ If bit 7 of keepCheckingPanKey is clear then we should
+ BPL dlan16             \ keep drawing the landscape irrespective of whether the
+                        \ pan key is still being pressed, so jump to dlan16 to
+                        \ jump back to dlan5 to keep drawing the landscape
+
+                        \ If we get here then we need to check whether the same
+                        \ pan key is still being held down, and abort the
+                        \ drawing process if it isn't (this happens if the
+                        \ player initiates a pan, thus triggering this drawing
+                        \ process, but releases the key before the drawing has
+                        \ finished, in which case we don't need to finish off
+                        \ drawing the landscape)
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -21077,11 +21096,18 @@ L314A = C3148+2
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is set then the sights
  BMI game13             \ are being shown, so jump to game13 to skip the
-                        \ following two instructions ???
+                        \ following two instructions
+                        \
+                        \ This ensures that when we pan the screen as a result
+                        \ of the sights moving off the edge of the screen, the
+                        \ panning process completes and doesn't get aborted if
+                        \ the player releases the pan key
 
- SEC                    \ Set bit 7 of L0C1B ??? This makes DrawLandscapeView
- ROR L0C1B              \ think that the pan key is still being held down even
-                        \ if it isn't
+ SEC                    \ The sights are not visible so we are panning the
+ ROR keepCheckingPanKey \ screen because the player has pressed a pan key, so
+                        \ set bit 7 of keepCheckingPanKey so DrawLandscapeView
+                        \ will abort the drawing process if the player releases
+                        \ the pan key before the drawing process has finished
 
 .game13
 
@@ -21089,7 +21115,10 @@ L314A = C3148+2
                         \ implement the pan and draw the new bits of the
                         \ landscape screen ???
 
- LSR L0C1B              \ Cleat bit 7 of L0C1B ???
+ LSR keepCheckingPanKey \ Clear bit 7 of keepCheckingPanKey so DrawLandscapeView
+                        \ will keep drawing the landscape irrespective of the
+                        \ pan keys being held down (so this takes the routine
+                        \ back to its default behaviour)
 
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw

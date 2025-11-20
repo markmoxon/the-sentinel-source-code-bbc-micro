@@ -2438,7 +2438,7 @@
      0C19   00
 .zTileSentinel
      0C1A   00
-.L0C1B
+.keepCheckingPanKey
      0C1B   00
 .titleObjectToDraw
      0C1C   05
