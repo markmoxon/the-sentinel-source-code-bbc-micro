@@ -5427,7 +5427,8 @@ L1145 = C1144+1
                         \ play4 to progress the game
 
  LDA #30                \ The Sentinel has won, so display the game over screen
- JSR DisplayGameOver    \ with A = 30 ???
+ JSR DisplayGameOver    \ with A = 30, so we decay the screen to black with a
+                        \ mass of 30 * 2400 = 72,000 randomly placed black dots
 
 .play3
 
@@ -20963,7 +20964,8 @@ L314A = C3148+2
  STA soundEffect        \ game over sound
 
  LDA #5                 \ The Sentinel has won, so display the game over screen
- JSR DisplayGameOver    \ with A = 5 ???
+ JSR DisplayGameOver    \ with A = 5, so we decay the screen to black with a
+                        \ mass of 5 * 2400 = 12,000 randomly placed black dots
 
 .game6
 
@@ -27925,14 +27927,33 @@ L314A = C3148+2
 \
 \       Name: DisplayGameOver
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: Display the game over screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The number of 2400-dot plotting cycles to perform when
+\                       decaying the screen from the landscape view to the game
+\                       over screen
+\                       
+\                         * 5 = 12,000 dots for when the player runs out of
+\                               energy when trying to hyperspace
+\                       
+\                         * 30 = 72,000 dots for when the player is absorbed by
+\                                the Sentinel
+\
+\   titleObjectToDraw   The type of object to draw on the game over screen
+\
+\                         * ???
 \
 \ ******************************************************************************
 
 .DisplayGameOver
 
- PHA
+ PHA                    \ Store the argument in A on the stack, so we can fetch
+                        \ it later
 
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
@@ -27945,13 +27966,19 @@ L314A = C3148+2
  LDA #250               \ Set gameOverSoundPitch = 250 to start the sound effect
  STA gameOverSoundPitch \ processing for the game over sound
 
- PLA
- JSR DecayScreenToBlack
+ PLA                    \ Retrieve the argument A from the stack, so it contains
+                        \ the number of black dots to draw on the screen
 
- LDY #0
- STY sightsByteCount
- STY sightsAreVisible
- LDA titleObjectToDraw
+ JSR DecayScreenToBlack \ Decay the screen to black with a mass of A * 2400
+                        \ randomly placed black dots
+
+ LDY #0                 \ Set sightsByteCount to zero to reset the sights pixel
+ STY sightsByteCount    \ byte stash
+
+ STY sightsAreVisible   \ Clear bit 7 of sightsAreVisible to indicate that the
+                        \ sights are not visible
+
+ LDA titleObjectToDraw  \ Draw the title object specified by titleObjectToDraw
  JSR sub_C5F80
 
  LDA #3                 \ Set screenBackground = 3 so the next time the screen
@@ -27978,7 +28005,7 @@ L314A = C3148+2
 \       Name: DecayScreenToBlack
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Smother the screen in randomly placed black dots to decay the
+\    Summary: Smother the screen with randomly placed black dots to decay the
 \             screen to black
 \
 \ ------------------------------------------------------------------------------
