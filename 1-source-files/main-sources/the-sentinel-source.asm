@@ -1530,7 +1530,7 @@
                         \
                         \   * 0 = fill scanner with black
                         \
-                        \   * ???
+                        \   * 4 = fill the scanner with static in colour 3
                         \
                         \   * 8 = fill scanner with green
 
@@ -7442,7 +7442,7 @@ L1145 = C1144+1
 \
 \       Name: UpdateScanner
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Update the scanner, if required
 \
 \ ******************************************************************************
@@ -7465,7 +7465,7 @@ L1145 = C1144+1
 \
 \       Name: UpdateScannerNow
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Update the scanner to a new state
 \
 \ ------------------------------------------------------------------------------
@@ -7664,7 +7664,7 @@ L1145 = C1144+1
 \
 \       Name: scannerStatic
 \       Type: Variable
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Storage for a random number that's used to generate static in the
 \             scanner
 \
@@ -7678,7 +7678,7 @@ L1145 = C1144+1
 \
 \       Name: scannerBlock
 \       Type: Variable
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: A counter for the eight character blocks that make up the scanner
 \
 \ ******************************************************************************
@@ -7691,20 +7691,26 @@ L1145 = C1144+1
 \
 \       Name: scannerState
 \       Type: Variable
-\   Category: Graphics
-\    Summary: ???
+\   Category: Scanner and energy icons
+\    Summary: The current state of the scanner (black, static or green)
 \
 \ ******************************************************************************
 
 .scannerState
 
- EQUB 0
+ EQUB 0                 \ The current state of the scanner:
+                        \
+                        \   * 0 = fill scanner with black
+                        \
+                        \   * 4 = fill the scanner with static in colour 3
+                        \
+                        \   * 8 = fill scanner with green
 
 \ ******************************************************************************
 \
 \       Name: scannerPixelByte
 \       Type: Variable
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Pixel bytes for the three states of the scanner (black, static and
 \             green)
 \
@@ -8245,7 +8251,7 @@ L1145 = C1144+1
 \
 \       Name: SetEnemyData
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Gameplay
 \    Summary: ???
 \
 \ ------------------------------------------------------------------------------
@@ -10912,7 +10918,7 @@ L1145 = C1144+1
 
 .C2008
 
- STA L2093
+ STA L2092+1
  BIT L0C6D
  BVC C2022
  BIT sentinelHasWon
@@ -10935,7 +10941,7 @@ L1145 = C1144+1
  CLI
  LDA L2092
  STA toAddr
- LDA L2093
+ LDA L2092+1
  STA toAddr+1
  LDA L0C69
  STA loopCounter
@@ -10948,7 +10954,7 @@ L1145 = C1144+1
  ADC #&08
  STA L2092
  STA toAddr
- LDA L2093
+ LDA L2092+1
  ADC #&00
  CMP #&80
  BCC C2053
@@ -10956,7 +10962,7 @@ L1145 = C1144+1
 
 .C2053
 
- STA L2093
+ STA L2092+1
  STA toAddr+1
 
 .C2058
@@ -11002,8 +11008,8 @@ L1145 = C1144+1
 \
 \       Name: viewBufferAddr
 \       Type: Variable
-\   Category: Graphics
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Storage for the address of the current view screen buffer
 \
 \ ******************************************************************************
 
@@ -11022,20 +11028,7 @@ L1145 = C1144+1
 
 .L2092
 
- EQUB &00
-
-\ ******************************************************************************
-\
-\       Name: L2093
-\       Type: Variable
-\   Category: ???
-\    Summary: ???
-\
-\ ******************************************************************************
-
-.L2093
-
- EQUB &00
+ EQUW &0000
 
 \ ******************************************************************************
 \
@@ -18535,8 +18528,9 @@ L314A = C3148+2
 \
 \       Name: CorruptSecretCode
 \       Type: Subroutine
-\   Category: Landscape
-\    Summary: ???
+\   Category: Cracker protection
+\    Summary: Corrupt the generation process for the landscape's secret code by
+\             fetching one more seed number than necessary
 \
 \ ******************************************************************************
 
@@ -21020,7 +21014,7 @@ L314A = C3148+2
 \
 \       Name: ClearIconsScanner
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Clear the energy icon and scanner row at the top of the screen
 \
 \ ******************************************************************************
@@ -21115,7 +21109,7 @@ L314A = C3148+2
 \
 \       Name: UpdateIconsScanner
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Update the icons in the top-left corner of the screen to show the
 \             player's current energy level and redraw the scanner box
 \
@@ -21265,7 +21259,7 @@ L314A = C3148+2
 \
 \       Name: DrawIcon
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Draw a single icon in the top-left corner of the screen (via the
 \             icon screen buffer at iconBuffer) and move along to the right
 \
@@ -21812,7 +21806,7 @@ L314A = C3148+2
 \
 \       Name: DisplayViewBuffer
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying the
 \             relevant parts of the view screen buffer into screen memory
 \
@@ -21879,7 +21873,7 @@ L314A = C3148+2
 \
 \       Name: DisplayBufferColumn
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying a 2-pixel
 \             wide column from the view screen buffer into screen memory
 \
@@ -21980,7 +21974,7 @@ L314A = C3148+2
 \
 \       Name: DisplayBufferRow
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying an 8-pixel
 \             high character row from the view screen buffer into screen memory
 \
@@ -22055,7 +22049,7 @@ L314A = C3148+2
 \
 \       Name: DisplayBufferBlock
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying an 8-byte
 \             character block from the view screen buffer into screen memory
 \
@@ -22111,7 +22105,7 @@ L314A = C3148+2
 \
 \       Name: updateOffsetLo
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The offset within screen memory for the player's landscape view
 \             of the area to update following a scroll (low byte)
 \
@@ -22128,7 +22122,7 @@ L314A = C3148+2
 \
 \       Name: updateOffsetHi
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The offset within screen memory for the player's landscape view
 \             of the area to update following a scroll (high byte)
 \
@@ -22145,7 +22139,7 @@ L314A = C3148+2
 \
 \       Name: scrollScreenLo
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The amount to change the start of screen memory in order to scroll
 \             the player's landscape view through each direction (low byte)
 \
@@ -22162,7 +22156,7 @@ L314A = C3148+2
 \
 \       Name: scrollScreenHi
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The amount to change the start of screen memory in order to scroll
 \             the player's landscape view through each direction (high byte)
 \
@@ -22179,7 +22173,7 @@ L314A = C3148+2
 \
 \       Name: viewBufferAddrHi
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The value to add to updateOffsetHi for each direction to get the
 \             high byte of the view screen buffer address in viewBufferAddr(1 0)
 \
@@ -22196,7 +22190,7 @@ L314A = C3148+2
 \
 \       Name: viewBufferAddrLo
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The value to add to updateOffsetLo for each direction to get the
 \             low byte of the view screen buffer address in viewBufferAddr(1 0)
 \
@@ -22226,7 +22220,7 @@ L314A = C3148+2
 \
 \       Name: SetNumberOfScrolls
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Start a scroll process by setting the number of scroll steps and
 \             the address in viewBufferAddr(1 0) ???
 \
@@ -22248,7 +22242,7 @@ L314A = C3148+2
 \
 \       Name: SetViewBufferAddr
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Set the address in viewBufferAddr(1 0) ???
 \
 \ ------------------------------------------------------------------------------
@@ -23324,7 +23318,7 @@ L314A = C3148+2
 \
 \       Name: GetIconRowAddress
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Scanner and energy icons
 \    Summary: Calculate the address in screen memory of the icon and scanner row
 \             at the top of the screen
 \
@@ -23369,7 +23363,7 @@ L314A = C3148+2
 \
 \       Name: DisplayIconBuffer
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Display the redrawn icon and scanner row by copying the contents
 \             of the icon screen buffer into screen memory
 \
@@ -23606,7 +23600,7 @@ L314A = C3148+2
 \
 \       Name: tileVisibility
 \       Type: Variable
-\   Category: Landscape
+\   Category: Drawing the landscape
 \    Summary: A table for storing the visibility of each tile from the player's
 \             point of view, with one bit per tile (1 = visible, 0 = hidden)
 \
@@ -23651,7 +23645,7 @@ L314A = C3148+2
 \
 \       Name: viewBufferLeft
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The view screen buffer for buffering the new part of the player's
 \             scrolling landscape view when panning right (scrolling left)
 \
@@ -24060,7 +24054,7 @@ L314A = C3148+2
 \
 \       Name: viewBufferRight
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The view screen buffer for buffering the new part of the player's
 \             scrolling landscape view when panning left (scrolling right)
 \
@@ -24107,7 +24101,7 @@ L314A = C3148+2
 \
 \       Name: viewBufferUp
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The view screen buffer for buffering the new part of the player's
 \             scrolling landscape view when panning up (scrolling down)
 \
@@ -25555,7 +25549,7 @@ L314A = C3148+2
 \
 \       Name: SetScannerUpdate
 \       Type: Subroutine
-\   Category: Main game loop
+\   Category: Scanner and energy icons
 \    Summary: Set the scanner update status and delay for 40 empty loops of 256
 \             iterations each (i.e. 10,240 loops)
 \
@@ -26632,7 +26626,7 @@ L314A = C3148+2
 \
 \       Name: viewBufferDown
 \       Type: Subroutine
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: The view screen buffer for buffering the new part of the player's
 \             scrolling landscape view when panning down (scrolling up)
 \
@@ -27736,7 +27730,7 @@ L314A = C3148+2
  CLC
  ADC fromAddr
  STA toAddr
- LDA L2093
+ LDA L2092+1
  ADC fromAddr+1
  CMP #&80
  BCC C5ED9
