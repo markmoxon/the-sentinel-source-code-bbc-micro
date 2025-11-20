@@ -337,12 +337,8 @@
 
 .columnCounter
 
- SKIP 0                 \ A counter for the number of columns to fill in the
+ SKIP 1                 \ A counter for the number of columns to fill in the
                         \ FillScreen routine
-
-.L0025
-
- SKIP 1                 \ ???
 
 .screenRowNumber
 
@@ -13874,7 +13870,7 @@ L23E3 = C23E2+1
 
  LDA #0                 \ Set drawingTableOffset = 0 so the call to first call
  STA drawingTableOffset \ GetTileViewEdges (for tile row 31) will populate the
-                        \ the tables at tileViewData+0, tileViewYaw+0 and
+                        \ tables at tileViewData+0, tileViewYaw+0 and
                         \ tileViewPitch+0 with the angles of the tile being
                         \ analysed
 
@@ -13946,7 +13942,7 @@ L23E3 = C23E2+1
  BNE dlan7
 
  JMP dlan18             \ The new tile row contains the viewer, so jump to
-                        \ dlan18 to draw it in two parts
+                        \ dlan18 to draw this row as a special case
 
 .dlan6
 
@@ -14237,29 +14233,64 @@ L23E3 = C23E2+1
 .dlan18
 
                         \ If we get here then the tile row we are drawing
-                        \ contains the viewer, so we draw it in two parts, on
-                        \ either side of the viewer, and from the outside in
+                        \ contains the viewer
+                        \
+                        \ The viewer can only see one half of the row, because
+                        \ they are standing on it, so we need to work out which
+                        \ half this is (if they can see any of the row at all)
+                        \ and then draw it
+                        \
+                        \ We don't draw the viewer's tile yet, as we do that
+                        \ later
 
- LDY xTileViewLeftEdge
- INY
- CPY xTileViewer
- BNE dlan19
- STY xTileViewRightEdge
- JMP dlan20
+ LDY xTileViewLeftEdge  \ Set Y to the tile number just inside the left edge of
+ INY                    \ the visible portion of the row
+
+ CPY xTileViewer        \ If this isn't the viewer's tile, jump to dlan19 to
+ BNE dlan19             \ perform the same check on the right side
+
+                        \ If we get here then the visible part of the viewer's
+                        \ tile row starts on the tile just to the left of their
+                        \ position, so we are looking left and should draw that
+                        \ part of the visible row
+
+ STY xTileViewRightEdge \ Set the right edge to the viewer's tile, so we draw
+                        \ from the left edge up to (but not including) the
+                        \ viewer's tile
+
+ JMP dlan20             \ Jump to dlan20 to draw the tile row containing the
+                        \ viewer
 
 .dlan19
 
- LDY xTileViewRightEdge
+                        \ If we get here then the left edge is not just to the
+                        \ left of the viewer, so now we check the right edge
+
+ LDY xTileViewRightEdge \ Set Y to the tile number that's two to the left of the
+ DEY                    \ right edge of the visible portion
  DEY
- DEY
- CPY xTileViewer
- BNE dlan21
- INY
- STY xTileViewLeftEdge
+
+ CPY xTileViewer        \ If this isn't the viewer's tile, jump to dlan21 to
+ BNE dlan21             \ skip drawing the tile row altogether, as we can't see
+                        \ it to the left or the right (so instead we move on to
+                        \ drawing the player's tile)
+
+                        \ If we get here then the visible part of the viewer's
+                        \ tile row starts on the tile just to the right of their
+                        \ position, so we are looking right and should draw that
+                        \ part of the visible row
+
+ INY                    \ Set the left edge to the tile just right of the
+ STY xTileViewLeftEdge  \ viewer's tile, so we draw from just right of the
+                        \ viewer's tile to the right edge
 
 .dlan20
 
- LDY xTileViewLeftEdge
+                        \ We now draw the tile row containing the viewer, but
+                        \ first we need to ensure we have the data for the tiles
+                        \ at each end
+
+ LDY xTileViewLeftEdge  \ Set Y to the left edge of the viewer's tile row
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -14274,7 +14305,7 @@ L23E3 = C23E2+1
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- LDY xTileViewRightEdge
+ LDY xTileViewRightEdge \ Set Y to the right edge of the viewer's tile row
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -14289,14 +14320,27 @@ L23E3 = C23E2+1
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- JSR DrawLandscapeRow
+ JSR DrawLandscapeRow   \ Draw the tile row at z-coordinate zTile, between tiles
+                        \ xTileViewLeftEdge and xTileViewRightEdge, including
+                        \ any objects on any of the tiles
 
 .dlan21
 
- LDA #0
- STA drawingTableOffset
- INC zTile
- LDY xTileViewer
+                        \ We now draw the tile row beneath the viewer, but first
+                        \ we need to ensure we have the data for the tile just
+                        \ in front of it
+
+ LDA #0                 \ Set drawingTableOffset = 0 so the following call to
+ STA drawingTableOffset \ GetTileViewAngles (which we call to fetch the data for
+                        \ the tile corner row in front of viewer) will populate
+                        \ the tables at tileViewYaw+0 and tileViewPitch+0
+
+ INC zTile              \ Increment the row number so it's the row in front of
+                        \ the viewer
+
+ LDY xTileViewer        \ Set Y to the tile column for the viewer's tile, so we
+                        \ can fetch the tile data for the tile directly in front
+                        \ of the viewer
 
  JSR GetTileViewAngles  \ Calculate the pitch and yaw angles for the tile corner
                         \ at (Y, zTile), from the perspective of the viewer, and
@@ -14311,47 +14355,102 @@ L23E3 = C23E2+1
                         \
                         \   * tileIsOnScreen (also returned in A and the Z flag)
 
- LDA tileViewPitchHi,Y
- CMP #&02
- BCS dlan22
- STA tileViewPitchHi+1,Y
- LDA tileViewPitchLo,Y
- STA tileViewPitchLo+1,Y
- LDA #32
- STA drawingTableOffset
- DEC zTile
- LDA #&FF
- STA tileViewPitchHi+32,Y
- STA tileViewPitchHi+33,Y
- STA tileViewYawHi+32,Y
- STA tileViewYawHi,Y
- LDA #&14
- STA tileViewYawHi+33,Y
- STA tileViewYawHi+1,Y
- LDA xTileViewer
- STA L0025
- JSR DrawFlatTile
+                        \ By this point we have the following:
+                        \
+                        \   * The tables at tileViewYaw+0 and tileViewPitch+0
+                        \     contain data for the tile corner row in front of
+                        \     the viewer, i.e. for the front edge of the tile on
+                        \     which the viewer sits
+                        \
+                        \   * The tables at tileViewYaw+32 and tileViewPitch+32
+                        \     contain data for the tile corner row containing
+                        \     the viewer, i.e. for the rear edge of the tile on
+                        \     which the viewer sits
+                        \
+                        \ Y is the offset of the viewer's tile within these
+                        \ tables, so, for example:
+                        \
+                        \    * tileViewPitchHi,Y is the corner at the front
+                        \      left of the viewer's tile
+                        \
+                        \    * tileViewPitchHi+1,Y is the corner at the front
+                        \      right of the viewer's tile
+                        \
+                        \    * tileViewPitchHi+32,Y is the corner at the rear
+                        \      left of the viewer's tile
+                        \
+                        \    * tileViewPitchHi+32+1,Y is the corner at the rear
+                        \      right of the viewer's tile
+                        \
+                        \ We now set up the angles for the tile to ensure that
+                        \ it looks correct
+
+ LDA tileViewPitchHi,Y  \ If the high byte of the pitch angle of the front-left
+ CMP #2                 \ edge of the viewer's tile is 2 or more, then it is off
+ BCS dlan22             \ the top of the screen, so jump to dlan22 to skip
+                        \ drawing it and instead return from the subroutine ???
+
+ STA tileViewPitchHi+1,Y    \ Set the pitch angle for the tile corner in the
+ LDA tileViewPitchLo,Y      \ front-right corner of the viewer's tile to be the
+ STA tileViewPitchLo+1,Y    \ same as the front-left corner, so this ensures
+                            \ that the two front corners of the tile containing
+                            \ the viewer are horizontally level
+
+ LDA #32                \ Set drawingTableOffset = 0 so the following call to
+ STA drawingTableOffset \ DrawFlatTile (for the tile row beneath the viewer)
+                        \ will fetch data from the tables at tileViewData+32,
+                        \ tileViewYaw+32 and tileViewPitch+32
+
+ DEC zTile              \ Decrement the row number so it goes back to the row
+                        \ containing the viewer
+
+                        \ We now position the corners of the viewe'r's tile so
+                        \ it spreads to the left and right screen edges and
+                        \ appears to dip down behind the viewer (so it spreads
+                        \ down to the bottom of the screen as well)
+
+ LDA #&FF                       \ Set the pitch angle for the two rear tile
+ STA tileViewPitchHi+32,Y       \ corners to be as low down as possible (as the
+ STA tileViewPitchHi+32+1,Y     \ high byte of &FF makes the angle negative)
+
+ STA tileViewYawHi+32,Y \ Set the yaw angle for the two left tile corners to be
+ STA tileViewYawHi,Y    \ as far left as possible
+
+ LDA #20                    \ Set the yaw angle for the two right tile corners
+ STA tileViewYawHi+32+1,Y   \ to 20, which is a full screen width, so this puts
+ STA tileViewYawHi+1,Y      \ them on the right edge of the screen
+
+ LDA xTileViewer        \ Set columnCounter to the column of the viewer's tile,
+ STA columnCounter      \ so the call to DrawFlatTile draws this tile
+
+ JSR DrawFlatTile       \ Draw the flat tile under the viewer
 
 .dlan22
 
- CLC
- RTS
+ CLC                    \ Clear the C flag to indicate that we have drawn the
+                        \ whole landscape
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: quadrantOffsets
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Offsets into the tile view data tables for the four different
+\             viewing directions
 \
 \ ******************************************************************************
 
 .quadrantOffsets
 
- EQUB 0
- EQUB 1
- EQUB 33
- EQUb 32
+ EQUB 0                 \ Looking at 12 o'clock (front left corner)
+
+ EQUB 1                 \ Looking at 3 o'clock (front right corner)
+
+ EQUB 32 + 1            \ Looking at 6 o'clock (rear right corner)
+
+ EQUb 32                \ Looking at 9 o'clock (rear left corner)
 
 \ ******************************************************************************
 \
@@ -15462,7 +15561,7 @@ L23E3 = C23E2+1
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a row of tiles between the left visible edge and the right
-\             visible, in two parts towards each side of the the viewer
+\             visible, in two parts towards each side of the viewer
 \
 \ ******************************************************************************
 
@@ -15827,7 +15926,7 @@ L23E3 = C23E2+1
 
  LDX #0
 
- LDA L0025
+ LDA columnCounter
  EOR zTile
  AND #1
  BEQ sub_C2A2D
@@ -17749,7 +17848,7 @@ L23E3 = C23E2+1
 
 .sub_C2D36
 
- LDA L0025
+ LDA columnCounter
  ORA drawingTableOffset
  BIT L003B
  BMI C2D13
@@ -20456,10 +20555,10 @@ L314A = C3148+2
                         \ through channels &11 to &13, playing each note on the
                         \ next channel number
                         \
-                        \ This plays the music with the the last three notes
-                        \ being sustained, which lets us play three-note chords
-                        \ as described above, giving the game music its
-                        \ distinctive chord style
+                        \ This plays the music with the last three notes being
+                        \ sustained, which lets us play three-note chords as
+                        \ described above, giving the game music its distinctive
+                        \ chord style
 
  CLC                    \ Add 1 to move A onto the number of the next channel
  ADC #1
@@ -20872,7 +20971,7 @@ L314A = C3148+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- LDX #3                 \ We now zero bits 8 to 40 of the the five-byte linear
+ LDX #3                 \ We now zero bits 8 to 40 of the five-byte linear
                         \ feedback shift landscape register, so set a byte
                         \ counter in X to count four bytes
 
@@ -28099,9 +28198,9 @@ L314A = C3148+2
  STA musicCounter       \ Set the musicCounter to the value in A to start the
                         \ music playing from this point
 
- LDA #3                 \ Set soundEffect = 3 to tell the the ProcessSound
- STA soundEffect        \ routine that this is music and should therefore be
-                        \ processed using the ProcessMusic routine
+ LDA #3                 \ Set soundEffect = 3 to tell the ProcessSound routine
+ STA soundEffect        \ that this is music and should therefore be processed
+                        \ using the ProcessMusic routine
 
  RTS                    \ Return from the subroutine
 

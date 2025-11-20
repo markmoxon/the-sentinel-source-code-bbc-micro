@@ -98,8 +98,6 @@
      0024
 .columnCounter
      0025
-.L0025
-     0025
 .screenRowNumber
      0026
 .zTile
