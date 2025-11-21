@@ -306,11 +306,11 @@
 
  SKIP 1                 \ ???
 
-.angle2Lo
+.yawAdjustLo
 
  SKIP 1                 \ ???
 
-.angle2Hi
+.screenLeftYawHi
 
  SKIP 1                 \ ???
 
@@ -10879,7 +10879,7 @@ L1145 = C1144+1
  LDA #0
  LSR L2095
  ROR A
- STA angle2Lo
+ STA yawAdjustLo
  LDA L2095
  ADC objectYawAngle,X
  STA objectYawAngle,X
@@ -10907,7 +10907,7 @@ L1145 = C1144+1
  JSR SetViewBufferAddr
  LDX anotherObject
  LDA #0
- STA angle2Lo
+ STA yawAdjustLo
  SEC
  LDA objectYawAngle,X
  SBC L2095
@@ -13640,14 +13640,17 @@ L23E3 = C23E2+1
                         \
                         \ This is used by the DrawTileAndObjects routine ???
 
- LDA T                  \ Set angle2Hi = T - 10
+ LDA T                  \ Set screenLeftYawHi = T - 10
  SEC                    \
- SBC #10                \ So angle2Hi contains the yaw angle of the gaze in the
- STA angle2Hi           \ the centre of the viewing arc, less 14.0625 degrees
-                        \ (i.e. 360 * 10 / 256)
+ SBC #10                \ So screenLeftYawHi contains the yaw angle of the gaze
+ STA screenLeftYawHi    \ in the the centre of the viewing arc, less 14.0625
+                        \ degrees (i.e. 360 * 10 / 256)
                         \
-                        \ So it contains some kind of yaw angle to the left of
-                        \ the view being seen ???
+                        \ The screen is 20 yaw angle units across, so this sets
+                        \ screenLeftYawHi to the high byte of the yaw angle of
+                        \ the left edge of the screen, reduced into the range of
+                        \ a single 90-degree quadrant (so it's relative to the
+                        \ 90-degree viewing arc)
 
                         \ We now set (xTileViewer, zTileViewer) to the tile
                         \ coordinate of the viewer (object #X), but with the
@@ -15089,18 +15092,26 @@ L23E3 = C23E2+1
                         \ analysing, so store it in the table at (tileViewYawHi
                         \ tileViewYawLo)
                         \
-                        \ We subtract (angle2Hi angle2Lo) because ???
+                        \ We also subtract the following:
+                        \
+                        \   * screenLeftYawHi from the high byte so the result
+                        \     is the relative yaw angle from the left edge of
+                        \     the screen, so the result is effectively a screen
+                        \     x-coordinate where zero is the left screen edge
+                        \
+                        \   * yawAdjustLo from the low byte so ???
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
  LDA angleLo            \ Set (tileViewYawHi tileViewYawLo) for this tile to:
  SEC                    \
- SBC angle2Lo           \   (angleHi angleLo) - (angle2Hi angle2Lo)
- STA tileViewYawLo,Y    \
+ SBC yawAdjustLo        \   (angleHi angleLo) - (screenLeftYawHi 0)
+ STA tileViewYawLo,Y    \                     - (0 yawAdjustLo)
+                        \
                         \ starting with the low bytes
 
  LDA angleHi            \ And then the high bytes
- SBC angle2Hi
+ SBC screenLeftYawHi
  STA tileViewYawHi,Y
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
@@ -27077,7 +27088,7 @@ L314A = C3148+2
  LDX anotherObject
  LDA angleLo
  SEC
- SBC angle2Lo
+ SBC yawAdjustLo
  STA L0C59
  LDA angleHi
  SBC objectYawAngle,X
@@ -27984,17 +27995,20 @@ L314A = C3148+2
  LDA #3                 \ Set screenBackground = 3 so the next time the screen
  STA screenBackground   \ is cleared, it shows a black background with stars
 
- LDA #&01
+ LDA #1                 \ Set currentObject = 1 ???
  STA currentObject
- LDA #&C0
+
+ LDA #%11000000         \ Set bits 6 and 7 of L0C4D ???
  STA L0C4D
- STA L0C6D
- LSR L0C1E
+
+ STA L0C6D              \ Set bits 6 and 7 of L0C6D ???
+
+ LSR L0C1E              \ Clear bit 7 of L0C1E ???
 
  LDA #50                \ Call the PlayMusic routine with A = 50 to play the
  JSR PlayMusic          \ game over music
 
- JSR sub_C1F84
+ JSR sub_C1F84          \ ???
 
  LDA #30                \ Smother the screen in 30 * 2400 = 72,000 randomly
  JMP DecayScreenToBlack \ placed black dots to decay the screen to black,
