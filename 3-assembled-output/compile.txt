@@ -88,7 +88,7 @@
      001E
 .L001E
      001E
-.yawAdjustLo
+.yawAdjustmentLo
      001F
 .screenLeftYawHi
      0020
@@ -252,7 +252,7 @@
      006C
 .screenAddrHi
      006D
-.anotherObject
+.viewingObject
      006E
 .enemyCounter
      006E
@@ -9115,7 +9115,7 @@
      38F1   80
      38F2   00
      38F3   C0
-.L38F4
+.panAngle
      38F4   14
      38F5   F8
      38F6   04

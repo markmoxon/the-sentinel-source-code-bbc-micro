@@ -306,7 +306,7 @@
 
  SKIP 1                 \ ???
 
-.yawAdjustLo
+.yawAdjustmentLo
 
  SKIP 1                 \ ???
 
@@ -732,16 +732,10 @@
  SKIP 1                 \ Storage for the high byte of the screen memory address
                         \ in the ScrollPlayerView routine
 
-.anotherObject
+.viewingObject
 
- SKIP 0                 \ Another object number, to go along with currentObject
-                        \
-                        \ Set to object #16 in DrawTitleObject
-                        \ Set to enemyData5,X in sub_C16A8
-                        \ Set to enemyObject in sub_C197D
-                        \ Set to playerObject in sub_C16A8, sub_C1AF3,
-                        \                        MainGameLoop
-                        \ Set to object #2 in sub_C5F80
+ SKIP 0                 \ The number of the object that is viewing the landscape
+                        \ (or the title screen or game over screen) ???
 
 .enemyCounter
 
@@ -4613,12 +4607,12 @@
 .sub_C10B7
 
  LDY lastPanKeyPressed
- LDX anotherObject
+ LDX viewingObject
  CPY #&02
  BCS C10FD
  LDA objectYawAngle,X
  CLC
- ADC L38F4,Y
+ ADC panAngle,Y
  STA objectYawAngle,X
  LDA #&19
  LDY #&18
@@ -4629,7 +4623,7 @@
 
  JSR DrawLandscapeView  \ Draw the landscape view
 
- LDX anotherObject
+ LDX viewingObject
  LDY lastPanKeyPressed
  BCS C10F2
  BNE C10EC
@@ -4648,7 +4642,7 @@
 
  LDA objectYawAngle,X
  SEC
- SBC L38F4,Y
+ SBC panAngle,Y
  STA objectYawAngle,X
  RTS
 
@@ -4658,7 +4652,7 @@
  CMP L1145,Y
  BEQ CRE05
  CLC
- ADC L38F4,Y
+ ADC panAngle,Y
  STA objectPitchAngle,X
  LDA #&19
  LDY #&08
@@ -4696,7 +4690,7 @@
 
  LDA objectPitchAngle,X
  SEC
- SBC L38F4,Y
+ SBC panAngle,Y
  STA objectPitchAngle,X
 
 .C1144
@@ -5347,13 +5341,6 @@ L1145 = C1144+1
 \   Category: Gameplay
 \    Summary: A gameplay loop that processes all game key presses, returning to
 \             the main game loop when the player moves, quits, loses or pans
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   anotherObject       This is always set to the object number of the player
-\                       (it is set in MainGameLoop before it calls this routine)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6022,7 +6009,7 @@ L1145 = C1144+1
  PLA
  STA xTitleOffset
  LDX #&10
- STX anotherObject
+ STX viewingObject
 
  JSR DrawLandscapeView  \ Draw the landscape view
 
@@ -7802,8 +7789,8 @@ L1145 = C1144+1
 
 .C16D4
 
- LDA playerObject       \ Set anotherObject to the object number of the player
- STA anotherObject
+ LDA playerObject       \ Set viewingObject to the object number of the player
+ STA viewingObject
 
  RTS
 
@@ -7822,7 +7809,7 @@ L1145 = C1144+1
 
 .C16F2
 
- STA anotherObject
+ STA viewingObject
  LDY enemyData6,X
  LDA objectFlags,Y
  BMI C174F
@@ -7894,7 +7881,7 @@ L1145 = C1144+1
 
 .C176A
 
- STX anotherObject
+ STX viewingObject
  JSR sub_C1A54
  BCS C1774
  JMP C1871
@@ -8072,8 +8059,8 @@ L1145 = C1144+1
 
  STX currentObject
 
- LDA playerObject       \ Set anotherObject to the object number of the player
- STA anotherObject
+ LDA playerObject       \ Set viewingObject to the object number of the player
+ STA viewingObject
 
  JSR sub_C1F84
 
@@ -8303,7 +8290,7 @@ L1145 = C1144+1
  LDA #&28
  STA L0C68
  LDX enemyObject
- STX anotherObject
+ STX viewingObject
 
 .C1986
 
@@ -8749,8 +8736,8 @@ L1145 = C1144+1
 
  STA currentObject
 
- LDA playerObject       \ Set anotherObject to the object number of the player
- STA anotherObject
+ LDA playerObject       \ Set viewingObject to the object number of the player
+ STA viewingObject
 
  TXA
  PHA
@@ -8773,15 +8760,6 @@ L1145 = C1144+1
 \   Category: Keyboard
 \    Summary: Process an action key press from key logger entry 1 (absorb,
 \             transfer, create, hyperspace, U-turn)
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   anotherObject       This is always set to the object number of the player
-\                       (it is set in MainGameLoop before it calls
-\                       ProcessGameplay and this routine)
-\                       
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8850,9 +8828,9 @@ L1145 = C1144+1
 
 .pkey2
 
- LDX anotherObject      \ Set X to the object number of the player, which we set
-                        \ in MainGameLoop before getting here via the
-                        \ ProcessGameplay routine
+ LDX viewingObject      \ Set X to the object number of the viewer, which we set
+                        \ to the player object in MainGameLoop before getting
+                        \ here via the ProcessGameplay routine
 
  CMP #35                \ If A <> 35 then the "U" key (U-turn) is not being
  BNE pkey3              \ pressed, so jump to pkey3 to move on to the next check
@@ -9846,7 +9824,7 @@ L1145 = C1144+1
 
 .sub_C1CCC
 
- LDX anotherObject
+ LDX viewingObject
  LSR L0C56
  LSR L0CDD
 
@@ -9902,7 +9880,7 @@ L1145 = C1144+1
 
 .C1D21
 
- LDX anotherObject
+ LDX viewingObject
  LDA xTile
  CMP xObject,X
  BNE C1D31
@@ -10873,13 +10851,13 @@ L1145 = C1144+1
 
 .C1F98
 
- LDX anotherObject
+ LDX viewingObject
  LDA L0C62
  STA L2095
  LDA #0
  LSR L2095
  ROR A
- STA yawAdjustLo
+ STA yawAdjustmentLo
  LDA L2095
  ADC objectYawAngle,X
  STA objectYawAngle,X
@@ -10905,9 +10883,9 @@ L1145 = C1144+1
 
  LDY #0
  JSR SetViewBufferAddr
- LDX anotherObject
+ LDX viewingObject
  LDA #0
- STA yawAdjustLo
+ STA yawAdjustmentLo
  SEC
  LDA objectYawAngle,X
  SBC L2095
@@ -13573,7 +13551,7 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   anotherObject       The number of the object that is viewing the landscape
+\   viewingObject       The number of the object that is viewing the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13590,7 +13568,7 @@ L23E3 = C23E2+1
 
 .DrawLandscapeView
 
- LDX anotherObject      \ Set X to the number of the object that is viewing the
+ LDX viewingObject      \ Set X to the number of the object that is viewing the
                         \ landscape
 
  LDA #LO(L0C40)         \ Set L003C(1 0) = L0C40 ???
@@ -14979,7 +14957,7 @@ L23E3 = C23E2+1
  STA tileIsOnScreen     \ tile is not on-screen (we change this in part 3 if it
                         \ is on-screen)
 
- LDX anotherObject      \ Set X to the number of the object that is viewing the
+ LDX viewingObject      \ Set X to the number of the object that is viewing the
                         \ landscape
 
                         \ We start by calculating the difference (the delta) in
@@ -15099,14 +15077,14 @@ L23E3 = C23E2+1
                         \     the screen, so the result is effectively a screen
                         \     x-coordinate where zero is the left screen edge
                         \
-                        \   * yawAdjustLo from the low byte so ???
+                        \   * yawAdjustmentLo from the low byte so ???
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
  LDA angleLo            \ Set (tileViewYawHi tileViewYawLo) for this tile to:
  SEC                    \
- SBC yawAdjustLo        \   (angleHi angleLo) - (screenLeftYawHi 0)
- STA tileViewYawLo,Y    \                     - (0 yawAdjustLo)
+ SBC yawAdjustmentLo    \   (angleHi angleLo) - (screenLeftYawHi 0)
+ STA tileViewYawLo,Y    \                     - (0 yawAdjustmentLo)
                         \
                         \ starting with the low bytes
 
@@ -15464,7 +15442,7 @@ L23E3 = C23E2+1
 
 .tang9
 
- LDX anotherObject      \ Set X to the number of the object that is viewing the
+ LDX viewingObject      \ Set X to the number of the object that is viewing the
                         \ landscape
 
  LDA #0                 \ Set (A xDeltaLo) = (U 0) - y-coordinate of object #X
@@ -20890,8 +20868,9 @@ L314A = C3148+2
                         \ This routine also performs a delay of 40 empty loops
                         \ of 256 iterations each (i.e. 10,240 loops)
 
- LDA playerObject       \ Set anotherObject to the object number of the player
- STA anotherObject
+ LDA playerObject       \ Set viewingObject to the object number of the player,
+ STA viewingObject      \ so the landscape view gets drawn from the perspective
+                        \ of the player
 
  BIT hyperspaceEndsGame \ If bit 7 of hyperspaceEndsGame is clear then the game
  BPL game2              \ has not ended because of a hyperspace, so jump to
@@ -22351,16 +22330,19 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L38F4
+\       Name: panAngle
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Pitch and yaw angles for panning in the four directions
 \
 \ ******************************************************************************
 
-.L38F4
+.panAngle
 
- EQUB &14, &F8, &04, &F4
+ EQUB 20                \ Direction 0 (pan right, scroll left)
+ EQUB -8                \ Direction 1 (pan left, scroll right)
+ EQUB 4                 \ Direction 2 (pan up, scroll down)
+ EQUB -12               \ Direction 3 (pan down, scroll up)
 
 \ ******************************************************************************
 \
@@ -27046,7 +27028,7 @@ L314A = C3148+2
  STY L006F
  LDA objectTypes,Y
  STA L004C
- LDX anotherObject
+ LDX viewingObject
 
  JSR GetHorizontalDelta \ Calculate the following:
                         \
@@ -27085,10 +27067,10 @@ L314A = C3148+2
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
 
- LDX anotherObject
+ LDX viewingObject
  LDA angleLo
  SEC
- SBC yawAdjustLo
+ SBC yawAdjustmentLo
  STA L0C59
  LDA angleHi
  SBC objectYawAngle,X
@@ -27253,7 +27235,7 @@ L314A = C3148+2
  STA xDeltaLo
  LDA U
  ADC L0C5C
- LDX anotherObject
+ LDX viewingObject
  JSR GetPitchAngleDelta
  LDY drawingTableIndex
  LDA pitchDeltaHi
@@ -28133,7 +28115,7 @@ L314A = C3148+2
  LDA L5FDF,Y
  STA objectYawAngle+1
  LDX #&02
- STX anotherObject
+ STX viewingObject
  RTS
 
 \ ******************************************************************************
