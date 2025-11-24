@@ -4401,6 +4401,7 @@
      1896   C5 74      CMP &74
      1898   D0 77      BNE &1911
      189A   20 01 5C   JSR &5C01
+.sub_C189D
      189D   A2 07      LDX #&07
      189F   BD 36 0F   LDA &0F36,X
      18A2   85 74      STA &74
@@ -4772,6 +4773,7 @@
      1B56   D0 40      BNE &1B98
      1B58   20 00 12   JSR &1200
      1B5B   86 0B      STX &0B
+.SetPlayerIsOnTower
 .ptow1
      1B5D   BD 00 01   LDA &0100,X
      1B60   C9 40      CMP #&40
@@ -6220,6 +6222,7 @@
      254D   18         CLC
      254E   69 60      ADC #&60
      2550   85 3C      STA &3C
+.CheckSecretStash
      2552   AD CE 0C   LDA &0CCE
      2555   30 27      BMI &257E
      2557   BD 56 0B   LDA &0B56,X
@@ -6939,6 +6942,7 @@
      2A21   29 01      AND #&01
      2A23   F0 08      BEQ &2A2D
      2A25   A2 08      LDX #&08
+.SetSecretStash
      2A27   BD 75 0C   LDA &0C75,X
      2A2A   9D 4D 0C   STA &0C4D,X
 .sub_C2A2D
@@ -7238,6 +7242,7 @@
      2C29   E8         INX
      2C2A   E0 20      CPX #&20
      2C2C   90 D2      BCC &2C00
+.SetCrackerSeed
      2C2E   BD 2E 5A   LDA &5A2E,X
      2C31   9D 1D 0F   STA &0F1D,X
 .stri16
@@ -8102,6 +8107,7 @@
      31F2   AD 4A 0C   LDA &0C4A
      31F5   85 26      STA &26
      31F7   A2 07      LDX #&07
+.CheckCrackerSeed
      31F9   BD 6E 0C   LDA &0C6E,X
      31FC   DD 36 0F   CMP &0F36,X
      31FF   B0 03      BCS &3204

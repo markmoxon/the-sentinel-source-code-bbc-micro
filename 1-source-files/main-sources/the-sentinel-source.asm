@@ -1786,14 +1786,10 @@
                         \ set of generated values for later checking in the
                         \ GetRowVisibility routine
                         \
-                        \ DrawFlatTile writes a value to this location ???
-                        \
-                        \ e.g. &8D for landscape 0, &BF for landscape 1
-                        \
-                        \ using the STA instruction at &2A2A
-                        \
-                        \ So this value seems to be set by the landscape drawing
-                        \ process in some way ???
+                        \ The value of stashOffset is set in the SetSecretStash
+                        \ routine during the landscape drawing process, where it
+                        \ is set to a value that is unique and consistent for
+                        \ each individual landscape
 
 .L0C56
 
@@ -6414,9 +6410,10 @@ L1145 = C1144+1
 
  LDY stashOffset-170,X  \ Set Y = stashOffset
                         \
-                        \ The stashOffset variable is set by the landscape
-                        \ drawing process to  value that depends on the
-                        \ landscape generation process
+                        \ The value of stashOffset is set in the SetSecretStash
+                        \ routine during the landscape drawing process, where it
+                        \ is set to a value that is unique and consistent for
+                        \ each individual landscape
                         \
                         \ We use it as an offset into the secretCodeStash list
                         \ below, so the stash moves around in memory depending
@@ -8070,7 +8067,7 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1882
+\       Name: sub_C1882 (Part 1 of 2)
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
@@ -8090,7 +8087,20 @@ L1145 = C1144+1
  CMP T
  BNE C1911
  JSR sub_C5C01
- LDX #&07
+
+\ ******************************************************************************
+\
+\       Name: sub_C189D
+\       Type: Subroutine
+\   Category: Cracker protection
+\    Summary: Check whether the anti-cracker seed-related data is correctly set
+\             up, as part of the anti-cracker code
+\
+\ ******************************************************************************
+
+.sub_C189D
+
+ LDX #7
  LDA rotm8-1,X
  STA T
  AND #&0F
@@ -8104,6 +8114,16 @@ L1145 = C1144+1
  CLC
  ADC T
  STA L0C75
+
+\ ******************************************************************************
+\
+\       Name: sub_C1882 (Part 2 of 2)
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
  LDA L0C68
  LSR A
  STA T
@@ -8958,6 +8978,8 @@ L1145 = C1144+1
 \             part of the anti-cracker code
 \
 \ ******************************************************************************
+
+.SetPlayerIsOnTower
 
                         \ We now work out whether the player just transferred
                         \ into a robot on the Sentinel's tower
@@ -12907,6 +12929,8 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
+.CheckSecretStash
+
  LDA doNotCheckSecret   \ If bit 7 of doNotCheckSecret is set then jump down to
  BMI rvis6              \ part 2 of GetRowVisibility to skip checking the secret
                         \ code stash
@@ -12929,6 +12953,11 @@ L23E3 = C23E2+1
 
  LDA stashOffset-255,X  \ We know that X is 255 from the loop above, so this
                         \ sets A = stashOffset
+                        \
+                        \ The value of stashOffset is set in the SetSecretStash
+                        \ routine during the landscape drawing process, where it
+                        \ is set to a value that is unique and consistent for
+                        \ each individual landscape
 
                         \ We now set stashAddr(1 0) to point to the four bytes
                         \ in the secretCodeStash that correspond to the four
@@ -15938,12 +15967,19 @@ L23E3 = C23E2+1
 
 .DrawFlatTile
 
- LDX #0
+ LDX #0                 \ Colour byte &3C = %00111100 for colour 3 ???
 
  LDA columnCounter
  EOR zTile
  AND #1
  BEQ sub_C2A2D
+
+ LDX #8                 \ Colour byte = 0 for colour 0
+
+                        \ We now take a short interlude to set the value of
+                        \ stashOffset, as part of the game's anti-cracker
+                        \ code, and we pick up the tile-drawing process again in
+                        \ sub_C2A2D
 
 \ ******************************************************************************
 \
@@ -15954,9 +15990,40 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
- LDX #8
- LDA seedNumberLFSR+2-8,X
- STA stashOffset-8,X
+.SetSecretStash
+
+                        \ This routine sets the value of stashOffset, which is
+                        \ the offset into the secretCodeStash where we store a
+                        \ set of generated values for later checking in the
+                        \ GetRowVisibility routine
+                        \
+                        \ The offset is set to the middle byte from the
+                        \ landscape seed linear feedback shift register (LFSR),
+                        \ overwriting previous values until we get here for the
+                        \ last time
+                        \
+                        \ As we only reach this routine when drawing flat tiles
+                        \ in colour 0, so stashOffset is set to the middle byte
+                        \ from the landscape seed linear feedback shift register
+                        \ for the last flat colour 0 tile to be drawn
+                        \
+                        \ The value itself doesn't matter, it's just another way
+                        \ of throwing crackers off the trail of working out how
+                        \ to generate landscape codes, as it changes the address
+                        \ of the secret code stash for each landscape
+
+ LDA seedNumberLFSR+2-8,X   \ At this point, X = 8 from DrawFlatTile, so this
+ STA stashOffset-8,X        \ sets the following:
+                            \
+                            \   stashOffset = seedNumberLFSR+2
+
+                        \ seedNumberLFSR+2 is the middle byte of the LFSR at
+                        \ seedNumberLFSR(4 3 2 1 0), so this sets the secret
+                        \ code stash offset to a unique and consistent value for
+                        \ each landscape
+
+                        \ Fall through into sub_C2A2D to finish drawing the flat
+                        \ tile
 
 \ ******************************************************************************
 \
@@ -16136,9 +16203,13 @@ L23E3 = C23E2+1
 .GenerateLandscape
 
                         \ We start by generating 81 seed numbers, though these
-                        \ are ignored (they get stored in the stripData table
-                        \ but there's no reason for this - they could just as
-                        \ easily be discarded)
+                        \ are ignored (with one exception)
+                        \
+                        \ These numbers get stored in the stripData table but
+                        \ there's no specific reason for this - they could just
+                        \ as easily be discarded, though the 79th seed number at
+                        \ stripData+78 is used by the anti-cracker code in the
+                        \ SetCrackerSeed and CheckCrackerSeed routines
                         \
                         \ The purpose of this step is to get the seed number
                         \ generator to a point where the output is predictable
@@ -17305,20 +17376,26 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: SetCrackerTile
+\       Name: SetCrackerSeed
 \       Type: Subroutine
 \   Category: Cracker protection
 \    Summary: Set up anti-cracker tile-related data that can be checked in the
-\             CheckCrackerTile routine
+\             CheckCrackerSeed routine
 \
 \ ******************************************************************************
 
+.SetCrackerSeed
 
- LDA tilesAtAltitude+14-32,X    \ Copy the contents of tilesAtAltitude+14 into
- STA GetAngleInRadians-1-32,X   \ the operand into GetAngleInRadians-1, which
+ LDA stripData+78-32,X          \ Copy the contents of stripData+78 into
+ STA GetAngleInRadians-1-32,X   \ the operand at GetAngleInRadians-1, which
                                 \ contains an unused LDA #0 instruction
                                 \
-                                \ This value is checked in the CheckCrackerTile
+                                \ At this point stripData+78 contains the 79th
+                                \ seed number that was generated at the start of
+                                \ the GenerateLandscape routin, where 81 seed
+                                \ numbers were generated and stored at stripData
+                                \
+                                \ This value is checked in the CheckCrackerSeed
                                 \ routine that runs as part of the DrawLetter3D
                                 \ routine when drawing the title screen
 
@@ -18886,12 +18963,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: CheckCrackerTile
+\       Name: CheckCrackerSeed
 \       Type: Subroutine
 \   Category: Cracker protection
-\    Summary: ???
+\    Summary: Check whether the anti-cracker seed-related data is correctly set
+\             up, as part of the anti-cracker code
 \
 \ ******************************************************************************
+
+.CheckCrackerSeed
 
  LDA L0C75-7,X          \ Set A = L0C75 ???
 
@@ -18899,12 +18979,11 @@ L314A = C3148+2
  BCS C3204                      \ jump to C3204 to skip the following
 
                         \ We set the contents of GetAngleInRadians-1 to the
-                        \ contents of tilesAtAltitude+14 in the SetCrackerTile
-                        \ routine between part 3 and 4 of the SmoothTileCorners
-                        \ routine when generating the landscape, so if we get
-                        \ here then something has gone wrong between then and
-                        \ now, presumably because something has been tampered
-                        \ with by crackers ???
+                        \ contents of stripData+78 in the SetCrackerSeed routine
+                        \ when generating the landscape, so if we get here then
+                        \ something has gone wrong between then and now,
+                        \ presumably because something has been tampered with
+                        \ by crackers ???
 
  JSR CorruptSecretCode  \ At this point A < the contents of GetAngleInRadians-1
                         \ and the C flag is clear, so CorruptSecretCode will
@@ -18912,8 +18991,6 @@ L314A = C3148+2
                         \ corrupt the generation of the landscape's secret code
                         \ by moving one step too far in the landscape's sequence
                         \ of seed numbers
-
-.C3204
 
 \ ******************************************************************************
 \
@@ -18923,6 +19000,8 @@ L314A = C3148+2
 \    Summary: ???
 \
 \ ******************************************************************************
+
+.C3204
 
  ASL L0C10,X
  LDA L0C49
