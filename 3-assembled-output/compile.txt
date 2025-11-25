@@ -6946,7 +6946,7 @@
 .SetSecretStash
      2A27   BD 75 0C   LDA &0C75,X
      2A2A   9D 4D 0C   STA &0C4D,X
-.sub_C2A2D
+.DrawQuadrilateral
      2A2D   BD E3 2C   LDA &2CE3,X
      2A30   85 19      STA &19
      2A32   A9 00      LDA #&00
@@ -7360,7 +7360,7 @@
      2CE0   21
      2CE1   FF
      2CE2   1F
-.L2CE3
+.tileShapeLookup
      2CE3   3C
      2CE4   04
      2CE5   04

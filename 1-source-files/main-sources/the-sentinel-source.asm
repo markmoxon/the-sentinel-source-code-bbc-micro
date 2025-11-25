@@ -1699,7 +1699,7 @@
                         \   * 1 = fill with solid colour 0 (blue)
                         \
                         \   * 2 = fill with dithered pixels in colour 0 (blue)
-                        \         and colour 3 (e.g. green in landscape zero)
+                        \         and colour 3 (e.g. green in landscape 0000)
                         \         by alternating colour 3/0/3/0 and 0/3/0/3
                         \         pixel bytes
                         \
@@ -4547,7 +4547,7 @@
 \                         * 1 = fill with solid colour 0 (blue)
 \
 \                         * 2 = fill with dithered pixels in colour 0 (blue)
-\                               and colour 3 (e.g. green in landscape zero)
+\                               and colour 3 (e.g. green in landscape 0000)
 \                               by alternating colour 3/0/3/0 and 0/3/0/3
 \                               pixel bytes
 \
@@ -5957,7 +5957,7 @@ L1145 = C1144+1
 \                         * 1 = fill with solid colour 0 (blue)
 \
 \                         * 2 = fill with dithered pixels in colour 0 (blue)
-\                               and colour 3 (e.g. green in landscape zero)
+\                               and colour 3 (e.g. green in landscape 0000)
 \                               by alternating colour 3/0/3/0 and 0/3/0/3
 \                               pixel bytes
 \
@@ -11684,7 +11684,7 @@ L1145 = C1144+1
 \                         * 1 = fill with solid colour 0 (blue)
 \
 \                         * 2 = fill with dithered pixels in colour 0 (blue)
-\                               and colour 3 (e.g. green in landscape zero)
+\                               and colour 3 (e.g. green in landscape 0000)
 \                               by alternating colour 3/0/3/0 and 0/3/0/3
 \                               pixel bytes
 \
@@ -16011,25 +16011,28 @@ L23E3 = C23E2+1
 \       Name: DrawFlatTile
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Draw a flat tile in the correct colour for the chess board effect
+\             that we use to draw the landscape
 \
 \ ******************************************************************************
 
 .DrawFlatTile
 
- LDX #0                 \ Colour byte &3C = %00111100 for colour 3 ???
+ LDX #0                 \ If bit 0 of columnCounter and zTile are the same, then
+ LDA columnCounter      \ the tile's x-coordinate and z-coordinate are either
+ EOR zTile              \ both odd or both even, so jump to DrawQuadrilateral
+ AND #1                 \ with X set to 0 to draw this tile with &3C from the
+ BEQ DrawQuadrilateral  \ tileShapeLookup table, is this tile colour ???
 
- LDA columnCounter
- EOR zTile
- AND #1
- BEQ sub_C2A2D
-
- LDX #8                 \ Colour byte = 0 for colour 0
+ LDX #8                 \ Otherwise the tile's x-coordinate and z-coordinate are
+                        \ different (i.e. one is odd and one is even), so set
+                        \ X to 8 to draw this tile with &00 from the
+                        \ tileShapeLookup table, is this tile colour ???
 
                         \ We now have a very short interlude to set the value of
                         \ stashOffset as part of the game's anti-cracker code,
-                        \ and we pick up the tile-drawing process again in
-                        \ sub_C2A2D
+                        \ and we pick up the tile-drawing process again in the
+                        \ DrawQuadrilateral routine
 
 \ ******************************************************************************
 \
@@ -16072,27 +16075,35 @@ L23E3 = C23E2+1
                         \ code stash offset to a unique and consistent value for
                         \ each landscape
 
-                        \ Fall through into sub_C2A2D to finish drawing the flat
-                        \ tile
+                        \ Fall through into DrawQuadrilateral to finish drawing
+                        \ the flat tile
 
 \ ******************************************************************************
 \
-\       Name: sub_C2A2D
+\       Name: DrawQuadrilateral
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: ???
+\    Summary: Draw a four-sided polygon
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The reference shape to use for the tile's colour from
+\                       the tileShapeLookup table
 \
 \ ******************************************************************************
 
-.sub_C2A2D
+.DrawQuadrilateral
 
- LDA L2CE3,X
+ LDA tileShapeLookup,X  \ Set L0019 to the tile's colour
  STA L0019
 
- LDA #0
+ LDA #0                 \ Set L003B = 0
  STA L003B
 
- JMP DrawPolygon
+ JMP DrawPolygon        \ Jump to DrawPolygon to draw the quadrilateral and
+                        \ return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -16118,7 +16129,7 @@ L23E3 = C23E2+1
  TAY
  AND #&03
  CMP #&01
- BEQ sub_C2A2D
+ BEQ DrawQuadrilateral
 
  LDA L2D03,Y
  STA L0045
@@ -16158,13 +16169,13 @@ L23E3 = C23E2+1
  TAX
  LDA #&80
  STA L003B
- LDA L2CE3,X
+ LDA tileShapeLookup,X
  STA L0019
  JSR DrawPolygon
  LDA L0034
  EOR #&10
  TAX
- LDA L2CE3,X
+ LDA tileShapeLookup,X
  STA L0019
  LDA L003B
  ORA #&40
@@ -17946,17 +17957,18 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: L2CE3
+\       Name: tileShapeLookup
 \       Type: Variable
 \   Category: ???
-\    Summary: ???
+\    Summary: Two sets of tile values, indexed by shape ???
 \
 \ ******************************************************************************
 
-.L2CE3
+.tileShapeLookup
 
  EQUB &3C, &04, &04, &08, &08, &08, &04, &08
  EQUB &00, &04, &08, &04, &04, &08, &08, &04
+
  EQUB &00, &00, &08, &04, &08, &00, &08, &04
  EQUB &00, &00, &04, &08, &04, &00, &04, &08
 
@@ -23329,7 +23341,7 @@ L314A = C3148+2
                         \ background is colour 0 or 1, and we draw the sights in
                         \ colour 1 when the background is colour 2 or 3
                         \
-                        \ As an example of physical colours, in landscape zero
+                        \ As an example of physical colours, in landscape 0000
                         \ we paint the sights pixels in white (colour 2) when
                         \ the background is blue (colour 0) or black (colour 1),
                         \ and we paint the sights pixels in black (colour 1)
@@ -27943,7 +27955,7 @@ L314A = C3148+2
 \
 \   * Enemy count = 8: blue, black, red, yellow
 \
-\ Landscape zero has one enemy, so the starting landscape is therefore in blue,
+\ Landscape 0000 has one enemy, so the starting landscape is therefore in blue,
 \ black, white and green.
 \
 \ ******************************************************************************
