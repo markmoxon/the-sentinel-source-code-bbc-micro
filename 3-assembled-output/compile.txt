@@ -2589,7 +2589,7 @@
      0C73   00
 .gameOverSoundPitch
      0C74   00
-.L0C75
+.alteredSeed
      0C75   00
 .L0C76
      0C76   00
@@ -3092,6 +3092,7 @@
      0F3A   60         RTS
 .xStoreMatrix
      0F3B   00
+.CrackerSeed
      0F3C   A9 00      LDA #&00
 .GetAngleInRadians
      0F3E   06 74      ASL &74
@@ -4401,7 +4402,7 @@
      1896   C5 74      CMP &74
      1898   D0 77      BNE &1911
      189A   20 01 5C   JSR &5C01
-.sub_C189D
+.AlterCrackerSeed
      189D   A2 07      LDX #&07
      189F   BD 36 0F   LDA &0F36,X
      18A2   85 74      STA &74
@@ -4409,7 +4410,7 @@
      18A6   C9 09      CMP #&09
      18A8   F0 02      BEQ &18AC
      18AA   A2 01      LDX #&01
-.C18AC
+.alts1
      18AC   8A         TXA
      18AD   18         CLC
      18AE   65 74      ADC &74

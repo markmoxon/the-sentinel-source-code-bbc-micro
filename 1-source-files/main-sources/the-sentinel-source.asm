@@ -1997,9 +1997,11 @@
                         \ decrements in ProcessSound until it dips below 80, at
                         \ which point the sound stops
 
-.L0C75
+.alteredSeed
 
- EQUB 0                 \ ???
+ EQUB 0                 \ An altered version of the anti-cracker seed-related
+                        \ data that gets created in AlterCrackerSeed and checked
+                        \ in CheckCreckerSeed as part of the anti-cracker code
 
 .L0C76
 
@@ -3393,7 +3395,6 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Apply the correct signs to the result
-\  Deep dive: The core driving model
 \
 \ ******************************************************************************
 
@@ -3495,12 +3496,26 @@
 
 \ ******************************************************************************
 \
+\       Name: CrackerSeed
+\       Type: Subroutine
+\   Category: Cracker protection
+\    Summary: Obfuscated storage for the high byte of the landscape number as
+\             part of the anti-cracker code
+\
+\ ******************************************************************************
+
+.CrackerSeed
+
+ LDA #0                 \ This instruction is never run but the operand is used
+                        \ to hide data as part of the anti-cracker code
+
+\ ******************************************************************************
+\
 \       Name: GetAngleInRadians
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Convert a 16-bit angle into radians, restricted to a quarter
 \             circle
-\  Deep dive: Trigonometry
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3520,8 +3535,6 @@
 \                       radians, and halved
 \
 \ ******************************************************************************
-
- LDA #0                 \ This instuction appears to be unused
 
 .GetAngleInRadians
 
@@ -8088,32 +8101,69 @@ L1145 = C1144+1
  BNE C1911
  JSR sub_C5C01
 
+                        \ We now have a very short interlude to set up some of
+                        \ the anti-cracker code before continuing in part 2
+
 \ ******************************************************************************
 \
-\       Name: sub_C189D
+\       Name: AlterCrackerSeed
 \       Type: Subroutine
 \   Category: Cracker protection
-\    Summary: Check whether the anti-cracker seed-related data is correctly set
-\             up, as part of the anti-cracker code
+\    Summary: Create an altered version of the anti-cracker seed-related data,
+\             as part of the anti-cracker code
 \
 \ ******************************************************************************
 
-.sub_C189D
+.AlterCrackerSeed
 
- LDX #7
- LDA rotm8-1,X
- STA T
- AND #&0F
- CMP #&09
- BEQ C18AC
- LDX #&01
+ LDX #7                 \ Set X = 7, to add to the cracker seed when its last
+                        \ digit is 9, so we effectively add 700 to the
+                        \ landscape number
 
-.C18AC
+ LDA CrackerSeed+1-7,X  \ Set T to the contents of CrackerSeed+1, which we set
+ STA T                  \ in the SetCrackerSeed routine to the high byte of the
+                        \ binary coded decimal (BCD) landscape number
+                        \
+                        \ So if the landscape number 0123, T contains 01 in BCD
+                        \ format
 
- TXA
- CLC
- ADC T
- STA L0C75
+ AND #%00001111         \ Set A to the second digit in the BCD landscape number
+
+ CMP #9                 \ If the second digit in the BCD number is 9, skip the
+ BEQ alts1              \ following instruction so that X stays set to 7
+
+ LDX #1                 \ Otherwise set X = 1, for when the second digit is in
+                        \ the range 0 to 8, so we effectively add 100 to the
+                        \ landscape number
+
+.alts1
+
+ TXA                    \ Set alteredSeed = T + X
+ CLC                    \
+ ADC T                  \ Note that this addition is not done in BCD mode, so we
+ STA alteredSeed        \ know that the following is true:
+                        \
+                        \   alteredSeed > T
+                        \
+                        \ so:
+                        \
+                        \   alteredSeed > CrackerSeed+1
+                        \
+                        \ as the largest possible value of T is &99 when the
+                        \ value of X is the largest possible at 7, and:
+                        \
+                        \   &99 + 7 = &A0
+                        \
+                        \ so the addition never overflows and the result in
+                        \ alteredSeed is greater than the original high byte in
+                        \ CrackerSeed+1
+                        \
+                        \ This fact is used in the CheckCrackerSeed routine to
+                        \ ensure that this part of the anti-cracker code has
+                        \ been run correctly
+
+                        \ Fall through into part 2 of sub_C1882 to continue with
+                        \ the ???
 
 \ ******************************************************************************
 \
@@ -12915,7 +12965,7 @@ L23E3 = C23E2+1
                         \ part of the player's z-coordinate, which is the number
                         \ of the row containing the player)
 
-                        \ We now take a short interlude to check the secret code
+                        \ We now have a short interlude to check the secret code
                         \ stash, as part of the game's anti-cracker code, and we
                         \ pick up the tile visibility code in part 2
 
@@ -15976,9 +16026,9 @@ L23E3 = C23E2+1
 
  LDX #8                 \ Colour byte = 0 for colour 0
 
-                        \ We now take a short interlude to set the value of
-                        \ stashOffset, as part of the game's anti-cracker
-                        \ code, and we pick up the tile-drawing process again in
+                        \ We now have a very short interlude to set the value of
+                        \ stashOffset as part of the game's anti-cracker code,
+                        \ and we pick up the tile-drawing process again in
                         \ sub_C2A2D
 
 \ ******************************************************************************
@@ -16205,11 +16255,10 @@ L23E3 = C23E2+1
                         \ We start by generating 81 seed numbers, though these
                         \ are ignored (with one exception)
                         \
-                        \ These numbers get stored in the stripData table but
-                        \ there's no specific reason for this - they could just
-                        \ as easily be discarded, though the 79th seed number at
-                        \ stripData+78 is used by the anti-cracker code in the
-                        \ SetCrackerSeed and CheckCrackerSeed routines
+                        \ These numbers get stored in the stripData table, from
+                        \ stripData+80 down to stripData+0, but there's no
+                        \ specific reason for this - they could just as easily
+                        \ be discarded
                         \
                         \ The purpose of this step is to get the seed number
                         \ generator to a point where the output is predictable
@@ -16217,6 +16266,16 @@ L23E3 = C23E2+1
                         \ of seed numbers for a landscape, they are exactly the
                         \ same each time while being unique to that landscape
                         \ number
+                        \
+                        \ That said, the third seed number that's generated and
+                        \ stored at stripData+78 is used by the anti-cracker
+                        \ code in the SetCrackerSeed and CheckCrackerSeed
+                        \ routines, as it contains the high byte of the BCD
+                        \ landscape number (this is because the seed generator
+                        \ is initialised using the landscape number, and the
+                        \ third number out of the shift register is unchanged
+                        \ and still contains the initial value of that byte -
+                        \ see the InitialiseSeeds routine for more details)
 
  LDX #80                \ Set a counter in X so we can generate 81 seed numbers
 
@@ -17372,7 +17431,8 @@ L23E3 = C23E2+1
                         \ This means that when we exit the loop, X = 32
 
                         \ We now have a very short interlude to set up some of
-                        \ the anti-cracker code before continuing in part 4
+                        \ the anti-cracker code before continuing the smoothing
+                        \ process in part 4
 
 \ ******************************************************************************
 \
@@ -17386,18 +17446,33 @@ L23E3 = C23E2+1
 
 .SetCrackerSeed
 
- LDA stripData+78-32,X          \ Copy the contents of stripData+78 into
- STA GetAngleInRadians-1-32,X   \ the operand at GetAngleInRadians-1, which
-                                \ contains an unused LDA #0 instruction
-                                \
-                                \ At this point stripData+78 contains the 79th
-                                \ seed number that was generated at the start of
-                                \ the GenerateLandscape routin, where 81 seed
-                                \ numbers were generated and stored at stripData
-                                \
-                                \ This value is checked in the CheckCrackerSeed
-                                \ routine that runs as part of the DrawLetter3D
-                                \ routine when drawing the title screen
+ LDA stripData+78-32,X  \ Copy the contents of stripData+78 into the operand of
+ STA CrackerSeed+1-32,X \ the unused LDA #0 instruction at CrackerSeed (this
+                        \ location is presumably disguised as an instruction to
+                        \ obfuscate this process)
+                        \
+                        \ At this point stripData+78 contains the third seed
+                        \ number to be generated at the start of the
+                        \ GenerateLandscape routine, where 81 seed numbers are
+                        \ generated and stored at stripData
+                        \
+                        \ This third seed contains the high byte of the BCD
+                        \ landscape number
+                        \
+                        \ This is because the seed generator is initialised
+                        \ using the landscape number, and the third number out
+                        \ of the shift register is unchanged and still contains
+                        \ the initial value of that byte - see the
+                        \ InitialiseSeeds routine for more details)
+                        \
+                        \ This value is altered in the AlterCrackerSeed routine
+                        \ that runs as part of the gameplay routines, and is
+                        \ checked in the CheckCrackerSeed routine that runs as
+                        \ part of the DrawLetter3D routine when drawing the
+                        \ landscape's secret code
+
+                        \ Fall through into part 4 of SmoothTileCorners to
+                        \ continue with the smoothing process
 
 \ ******************************************************************************
 \
@@ -18961,6 +19036,11 @@ L314A = C3148+2
 
  LDX #7
 
+                        \ We now have a short interlude to check some of the
+                        \ anti-cracker code, so we can corrupt the secret code
+                        \ being drawn on-screen if this landscape has not been
+                        \ played through properly
+
 \ ******************************************************************************
 \
 \       Name: CheckCrackerSeed
@@ -18973,28 +19053,34 @@ L314A = C3148+2
 
 .CheckCrackerSeed
 
- LDA L0C75-7,X          \ Set A = L0C75 ???
+ LDA alteredSeed-7,X    \ Set A to the value of alteredSeed, which we set in
+                        \ the AlterCrackerSeed routine
 
- CMP GetAngleInRadians-1-7,X    \ If A >= the contents of GetAngleInRadians-1,
- BCS C3204                      \ jump to C3204 to skip the following
+ CMP CrackerSeed+1-7,X  \ If A >= the contents of CrackerSeed+1 then the code
+ BCS C3204              \ in AlterCrackerSeed was correctly run (which only
+                        \ happens if the gameplay routines are run, i.e. when
+                        \ the landscape has been played), so jump to C3204 to
+                        \ skip the following
 
-                        \ We set the contents of GetAngleInRadians-1 to the
-                        \ contents of stripData+78 in the SetCrackerSeed routine
-                        \ when generating the landscape, so if we get here then
-                        \ something has gone wrong between then and now,
-                        \ presumably because something has been tampered with
-                        \ by crackers ???
+                        \ If we get here then the AlterCrackerSeed routine has
+                        \ not been correctly run, which means the landscape was
+                        \ not played properly, so we now corrupt the secret code
+                        \ that's being drawn on-screen (if that's why we are
+                        \ here)
 
- JSR CorruptSecretCode  \ At this point A < the contents of GetAngleInRadians-1
-                        \ and the C flag is clear, so CorruptSecretCode will
-                        \ call the GetNextSeedNumber routine, which will in turn
+ JSR CorruptSecretCode  \ At this point A < the contents of CrackerSeed+1 and
+                        \ the C flag is clear, so CorruptSecretCode will call
+                        \ the GetNextSeedNumber routine, which will in turn
                         \ corrupt the generation of the landscape's secret code
                         \ by moving one step too far in the landscape's sequence
                         \ of seed numbers
 
+                        \ Fall through into part 2 of DrawLetter3D to continue
+                        \ with the letter-drawing process
+
 \ ******************************************************************************
 \
-\       Name: DrawLetter3D (Part 1 of 2)
+\       Name: DrawLetter3D (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: ???
@@ -19815,6 +19901,18 @@ L314A = C3148+2
                         \ pseudo-random numbers for this landscape, and which
                         \ will be the exact same sequence every time we need to
                         \ generate this landscape
+                        \
+                        \ It also ensures that the third number to be generated
+                        \ by the shift register is the high byte of the
+                        \ landscape number that we put into seedNumberLFSR+1, as
+                        \ at this early stage of the process the EOR feedback
+                        \ does not affect this byte as it passes through the
+                        \ shift register, so after three 8-bit shifts the high
+                        \ byte reaches seedNumberLFSR+4 and is returned as the
+                        \ next seed number
+                        \
+                        \ This fact is exploited by the anti-cracker code in the
+                        \ SetCrackerSeed routine
 
  STY landscapeNumberHi  \ Set (landscapeNumberHi landscapeNumberLo) = (Y X)
  STX landscapeNumberLo
