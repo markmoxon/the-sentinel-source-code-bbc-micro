@@ -13687,7 +13687,7 @@ L23E3 = C23E2+1
  STA viewingQuadrantx4  \ containing the right edge of the viewing arc,
                         \ multiplied by 4
                         \
-                        \ This is used by the sub_C2A39 routine ???
+                        \ This is used by the DrawSlopingTile routine ???
 
  TYA                    \ Set viewingQuadrantOpp = Y - 2
  SEC                    \
@@ -15983,28 +15983,31 @@ L23E3 = C23E2+1
                         \ jump to DrawFlatTile to draw the flat tile, returning
                         \ from the subroutine using a tail call
 
- CMP #12                \ If the tile shape is 12, jump to tobj3
- BEQ tobj3
+ CMP #12                \ If the tile shape is 12 then we know the tile consists
+ BEQ tobj3              \ of two faces, so jump to tobj3
 
- CMP #4                 \ If the tile shape is not 4, jump to sub_C2A39 to draw
- BNE sub_C2A39          \ the tile, returning from the subroutine using a tail
-                        \ call
+ CMP #4                 \ If the tile shape is 4 then we know the tile consists
+ BNE DrawSlopingTile    \ of two faces, so keep going, otherwise we don't know
+                        \ how many faces it contains, so jump to DrawSlopingTile
+                        \ to work this out
 
 .tobj3
 
-                        \ If we get here then the tile shape is 4 or 12
+                        \ If we get here then the tile shape is 4 or 12, both of
+                        \ which we know consist of two triangular faces
 
  PHA                    \ Store the tile shape on the stack
 
  LDA viewingQuadrantOpp \ Set L0045 to bit 0 of viewingQuadrantOpp to pass to
- AND #1                 \ the sub_C2A5A routine ???
+ AND #1                 \ the DrawTwoFaceTile routine ???
  STA L0045
 
  PLA                    \ Retrieve the tile shape from the stack
 
- BNE sub_C2A5A          \ Jump to sub_C2A5A to draw the tile, returning from the
-                        \ subroutine using a tail call (this BNE is effectively
-                        \ a JMP as we know the tile shape is non-zero)
+ BNE DrawTwoFaceTile    \ Jump to DrawTwoFaceTile to draw the tile, returning
+                        \ from the subroutine using a tail call (this BNE is
+                        \ effectively a JMP as we know the tile shape is
+                        \ non-zero)
 
 \ ******************************************************************************
 \
@@ -16020,19 +16023,19 @@ L23E3 = C23E2+1
 
  LDX #0                 \ If bit 0 of columnCounter and zTile are the same, then
  LDA columnCounter      \ the tile's x-coordinate and z-coordinate are either
- EOR zTile              \ both odd or both even, so jump to DrawQuadrilateral
+ EOR zTile              \ both odd or both even, so jump to DrawOneFaceTile
  AND #1                 \ with X set to 0 to draw this tile with &3C from the
- BEQ DrawQuadrilateral  \ tileShapeLookup table, is this tile colour ???
+ BEQ DrawOneFaceTile    \ tileShapeColour table, is this tile colour ???
 
  LDX #8                 \ Otherwise the tile's x-coordinate and z-coordinate are
                         \ different (i.e. one is odd and one is even), so set
                         \ X to 8 to draw this tile with &00 from the
-                        \ tileShapeLookup table, is this tile colour ???
+                        \ tileShapeColour table, is this tile colour ???
 
                         \ We now have a very short interlude to set the value of
                         \ stashOffset as part of the game's anti-cracker code,
                         \ and we pick up the tile-drawing process again in the
-                        \ DrawQuadrilateral routine
+                        \ DrawOneFaceTile routine
 
 \ ******************************************************************************
 \
@@ -16075,31 +16078,31 @@ L23E3 = C23E2+1
                         \ code stash offset to a unique and consistent value for
                         \ each landscape
 
-                        \ Fall through into DrawQuadrilateral to finish drawing
+                        \ Fall through into DrawOneFaceTile to finish drawing
                         \ the flat tile
 
 \ ******************************************************************************
 \
-\       Name: DrawQuadrilateral
+\       Name: DrawOneFaceTile
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: Draw a four-sided polygon
+\    Summary: Draw a tile with one quadrilateral (four-sided) face
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
 \   X                   The reference shape to use for the tile's colour from
-\                       the tileShapeLookup table
+\                       the tileShapeColour table ???
 \
 \ ******************************************************************************
 
-.DrawQuadrilateral
+.DrawOneFaceTile
 
- LDA tileShapeLookup,X  \ Set L0019 to the tile's colour
+ LDA tileShapeColour,X  \ Set L0019 to the tile's colour ???
  STA L0019
 
- LDA #0                 \ Set L003B = 0
+ LDA #0                 \ Set L003B = 0 ???
  STA L003B
 
  JMP DrawPolygon        \ Jump to DrawPolygon to draw the quadrilateral and
@@ -16107,10 +16110,10 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2A39
+\       Name: DrawSlopingTile
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: Draw a tile not of shape 0, 4 or 12 ???
+\    Summary: Draw a sloping tile that is not shape 4 or 12
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16120,66 +16123,93 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.sub_C2A39
+.DrawSlopingTile
 
- TAX
- SEC
- SBC viewingQuadrantx4
- AND #&0F
- TAY
- AND #&03
- CMP #&01
- BEQ DrawQuadrilateral
+ TAX                    \ Set X to the tile shape so we can retrieve it later
 
- LDA L2D03,Y
- STA L0045
- TXA
- AND #&04
+ SEC                    \ Set Y = (A - viewingQuadrantx4) mod 16
+ SBC viewingQuadrantx4  \
+ AND #%00001111         \ Tiles are grouped into four groups, so this sets the
+ TAY                    \ correct group for the orientation of the viewer
+
+ AND #%00000011         \ If Y mod 4 = 1, jump to DrawOneFaceTile
+ CMP #%00000001
+ BEQ DrawOneFaceTile
+
+ LDA L2D03,Y            \ Set L0045 = 1 for shapes 6, 7, 14, 15 (in group)
+ STA L0045              \             0 for all other shapes
+
+ TXA                    \ Set A = 1 for shapes 5, 6, 7, 13, 14, 15
+ AND #%00000100         \         0 for shapes 1, 2, 3, 9, 10, 11
  LSR A
  LSR A
- CLC
- ADC viewingQuadrantOpp
- CMP #&02
- TXA
- BCS sub_C2A5A
- ORA #&10
 
-                        \ Fall through into sub_C2A5A to ???
+ CLC                    \ Set C flag if viewingQuadrantOpp = 1 and A = 1
+ ADC viewingQuadrantOpp \            or viewingQuadrantOpp = 2
+ CMP #2                 \            or viewingQuadrantOpp = 3
+                        \
+                        \ Clear C flag if viewingQuadrantOpp = 0
+                        \              or viewingQuadrantOpp = 1 and A = 0
+
+ TXA                    \ Set A to the tile shape
+
+ BCS DrawTwoFaceTile    \ Add 16 to the tile shape if the C flag is clear
+ ORA #16
+
+                        \ Fall through into DrawTwoFaceTile to draw the tile
+                        \ with two triangular (three-sided) faces
 
 \ ******************************************************************************
 \
-\       Name: sub_C2A5A
+\       Name: DrawTwoFaceTile
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: Draw a tile of shape 4 or 12 ???
+\    Summary: Draw a tile with two triangular (three-sided) faces
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
 \   A                   The shape of the tile to draw (4 or 12)
+\                       Plus 16 if viewingQuadrantOpp = 0 or
+\                       viewingQuadrantOpp = 1 and shape is 1, 2, 3, 9, 10, 11
 \
-\   L0045               ???
+\   L0045               Set to 0 or 1 ???
+\
+\                         * For shapes 4 or 12 = bit 0 of viewingQuadrantOpp
+\
+\                         * Otherwise 1 for shapes 6, 7, 14, 15 (in group)
+\                                     0 for all other shapes
 \
 \ ******************************************************************************
 
-.sub_C2A5A
+.DrawTwoFaceTile
 
- STA L0034
- TAX
- LDA #&80
+ STA L0034              \ Set L0034 to the tile shape
+
+ TAX                    \ Set X to the tile shape so we can use it as an index
+                        \ into the tileShapeColour table
+
+ LDA #%10000000         \ Set bit 7 of L003B ???
  STA L003B
- LDA tileShapeLookup,X
- STA L0019
- JSR DrawPolygon
- LDA L0034
- EOR #&10
+
+ LDA tileShapeColour,X  \ Set L0019 to the relevant entry from tileShapeColour
+ STA L0019              \ (i.e. tileShapeColour or tileShapeColour+16)
+
+ JSR DrawPolygon        \ Draw the first trianglar face
+
+ LDA L0034              \ Set L0019 to the opposite half of tileShapeColour
+ EOR #16                \ (i.e. tileShapeColour+16 or tileShapeColour)
  TAX
- LDA tileShapeLookup,X
+ LDA tileShapeColour,X
  STA L0019
- LDA L003B
- ORA #&40
+
+ LDA L003B              \ Set bit 6 of L003B ???
+ ORA #%01000000
  STA L003B
+
+                        \ Fall into DrawPolygon to draw the second trianglar
+                        \ face
 
 \ ******************************************************************************
 \
@@ -16187,6 +16217,20 @@ L23E3 = C23E2+1
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   L0034               The tile shape
+\
+\   L003B               ???
+\
+\                         * 0 for four-sided shape
+\
+\                         * Bit 7 set for first triangle in DrawTwoFaceTile
+\
+\                         * Bit 6 set for second triangle in DrawTwoFaceTile
 \
 \ ******************************************************************************
 
@@ -17567,8 +17611,8 @@ L23E3 = C23E2+1
 \
 \ The shape is calculated as follows, where:
 \
-\   * 0, 1, 2 represent arbitrary altitudes that are in that order, with 2 being
-\     higher than 1 being higher than 0
+\   * 0 and 1 represent arbitrary altitudes that are in that order, with 1 being
+\     higher than 0
 \
 \   * a, b represent arbitrary altitudes where a <> b <> 1
 \
@@ -17586,8 +17630,8 @@ L23E3 = C23E2+1
 \   1       S == V      S <> T                  U <  V      U == T      0 0
 \                                                                       1 1
 \
-\   2       S <> V      S <> T      S <= U      U == V      U == T      2 2
-\                                                                       1 2
+\   2       S <> V      S <> T      S <= U      U == V      U == T      1 1
+\                                                                       0 1
 \
 \   3       S == V      S == T      S >  U                              1 0
 \                                                                       1 1
@@ -17601,17 +17645,17 @@ L23E3 = C23E2+1
 \   5       S <> V      S == T                  U == V      U <  T      1 0
 \                                                                       1 0
 \
-\   6       S == V      S <> T                  U == V      U <  T      2 1
-\                                                                       1 1
+\   6       S == V      S <> T                  U == V      U <  T      1 0
+\                                                                       0 0
 \
 \   7       S <> V      S == T                  U >= V      U == T      1 1
 \                                                                       1 0
 \
-\   9       S == V      S <> T                  U >= V      U == T      2 2
-\                                                                       1 1
+\   9       S == V      S <> T                  U >= V      U == T      1 1
+\                                                                       0 0
 \
-\   10      S == V      S == T      S <  U                              1 2
-\                                                                       1 1
+\   10      S == V      S == T      S <  U                              0 1
+\                                                                       0 0
 \
 \   11      S <> V      S <> T      S >  U      U == V      U == T      0 0
 \                                                                       1 0
@@ -17622,11 +17666,11 @@ L23E3 = C23E2+1
 \   12b     S == V      S <> T                  U <> V      U <> T      a b
 \                                                                       1 1
 \
-\   13      S <> V      S == T                  U == V      U >= T      1 2
-\                                                                       1 2
+\   13      S <> V      S == T                  U == V      U >= T      0 1
+\                                                                       0 1
 \
-\   14      S <> V      S == T                  U <  V      U == T      1 1
-\                                                                       1 2
+\   14      S <> V      S == T                  U <  V      U == T      0 0
+\                                                                       0 1
 \
 \   15      S == V      S <> T                  U == V      U >= T      0 1
 \                                                                       1 1
@@ -17957,14 +18001,14 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: tileShapeLookup
+\       Name: tileShapeColour
 \       Type: Variable
-\   Category: ???
+\   Category: Drawing the landscape
 \    Summary: Two sets of tile values, indexed by shape ???
 \
 \ ******************************************************************************
 
-.tileShapeLookup
+.tileShapeColour
 
  EQUB &3C, &04, &04, &08, &08, &08, &04, &08
  EQUB &00, &04, &08, &04, &04, &08, &08, &04

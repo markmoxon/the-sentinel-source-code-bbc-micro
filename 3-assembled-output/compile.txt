@@ -6946,13 +6946,13 @@
 .SetSecretStash
      2A27   BD 75 0C   LDA &0C75,X
      2A2A   9D 4D 0C   STA &0C4D,X
-.DrawQuadrilateral
+.DrawOneFaceTile
      2A2D   BD E3 2C   LDA &2CE3,X
      2A30   85 19      STA &19
      2A32   A9 00      LDA #&00
      2A34   85 3B      STA &3B
      2A36   4C 79 2A   JMP &2A79
-.sub_C2A39
+.DrawSlopingTile
      2A39   AA         TAX
      2A3A   38         SEC
      2A3B   E5 66      SBC &66
@@ -6973,7 +6973,7 @@
      2A55   8A         TXA
      2A56   B0 02      BCS &2A5A
      2A58   09 10      ORA #&10
-.sub_C2A5A
+.DrawTwoFaceTile
      2A5A   85 34      STA &34
      2A5C   AA         TAX
      2A5D   A9 80      LDA #&80
@@ -7360,7 +7360,7 @@
      2CE0   21
      2CE1   FF
      2CE2   1F
-.tileShapeLookup
+.tileShapeColour
      2CE3   3C
      2CE4   04
      2CE5   04
