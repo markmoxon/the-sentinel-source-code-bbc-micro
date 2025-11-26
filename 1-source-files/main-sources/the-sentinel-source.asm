@@ -16317,11 +16317,13 @@ L23E3 = C23E2+1
 \
 \                         * Bit 6 set for second triangle in DrawTwoFaceTile
 \
+\   L0010               ???
+
 \ ******************************************************************************
 
 .DrawPolygon
 
- LDY L0010              \ If L0010 >= 2, jump to poly2
+ LDY L0010              \ If L0010 >= 2, jump to poly2 ???
  CPY #2
  BCS poly2
 
@@ -16329,14 +16331,16 @@ L23E3 = C23E2+1
  BCS poly1
  JSR sub_C2299
 
- LDY L0010
+ LDY L0010              \ L0010 is 0 or 1, so set A = L002C or L002D
  LDA L002C,Y
- CMP #&01
- BEQ poly3
+
+ CMP #1                 \ If L002C or L002D = 1, jump to poly3 to return from
+ BEQ poly3              \ the subroutine
 
 .poly1
 
- JSR sub_C295D
+ JSR sub_C295D          \ Flip bit 0 of L0010 and set lots of variables
+                        \ accordingly ???
 
 .poly2
 
@@ -16346,7 +16350,7 @@ L23E3 = C23E2+1
 
 .poly3
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -18091,17 +18095,66 @@ L23E3 = C23E2+1
 \       Name: tileShapeColour
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: Two sets of tile values, indexed by shape ???
+\    Summary: Tile colours by shape and the orientation of the viewer
+\
+\ ------------------------------------------------------------------------------
+\
+\ The colours shown in the comments below are for landscape 0000, which has the
+\ following palette:
+\
+\   * Colour 0 = blue
+\
+\   * Colour 1 = black
+\
+\   * Colour 2 = white
+\
+\   * Colour 3 = green
+\
+\ Colours 2 and 3 can be altered depending on the context (for gameplay, the
+\ palette changes depending on the number of enemies, for example). The range of
+\ colours is as follows:
+\
+\   * Colour 2 can be white, yellow, cyan or red
+\
+\   * Colour 3 can be green, red, yellow or cyan
 \
 \ ******************************************************************************
 
 .tileShapeColour
 
- EQUB &3C, &04, &04, &08, &08, &08, &04, &08
- EQUB &00, &04, &08, &04, &04, &08, &08, &04
-
- EQUB &00, &00, &08, &04, &08, &00, &08, &04
- EQUB &00, &00, &04, &08, &04, &00, &04, &08
+ EQUB 3 << 2 + 3 << 4   \ Shape  0 = colour 3 (green) and colour 0 (blue)
+ EQUB 1 << 2            \ Shape  1 = colour 1 (black) and colour 0 (blue)
+ EQUB 1 << 2            \ Shape  2 = colour 1 (black) and colour 2 (white)
+ EQUB 2 << 2            \ Shape  3 = colour 2 (white) and colour 1 (black)
+ EQUB 2 << 2            \ Shape  4 = colour 2 (white) and colour 2 (white)
+ EQUB 2 << 2            \ Shape  5 = colour 2 (white) and colour 0 (blue)
+ EQUB 1 << 2            \ Shape  6 = colour 1 (black) and colour 2 (white)
+ EQUB 2 << 2            \ Shape  7 = colour 2 (white) and colour 1 (black)
+ EQUB 0 << 2            \ Shape  8 = unused
+ EQUB 1 << 2            \ Shape  9 = colour 1 (black) and colour 0 (blue)
+ EQUB 2 << 2            \ Shape 10 = colour 2 (white) and colour 1 (black)
+ EQUB 1 << 2            \ Shape 11 = colour 1 (black) and colour 2 (white)
+ EQUB 1 << 2            \ Shape 12 = colour 1 (black) and colour 1 (black)
+ EQUB 2 << 2            \ Shape 13 = colour 2 (white) and colour 0 (blue)
+ EQUB 2 << 2            \ Shape 14 = colour 2 (white) and colour 1 (black)
+ EQUB 1 << 2            \ Shape 15 = colour 1 (black) and colour 2 (white)
+ 
+ EQUB 0 << 2            \ Shape  0 = colour 3 (green) and colour 0 (blue)
+ EQUB 0 << 2            \ Shape  1 = colour 1 (black) and colour 0 (blue)
+ EQUB 2 << 2            \ Shape  2 = colour 1 (black) and colour 2 (white)
+ EQUB 1 << 2            \ Shape  3 = colour 2 (white) and colour 1 (black)
+ EQUB 2 << 2            \ Shape  4 = colour 2 (white) and colour 2 (white)
+ EQUB 0 << 2            \ Shape  5 = colour 2 (white) and colour 0 (blue)
+ EQUB 2 << 2            \ Shape  6 = colour 1 (black) and colour 2 (white)
+ EQUB 1 << 2            \ Shape  7 = colour 2 (white) and colour 1 (black)
+ EQUB 0 << 2            \ Shape  8 = unused
+ EQUB 0 << 2            \ Shape  9 = colour 1 (black) and colour 0 (blue)
+ EQUB 1 << 2            \ Shape 10 = colour 2 (white) and colour 1 (black)
+ EQUB 2 << 2            \ Shape 11 = colour 1 (black) and colour 2 (white)
+ EQUB 1 << 2            \ Shape 12 = colour 1 (black) and colour 1 (black)
+ EQUB 0 << 2            \ Shape 13 = colour 2 (white) and colour 0 (blue)
+ EQUB 1 << 2            \ Shape 14 = colour 2 (white) and colour 1 (black)
+ EQUB 2 << 2            \ Shape 15 = colour 1 (black) and colour 2 (white)
 
 \ ******************************************************************************
 \
