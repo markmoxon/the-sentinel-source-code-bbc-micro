@@ -3307,7 +3307,7 @@
      10B4   D0 F9      BNE &10AF
 .clrs2
      10B6   60         RTS
-.sub_C10B7
+.PanLandscapeView
      10B7   A4 08      LDY &08
      10B9   A6 6E      LDX &6E
      10BB   C0 02      CPY #&02
@@ -5824,11 +5824,11 @@
      2290   CC
      2291   EE
      2292   FF
-.L2293
+.L2293Lo
      2293   00
      2294   60
      2295   00
-.L2296
+.L2293Hi
      2296   00
      2297   00
      2298   00

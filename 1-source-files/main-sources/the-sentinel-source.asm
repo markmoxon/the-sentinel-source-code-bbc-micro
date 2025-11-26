@@ -4619,14 +4619,14 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C10B7
+\       Name: PanLandscapeView
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing the landscape
+\    Summary: Pan the landscape and update the landscape view
 \
 \ ******************************************************************************
 
-.sub_C10B7
+.PanLandscapeView
 
  LDY lastPanKeyPressed
  LDX viewingObject
@@ -12007,29 +12007,33 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: L2293
+\       Name: L2293Lo
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L2293
+.L2293Lo
 
- EQUB &00, &60, &00
+ EQUB LO(&0000)
+ EQUB LO(&0060)
+ EQUB LO(&0000)
 
 \ ******************************************************************************
 \
-\       Name: L2296
+\       Name: L2293Hi
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L2296
+.L2293Hi
 
- EQUB &00, &00, &00
+ EQUB HI(&0000)
+ EQUB HI(&0060)
+ EQUB HI(&0000)
 
 \ ******************************************************************************
 \
@@ -12075,10 +12079,10 @@ L1145 = C1144+1
  LDY L0010
  LDA R
  CLC
- ADC L2293,Y
+ ADC L2293Lo,Y          \ Adds &60 when Y = 1
  STA R
  LDA S
- ADC L2296,Y
+ ADC L2293Hi,Y          \ Adds &60 when Y = 1
  STA S
  LDA polygonColour
  BIT L0C7A
@@ -15741,9 +15745,9 @@ L23E3 = C23E2+1
 
 .sub_C295D
 
- LDA L0010
- AND #&01
- EOR #&01
+ LDA L0010              \ Flip bit 0 of L0010
+ AND #1
+ EOR #1
 
 \ ******************************************************************************
 \
@@ -21481,9 +21485,7 @@ L314A = C3148+2
 
 .game13
 
- JSR sub_C10B7          \ This draws the landscape view somehow, does it
-                        \ implement the pan and draw the new bits of the
-                        \ landscape screen ???
+ JSR PanLandscapeView   \ Pan the landscape and update the landscape view
 
  LSR keepCheckingPanKey \ Clear bit 7 of keepCheckingPanKey so DrawLandscapeView
                         \ will keep drawing the landscape irrespective of the
