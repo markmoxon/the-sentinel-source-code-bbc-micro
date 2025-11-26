@@ -529,13 +529,9 @@
 
 .xCoordHi
 
- SKIP 0                 \ The x-coordinate of an object or point (high byte)
+ SKIP 1                 \ The x-coordinate of an object or point (high byte)
                         \
                         \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
-
-.L003A
-
- SKIP 1                 \ ???
 
 .yCoordHi
 
@@ -795,9 +791,11 @@
 
  SKIP 1                 \ Temporary storage, used in a number of places
 
-.L0079
+.platformAltitudeLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The low byte of the altitude of the Sentinel's tower
+                        \ or boulder when returning tile data from the
+                        \ GetTileAltitude routine
 
 .aLo
 
@@ -8222,7 +8220,7 @@ L1145 = C1144+1
  LDA angleHi
  STA vectorPitchAngleHi
  JSR GetVectorForAngles
- JSR sub_C1CCC
+ JSR FollowGazeVector
  ROL L0C56
  ROR L0014
  ROL L0CDD
@@ -8975,17 +8973,31 @@ L1145 = C1144+1
                         \   [ (xVectorLo xVectorBot) ]
                         \   [ (yVectorLo yVectorBot) ]
                         \   [ (zVectorLo zVectorBot) ]
-
- JSR sub_C1CCC          \ Does this work out if we are able to see the tile ???
                         \
-                        \ This also calls GetObjectCoords to set (L003A, L003C)
-                        \ which we use below as the tile coordinates where we
-                        \ create objects, so is (L003A, L003C) the tile that the
-                        \ player is looking at ???
+                        \ This vector is the vector from the player's eyes to
+                        \ the sights, divided by 16 by the GetVectorForAngles
+                        \ routine that GetSightsVector uses
+                        \
+                        \ The "divided by 16" part is important, as we want to
+                        \ divide the vector from the player to the sights into
+                        \ small steps, so we can move along the vector
+                        \ sequentially, checking on each step whether the
+                        \ vector is passing through a flat tile or platform
 
- BCS pkey7              \ If the C flag is set then this means ???, so jump to
+ JSR FollowGazeVector   \ Follow the gaze vector from a viewing object to
+                        \ determine whether the player's sights can see a flat
+                        \ tile or platform (i.e. boulder or tower)
+                        \
+                        \ If it does hit a tile or platform, it sets xCoordHi
+                        \ and zCoordHi to the tile coorsinates of the tile,
+                        \ which we use below for creating or removing objects
+                        \ on the tile in the sights
+
+ BCS pkey7              \ If the C flag is set then this means the player can't
+                        \ see a tile or platform through the sights, so jump to
                         \ pkey7 to make an error sound and return from the
-                        \ subroutine as we can't see the tile ???
+                        \ subroutine as we can't see a suitable surface for the
+                        \ create, absorb or transfer action
 
  LDA keyPress           \ If bit 5 of keypress is clear then A is not 32 or 33,
  AND #%00100000         \ so A must be 0, 2 or 3 (one of the create keys), so
@@ -9179,9 +9191,8 @@ L1145 = C1144+1
                         \
                         \   * Absorb or transfer to an empty tile
                         \
-                        \   * Create, absorb or transfer to a tile that they
-                        \     can't see directly (sub_C1CCC returns with C flag
-                        \     set, this explanation is a total guess) ???
+                        \   * Create, absorb or transfer to a tile or platform
+                        \     that they see directly
                         \
                         \   * Transfer to an object that is not a robot
                         \
@@ -9243,9 +9254,9 @@ L1145 = C1144+1
  LDX currentObject      \ Set X to the object number of the object we just
                         \ created
 
- LDA L003A              \ Set (xTile, zTile) = (L003A, L003C) ???
- STA xTile              \
- LDA L003C              \ Is this the tile that the player is looking at ???
+ LDA xCoordHi           \ Set (xTile, zTile) to the tile coordinates of the tile
+ STA xTile              \ in the sights, which we set in part 1 with the call to
+ LDA zCoordHi           \ FollowGazeVector
  STA zTile
 
  JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
@@ -9959,17 +9970,79 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1CCC
+\       Name: FollowGazeVector (Part 1 of 2)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Follow a gaze vector from a viewing object to determine whether
+\             the viewer can see a flat tile or platform (i.e. boulder or tower)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine follows the gaze of a viewing object to see if it hits a tile or
+\ a platform (where a platform is a boulder or the Sentinel's tower)
+\
+\ The gaze is defined by the following vector:
+\
+\   [ xVector ]   [ (xVectorLo xVectorBot) ]
+\   [ yVector ] = [ (yVectorLo yVectorBot) ]
+\   [ zVector ]   [ (zVectorLo zVectorBot) ]
+\
+\ This contains the gaze vector, scaled down to be very small, so we can trace
+\ the line of the gaze by repeatedly adding this vector to the coordinates of
+\ the viewing object to step along the line of the gaze. At each step we check
+\ to see whether the gaze has hit a tile, repeatiung this until we either hit a
+\ tile or fall off the edge of the landscape.
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   viewingObject       The number of the object that is performing the gaze
+\
+\   xVectorLo           The x-coordinate of the scaled-down gaze vector (low
+\                       byte)
+\
+\   xVectorBot          The x-coordinate of the scaled-down gaze vector (bottom
+\                       byte)
+\
+\   yVectorLo           The y-coordinate of the scaled-down gaze vector (low
+\                       byte)
+\
+\   yVectorBot          The y-coordinate of the scaled-down gaze vector (bottom
+\                       byte)
+\
+\   zVectorLo           The z-coordinate of the scaled-down gaze vector (low
+\                       byte)
+\
+\   zVectorBot          The z-coordinate of the scaled-down gaze vector (bottom
+\                       byte)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Status flag:
+\
+\                         * Clear if the viewing object can see a tile along
+\                           the gaze vector
+\
+\                         * Set if the viewing object can't see a tile along
+\                           the gaze vector
+\
+\   L0C56               Bit 7 ???
+\
+\   L0CDD               Bit 7 ???
+\
+\   xCoordHi            The tile x-coordinate of the tile that can be seen
+\
+\   zCoordHi            The tile z-coordinate of the tile that can be seen
 \
 \ ******************************************************************************
 
-.sub_C1CCC
+.FollowGazeVector
 
- LDX viewingObject      \ Set X to the number of the object that is doing the
-                        \ looking ???
+ LDX viewingObject      \ Set X to the number of the object that is performing
+                        \ the gaze (i.e. doing the looking or scanning)
 
  LSR L0C56              \ Clear bit 7 of L0C56 ????
 
@@ -9983,8 +10056,12 @@ L1145 = C1144+1
                         \   (yCoordHi yCoordLo yCoordBot)
                         \
                         \   (zCoordHi zCoordLo zCoordBot)
+                        \
+                        \ We now repeatedly add the scaled-down gaze vector to
+                        \ this coordinate to step along the gaze from the
+                        \ viewing object and see if it hits anything
 
-.C1CD7
+.gaze1
 
  JSR AddVectorToCoord   \ Add the coordinates and the vector as follows:
                         \
@@ -10003,143 +10080,407 @@ L1145 = C1144+1
                         \   [ xVector ]   [ (xVectorLo xVectorBot) ]
                         \   [ yVector ] = [ (yVectorLo yVectorBot) ]
                         \   [ zVector ]   [ (zVectorLo zVectorBot) ]
+                        \
+                        \ This adds the scaled-down gaze vector to the
+                        \ coordinate to perform a step along the object's gaze
 
- LDA xCoordHi
- STA xTile
- CMP #&1F
- BCS C1D33
- LDA zCoordHi
- STA zTile
- CMP #&1F
- BCS C1D33
+ LDA xCoordHi           \ Set xTile to the high byte of the result (i.e. the
+ STA xTile              \ tile x-coordinate below our current position along the
+                        \ viewer's gaze)
 
- LDA #%10000000         \ Set bit 7 of considerObjects so GetTileAltitude will
- STA considerObjects    \ include objects in its calculations ???
+ CMP #31                \ If we just stepped beyond the right edge of the
+ BCS gaze4              \ landscape then the gaze does not land upon a tile, so
+                        \ jump to gaze4 to return from the subroutine with the
+                        \ C flag set to indicate that the viewer is not looking
+                        \ at a tile
 
- STA L000C
- LDA #0
- STA L0079
- STA L0C67
- JSR GetTileAltitude
- BCS C1D35
- TAX
- LDA L0079
- SEC
- SBC yCoordLo
- STA L0079
- TXA
- SBC yCoordHi
- BMI C1CD7
- BNE C1D33
- LDA L0079
- CMP L000C
- BCS C1D33
+ LDA zCoordHi           \ Set zTile to the high byte of the result (i.e. the
+ STA zTile              \ tile z-coordinate below our current position along the
+                        \ viewer's gaze)
 
- BIT considerObjects    \ If bit 6 of considerObjects is set then jump to L1D33
- BVS C1D33              \ to return from the subroutine with the C flag set ???
+ CMP #31                \ If we just stepped beyond the rear edge of the
+ BCS gaze4              \ landscape then the gaze does not land upon a tile, so
+                        \ jump to gaze4 to return from the subroutine with the
+                        \ C flag set to indicate that the viewer is not looking
+                        \ at a tile
 
- LDA L0C6E              \ If bit 7 is set in one or both of L0C6E and L0C67,
- ORA L0C67              \ skip the following test ???
- BMI C1D21
+ LDA #%10000000         \ Set bit 7 and clear bit 6 of considerObjects so the
+ STA considerObjects    \ following call GetTileAltitude will include objects in
+                        \ its calculations ???
 
- LDA yVectorLo
- BPL C1D33
+ STA L000C              \ Set bit 7 of L000C ???
 
-.C1D21
+ LDA #0                 \ Set platformAltitudeLo = 0, so if the tile doesn't
+ STA platformAltitudeLo \ contain a platform, platformAltitudeLo will be zero
 
- LDX viewingObject
- LDA xTile
- CMP xObject,X
- BNE C1D31
- LDA zTile
- CMP zObject,X
- BEQ C1CD7
+ STA L0C67              \ Set L0067 = 0 ???
 
-.C1D31
+ JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
+                        \ set to extract the following tile data:
+                        \
+                        \   * (A platformAltitudeLo) = if the tile contains a
+                        \     boulder or the Sentinel's tower, then this is set
+                        \     to the altitude of the platform object, +32 for
+                        \     the tower or +96 for the boulder
+                        \
+                        \   * A = if the tile contains a non-platform object
+                        \         then this is set to the high byte of the
+                        \         tile's altitude, which is the same as the high
+                        \         byte of the object's altitude
+                        \
+                        \   * A = if the tile is not flat then this is set to
+                        \         the tile altitude from the tile data
+                        \
+                        \   * C flag = the tile's shape, clear if the tile is
+                        \              flat or set if the tile is not flat
 
- CLC
- RTS
+ BCS gaze5              \ If the tile is not flat, jump to gaze5 to calculate
+                        \ the gaze vector's interaction with the tile slopes
 
-.C1D33
+                        \ If we get here then the tile is flat and may contain
+                        \ an object
 
- SEC
- RTS
+ TAX                    \ Set (X A) to the altitude of the platform (if there is
+ LDA platformAltitudeLo \ one) or the altitude of the tile (is there isn't)
 
-.C1D35
+ SEC                    \ Set the following:
+ SBC yCoordLo           \
+ STA platformAltitudeLo \   (A platformAltitudeLo) = (X A) - (yCoordHi yCoordLo)
+ TXA                    \
+ SBC yCoordHi           \ So this contains the relative altitude of the tile or
+                        \ platform compared to our current position along the
+                        \ viewer's gaze (as we are subtracting the altitude of
+                        \ the gaze from the altitude of the tile/platform)
 
- STA S
- STA W
+ BMI gaze1              \ If the high byte of the result is negative then the
+                        \ gaze is passing through the y-coordinate above the
+                        \ tile or platform, in terms of whole numbers (so it is
+                        \ essentially more than one "tile cube" above the tile)
+                        \
+                        \ This means it hasn't hit the tile and is still passing
+                        \ through empty space above the landscape, so loop back
+                        \ to gaze1 to move along the gaze vector and restart the
+                        \ checks
+
+ BNE gaze4              \ If the high byte of the result is non-zero and
+                        \ positive, then the the gaze is passing through the
+                        \ y-coordinate below the tile or platform, in terms of
+                        \ whole numbers (so it is essentially in the "tile cube"
+                        \ beneath the tile)
+                        \
+                        \ This means the gaze must have passed through a slope
+                        \ and "into" the ground beneath the tile, so jump to
+                        \ gaze4 to return from the subroutine with the C flag
+                        \ set to indicate that the viewer is not looking at a
+                        \ tile
+
+                        \ If we get here then the gaze is currently sitting
+                        \ within the "tile cube" above the tile
+
+ LDA platformAltitudeLo \ If platformAltitudeLo >= L000C, then the platform is
+ CMP L000C              \ too high, so jump to gaze4 to return from the
+ BCS gaze4              \ subroutine with the C flag set to indicate that the
+                        \ viewer is not looking at a tile ???
+
+ BIT considerObjects    \ If bit 6 of considerObjects is set then jump to gaze4
+ BVS gaze4              \ to return from the subroutine with the C flag set to
+                        \ indicate that the viewer is not looking at a tile ???
+
+ LDA L0C6E              \ If bit 7 is set in either of L0C6E and L0C67, skip the
+ ORA L0C67              \ following test ???
+ BMI gaze2
+
+                        \ If we get here then bit 7 is clear in both L0C6E and
+                        \ L0C67, so ???
+
+ LDA yVectorLo          \ If the low byte (i.e. the fractional part) of the gaze
+ BPL gaze4              \ vector's y-coordinate is positive, then the viewer is
+                        \ looking upwards and ???, so jump to gaze4 to return
+                        \ from the subroutine with the C flag set to indicate
+                        \ that the viewer is not looking at a tile
+
+.gaze2
+
+                        \ If we get here then the viewer's gaze has landed on a
+                        \ tile, so the final check is to make sure the viewer is
+                        \ not looking at their own tile
+
+ LDX viewingObject      \ Set X to the number of the object that is performing
+                        \ the gaze (i.e. doing the looking or scanning)
+
+ LDA xTile              \ If the x-coordinate of the viewing object is not the
+ CMP xObject,X          \ same as the x-coordinate of the tile that the gaze has
+ BNE gaze3              \ hit, jump to gaze3 to return from the subroutine with
+                        \ the C flag clear, to indicate that the viewer is
+                        \ looking at a tile
+
+                        \ If we get here then the x-coordinates match, so we now
+                        \ need to check the z-coordinates
+
+ LDA zTile              \ If the z-coordinate of the viewing object is the same
+ CMP zObject,X          \ as the x-coordinate, then the viewer is looking at
+ BEQ gaze1              \ their own tile, so loop back to gaze1 to move along the
+                        \ gaze vector and restart the checks
+
+                        \ If we get here then the z-coordinates do not match, so
+                        \ we can now return from the subroutine with the C flag
+                        \ clear, to indicate that the viewer is looking at a
+                        \ tile
+
+.gaze3
+
+ CLC                    \ Set the C flag to indicate that the gaze hit
+                        \ something, so the viewing object is looking at
+                        \ something
+
+ RTS                    \ Return from the subroutine
+
+.gaze4
+
+ SEC                    \ Set the C flag to indicate that the gaze didn't hit
+                        \ anything, so the viewing object isn't looking at
+                        \ anything
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: FollowGazeVector (Part 2 of 2)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Calculate whether the viewing object's gaze is obstructed by the
+\             shape of a non-flat tile
+\
+\ ******************************************************************************
+
+.gaze5
+
+                        \ If we get here then the tile is not flat and A is set
+                        \ to the tile altitude from the tile data
+
+ STA S                  \ Set S to the tile altitude
+
+ STA W                  \ Set W to the tile altitude (is this used ???)
 
  LSR considerObjects    \ Clear bit 7 of considerObjects so GetTileAltitude will
                         \ only extract the altitude and flatness of the tiles
                         \ when we call it below, ignoring any objects on the
                         \ landscape
 
- INC xTile
- JSR GetTileAltitude
- STA V
- INC zTile
- JSR GetTileAltitude
- STA U
- DEC xTile
- JSR GetTileAltitude
- STA T
- DEC zTile
+ INC xTile              \ Move along the x-axis to fetch the next tile to the
+                        \ right
+
+ JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
+                        \ clear to extract the following tile data:
+                        \
+                        \   * A = the high byte of the tile's altitude (which
+                        \         is also the altitude of the tile corner)
+                        \
+                        \   * C flag = the tile's shape, clear if the tile is
+                        \              flat or set if the tile is not flat
+
+ STA V                  \ Set V to the altitude of the tile to the right
+
+ INC zTile              \ Move along the x-axis to fetch the next tile into the
+                        \ screen
+
+ JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
+                        \ clear to extract the following tile data:
+                        \
+                        \   * A = the high byte of the tile's altitude (which
+                        \         is also the altitude of the tile corner)
+                        \
+                        \   * C flag = the tile's shape, clear if the tile is
+                        \              flat or set if the tile is not flat
+
+ STA U                  \ Set U to the altitude of the tile behind
+
+ DEC xTile              \ Move back along the x-axis to fetch the next tile to
+                        \ the left
+
+ JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
+                        \ clear to extract the following tile data:
+                        \
+                        \   * A = the high byte of the tile's altitude (which
+                        \         is also the altitude of the tile corner)
+                        \
+                        \   * C flag = the tile's shape, clear if the tile is
+                        \              flat or set if the tile is not flat
+
+ STA T                  \ Set V to the altitude of the tile to the left
+
+ DEC zTile              \ Move out of the screen, back along the z-axis to take
+                        \ us back to the tile we are processing
+
+                        \ So at this point we have the altitudes of four tile
+                        \ corners, as follows, with the view from above:
+                        \
+                        \      ^           [T]  [U]
+                        \      |
+                        \      |           [S]  [V]
+                        \   z-axis
+                        \    into
+                        \   screen      x-axis from left to right --->
+                        \
+                        \ S is the altitude of the tile corner that anchors the
+                        \ tile below the current position along the viewer's
+                        \ gaze, and T, U and V are the altitudes of the tile's
+                        \ other three corners, so now we can analyse how the
+                        \ gaze interacts with the shape of the tile
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #&0F
- CMP #&04
- BEQ C1D5F
- CMP #&0C
- BNE C1D77
+ AND #%00001111         \ The tile shape is in the low nibble of the tile data,
+                        \ so extract the tile shape into A
 
-.C1D5F
+ CMP #4                 \ If the tile shape is 4 then jump to gaze6
+ BEQ gaze6
 
- LDA yCoordHi
- CMP S
- BCS C1D74
- CMP T
- BCS C1D74
+ CMP #12                \ If the tile shape is 12 then keep going, otherwise
+ BNE gaze8              \ jump to gaze8
+
+.gaze6
+
+                        \ If we get here then the tile shape is 4 or 12
+
+ LDA yCoordHi           \ If yCoordHi is higher than any of the four tile
+ CMP S                  \ corners, then the current position along the viewer's
+ BCS gaze7              \ gaze is above the tile surface, so jump to gaze1 via
+ CMP T                  \ gaze7 to move along the gaze vector and restart the
+ BCS gaze7              \ checks
  CMP U
- BCS C1D74
+ BCS gaze7
  CMP V
- BCS C1D74
- JMP C1D33
+ BCS gaze7
 
-.C1D74
+ JMP gaze4              \ Otherwise the current position along the viewer's
+                        \ gaze is below the height of at least one tile corner,
+                        \ so we consider this to be enough interference to be
+                        \ blocking the viewer's gaze of any tiles that might be
+                        \ partially visible beyond (which might be possible if
+                        \ the slope is from left to right, for example)
+                        \
+                        \ So jump to gaze4 to return from the subroutine with
+                        \ the C flag set to indicate that the viewer is not
+                        \ looking at a tile
 
- JMP C1CD7
+.gaze7
 
-.C1D77
+ JMP gaze1              \ Jump to gaze1 to move along the gaze vector and
+                        \ restart the checks (this jump point is for use by
+                        \ branching instructions)
 
- LSR A
- BCC C1D89
- LSR A
- BCS C1D82
- AND #&01
- JMP C1D9C
+.gaze8
 
-.C1D82
+                        \ If we get here then the tile shape in A is not 4 or 12
+                        \ (and it also isn't 0, as the tile is not flat)
+                        \
+                        \ The tile shape is therefore one of the following:
+                        \
+                        \   1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15
 
- ADC #&01
- AND #&03
- JMP C1D8A
+ LSR A                  \ If bit 0 of the shape number is clear, jump to gaze10
+ BCC gaze10
 
-.C1D89
+                        \ If we get here then the tile shape is one of the
+                        \ following:
+                        \
+                        \   1, 3, 5, 7, 9, 11, 13, 15
+                        \
+                        \ and A contains the shape >> 1
 
- LSR A
+ LSR A                  \ If bit 1 of the shape number is set, jump to gaze9
+ BCS gaze9
 
-.C1D8A
+                        \ If we get here then the tile shape is one of the
+                        \ following:
+                        \
+                        \   1, 5, 9, 13
+                        \
+                        \ and A contains the shape >> 2 to give:
+                        \
+                        \   0, 1, 2, 3
+
+ AND #1                 \ Set A to bit 0 of A, which is bit 2 of the original
+                        \ shape number, so:
+                        \
+                        \   * A = 0 if the tile shape is 0 or 9
+                        \
+                        \   * A = 1 if the tile shape is 5 or 13
+
+ JMP gaze13             \ Jump to gaze13 to analyse this shape
+
+.gaze9
+
+                        \ If we get here then the tile shape is one of the
+                        \ following:
+                        \
+                        \   3, 7, 11, 15
+                        \
+                        \ and A contains the shape >> 2 to give:
+                        \
+                        \   0, 1, 2, 3
+                        \
+                        \ and the C flag is set
+
+ ADC #1                 \ Set A = (A + 2) mod 4, to give:
+ AND #3                 \
+                        \   2, 3, 0, 1
+                        \
+                        \ The addition adds 2 because the C flag is set
+
+ JMP gaze11             \ Jump to gaze11 to analyse this shape
+
+.gaze10
+
+                        \ If we get here then the tile shape is one of the
+                        \ following:
+                        \
+                        \   2, 6, 8, 10, 14
+                        \
+                        \ and A contains the shape >> 1
+
+ LSR A                  \ Shift A right by one place, so the tile shape is one
+                        \ of the following:
+                        \
+                        \   2, 6, 8, 10, 14
+                        \
+                        \ and A contains the shape >> 2 to give:
+                        \
+                        \   0, 1, 2, 2, 3
+
+.gaze11
+
+                        \ We either jump here with:
+                        \
+                        \   * A = 2 if the tile shape is 3
+                        \
+                        \   * A = 3 if the tile shape is 7
+                        \
+                        \   * A = 0 if the tile shape is 11
+                        \
+                        \   * A = 1 if the tile shape is 15
+                        \
+                        \ or fall through from above with:
+                        \
+                        \   * A = 0 if the tile shape is 2
+                        \
+                        \   * A = 1 if the tile shape is 6
+                        \
+                        \   * A = 2 if the tile shape is 8
+                        \
+                        \   * A = 2 if the tile shape is 10
+                        \
+                        \   * A = 3 if the tile shape is 14
 
  STA G
  LSR A
  LDA xCoordLo
- BCC C1D93
+ BCC gaze12
  EOR #&FF
 
-.C1D93
+.gaze12
 
  CMP zCoordLo
  LDA G
@@ -10147,22 +10488,32 @@ L1145 = C1144+1
  TAY
  LDA L1DDE,Y
 
-.C1D9C
+.gaze13
+
+                        \ We either jump here with:
+                        \
+                        \   * A = 0 if the tile shape is 0 or 9
+                        \
+                        \   * A = 1 if the tile shape is 5 or 13
+                        \
+                        \ or fall through from above with:
+                        \
+                        \   ???
 
  TAX
  LSR A
  LDY xCoordLo
- BCS C1DA4
+ BCS gaze14
  LDY zCoordLo
 
-.C1DA4
+.gaze14
 
  LSR A
  TYA
- BCC C1DAA
+ BCC gaze15
  EOR #&FF
 
-.C1DAA
+.gaze15
 
  STA L0002
  LDA S,X
@@ -10171,12 +10522,12 @@ L1145 = C1144+1
  SEC
  SBC S,X
  PHP
- BPL C1DBD
+ BPL gaze16
  EOR #&FF
  CLC
  ADC #&01
 
-.C1DBD
+.gaze16
 
  STA U
  LDA L0002
@@ -10198,12 +10549,12 @@ L1145 = C1144+1
  SBC T
  LDA yCoordHi
  SBC U
- BPL C1DDB
- JMP C1D33
+ BPL gaze17
+ JMP gaze4
 
-.C1DDB
+.gaze17
 
- JMP C1CD7
+ JMP gaze1
 
 \ ******************************************************************************
 \
@@ -10235,11 +10586,20 @@ L1145 = C1144+1
 \   considerObjects     The data to extract:
 \
 \                         * Bit 7 clear = extract the tile's altitude and
-\                                         flatness
+\                                         flatness, ignoring any objects on the
+\                                         tile
 \
 \                         * Bit 7 set = if the tile contains an object, then ???
 \                                       otherwise extract the tile's altitude
 \                                       and shape
+\
+\   xCoordLo            The low byte of an x-coordinate for comparing to the
+\                       centre of a tile (only used if bit 7 of considerObjects
+\                       is set)
+\
+\   zCoordLo            The low byte of an z-coordinate for comparing to the
+\                       centre of a tile (only used if bit 7 of considerObjects
+\                       is set)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10247,8 +10607,9 @@ L1145 = C1144+1
 \
 \   A                   The high byte of the tile's altitude
 \
-\   L0079               The low byte of the tile's altitude in (A L0079) when
-\                       the tile contains the Sentinel's tower or a boulder
+\   platformAltitudeLo  If bit 7 of considerObjects is set and the tile contains
+\                       the Sentinel's tower or a boulder, the altitude of the
+\                       tower or boulder is returned in (A platformAltitudeLo)
 \
 \   C flag              The tile's shape:
 \
@@ -10314,7 +10675,11 @@ L1145 = C1144+1
 
  JSR CheckForTileCentre \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
-                        \ and return the same value in A ???
+                        \ and return the same value in A
+                        \
+                        \ This calculates how close the coordinate is to the
+                        \ centre of a tile, in terms of the x-coordinate and
+                        \ z-coordinate
 
  CMP #100               \ If A >= 100 then jump to data6 to ???
  BCS data6
@@ -10322,11 +10687,11 @@ L1145 = C1144+1
  LDA #16                \ Set L000C = 16 ???
  STA L000C
 
- LDA yObjectLo,Y        \ Set (A L0079) = (yObjectHi yObjectLo) + 32
+ LDA yObjectLo,Y        \ Set the following:
  CLC                    \
- ADC #&20               \ where yObject is the altitude of the Sentinel's tower
- STA L0079
- LDA yObjectHi,Y
+ ADC #&20               \   (A platformAltitudeLo) = (yObjectHi yObjectLo) + 32
+ STA platformAltitudeLo \
+ LDA yObjectHi,Y        \ where yObject is the altitude of the Sentinel's tower
  ADC #&00
 
  CLC                    \ Clear the C flag to indicate that the tile is flat
@@ -10378,11 +10743,11 @@ L1145 = C1144+1
  SEC                    \ Set bit 7 of L0C67 ???
  ROR L0C67
 
- LDA yObjectLo,Y        \ Set (A L0079) = (yObjectHi yObjectLo) - 96
+ LDA yObjectLo,Y        \ Set the following:
  SEC                    \
- SBC #&60               \ where yObject is the altitude of the boulder
- STA L0079
- LDA yObjectHi,Y
+ SBC #&60               \   (A platformAltitudeLo) = (yObjectHi yObjectLo) - 96
+ STA platformAltitudeLo \
+ LDA yObjectHi,Y        \ where yObject is the altitude of the boulder
  SBC #&00
 
  CLC                    \ Clear the C flag to indicate that the tile is flat
@@ -10427,8 +10792,8 @@ L1145 = C1144+1
 
  LDA objectTypes,Y      \ Set A to the type of object #Y
 
- CMP #2
- BEQ data7
+ CMP #2                 \ If the tile contains an object of type 2 (a tree),
+ BEQ data7              \ jump to data7 to skip the following instruction
 
  LDA #%11000000         \ Set bit 6 and 7 of considerObjects ???
  STA considerObjects
@@ -18861,7 +19226,7 @@ L2F79 = C2F77+2
 
  STA L0043
  LDA T
- STA L003A
+ STA xCoordHi
  LDA L54A0,Y
  STA L0039
  LDA L0B40,Y
@@ -18887,7 +19252,7 @@ L2F79 = C2F77+2
  LDA L0039
  STA L0018
  SEC
- SBC L003A
+ SBC xCoordHi
  STA L0039
  LDA L0042
  STA L0041

@@ -166,8 +166,6 @@
      0039
 .xCoordHi
      003A
-.L003A
-     003A
 .yCoordHi
      003B
 .L003B
@@ -282,7 +280,7 @@
      0077
 .G
      0078
-.L0079
+.platformAltitudeLo
      0079
 .aLo
      007A
@@ -4985,12 +4983,12 @@
      1CC8   10 E2      BPL &1CAC
      1CCA   60         RTS
      1CCB   00
-.sub_C1CCC
+.FollowGazeVector
      1CCC   A6 6E      LDX &6E
      1CCE   4E 56 0C   LSR &0C56
      1CD1   4E DD 0C   LSR &0CDD
      1CD4   20 B5 1E   JSR &1EB5
-.C1CD7
+.gaze1
      1CD7   20 AA 1C   JSR &1CAA
      1CDA   A5 3A      LDA &3A
      1CDC   85 24      STA &24
@@ -5027,7 +5025,7 @@
      1D1B   30 04      BMI &1D21
      1D1D   A5 30      LDA &30
      1D1F   10 12      BPL &1D33
-.C1D21
+.gaze2
      1D21   A6 6E      LDX &6E
      1D23   A5 24      LDA &24
      1D25   DD 00 09   CMP &0900,X
@@ -5035,13 +5033,13 @@
      1D2A   A5 26      LDA &26
      1D2C   DD 80 09   CMP &0980,X
      1D2F   F0 A6      BEQ &1CD7
-.C1D31
+.gaze3
      1D31   18         CLC
      1D32   60         RTS
-.C1D33
+.gaze4
      1D33   38         SEC
      1D34   60         RTS
-.C1D35
+.gaze5
      1D35   85 73      STA &73
      1D37   85 77      STA &77
      1D39   46 60      LSR &60
@@ -5061,7 +5059,7 @@
      1D59   F0 04      BEQ &1D5F
      1D5B   C9 0C      CMP #&0C
      1D5D   D0 18      BNE &1D77
-.C1D5F
+.gaze6
      1D5F   A5 3B      LDA &3B
      1D61   C5 73      CMP &73
      1D63   B0 0F      BCS &1D74
@@ -5072,45 +5070,45 @@
      1D6D   C5 76      CMP &76
      1D6F   B0 03      BCS &1D74
      1D71   4C 33 1D   JMP &1D33
-.C1D74
+.gaze7
      1D74   4C D7 1C   JMP &1CD7
-.C1D77
+.gaze8
      1D77   4A         LSR A
      1D78   90 0F      BCC &1D89
      1D7A   4A         LSR A
      1D7B   B0 05      BCS &1D82
      1D7D   29 01      AND #&01
      1D7F   4C 9C 1D   JMP &1D9C
-.C1D82
+.gaze9
      1D82   69 01      ADC #&01
      1D84   29 03      AND #&03
      1D86   4C 8A 1D   JMP &1D8A
-.C1D89
+.gaze10
      1D89   4A         LSR A
-.C1D8A
+.gaze11
      1D8A   85 78      STA &78
      1D8C   4A         LSR A
      1D8D   A5 37      LDA &37
      1D8F   90 02      BCC &1D93
      1D91   49 FF      EOR #&FF
-.C1D93
+.gaze12
      1D93   C5 39      CMP &39
      1D95   A5 78      LDA &78
      1D97   2A         ROL A
      1D98   A8         TAY
      1D99   B9 DE 1D   LDA &1DDE,Y
-.C1D9C
+.gaze13
      1D9C   AA         TAX
      1D9D   4A         LSR A
      1D9E   A4 37      LDY &37
      1DA0   B0 02      BCS &1DA4
      1DA2   A4 39      LDY &39
-.C1DA4
+.gaze14
      1DA4   4A         LSR A
      1DA5   98         TYA
      1DA6   90 02      BCC &1DAA
      1DA8   49 FF      EOR #&FF
-.C1DAA
+.gaze15
      1DAA   85 02      STA &02
      1DAC   B5 73      LDA &73,X
      1DAE   85 78      STA &78
@@ -5122,7 +5120,7 @@
      1DB8   49 FF      EOR #&FF
      1DBA   18         CLC
      1DBB   69 01      ADC #&01
-.C1DBD
+.gaze16
      1DBD   85 75      STA &75
      1DBF   A5 02      LDA &02
      1DC1   20 03 0D   JSR &0D03
@@ -5138,7 +5136,7 @@
      1DD4   E5 75      SBC &75
      1DD6   10 03      BPL &1DDB
      1DD8   4C 33 1D   JMP &1D33
-.C1DDB
+.gaze17
      1DDB   4C D7 1C   JMP &1CD7
 .L1DDE
      1DDE   00
