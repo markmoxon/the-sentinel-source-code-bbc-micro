@@ -16331,9 +16331,12 @@ L23E3 = C23E2+1
  CPY #2
  BCS poly2
 
- JSR sub_C2D36          \ Seems to do the actual drawing ???
- BCS poly1
- JSR sub_C2299
+ JSR sub_C2D36          \ Seems to check something to do with drawing ???
+
+ BCS poly1              \ If the call to sub_C2D36 set the C flag then ???, so
+                        \ jump to poly1 to skip the following
+
+ JSR sub_C2299          \ Seems to do the actual drawing ???
 
  LDY L0010              \ L0010 is 0 or 1, so set A = L002C or L002D
  LDA L002C,Y
@@ -16348,9 +16351,12 @@ L23E3 = C23E2+1
 
 .poly2
 
- JSR sub_C2D36          \ Seems to do the actual drawing ???
- BCS poly3
- JSR sub_C2299
+ JSR sub_C2D36          \ Seems to check something to do with drawing ???
+
+ BCS poly3              \ If the call to sub_C2D36 set the C flag then ???, so
+                        \ jump to poly3 to return from the subroutine
+
+ JSR sub_C2299          \ Seems to do the actual drawing ???
 
 .poly3
 
