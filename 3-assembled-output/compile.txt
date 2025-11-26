@@ -4963,9 +4963,9 @@
 .divi1
      1CA7   A6 74      LDX &74
      1CA9   60         RTS
-.sub_C1CAA
+.AddVectorToCoord
      1CAA   A2 02      LDX #&02
-.P1CAC
+.addv1
      1CAC   A9 00      LDA #&00
      1CAE   85 74      STA &74
      1CB0   B5 34      LDA &34,X
@@ -4975,7 +4975,7 @@
      1CB7   B5 2F      LDA &2F,X
      1CB9   10 02      BPL &1CBD
      1CBB   C6 74      DEC &74
-.C1CBD
+.addv2
      1CBD   75 37      ADC &37,X
      1CBF   95 37      STA &37,X
      1CC1   B5 3A      LDA &3A,X

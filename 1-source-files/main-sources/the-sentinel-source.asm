@@ -9862,41 +9862,100 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C1CAA
+\       Name: AddVectorToCoord
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Maths (Geometry)
+\    Summary: Add a vector to a coordinate
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine adds a vector to a coordinate:
+\
+\   [ xCoord ]   [ xCoord ]   [ xVector ]
+\   [ yCoord ] = [ yCoord ] + [ yVector ]
+\   [ zCoord ]   [ zCoord ]   [ zVector ]
+\
+\ where the coordinate consists of 24-bit signed numbers:
+\
+\   [ xCoord ]   [ (xCoordHi xCoordLo xCoordBot) ]
+\   [ yCoord ] = [ (yCoordHi yCoordLo yCoordBot) ]
+\   [ zCoord ]   [ (zCoordHi zCoordLo zCoordBot) ]
+\
+\ and the vector consists of 16-bit signed numbers:
+\
+\   [ xVector ]   [ (xVectorLo xVectorBot) ]
+\   [ yVector ] = [ (yVectorLo yVectorBot) ]
+\   [ zVector ]   [ (zVectorLo zVectorBot) ]
 \
 \ ******************************************************************************
 
-.sub_C1CAA
+.AddVectorToCoord
 
- LDX #&02
+ LDX #2                 \ We now work through all three axes in turn, so set an
+                        \ axis counter in X to iterate through 2, 1 and 0 (for
+                        \ the z-axis, y-axis and x-axis respectively)
+                        \
+                        \ The comments in the following loop will concentrate on
+                        \ the x-axis to keep things simple
 
-.P1CAC
+.addv1
 
- LDA #0
- STA T
- LDA xCoordBot,X
+                        \ We now perform the following addition of a 24-bit
+                        \ coordinate and a 16-bit vector:
+                        \
+                        \   xCoord = xCoord + xVector
+                        \
+                        \ where:
+                        \
+                        \   * xCoord is (xCoordHi xCoordLo xCoordBot)
+                        \
+                        \   * xVector is (xVectorLo xVectorBot)
+                        \
+                        \ We do this for each axis in turn, but let's talk about
+                        \ the x-axis
+
+ LDA #0                 \ Set T = 0
+ STA T                  \
+                        \ We use T as the high byte of xVector, which we either
+                        \ set to 0 (if xVector is positive) or &FF (if xVector
+                        \ is negative)
+                        \
+                        \ We set T for positive numbers here, and change it to
+                        \ &FF during the addition if xVector turns out to be
+                        \ negative
+                        \
+                        \ The addition therefore supports signed numbers
+
+ LDA xCoordBot,X        \ Add the bottom bytes of the calculation
  CLC
  ADC xVectorBot,X
  STA xCoordBot,X
- LDA xVectorLo,X
- BPL C1CBD
- DEC T
 
-.C1CBD
+ LDA xVectorLo,X        \ Set A to xVectorLo so we can check its sign
 
- ADC xCoordLo,X
+ BPL addv2              \ If xVectorLo is negative, set T = &FF so we can use it
+ DEC T                  \ as the high byte in the negative 24-bit number, like
+                        \ this:
+                        \
+                        \   (&FF xVectorLo xVectorBot)
+
+.addv2
+
+ ADC xCoordLo,X         \ Now add the low bytes of the calculation
  STA xCoordLo,X
- LDA xCoordHi,X
- ADC T
- STA xCoordHi,X
- DEX
- BPL P1CAC
- RTS
 
- EQUB &00
+ LDA xCoordHi,X         \ And then add the high bytes, incorporating the high
+ ADC T                  \ byte of xVector that we set in T
+ STA xCoordHi,X
+
+ DEX                    \ Decrement the axis counter in X to move on to the next
+                        \ axis
+
+ BPL addv1              \ Loop back until we have processed all three axes
+
+ RTS                    \ Return from the subroutine
+
+ EQUB &00               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -9909,11 +9968,14 @@ L1145 = C1144+1
 
 .sub_C1CCC
 
- LDX viewingObject
- LSR L0C56
- LSR L0CDD
+ LDX viewingObject      \ Set X to the number of the object that is doing the
+                        \ looking ???
 
- JSR GetObjectCoords    \ Fetch the cartesian coordinates of the another object
+ LSR L0C56              \ Clear bit 7 of L0C56 ????
+
+ LSR L0CDD              \ Clear bit 7 of L0CDD ????
+
+ JSR GetObjectCoords    \ Fetch the cartesian coordinates of the viewing object
                         \ as three 24-bit numbers, as follows:
                         \
                         \   (xCoordHi xCoordLo xCoordBot)
@@ -9924,7 +9986,24 @@ L1145 = C1144+1
 
 .C1CD7
 
- JSR sub_C1CAA
+ JSR AddVectorToCoord   \ Add the coordinates and the vector as follows:
+                        \
+                        \   [ xCoord ]   [ xCoord ]   [ xVector ]
+                        \   [ yCoord ] = [ yCoord ] + [ yVector ]
+                        \   [ zCoord ]   [ zCoord ]   [ zVector ]
+                        \
+                        \ where:
+                        \
+                        \   [ xCoord ]   [ (xCoordHi xCoordLo xCoordBot) ]
+                        \   [ yCoord ] = [ (yCoordHi yCoordLo yCoordBot) ]
+                        \   [ zCoord ]   [ (zCoordHi zCoordLo zCoordBot) ]
+                        \
+                        \ and:
+                        \
+                        \   [ xVector ]   [ (xVectorLo xVectorBot) ]
+                        \   [ yVector ] = [ (yVectorLo yVectorBot) ]
+                        \   [ zVector ]   [ (zVectorLo zVectorBot) ]
+
  LDA xCoordHi
  STA xTile
  CMP #&1F
@@ -9933,8 +10012,10 @@ L1145 = C1144+1
  STA zTile
  CMP #&1F
  BCS C1D33
- LDA #&80
- STA considerObjects
+
+ LDA #%10000000         \ Set bit 7 of considerObjects so GetTileAltitude will
+ STA considerObjects    \ include objects in its calculations ???
+
  STA L000C
  LDA #0
  STA L0079
@@ -9953,8 +10034,9 @@ L1145 = C1144+1
  LDA L0079
  CMP L000C
  BCS C1D33
- BIT considerObjects
- BVS C1D33
+
+ BIT considerObjects    \ If bit 6 of considerObjects is set then jump to L1D33
+ BVS C1D33              \ to return from the subroutine with the C flag set ???
 
  LDA L0C6E              \ If bit 7 is set in one or both of L0C6E and L0C67,
  ORA L0C67              \ skip the following test ???
@@ -9987,7 +10069,12 @@ L1145 = C1144+1
 
  STA S
  STA W
- LSR considerObjects
+
+ LSR considerObjects    \ Clear bit 7 of considerObjects so GetTileAltitude will
+                        \ only extract the altitude and flatness of the tiles
+                        \ when we call it below, ignoring any objects on the
+                        \ landscape
+
  INC xTile
  JSR GetTileAltitude
  STA V
@@ -10199,8 +10286,12 @@ L1145 = C1144+1
 
 .data1
 
- CPY targetObject       \ If Y = targetObject, set bit 7 of L0C56
- BNE data2
+                        \ If we get here then the tile contains object #Y and
+                        \ bit 7 of considerObjects is set, so we need to process
+                        \ the objects on the stack
+
+ CPY targetObject       \ If Y = targetObject then the target object is on the
+ BNE data2              \ tile, so set bit 7 of L0C56 ???
  ROR L0C56
 
 .data2
@@ -10248,15 +10339,22 @@ L1145 = C1144+1
 
  AND #%00111111         \ Because the tile already has an object on it, the tile
  TAY                    \ data contains the existing object's number in bits 0
-                        \ to 5, so extract the object number into Y
+                        \ to 5, so extract the object number into Y (so the tile
+                        \ contains object #Y)
 
  BIT considerObjects    \ If bit 7 of considerObjects is clear, jump to data7 to
- BPL data7              \ get the altitude of the bottom object on the tile
-                        \ (which will also be the altitude of the tile itself)
-                        \ and return that as the tile's data
+ BPL data7              \ return the altitude of the bottom object on the tile,
+                        \ iterating down through the stack of objects if there
+                        \ is more than one object
+                        \
+                        \ The altitude of the bottom object is the same as the
+                        \ altitude of the tile itself, so this ensures that we
+                        \ return the tile's altitude from the subroutine, as per
+                        \ bit 7 of considerObjects
 
  BMI data1              \ Otherwise bit 7 of considerObjects is set, so jump to
-                        \ data1 to do calculations involving xCoord ???
+                        \ data1 to calculate the ??? (this BMI is effectively a
+                        \ JMP as we just passed through a BPL)
 
 .data4
 
@@ -10332,7 +10430,7 @@ L1145 = C1144+1
  CMP #2
  BEQ data7
 
- LDA #%11000000
+ LDA #%11000000         \ Set bit 6 and 7 of considerObjects ???
  STA considerObjects
 
 .data7
