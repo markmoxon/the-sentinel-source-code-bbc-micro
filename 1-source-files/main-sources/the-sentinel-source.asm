@@ -238,9 +238,10 @@
  SKIP 0                 \ Used to store the tile y-coordinate of the tile we are
                         \ analysing in the GetRowVisibility routine
 
-.L0019
+.polygonColour
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The colour of the polygon that's being drawn in the
+                        \ DrawPolygon routine
 
 .L001A
 
@@ -340,6 +341,10 @@
                         \ As a result we tend to use the terms "tile" and "tile
                         \ corner" interchangeably, depending on the context
 
+.xTileToDraw
+
+ SKIP 0                \ The column number of the tile we are currently drawing
+
 .columnCounter
 
  SKIP 1                 \ A counter for the number of columns to fill in the
@@ -394,12 +399,20 @@
                         \ sights can be drawn and removed using the contents of
                         \ the sights pixel byte stash
 
+.L002C
+
+ SKIP 0                 \ ???
+
 .xVectorBot
 
  SKIP 1                 \ The x-coordinate of a vector (bottom byte)
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+
+.L002D
+
+ SKIP 0                 \ ???
 
 .yVectorBot
 
@@ -12030,8 +12043,8 @@ L1145 = C1144+1
 .sub_C2299
 
  LDA #&01
- STA xVectorBot
- STA yVectorBot
+ STA L002C
+ STA L002D
  LDA tileAltitude
  CLC
  ADC L0004
@@ -12067,12 +12080,12 @@ L1145 = C1144+1
  LDA S
  ADC L2296,Y
  STA S
- LDA L0019
+ LDA polygonColour
  BIT L0C7A
  BPL C22EF
  AND #&CF
  STA T
- LDA L0019
+ LDA polygonColour
  ASL A
  ASL A
  AND #&30
@@ -12136,13 +12149,13 @@ L1145 = C1144+1
 .C2333
 
  LDA #0
- STA yVectorBot
+ STA L002D
  BEQ sub_C230D
 
 .C2339
 
  LDA #0
- STA xVectorBot
+ STA L002C
  BEQ sub_C230D
 
 .C233F
@@ -12150,7 +12163,7 @@ L1145 = C1144+1
  LDA L0061
  ASL A
  STA L0056
- STA xVectorBot
+ STA L002C
  BNE C23A6
 
 .C2348
@@ -12163,7 +12176,7 @@ L1145 = C1144+1
  SBC #&00
  STA Q
  LDA #0
- STA yVectorBot
+ STA L002D
  LDA #&F8
  BNE C23D8
 
@@ -14505,8 +14518,8 @@ L23E3 = C23E2+1
  STA tileViewYawHi+32+1,Y   \ to 20, which is a full screen width, so this puts
  STA tileViewYawHi+1,Y      \ them on the right edge of the screen
 
- LDA xTileViewer        \ Set columnCounter to the column of the viewer's tile,
- STA columnCounter      \ so the call to DrawFlatTile draws this tile
+ LDA xTileViewer        \ Set xTileToDraw to the column of the viewer's tile, so
+ STA xTileToDraw        \ the call to DrawFlatTile draws this tile
 
  JSR DrawFlatTile       \ Draw the flat tile under the viewer
 
@@ -15660,8 +15673,8 @@ L23E3 = C23E2+1
 
 .DrawLandscapeRow
 
- LDA xTileViewLeftEdge  \ Set columnCounter to the column number of the tile at
- STA columnCounter      \ the left edge of the visible row we want to draw
+ LDA xTileViewLeftEdge  \ Set xTileToDraw to the column number of the tile at
+ STA xTileToDraw        \ the left edge of the visible row we want to draw
 
 .draw1
 
@@ -15673,10 +15686,11 @@ L23E3 = C23E2+1
 
  JSR DrawTileAndObjects \ Draw the tile and any objects stacked on it
 
- INC columnCounter      \ Increment the column counter to move right along the
+ INC xTileToDraw        \ Increment the column number to move right along the
                         \ row
 
- LDA columnCounter      \ Set A to the new column number
+ LDA xTileToDraw        \ Set A to the updated column number of the tile we want
+                        \ to draw
 
  JMP draw1              \ Loop back to draw1 the next tile to the right until we
                         \ reach the viewer's tile column or reach the end of the
@@ -15695,7 +15709,8 @@ L23E3 = C23E2+1
  BMI draw4              \ If we have reached the start of the row, jump to draw4
                         \ to return from the subroutine
 
- STA columnCounter      \ Store the updated column counter in columnCounter
+ STA xTileToDraw        \ Store the updated column number of the tile we want to
+                        \ draw
 
  CMP xTileViewLeftEdge  \ If we have gone past the left edge, jump to draw4 to
  BCC draw4              \ return from the subroutine
@@ -15705,7 +15720,7 @@ L23E3 = C23E2+1
 
  JSR DrawTileAndObjects \ Draw the tile and any objects stacked on it
 
- LDA columnCounter      \ Set A to the new column number
+ LDA xTileToDraw        \ Set A to the column number of the tile we just drew
 
  JMP draw3              \ Loop back to draw1 the next tile to the left until we
                         \ reach the viewer's tile column or reach the end of the
@@ -15893,7 +15908,7 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   columnCounter       The tile x-coordinate (i.e. the tile column)
+\   xTileToDraw         The tile x-coordinate (i.e. the tile column)
 \
 \   zTile               The tile z-coordinate (i.e. the tile row)
 \
@@ -15913,8 +15928,8 @@ L23E3 = C23E2+1
  BEQ CRE17              \ If the object type is zero then jump to CRE17 to
                         \ return from the subroutine without drawing anything
 
- LDA columnCounter      \ Set the x-coordinate for the block in object #63 to
- STA xObject+63         \ the tile column in columnCounter
+ LDA xTileToDraw        \ Set the x-coordinate for the block in object #63 to
+ STA xObject+63         \ the tile column in xTileToDraw
 
  LDA zTile              \ Set the z-coordinate for the block in object #63 to
  STA zObject+63         \ the tile row in zTile
@@ -15931,7 +15946,7 @@ L23E3 = C23E2+1
  JSR ProcessSound       \ Process any sounds or music that are being made in the
                         \ background
 
- LDA columnCounter      \ Set X to the index of the tile data that we set up for
+ LDA xTileToDraw        \ Set X to the index of the tile data that we set up for
  ORA drawingTableOffset \ this tile in part 2 of the GetTileViewAngles routine
  CLC                    \ ???
  ADC quadrantOffset
@@ -16021,16 +16036,15 @@ L23E3 = C23E2+1
 
 .DrawFlatTile
 
- LDX #0                 \ If bit 0 of columnCounter and zTile are the same, then
- LDA columnCounter      \ the tile's x-coordinate and z-coordinate are either
+ LDX #0                 \ If bit 0 of xTileToDraw and zTile are the same, then
+ LDA xTileToDraw        \ the tile's x-coordinate and z-coordinate are either
  EOR zTile              \ both odd or both even, so jump to DrawOneFaceTile
- AND #1                 \ with X set to 0 to draw this tile with &3C from the
- BEQ DrawOneFaceTile    \ tileShapeColour table, is this tile colour ???
+ AND #1                 \ with X set to 0 to draw this tile in colour 3 (white,
+ BEQ DrawOneFaceTile    \ yellow, cyan or red)
 
  LDX #8                 \ Otherwise the tile's x-coordinate and z-coordinate are
                         \ different (i.e. one is odd and one is even), so set
-                        \ X to 8 to draw this tile with &00 from the
-                        \ tileShapeColour table, is this tile colour ???
+                        \ X to 8 to draw this tile in colour 0 (blue)
 
                         \ We now have a very short interlude to set the value of
                         \ stashOffset as part of the game's anti-cracker code,
@@ -16099,8 +16113,8 @@ L23E3 = C23E2+1
 
 .DrawOneFaceTile
 
- LDA tileShapeColour,X  \ Set L0019 to the tile's colour ???
- STA L0019
+ LDA tileShapeColour,X  \ Set polygonColour to the entry for the reference shape
+ STA polygonColour      \ from the tileShapeColour or tileShapeColour+16 table
 
  LDA #0                 \ Set L003B = 0 ???
  STA L003B
@@ -16131,16 +16145,76 @@ L23E3 = C23E2+1
  SBC viewingQuadrantx4  \
  AND #%00001111         \ Tiles are grouped into four groups, so this sets the
  TAY                    \ correct group for the orientation of the viewer
+                        \
+                        \ In other words, this makes the shape numbers relative
+                        \ to the viewer's orientation, so we can set the correct
+                        \ colours for the shape's faces
+                        \
+                        \ Specifically, it realigns the following tile shape
+                        \ numbers so that the numbering starts in the quadrant
+                        \ where the player is facing:
+                        \
+                        \   1    0 0            Y = 1-3 when facing 12 o'clock
+                        \        1 1              = 5-7 when facing 9 o'clock
+                        \                         = 9-11 when facing 6 o'clock
+                        \   2    1 1              = 13-15 when facing 3 o'clock
+                        \        0 1
+                        \
+                        \   3    1 0
+                        \        1 1
+                        \
+                        \
+                        \   5    1 0            Y = 1-3 when facing 3 o'clock
+                        \        1 0              = 5-7 when facing 12 o'clock
+                        \                         = 9-11 when facing 9 o'clock
+                        \   6    1 0              = 13-15 when facing 6 o'clock
+                        \        0 0
+                        \
+                        \   7    1 1
+                        \        1 0
+                        \
+                        \
+                        \   9    1 1            Y = 1-3 when facing 6 o'clock
+                        \        0 0              = 5-7 when facing 3 o'clock
+                        \                         = 9-11 when facing 12 o'clock
+                        \   10   0 1              = 13-15 when facing 9 o'clock
+                        \        0 0
+                        \
+                        \   11   0 0
+                        \        1 0
+                        \
+                        \
+                        \   13   0 1            Y = 1-3 when facing 9 o'clock
+                        \        0 1              = 5-7 when facing 6 o'clock
+                        \                         = 9-11 when facing 3 o'clock
+                        \   14   0 0              = 13-15 when facing 12 o'clock
+                        \        0 1
+                        \
+                        \   15   0 1
+                        \        1 1
+                        \
+                        \ We use this value below when calculating the colours
+                        \ of the two faces in two-face tiles
 
- AND #%00000011         \ If Y mod 4 = 1, jump to DrawOneFaceTile
- CMP #%00000001
- BEQ DrawOneFaceTile
+ AND #%00000011         \ If Y mod 4 = 1 then the tile shape is the first shape 
+ CMP #%00000001         \ in one of the groups above, so it's a single sloping
+ BEQ DrawOneFaceTile    \ face from one horizontal edge to another, so jump to
+                        \ DrawOneFaceTile to draw this one-face tile
 
- LDA L2D03,Y            \ Set L0045 = 1 for shapes 6, 7, 14, 15 (in group)
- STA L0045              \             0 for all other shapes
+                        \ If we get here then the tile shape is the second or
+                        \ third shape in one of the groups above, so one corner
+                        \ is a different altitude to the othes
+                        \
+                        \ We now use the value of Y to pick the correct value
+                        \ for L0045 and the correct tileShapeColour table offset
+                        \ for the tile colour, so we can pass them to
+                        \ DrawTwoFaceTile to draw the tile
 
- TXA                    \ Set A = 1 for shapes 5, 6, 7, 13, 14, 15
- AND #%00000100         \         0 for shapes 1, 2, 3, 9, 10, 11
+ LDA L2D03,Y            \ Set L0045 = 1 for Y = 6, 7, 14, 15 ???
+ STA L0045              \             0 for Y = 2, 3, 10, 11
+
+ TXA                    \ Set A = 1 for tile shapes 6, 7, 14, 15
+ AND #%00000100         \         0 for tile shapes 2, 3, 10, 11
  LSR A
  LSR A
 
@@ -16151,9 +16225,9 @@ L23E3 = C23E2+1
                         \ Clear C flag if viewingQuadrantOpp = 0
                         \              or viewingQuadrantOpp = 1 and A = 0
 
- TXA                    \ Set A to the tile shape
+ TXA                    \ Set A to the tile shape to pass to DrawTwoFaceTile
 
- BCS DrawTwoFaceTile    \ Add 16 to the tile shape if the C flag is clear
+ BCS DrawTwoFaceTile    \ Add 16 to the tile shape if the C flag is clear ???
  ORA #16
 
                         \ Fall through into DrawTwoFaceTile to draw the tile
@@ -16170,22 +16244,32 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   A                   The shape of the tile to draw (4 or 12)
-\                       Plus 16 if viewingQuadrantOpp = 0 or
-\                       viewingQuadrantOpp = 1 and shape is 1, 2, 3, 9, 10, 11
+\   A                   The shape of the tile to draw, amended to use as an
+\                       offset into the tileShapeColour table ???
+\
+\                       Add 16 if either of these is true, so we use the colours
+\                       from tileShapeColour+16:
+\
+\                         * viewingQuadrantOpp = 0
+\
+\                         * viewingQuadrantOpp = 1, shape = 2, 3, 10, 11
 \
 \   L0045               Set to 0 or 1 ???
 \
 \                         * For shapes 4 or 12 = bit 0 of viewingQuadrantOpp
 \
-\                         * Otherwise 1 for shapes 6, 7, 14, 15 (in group)
-\                                     0 for all other shapes
+\                         * Otherwise:
+\
+\                           * 1 for shapes 6, 7, 14, 15 (viewer-relative)
+\
+\                           * 0 for all other shapes
 \
 \ ******************************************************************************
 
 .DrawTwoFaceTile
 
- STA L0034              \ Set L0034 to the tile shape
+ STA L0034              \ Set L0034 to the tile shape, amended to use as an
+                        \ offset into the tileShapeColour table
 
  TAX                    \ Set X to the tile shape so we can use it as an index
                         \ into the tileShapeColour table
@@ -16193,16 +16277,16 @@ L23E3 = C23E2+1
  LDA #%10000000         \ Set bit 7 of L003B ???
  STA L003B
 
- LDA tileShapeColour,X  \ Set L0019 to the relevant entry from tileShapeColour
- STA L0019              \ (i.e. tileShapeColour or tileShapeColour+16)
+ LDA tileShapeColour,X  \ Set polygonColour to the entry for this shape from the
+ STA polygonColour      \ tileShapeColour or tileShapeColour+16 table
 
  JSR DrawPolygon        \ Draw the first trianglar face
 
- LDA L0034              \ Set L0019 to the opposite half of tileShapeColour
- EOR #16                \ (i.e. tileShapeColour+16 or tileShapeColour)
- TAX
+ LDA L0034              \ Set polygonColour to the entry for this shape from the
+ EOR #16                \ other tileShapeColour table (e.g. tileShapeColour+16
+ TAX                    \ if the previous colour was from tileShapeColour)
  LDA tileShapeColour,X
- STA L0019
+ STA polygonColour
 
  LDA L003B              \ Set bit 6 of L003B ???
  ORA #%01000000
@@ -16222,9 +16306,10 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   L0034               The tile shape
+\   L0034               The tile shape, amended to use as an offset into the
+\                       tileShapeColour table
 \
-\   L003B               ???
+\   L003B               The shape to draw ???
 \
 \                         * 0 for four-sided shape
 \
@@ -16236,14 +16321,16 @@ L23E3 = C23E2+1
 
 .DrawPolygon
 
- LDY L0010
- CPY #&02
+ LDY L0010              \ If L0010 >= 2, jump to poly2
+ CPY #2
  BCS poly2
- JSR sub_C2D36
+
+ JSR sub_C2D36          \ Seems to do the actual drawing ???
  BCS poly1
  JSR sub_C2299
+
  LDY L0010
- LDA xVectorBot,Y
+ LDA L002C,Y
  CMP #&01
  BEQ poly3
 
@@ -16253,7 +16340,7 @@ L23E3 = C23E2+1
 
 .poly2
 
- JSR sub_C2D36
+ JSR sub_C2D36          \ Seems to do the actual drawing ???
  BCS poly3
  JSR sub_C2299
 
@@ -18070,7 +18157,7 @@ L23E3 = C23E2+1
 
 .sub_C2D36
 
- LDA columnCounter
+ LDA xTileToDraw
  ORA drawingTableOffset
  BIT L003B
  BMI C2D13
@@ -19250,8 +19337,8 @@ L314A = C3148+2
                         \ So this makes object #63 face directly out of the
                         \ screen
 
- LDA #&E0               \ Set (yObjectHi yObjectLo) for object #63 to &230,
- STA yObjectLo+63       \ or 736
+ LDA #&E0               \ Set (yObjectHi yObjectLo) for object #63 to 736 (&2E0)
+ STA yObjectLo+63
  LDA #&02
  STA yObjectHi+63
 
@@ -27559,7 +27646,7 @@ L314A = C3148+2
 .drob6
 
  AND #&3C
- STA L0019
+ STA polygonColour
  LDA L4EA0,Y
  AND #&03
  CLC

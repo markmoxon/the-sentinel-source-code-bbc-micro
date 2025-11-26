@@ -64,7 +64,7 @@
      0018
 .yTileRow
      0019
-.L0019
+.polygonColour
      0019
 .L001A
      001A
@@ -98,6 +98,8 @@
      0022
 .xTile
      0024
+.xTileToDraw
+     0025
 .columnCounter
      0025
 .screenRowNumber
@@ -114,8 +116,12 @@
      002A
 .sightsByteAddr
      002A
+.L002C
+     002C
 .xVectorBot
      002C
+.L002D
+     002D
 .yVectorBot
      002D
 .zVectorBot
