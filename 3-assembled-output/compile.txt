@@ -4,6 +4,8 @@
      0001
 .L0002
      0002
+.edgeGazeDistance
+     0002
 .xTileViewer
      0003
 .L0004
@@ -5138,7 +5140,7 @@
      1DD8   4C 33 1D   JMP &1D33
 .gaze17
      1DDB   4C D7 1C   JMP &1CD7
-.L1DDE
+.tileEdges
      1DDE   00
      1DDF   03
      1DE0   01

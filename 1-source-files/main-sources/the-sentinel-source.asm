@@ -87,7 +87,12 @@
 
 .L0002
 
- SKIP 1                 \ ???
+ SKIP 0                 \ ???
+
+.edgeGazeDistance
+
+ SKIP 1                 \ The fractional distance along a tile edge that matches
+                        \ the current position along the gaze vector
 
 .xTileViewer
 
@@ -9970,7 +9975,7 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: FollowGazeVector (Part 1 of 2)
+\       Name: FollowGazeVector (Part 1 of 5)
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Follow a gaze vector from a viewing object to determine whether
@@ -10245,11 +10250,10 @@ L1145 = C1144+1
 
 \ ******************************************************************************
 \
-\       Name: FollowGazeVector (Part 2 of 2)
+\       Name: FollowGazeVector (Part 2 of 5)
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate whether the viewing object's gaze is obstructed by the
-\             shape of a non-flat tile
+\    Summary: Calculate the altitudes of the four corners in a non-flat tile
 \
 \ ******************************************************************************
 
@@ -10260,7 +10264,13 @@ L1145 = C1144+1
 
  STA S                  \ Set S to the tile altitude
 
- STA W                  \ Set W to the tile altitude (is this used ???)
+ STA W                  \ Set W to the tile altitude
+                        \
+                        \ This ensures that when we access the altitudes of the
+                        \ four tile corners in part 5 using variables S, T, U
+                        \ and V, the list wraps around in memory into variable W
+                        \ to support corner pairs for all four edges - see part
+                        \ 5 for details
 
  LSR considerObjects    \ Clear bit 7 of considerObjects so GetTileAltitude will
                         \ only extract the altitude and flatness of the tiles
@@ -10342,7 +10352,23 @@ L1145 = C1144+1
 
 .gaze6
 
-                        \ If we get here then the tile shape is 4 or 12
+                        \ The tile shape is 4 or 12, so fall through into part 3
+                        \ to process this shape
+
+\ ******************************************************************************
+\
+\       Name: FollowGazeVector (Part 3 of 5)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: Calculate whether the viewing object's gaze is obstructed by a
+\             tile of shape 4 or 12 (i.e. a tile with one horizontal edge)
+\
+\ ******************************************************************************
+
+                        \ If we get here then the tile shape is 4 or 12, so the
+                        \ tile has one horizontal edge with the other two points
+                        \ being arbitrary (but not at the same height as the
+                        \ horizontal edge)
 
  LDA yCoordHi           \ If yCoordHi is higher than any of the four tile
  CMP S                  \ corners, then the current position along the viewer's
@@ -10371,20 +10397,74 @@ L1145 = C1144+1
                         \ restart the checks (this jump point is for use by
                         \ branching instructions)
 
+\ ******************************************************************************
+\
+\       Name: FollowGazeVector (Part 4 of 5)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: For non-flat tiles with two horizontal edges, work out which tile
+\             edge to use when checking for obstruction of the gaze vector
+\
+\ ******************************************************************************
+
 .gaze8
 
                         \ If we get here then the tile shape in A is not 4 or 12
-                        \ (and it also isn't 0, as the tile is not flat)
+                        \
+                        \ It also isn't 0, as the tile is not flat, and it isn't
+                        \ 8 either, as that shape number isn't used
                         \
                         \ The tile shape is therefore one of the following:
                         \
-                        \   1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15
+                        \   1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15
+                        \
+                        \ All of these shapes have two horizontal edges and two
+                        \ sloping edges, so we now work out which of the sloping
+                        \ edges we should use to check against the gaze vector
+                        \ to see if the slope is obstructing the gaze
+                        \
+                        \ We pass this information to part 5 as a single tile
+                        \ corner number in A, which tells part 5 to use the edge
+                        \ from corner A to corner A + 1 in the calculation
+                        \
+                        \ To recap, we set the tile altitudes in part 2 like
+                        \ this:
+                        \
+                        \      ^           [T]  [U]
+                        \      |
+                        \      |           [S]  [V]
+                        \   z-axis
+                        \    into
+                        \   screen      x-axis from left to right --->
+                        \
+                        \ We can also number these corners so we can pass a
+                        \ corner number to part 5, so let's number them like
+                        \ this:
+                        \
+                        \      [T]  [U]          [1]  [2]
+                        \                   =
+                        \      [S]  [V]          [0]  [3]
+                        \
+                        \ As mentioned above, when we pass a corner number in A
+                        \ to part 5, this tells part 5 to use the edge from
+                        \ corner A to corner A + 1 in the calculation, so if we
+                        \ pass A = 0 to part 5, that will tell it to use the
+                        \ left edge (from 0 to 1) in the calculation, while
+                        \ passing A = 2 will make it use the right edge (from 2
+                        \ to 3)
+                        \
+                        \ This part is therefore all about setting A to the
+                        \ correct corner number for the edge that we want to use
+                        \ in the gaze vector calculation
+                        \
+                        \ We start by working out which two edges in the tile
+                        \ shape are the sloping edges
 
  LSR A                  \ If bit 0 of the shape number is clear, jump to gaze10
  BCC gaze10
 
                         \ If we get here then the tile shape is one of the
-                        \ following:
+                        \ following (i.e. %xxxxxxx1 in binary):
                         \
                         \   1, 3, 5, 7, 9, 11, 13, 15
                         \
@@ -10394,7 +10474,7 @@ L1145 = C1144+1
  BCS gaze9
 
                         \ If we get here then the tile shape is one of the
-                        \ following:
+                        \ following (i.e. %xxxxxx01 in binary):
                         \
                         \   1, 5, 9, 13
                         \
@@ -10405,16 +10485,36 @@ L1145 = C1144+1
  AND #1                 \ Set A to bit 0 of A, which is bit 2 of the original
                         \ shape number, so:
                         \
-                        \   * A = 0 if the tile shape is 0 or 9
+                        \   * A = 0 if the tile shape is 1 or 9
+                        \           (i.e. %xxxxx001 in binary)
                         \
                         \   * A = 1 if the tile shape is 5 or 13
+                        \           (i.e. %xxxxx101 in binary)
 
- JMP gaze13             \ Jump to gaze13 to analyse this shape
+                        \ At this point we have a suitable value of A to pass
+                        \ to part 5, as we have:
+                        \
+                        \   * A = 0 to denote the left edge for shapes 1 and 9
+                        \
+                        \                          0 0   or   1 1
+                        \                          1 1        0 0
+                        \
+                        \   * A = 1 to denote the top edge for shapes 5 and 13
+                        \
+                        \                          1 0   or   0 1
+                        \                          1 0        0 1
+                        \
+                        \ As the sloping edges in these shapes have the exact
+                        \ same slope gradient, either of them can be used in the
+                        \ calculation
+
+ JMP gaze13             \ Jump to gaze13 in part 5 to check the gaze vector
+                        \ against the edge specified in A
 
 .gaze9
 
                         \ If we get here then the tile shape is one of the
-                        \ following:
+                        \ following (i.e. %xxxxxx11 in binary):
                         \
                         \   3, 7, 11, 15
                         \
@@ -10435,139 +10535,472 @@ L1145 = C1144+1
 .gaze10
 
                         \ If we get here then the tile shape is one of the
-                        \ following:
+                        \ following (i.e. %xxxxxxx0 in binary):
                         \
-                        \   2, 6, 8, 10, 14
+                        \   2, 6, 10, 14
                         \
                         \ and A contains the shape >> 1
 
  LSR A                  \ Shift A right by one place, so the tile shape is one
                         \ of the following:
                         \
-                        \   2, 6, 8, 10, 14
+                        \   2, 6, 10, 14
                         \
                         \ and A contains the shape >> 2 to give:
                         \
-                        \   0, 1, 2, 2, 3
+                        \   0, 1, 2, 3
 
 .gaze11
 
+                        \ If we get here then the tile shape is one of:
+                        \
+                        \   2, 3, 6, 7, 10, 11, 14, 15
+                        \
+                        \ and A contains a number that tells us which two edges
+                        \ are the sloping edges:
+                        \
+                        \   * If A = 0, the bottom and left edges slope
+                        \
+                        \   * If A = 1, the top and left edges slope
+                        \
+                        \   * If A = 2, the top and right edges slope
+                        \
+                        \   * If A = 3, the bottom and right edges slope
+                        \
                         \ We either jump here with:
                         \
-                        \   * A = 2 if the tile shape is 3
+                        \   * A = 0 if the tile shape is 11     0 0     Bottom
+                        \                                       1 0     Left
                         \
-                        \   * A = 3 if the tile shape is 7
+                        \   * A = 1 if the tile shape is 15     0 1     Top
+                        \                                       1 1     Left
                         \
-                        \   * A = 0 if the tile shape is 11
+                        \   * A = 2 if the tile shape is 3      1 0     Top
+                        \                                       1 1     Right
                         \
-                        \   * A = 1 if the tile shape is 15
+                        \   * A = 3 if the tile shape is 7      1 1     Bottom
+                        \                                       1 0     Right
                         \
-                        \ or fall through from above with:
+                        \ or we fall through from above with:
                         \
-                        \   * A = 0 if the tile shape is 2
+                        \   * A = 0 if the tile shape is 2      1 1     Bottom
+                        \                                       0 1     Left
                         \
-                        \   * A = 1 if the tile shape is 6
+                        \   * A = 1 if the tile shape is 6      1 0     Top
+                        \                                       0 0     Left
                         \
-                        \   * A = 2 if the tile shape is 8
+                        \   * A = 2 if the tile shape is 10     0 1     Top
+                        \                                       0 0     Right
                         \
-                        \   * A = 2 if the tile shape is 10
-                        \
-                        \   * A = 3 if the tile shape is 14
+                        \   * A = 3 if the tile shape is 14     0 0     Bottom
+                        \                                       0 1     Right
 
- STA G
- LSR A
- LDA xCoordLo
- BCC gaze12
- EOR #&FF
+                        \ The next step is to choose which of these sloping
+                        \ edges is the closest to the current position along
+                        \ the gaze vector
+                        \
+                        \ The tileEdges table helps us do this
+                        \
+                        \ It is made up of two numbers for each pair of edges
+                        \ represented by A; these are the corner numbers at the
+                        \ start of each of the two edges in the pair, so for
+                        \ each value of A, we need to choose one of the corner
+                        \ numbers from the pair to pass to part 5
+                        \
+                        \ We choose the correct value according to whether the
+                        \ gaze vector is closer to the edge along the x-axis
+                        \ or the z-axis
+                        \
+                        \ For example, consider tile shape 11, for which we will
+                        \ will have A = 0 to denote that the bottom and left
+                        \ edges are the sloping edges in this shape:
+                        \
+                        \   0 0
+                        \   1 0
+                        \
+                        \ The tileEdges table contains 0 and 3 for this shape
+                        \ (to denote the left and bottom edges respectively)
+                        \
+                        \ Zooming in on the tile, we have the following, where
+                        \ [x] is the current position along the gaze vector when
+                        \ looking at the tile from above:
+                        \
+                        \   [1]                 [2]
+                        \    | xCoordLo
+                        \    |<--------> [x]
+                        \    |            ^
+                        \    |            |
+                        \    |            |  zCoordLo
+                        \    |            v
+                        \   [0] --------------- [3]
+                        \
+                        \ The calculation below clears the C flag so we compare
+                        \ xCoordLo and zCoordLo, so the calcuation is:
+                        \
+                        \   * If xCoordLo < zCoordLo, we pick the first entry
+                        \     from tileEdges, i.e. 0, which is the left edge
+                        \     (because the gaze point in [x] is closer to the
+                        \     left edge than the bottom edge)
+                        \
+                        \   * If xCoordLo >= zCoordLo, we pick the second entry
+                        \     from tileEdges, i.e. 3, which is the bottom edge
+                        \     (because the gaze point in [x] is closer to the
+                        \     bottom edge than the left edge)
+                        \
+                        \ The comparison is flipped around for tiles where the
+                        \ slopes are along the top/left or bottom/right edges,
+                        \ so we compare ~xCoordLo instead, like this example
+                        \ when the slopes are along the bottom and right edges:
+                        \
+                        \   [1]                 [2]
+                        \              ~xCoordLo |
+                        \         [x] <--------> |
+                        \                  ^     |
+                        \                  |     |
+                        \        zCoordLo  |     |
+                        \                  v     |
+                        \   [0] --------------- [3]
+
+ STA G                  \ Store the value of A in G so we can retrieve it below
+
+ LSR A                  \ Set the C flag to bit 0 of A, so it is:
+                        \
+                        \   * 0 if G = 0 or 2 (bottom/left or top/right)
+                        \
+                        \   * 1 if G = 1 or 3 (top/left or bottom/right)
+                        \
+                        \ So we compare against ~xCoordLo in the following for
+                        \ the top/left or bottom/right edge pairs
+
+ LDA xCoordLo           \ Set A to xCoordLo when C = 0 or ~xCoordLo when C = 1
+ BCC gaze12             \
+ EOR #%11111111         \ This ensures that the correct x-axis distance is used
+                        \ in the comparison
 
 .gaze12
 
- CMP zCoordLo
- LDA G
- ROL A
- TAY
- LDA L1DDE,Y
+ CMP zCoordLo           \ Set the C flag as follows:
+                        \
+                        \   * 0 if xCoordLo < zCoordLo (i.e. gaze vector is
+                        \          closer to the left or right edge)
+                        \
+                        \   * 1 if xCoordLo >= zCoordLo i.e. gaze vector is
+                        \          closer to the top or bottom edge)
+                        \
+                        \ So we choose the first entry from tileEdges when the
+                        \ gaze vector iscloser to the left or right edge, or the
+                        \ second entry when the gaze vector is closer to the top
+                        \ or bottom edge
+
+ LDA G                  \ Set Y = (G * 2) + C
+ ROL A                  \
+ TAY                    \ So Y can be used as an index into the tileEdges table
+                        \ that points to the entry in pair number G as specified
+                        \ by the C flag
+
+ LDA tileEdges,Y        \ Set A to the edge number that we should test against
+                        \ the gaze vector
+
+                        \ Fall into part 5 to check whether the gaze vector is
+                        \ obscured by the the edge we just chose
+
+\ ******************************************************************************
+\
+\       Name: FollowGazeVector (Part 5 of 5)
+\       Type: Subroutine
+\   Category: Maths (Geometry)
+\    Summary: For non-flat tiles with two horizontal edges, work out whether the
+\             tile edge obstructs the gaze vector
+\
+\ ******************************************************************************
 
 .gaze13
 
-                        \ We either jump here with:
-                        \
-                        \   * A = 0 if the tile shape is 0 or 9
-                        \
-                        \   * A = 1 if the tile shape is 5 or 13
-                        \
-                        \ or fall through from above with:
-                        \
-                        \   ???
+                        \ We jump here with A set to the number of the tile edge
+                        \ that we can test against the gaze vector (where the
+                        \ edge goes from corner A to corner A + 1)
 
- TAX
- LSR A
- LDY xCoordLo
- BCS gaze14
- LDY zCoordLo
+ TAX                    \ Copy A into X so we can use it as an index into the
+                        \ corner height variables we set up above
+
+                        \ By this point the value of X (and, currently, of A)
+                        \ is in the range 0 to 3, and it represents the first
+                        \ corner of the edge within the tile we are analysing
+                        \
+                        \ Here are the tile's corner heights that we set in the
+                        \ S, T, U and V variables above:
+                        \
+                        \      ^           [T]  [U]
+                        \      |
+                        \      |           [S]  [V]
+                        \   z-axis
+                        \    into
+                        \   screen      x-axis from left to right --->
+                        \
+                        \ The variables S, T, U and V are consecutive in memory,
+                        \ so LDA S,X can be used to select corner altitudes for
+                        \ values of X, like this:
+                        \
+                        \      [T]  [U]          [1]  [2]
+                        \                   =
+                        \      [S]  [V]          [0]  [3]
+                        \
+                        \ Similarly, LDA T,X will select the altitude for tile
+                        \ corner X + 1
+                        \
+                        \ Note that back in part 2, we set W to the same value
+                        \ as S, so this approach will still work if X = 3, as
+                        \ LDA T,X will fetch the value of W, which is the tile
+                        \ altitude of corner 0, just like S
+                        \
+                        \ So X (and A) represent the starting corner, and we now
+                        \ calculate the coordinates and gradient of the tile
+                        \ edge from corner X to corner X + 1, so we can work out
+                        \ whether the gaze passes above or below the edge
+                        \
+                        \ We start by calculating the distance along the tile
+                        \ edge that corresponds to the current position of the
+                        \ gaze vector
+                        \
+                        \ To see how this works, consider the axes of the tile
+                        \ corners:
+                        \
+                        \      ^           [1]  [2]
+                        \      |
+                        \      |           [0]  [3]
+                        \   z-axis
+                        \    into
+                        \   screen      x-axis from left to right --->
+                        \
+                        \ The low bytes of the current gaze vector in xCoordLo
+                        \ and zCoordLo give us the fractional part of the
+                        \ coordinate of the current position along the gaze, and
+                        \ the fractional part gives us the position of the
+                        \ coordinate within the tile (as the tile corners are on
+                        \ the integer coordinates)
+                        \
+                        \ Zooming in on the tile, we have the following, where
+                        \ [x] is the current position along the gaze vector when
+                        \ looking at the tile from above:
+                        \
+                        \   [1]                 [2]
+                        \     xCoordLo
+                        \   <----------> [x]
+                        \                 ^
+                        \                 |
+                        \                 |  zCoordLo
+                        \                 |
+                        \   [0]           v     [3]
+                        \
+                        \ We now set edgeGazeDistance to the corner-relative
+                        \ coordinate of the gaze vector along the edge that we
+                        \ are considering (so if we are examining the edge from
+                        \ corner X to corner X + 1, we're looking for the
+                        \ distance between corner X and the [x] of the gaze
+                        \ vector)
+                        \
+                        \ For example, if we are considering the left edge from
+                        \ 0 to 1, the distance of the [x] relative to corner 0
+                        \ and along the edge is zCoordLo, while on the top edge
+                        \ from 1 to 2, the distance of the [x] relative to
+                        \ corner 1 and along the edge is xCoordLo
+                        \
+                        \ The other two edges are similar but the distances are
+                        \ in the opposite direction to the axes
+                        \
+                        \ So if we we are considering the bottom edge from 3 to
+                        \ 0, the distance is ~xCoordLo, because:
+                        \
+                        \   xCoordLo + ~xCoordLo = 1
+                        \
+                        \ So adding xCoordLo and ~xCoordLo together gives us the
+                        \ distance between the tile corners (which is 1), so it
+                        \ follows that ~xCoordLo is the distance from corner 3
+                        \ to the gaze point, as xCoordLo is the distance from
+                        \ corner 0 to the gaze point
+                        \
+                        \ We now set edgeGazeDistance to the correct value
+
+ LSR A                  \ Set Y as follows:
+ LDY xCoordLo           \
+ BCS gaze14             \   * xCoordLo if A = 1 or 3 (i.e. bit 0 of A is 1)
+ LDY zCoordLo           \
+                        \   * zCoordLo if A = 0 or 2 (i.e. bit 0 of A is 1)
 
 .gaze14
 
- LSR A
- TYA
- BCC gaze15
- EOR #&FF
+ LSR A                  \ Set A as follows:
+ TYA                    \
+ BCC gaze15             \   * A = Y if A = 0 or 1 (i.e. bit 1 of A is 0)
+ EOR #%11111111         \
+                        \   * A = ~Y if A = 2 or 3 (i.e. bit 1 of A is 1)
 
 .gaze15
 
- STA L0002
- LDA S,X
- STA G
- LDA T,X
- SEC
- SBC S,X
- PHP
- BPL gaze16
- EOR #&FF
- CLC
- ADC #&01
+ STA edgeGazeDistance   \ Set edgeGazeDistance to the result in A, so we set it
+                        \ as follows:
+                        \
+                        \   * edgeGazeDistance = zCoordLo if A = 0
+                        \
+                        \   * edgeGazeDistance = xCoordLo if A = 1
+                        \
+                        \   * edgeGazeDistance = ~zCoordLo if A = 2
+                        \
+                        \   * edgeGazeDistance = ~xCoordLo if A = 3
+                        \
+                        \ We use edgeGazeDistance below to calculate where the
+                        \ gaze vector crosses the edge
+
+                        \ We now calculate the gradient of the tile edge
+
+ LDA S,X                \ Set G to the altitude of corner X, which we use in the
+ STA G                  \ calculation at the end of the routine
+
+ LDA T,X                \ Set A to the altitude of corner X + 1 minus the
+ SEC                    \ altitude of corner X
+ SBC S,X                \
+                        \ So this is the gradient of the edge between corner
+                        \ X and corner X + 1
+
+ PHP                    \ Store the flags of the result on the stack, so we can
+                        \ retrieve the sign below
+
+ BPL gaze16             \ If the result is negative then negate it to make it
+ EOR #%11111111         \ positive, so A now contains the absolute value of the
+ CLC                    \ edge gradient
+ ADC #1
 
 .gaze16
 
- STA U
- LDA L0002
+ STA U                  \ Set U to the absolute gradient of the edge
+
+ LDA edgeGazeDistance   \ Set A to the fractional distance along the edge that
+                        \ corresponds to the current position along the gaze
+                        \ vector
 
  JSR Multiply8x8        \ Set (A T) = A * U
+                        \           = fractional distance * |gradient|
 
- PLP                    \ Restore the sign of ??? which we stored on the
-                        \ stack above, so the N flag is positive if ???,
-                        \ or negative if ???
 
- JSR Absolute16Bit      \ Set the sign of (A T) to match the result of the
-                        \ subtraction above, so A is now ???
+ PLP                    \ Restore the sign of the gradient which we stored on
+                        \ the stack above, so the N flag reflects the sign of
+                        \ the gradient
 
- CLC
- ADC G
- STA U
- LDA yCoordLo
- SEC
- SBC T
- LDA yCoordHi
- SBC U
- BPL gaze17
- JMP gaze4
+ JSR Absolute16Bit      \ Set the sign of (A T) to match the gradient, so A is
+                        \ now the correct sign for the calculation and we have
+                        \ the following:
+                        \
+                        \   (A T) = fractional distance * gradient
+                        \
+                        \ The fractional distance is a fractional value that
+                        \ represents how far along the edge we would need to go
+                        \ in order to be at the corresponding coordinate as the
+                        \ current position along the gaze vector
+                        \
+                        \ The gradient is the change in altitude as we move from
+                        \ one end of the edge to the other
+                        \
+                        \ Multiplying these two therefore gives us the height of
+                        \ the point along the edge that corresponds to the
+                        \ current position of the gaze vector
+                        \
+                        \ This height is relative to the tile corner at the
+                        \ start of the edge (i.e. corner X), so to get the
+                        \ altitude of the point in the 3D world, we need to add
+                        \ the result in (A T) to the altitude of corner X
+                        \
+                        \ We set G above to the altitude of corner X, which came
+                        \ from the call to GetTileAltitude, so G contains the
+                        \ high byte of the altitude and is therefore an integer
+                        \ value, so we add a low byte of 0 in the addition
+
+ CLC                    \ Set (U T) = (G 0) + (A T)
+ ADC G                  \
+ STA U                  \ So (U T) contains the altitude of the point on the
+                        \ edge that corresponds to the current position of the
+                        \ gaze vector
+
+ LDA yCoordLo           \ Set (A *) = (yCoordHi yCoordLo) - (U T)
+ SEC                    \
+ SBC T                  \ So A contains the high byte of the difference in
+ LDA yCoordHi           \ altitude between the current position of the gaze
+ SBC U                  \ vector and the point on the edge that corresponds to
+                        \ the vector
+
+ BPL gaze17             \ If the current position along the gaze vector is
+                        \ higher than the corresponding point on the edge, then
+                        \ the viewer's gaze is not being obstructed by the edge,
+                        \ so jump to gaze1 via gaze17 to to move along the gaze
+                        \ vector and restart the checks
+
+ JMP gaze4              \ Otherwise the current position along the gaze vector
+                        \ is below the corresponding point on the edge, and the
+                        \ viewer's gaze is being obstructed by the edge, so jump
+                        \ to gaze4 to to return from the subroutine with the
+                        \ C flag set to indicate that the viewer is not looking
+                        \ at a tile
 
 .gaze17
 
- JMP gaze1
+ JMP gaze1              \ Jump to gaze1 to move along the gaze vector and
+                        \ restart the checks (this jump point is for use by
+                        \ branching instructions)
 
 \ ******************************************************************************
 \
-\       Name: L1DDE
+\       Name: tileEdges
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Landscape
+\    Summary: A table to map tile shapes and gaze vector direction to tile edges
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains tile corner numbers from a tile:
+\
+\      ^           [1]  [2]
+\      |
+\      |           [0]  [3]
+\   z-axis
+\    into
+\   screen      x-axis from left to right --->
+\
+\ Each tile corner number represents an edge from the number to the number + 1,
+\ so 1 represents the edge from corner 1 to corner 2, for example.
+\
+\ The table is used to work out which edge should be chosen for the calculation
+\ in the FollowGazeVector routine, where we work out whether the gaze vector is
+\ hitting a tile slope in a tile with two horizontal edges.
+\
+\ See part 4 of the FollowGazeVector routine for details of how this table
+\ works.
 \
 \ ******************************************************************************
 
-.L1DDE
+.tileEdges
 
- EQUB &00, &03, &01, &00, &01, &02, &02, &03
+ EQUB 0, 3              \ Left and bottom edges (G = 0)
+                        \
+                        \ First entry (left edge) for xCoordLo < zCoordLo
+                        \
+                        \ Second entry (bottom edge) for xCoordLo >= zCoordLo
+
+ EQUB 1, 0              \ Top and left edges (G = 1)
+                        \
+                        \ First entry (top edge) for ~xCoordLo < zCoordLo
+                        \
+                        \ Second entry (left edge) for ~xCoordLo >= zCoordLo
+
+ EQUB 1, 2              \ Top and right edges (G = 2)
+                        \
+                        \ First entry (top edge) for xCoordLo < zCoordLo
+                        \
+                        \ Second entry (right edge) for xCoordLo >= zCoordLo
+
+ EQUB 2, 3              \ Right and bottom edges (G = 3)
+                        \
+                        \ First entry (right edge) for ~xCoordLo < zCoordLo
+                        \
+                        \ Second entry (bottom edge) for ~xCoordLo >= zCoordLo
 
 \ ******************************************************************************
 \
@@ -10616,6 +11049,8 @@ L1145 = C1144+1
 \                         * Clear if the tile is flat
 \
 \                         * Set if the tile is not flat
+\
+\   L0CDD               Bit 7 ???
 \
 \ ******************************************************************************
 
@@ -10823,9 +11258,24 @@ L1145 = C1144+1
 \   Category: Maths (Geometry)
 \    Summary: Calculate max(|xCoordLo - 128|, |zCoordLo - 128|)
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   xCoordLo            The low byte of an x-coordinate for comparing to the
+\                       centre of a tile (i.e. a fractional part)
+\
+\   zCoordLo            The low byte of an z-coordinate for comparing to the
+\                       centre of a tile (i.e. a fractional part)
+\
 \ ******************************************************************************
 
 .CheckForTileCentre
+
+                        \ We check the distance of the fractional coordinate in
+                        \ (xCoordLo, zCoordLo) from the centre of the tile by
+                        \ subtracting from (128, 128), as 128 represents 0.5 in
+                        \ fractional terms
 
  LDA xCoordLo           \ Set A = |xCoordLo - 128|
  SEC
@@ -18180,8 +18630,6 @@ L23E3 = C23E2+1
 \
 \   * a, b represent arbitrary altitudes where a <> b <> 1
 \
-\   * c represents an arbitrary altitude where b <> c (so c can equal 1)
-\
 \ These are all the different types of shape (note there is no shape 8, and
 \ shapes 4 and 12 can have multiple layouts):
 \
@@ -18224,7 +18672,7 @@ L23E3 = C23E2+1
 \   11      S <> V      S <> T      S >  U      U == V      U == T      0 0
 \                                                                       1 0
 \
-\   12a     S <> V      S <> T                  U <> V                  1 c
+\   12a     S <> V      S <> T                  U <> V                  1 1
 \                                                                       a b
 \
 \   12b     S == V      S <> T                  U <> V      U <> T      a b
@@ -18238,6 +18686,22 @@ L23E3 = C23E2+1
 \
 \   15      S == V      S <> T                  U == V      U >= T      0 1
 \                                                                       1 1
+\
+\ Note that for shape 12a, the top-right corner could in theory be a different
+\ altitude to a, b and 1, and the comparisons would still fit. However, the way
+\ the landscape gets smoothed ensures that every tile has at least one
+\ horizontal edge, so this means the top-right corner must be at altitude 1.
+\
+\ It is worth noting that:
+\
+\   * Shape 0 has four horizontal edges
+\
+\   * Shapes 4 and 12 have one horizontal edge and three sloping edges
+\
+\   * Shape 8 is unused
+\
+\   * All other shapes (1, 2, 3, 5, 6, 7, 9, 10, 11, 14 and 15) have two
+\     horizontal edges and two sloping edges
 \
 \ ------------------------------------------------------------------------------
 \
