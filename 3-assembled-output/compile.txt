@@ -2567,7 +2567,7 @@
 .secretCodeChecks
      0C65   00
      0C66   00
-.L0C67
+.boulderOnTile
      0C67   00
 .L0C68
      0C68   00

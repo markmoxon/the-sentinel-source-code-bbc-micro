@@ -1914,9 +1914,14 @@
 
  EQUB 0                 \ This byte appears to be unused
 
-.L0C67
+.boulderOnTile
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether the tile being analysed in
+                        \ the GetTileAltitude routine contains a boulder
+                        \
+                        \   * Bit 7 clear = tile does not contain a boulder
+                        \
+                        \   * Bit 7 set = tile contains a boulder
 
 .L0C68
 
@@ -10118,7 +10123,9 @@ L1145 = C1144+1
  LDA #0                 \ Set platformAltitudeLo = 0, so if the tile doesn't
  STA platformAltitudeLo \ contain a platform, platformAltitudeLo will be zero
 
- STA L0C67              \ Set L0067 = 0 ???
+ STA boulderOnTile      \ Clear bit 7 of boulderOnTile to denote that the tile
+                        \ does not contain a boulder, so GetTileAltitude can
+                        \ set bit 7 if it does contain a boulder
 
  JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
                         \ set to extract the following tile data:
@@ -10138,6 +10145,9 @@ L1145 = C1144+1
                         \
                         \   * C flag = the tile's shape, clear if the tile is
                         \              flat or set if the tile is not flat
+                        \
+                        \   * boulderOnTile has bit 7 set if the tile contains a
+                        \     boulder
 
  BCS gaze5              \ If the tile is not flat, jump to gaze5 to calculate
                         \ the gaze vector's interaction with the tile slopes
@@ -10191,12 +10201,13 @@ L1145 = C1144+1
  BVS gaze4              \ to return from the subroutine with the C flag set to
                         \ indicate that the viewer is not looking at a tile ???
 
- LDA L0C6E              \ If bit 7 is set in either of L0C6E and L0C67, skip the
- ORA L0C67              \ following test ???
- BMI gaze2
+ LDA L0C6E              \ If bit 7 is set in either of L0C6E and boulderOnTile,
+ ORA boulderOnTile      \ skip the following test, as the tile contains either a
+ BMI gaze2              \ ??? or a boulder
 
                         \ If we get here then bit 7 is clear in both L0C6E and
-                        \ L0C67, so ???
+                        \ boulderOnTile, so the tile does not contain a ??? or a
+                        \ boulder
 
  LDA yVectorLo          \ If the low byte (i.e. the fractional part) of the gaze
  BPL gaze4              \ vector's y-coordinate is positive, then the viewer is
@@ -11024,25 +11035,23 @@ L1145 = C1144+1
 \
 \                         * Bit 7 set = if the tile contains an object, then ???
 \                                       otherwise extract the tile's altitude
-\                                       and shape
+\                                       and shape (this is only set when calling
+\                                       the routine from FollowGazeVector)
 \
-\   xCoordLo            The low byte of an x-coordinate for comparing to the
-\                       centre of a tile (only used if bit 7 of considerObjects
-\                       is set)
+\   xCoordLo            The low byte (i.e. fractional part) of the x-coordinate
+\                       of the current position along the gaze vector (when
+\                       the routine is called from FollowGazeVector)
 \
-\   zCoordLo            The low byte of an z-coordinate for comparing to the
-\                       centre of a tile (only used if bit 7 of considerObjects
-\                       is set)
+\   zCoordLo            The low byte (i.e. fractional part) of the z-coordinate
+\                       of the current position along the gaze vector (when
+\                       the routine is called from FollowGazeVector)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
-\   A                   The high byte of the tile's altitude
-\
-\   platformAltitudeLo  If bit 7 of considerObjects is set and the tile contains
-\                       the Sentinel's tower or a boulder, the altitude of the
-\                       tower or boulder is returned in (A platformAltitudeLo)
+\   A                   The high byte of the tile's altitude (though if bit 7 of
+\                       considerObjects is set, see platformAltitudeLo below)
 \
 \   C flag              The tile's shape:
 \
@@ -11050,7 +11059,23 @@ L1145 = C1144+1
 \
 \                         * Set if the tile is not flat
 \
-\   L0CDD               Bit 7 ???
+\   platformAltitudeLo  If bit 7 of considerObjects is set and the tile contains
+\                       the Sentinel's tower or a boulder, the altitude of the
+\                       platform on the top of the tower or boulder is returned
+\                       in (A platformAltitudeLo)
+\
+\   boulderOnTile       If bit 7 of considerObjects is set, this records whether
+\                       the tile contains a boulder:
+\
+\                         * Bit 7 clear = tile does not contain a boulder
+\
+\                         * Bit 7 set = tile contains a boulder
+\
+\   L0CDD               If bit 7 of considerObjects is set, this records ???
+\
+\                         * Bit 7 clear = ???
+\
+\                         * Bit 7 set = ???
 \
 \ ******************************************************************************
 
@@ -11096,14 +11121,15 @@ L1145 = C1144+1
                         \ (i.e. the type of object #Y)
 
  CMP #3                 \ If the tile contains an object of type 3 (a boulder),
- BEQ data4              \ jump to data4 to ???
+ BEQ data4              \ jump to data4 to extract details about the boulder
 
  CMP #2                 \ If the tile contains an object of type 2 (a tree),
- BEQ data4              \ jump to data4 to ???
+ BEQ data4              \ jump to data4 to extract details about the tree
 
  CMP #6                 \ If the tile doesn't contain the Sentinel's tower (type
  BNE data7              \ 6) then it must contain a robot, sentry, meanie or the
-                        \ Sentinel, so jump to data7 to ???
+                        \ Sentinel, so jump to data7 to return the altitude of
+                        \ the tile rather than the object
 
                         \ If we get here then the tile contains the Sentinel's
                         \ tower in object #Y
@@ -11112,12 +11138,20 @@ L1145 = C1144+1
                         \
                         \ and return the same value in A
                         \
-                        \ This calculates how close the coordinate is to the
-                        \ centre of a tile, in terms of the x-coordinate and
-                        \ z-coordinate
+                        \ This calculates how close the current position along
+                        \ the gaze vector is to the centre of the tile, in terms
+                        \ of the x-coordinate and z-coordinate
 
- CMP #100               \ If A >= 100 then jump to data6 to ???
- BCS data6
+ CMP #100               \ If A >= 100 then the gaze vector is a long way from
+ BCS data6              \ the centre of the tile (i.e. more than 100/128 = 78%
+                        \ of the distance from the centre to the tile edge,
+                        \ which is outside the body of the tower), so jump to
+                        \ data6 to return the altitude of the tile rather than
+                        \ the tower
+
+                        \ If we get here then the gaze vector is pointing at the
+                        \ sides of the tower, so we return the altitude of the
+                        \ platform on top of the tower
 
  LDA #16                \ Set L000C = 16 ???
  STA L000C
@@ -11127,7 +11161,15 @@ L1145 = C1144+1
  ADC #&20               \   (A platformAltitudeLo) = (yObjectHi yObjectLo) + 32
  STA platformAltitudeLo \
  LDA yObjectHi,Y        \ where yObject is the altitude of the Sentinel's tower
- ADC #&00
+ ADC #&00               \
+                        \ So we return the altitude of the top of the tower by
+                        \ effectively adding the tower's height to the tower
+                        \ object's altitude, bearing in mind that objects are
+                        \ spawned at a height of 224 above their tiles, so this
+                        \ returns the altitude of the top of the tower, with
+                        \ the tower being 224 + 32 = 256 fractional parts above
+                        \ the tile (so the tower is the height of one entire
+                        \ integer y-coordinate)
 
  CLC                    \ Clear the C flag to indicate that the tile is flat
 
@@ -11163,10 +11205,18 @@ L1145 = C1144+1
 
  JSR CheckForTileCentre \ Set T = max(|xCoordLo - 128|, |zCoordLo - 128|)
                         \
-                        \ and return the same value in A ???
+                        \ and return the same value in A
+                        \
+                        \ This calculates how close the current position along
+                        \ the gaze vector is to the centre of the tile, in terms
+                        \ of the x-coordinate and z-coordinate
 
- CMP #64                \ If A >= 64 then jump to data6 to ???
- BCS data6
+ CMP #64                \ If A >= 64 then the gaze vector is more than half way
+ BCS data6              \ from the centre of the tile (i.e. more than 64/128 =
+                        \ 50% of the distance from the centre to the tile edge,
+                        \ which is outside the body of the tree or boulder), so
+                        \ jump to data6 to return the altitude of the tile
+                        \ rather than the tree or boulder
 
  LDA objectTypes,Y      \ If object #Y is an object of type 2 (a tree), jump to
  CMP #2                 \ data5
@@ -11175,8 +11225,8 @@ L1145 = C1144+1
                         \ If we get here then the tile contains a boulder in
                         \ object #Y
 
- SEC                    \ Set bit 7 of L0C67 ???
- ROR L0C67
+ SEC                    \ Set bit 7 of boulderOnTile to indicate that the tile
+ ROR boulderOnTile      \ contains a boulder
 
  LDA yObjectLo,Y        \ Set the following:
  SEC                    \
@@ -11184,6 +11234,14 @@ L1145 = C1144+1
  STA platformAltitudeLo \
  LDA yObjectHi,Y        \ where yObject is the altitude of the boulder
  SBC #&00
+                        \ So we return the altitude of the top of the boulder by
+                        \ effectively adding the boulder's height to the boulder
+                        \ object's altitude, bearing in mind that objects are
+                        \ spawned at a height of 224 above their tiles, so this
+                        \ returns the altitude of the top of the boulder, with
+                        \ the boulder being 224 - 96 = 128 fractional parts above
+                        \ the tile (so the boulder is the height of one half of
+                        \ a y-coordinate)
 
  CLC                    \ Clear the C flag to indicate that the tile is flat
 
@@ -11194,7 +11252,7 @@ L1145 = C1144+1
                         \ If we get here then the tile contains a tree in
                         \ object #Y
 
- LDA yObjectLo,Y
+ LDA yObjectLo,Y        \ ???
  SEC
  SBC yCoordLo
  STA U
@@ -11230,7 +11288,7 @@ L1145 = C1144+1
  CMP #2                 \ If the tile contains an object of type 2 (a tree),
  BEQ data7              \ jump to data7 to skip the following instruction
 
- LDA #%11000000         \ Set bit 6 and 7 of considerObjects ???
+ LDA #%11000000         \ Set bits 6 and 7 of considerObjects ???
  STA considerObjects
 
 .data7
