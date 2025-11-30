@@ -1807,9 +1807,16 @@
                         \ is set to a value that is unique and consistent for
                         \ each individual landscape
 
-.L0C56
+.targetOnTile
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether the tile being analysed in
+                        \ the GetTileAltitude routine contains the target object
+                        \ whose number is in targetObject
+                        \
+                        \   * Bit 7 clear = tile does not contain the target
+                        \                   object
+                        \
+                        \   * Bit 7 set = tile contains the target object
 
 .L0C57
 
@@ -2212,9 +2219,14 @@
                         \ whether doNotScanKeyboard has changed during the
                         \ ProcessGameplay loop ???
 
-.L0CDD
+.gazeCanSeeTree
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A flag to record whether the gaze vector can see a
+                        \ tree:
+                        \
+                        \   * Bit 7 clear = gaze vector cannot see a tree
+                        \
+                        \   * Bit 7 set = gaze vector can see a tree
 
 .hyperspaceEndsGame
 
@@ -8231,9 +8243,9 @@ L1145 = C1144+1
  STA vectorPitchAngleHi
  JSR GetVectorForAngles
  JSR FollowGazeVector
- ROL L0C56
+ ROL targetOnTile
  ROR L0014
- ROL L0CDD
+ ROL gazeCanSeeTree
  ROR L0C76
 
 .C18FF
@@ -10039,9 +10051,20 @@ L1145 = C1144+1
 \                         * Set if the viewing object can't see a tile along
 \                           the gaze vector
 \
-\   L0C56               Bit 7 ???
+\   targetOnTile        Records whether the gaze vector can see a tile
+\                       containing the target object whose number is in
+\                       targetObject:
 \
-\   L0CDD               Bit 7 ???
+\                         * Bit 7 clear = gaze vector cannot see the target
+\                                         object
+\
+\                         * Bit 7 set = gaze vector can see the target object
+\
+\   gazeCanSeeTree      Records whether the gaze vector can see a tree:
+\
+\                         * Bit 7 clear = gaze vector cannot see a tree
+\
+\                         * Bit 7 set = gaze vector can see a tree
 \
 \   xCoordHi            The tile x-coordinate of the tile that can be seen
 \
@@ -10054,9 +10077,13 @@ L1145 = C1144+1
  LDX viewingObject      \ Set X to the number of the object that is performing
                         \ the gaze (i.e. doing the looking or scanning)
 
- LSR L0C56              \ Clear bit 7 of L0C56 ????
+ LSR targetOnTile       \ Clear bit 7 of targetOnTile so it can be set if the
+                        \ tile contains the target object whose number is in
+                        \ targetObject
 
- LSR L0CDD              \ Clear bit 7 of L0CDD ????
+ LSR gazeCanSeeTree     \ Clear bit 7 of gazeCanSeeTree so it can be set if
+                        \ there is tree on the tile that can be seen by the
+                        \ gaze vector
 
  JSR GetObjectCoords    \ Fetch the cartesian coordinates of the viewing object
                         \ as three 24-bit numbers, as follows:
@@ -10235,8 +10262,8 @@ L1145 = C1144+1
 
  LDA zTile              \ If the z-coordinate of the viewing object is the same
  CMP zObject,X          \ as the x-coordinate, then the viewer is looking at
- BEQ gaze1              \ their own tile, so loop back to gaze1 to move along the
-                        \ gaze vector and restart the checks
+ BEQ gaze1              \ their own tile, so loop back to gaze1 to move along
+                        \ the gaze vector and restart the checks
 
                         \ If we get here then the z-coordinates do not match, so
                         \ we can now return from the subroutine with the C flag
@@ -11071,11 +11098,24 @@ L1145 = C1144+1
 \
 \                         * Bit 7 set = tile contains a boulder
 \
-\   L0CDD               If bit 7 of considerObjects is set, this records ???
+\   targetOnTile        If bit 7 of considerObjects is set, this records whether
+\                       the tile contains the target object whose number is in
+\                       targetOnTile:
 \
-\                         * Bit 7 clear = ???
+\                         * Bit 7 clear = tile does not contain the target
+\                                         object
 \
-\                         * Bit 7 set = ???
+\                         * Bit 7 set = tile does contain the target object
+\
+\   gazeCanSeeTree      If bit 7 of considerObjects is set, this records whether
+\                       the tile contains a tree that can be seen by the gaze
+\                       vector:
+\
+\                         * Bit 7 clear = tile does not contain a tree that can
+\                                         be seen by the gaze vector
+\
+\                         * Bit 7 set = tile contains a tree that can be seen by
+\                                       the gaze vector
 \
 \ ******************************************************************************
 
@@ -11112,8 +11152,8 @@ L1145 = C1144+1
                         \ the objects on the stack
 
  CPY targetObject       \ If Y = targetObject then the target object is on the
- BNE data2              \ tile, so set bit 7 of L0C56 ???
- ROR L0C56
+ BNE data2              \ tile, so set bit 7 of targetOnTile to indicate this
+ ROR targetOnTile
 
 .data2
 
@@ -11239,9 +11279,9 @@ L1145 = C1144+1
                         \ object's altitude, bearing in mind that objects are
                         \ spawned at a height of 224 above their tiles, so this
                         \ returns the altitude of the top of the boulder, with
-                        \ the boulder being 224 - 96 = 128 fractional parts above
-                        \ the tile (so the boulder is the height of one half of
-                        \ a y-coordinate)
+                        \ the boulder being 224 - 96 = 128 fractional parts
+                        \ above the tile (so the boulder is the height of one
+                        \ half of a y-coordinate)
 
  CLC                    \ Clear the C flag to indicate that the tile is flat
 
@@ -11252,34 +11292,77 @@ L1145 = C1144+1
                         \ If we get here then the tile contains a tree in
                         \ object #Y
 
- LDA yObjectLo,Y        \ ???
- SEC
- SBC yCoordLo
- STA U
- LDA yObjectHi,Y
- SBC yCoordHi
+ LDA yObjectLo,Y        \ Set the following:
+ SEC                    \
+ SBC yCoordLo           \   (A U) =  (yObjectHi yObjectLo) - (yCoordHi yCoordLo)
+ STA U                  \
+ LDA yObjectHi,Y        \ where yObject is the altitude of the tree
+ SBC yCoordHi           \
+                        \ So (A U) contains the relative altitude of the current
+                        \ position along the gaze vector compared to the tree,
+                        \ with a positive value indicating that the gaze is
+                        \ is below the tree, and a negative value indicating
+                        \ that the gaze is above the tree
 
- PHA
- LDA U
- CLC
- ADC #&E0
- STA U
- PLA
- ADC #&00
- BMI data6
- LSR A
- ROR U
- LSR A
- BNE data6
- LDA U
- ROR A
- CMP T
- BCC data6
- BIT L0C56
- BMI data6
+ PHA                    \ Set (A U) = (A U) + 224
+ LDA U                  \
+ CLC                    \ This adds the height of the tree to (A U), as trees
+ ADC #&E0               \ have a height of 224 fractional y-coordinates, so the
+ STA U                  \ value in (A U) is now relative to the top of the tree,
+ PLA                    \ so it is effectively the height difference between the
+ ADC #&00               \ gaze and the tree top
 
- SEC
- ROR L0CDD
+ BMI data6              \ If A is negative then the current position along the
+                        \ gaze vector is above the top of the tree, so jump to
+                        \ data6 to return the altitude of the tile rather than
+                        \ the tree
+
+ LSR A                  \ Set (A U) = (A U) / 2
+ ROR U                  \
+                        \ So (A U) is now half the height difference between the
+                        \ gaze and tree top
+
+ LSR A                  \ If any of bits 1 to 7 of A are set then A >> 1 will be
+ BNE data6              \ non-zero and the original value of (A U) must have
+                        \ been at least %100, so that's a positive value with a
+                        \ high byte of at least 4
+                        \
+                        \ This means the gaze vector is too far below the tree
+                        \ for it to be visible, so jump to data6 to return the
+                        \ altitude of the tile rather than the tree
+
+ LDA U                  \ If we get here then we know A >> 1 = 0, so we can
+ ROR A                  \ halve (U A) again and discard the top byte, as it will
+                        \ be zero, so this sets:
+                        \
+                        \   A = (U A) / 2
+                        \
+                        \ So this is the original height difference between the
+                        \ gaze and tree top, divided by 4
+
+                        \ We set T above to the maximum distance between the
+                        \ gaze vector and the centre of the tile in terms of the
+                        \ horizontal axes
+
+ CMP T                  \ If A < T then the gaze is further from the centre of
+ BCC data6              \ the tile than the height difference to the tree top
+                        \ divided by 4, so jump to data6 to return the altitude
+                        \ of the tile rather than the tree
+                        \
+                        \ The centre point of the tile is the tree trunk, so
+                        \ this test means that gazes at the lower parts of the
+                        \ tree can be further from the centre point than gazes
+                        \ at the upper parts of the tree, while still being
+                        \ considered gazes that fall upon the tree
+                        \
+                        \ This fits in with the tree's shape and makes the tree
+                        \ detection code more accurate
+
+ BIT targetOnTile       \ If bit 7 of targetOnTile is set then the tree is
+ BMI data6              \ the targeted object, so skip the following so that ???
+
+ SEC                    \ Set bit 7 of gazeCanSeeTree to indicate that the tree
+ ROR gazeCanSeeTree     \ can be seen by the gaze vector
 
 .data6
 

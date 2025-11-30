@@ -2533,7 +2533,7 @@
      0C54   00
 .stashOffset
      0C55   00
-.L0C56
+.targetOnTile
      0C56   00
 .L0C57
      0C57   0D
@@ -2728,7 +2728,7 @@
      0CDB   00
 .previousDoNotScan
      0CDC   00
-.L0CDD
+.gazeCanSeeTree
      0CDD   00
 .hyperspaceEndsGame
      0CDE   00
