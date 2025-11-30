@@ -11045,8 +11045,8 @@ L1145 = C1144+1
 \       Name: GetTileAltitude
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: Calculate the altitude of a tile, optionally including objects in
-\             the calculation
+\    Summary: Calculate the altitude of a tile, optionally including platform
+\             object and trees in the calculation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11060,10 +11060,12 @@ L1145 = C1144+1
 \                                         flatness, ignoring any objects on the
 \                                         tile
 \
-\                         * Bit 7 set = if the tile contains an object, then ???
-\                                       otherwise extract the tile's altitude
-\                                       and shape (this is only set when calling
-\                                       the routine from FollowGazeVector)
+\                         * Bit 7 set = if the tile contains a platform object
+\                                       (i.e. boulder or tower) or a tree, then
+\                                       extract data for the object instead of
+\                                       the tile when applicable (this option
+\                                       is only set when calling this routine
+\                                       from FollowGazeVector)
 \
 \   xCoordLo            The low byte (i.e. fractional part) of the x-coordinate
 \                       of the current position along the gaze vector (when
