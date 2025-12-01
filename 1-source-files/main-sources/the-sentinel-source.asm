@@ -118,7 +118,7 @@
 .lastPanKeyPressed
 
  SKIP 1                 \ The direction of the last pan key that was pressed
-                        \ (which may still be being held down)
+                        \ (which may not still be held down)
                         \
                         \   * Bit 7 set = not currently panning
                         \
@@ -1934,7 +1934,7 @@
 
  EQUB 0                 \ ???
 
-.L0C69
+.bufferColumns
 
  EQUB 0                 \ ???
 
@@ -4644,102 +4644,239 @@
 \   Category: Drawing the landscape
 \    Summary: Pan the landscape and update the landscape view
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   viewingObject       The number of the object that is viewing the landscape
+\                       (this is always the player object for this routine)
+\
 \ ******************************************************************************
 
 .PanLandscapeView
 
- LDY lastPanKeyPressed
- LDX viewingObject
- CPY #&02
- BCS C10FD
- LDA objectYawAngle,X
- CLC
- ADC panAngle,Y
- STA objectYawAngle,X
- LDA #&19
- LDY #&18
- LDX #&10
- STX L0C69
- JSR FillScreen
- JSR sub_C391E
+ LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
+                        \ pressed (which may not still be held down)
+                        \
+                        \ So this contains the direction of any scrolling that
+                        \ we need to apply to the landscape, as follows:
+                        \
+                        \   * 0 = pan right
+                        \
+                        \   * 1 = pan left
+                        \
+                        \   * 2 = pan up
+                        \
+                        \   * 3 = pan down
+                        \
+                        \ We use this as an index into various tables, to look
+                        \ up the correct values for the direction in which we
+                        \ want to scroll
 
- JSR DrawLandscapeView  \ Draw the landscape view
+ LDX viewingObject      \ Set X to the object number of the viewer, which we set
+                        \ to the player object in MainGameLoop
 
- LDX viewingObject
- LDY lastPanKeyPressed
- BCS C10F2
- BNE C10EC
- LDA objectYawAngle,X
+ CPY #2                 \ If the panning direction in Y is up or down, jump to
+ BCS lpan3              \ lpan3 to pan vertically
+
+                        \ If we get here then Y is 0 or 1 and the panning
+                        \ direction is right or left
+
+ LDA objectYawAngle,X   \ Rotate the player's gaze so that when we draw the
+ CLC                    \ updated view, the new part of the landscape that we
+ ADC panAngleToUpdate,Y \ need to scroll in from the side goes into the screen
+ STA objectYawAngle,X   \ buffer (as the screen buffer is mapped to the left
+                        \ portion of the view that we are drawing)
+
+ LDA #25                \ Set A = 25 to pass to FillScreen so we fill the screen
+                        \ buffer from character row 25 onwards
+
+ LDY #24                \ Set Y = 24 to pass to FillScreen so we fill 24
+                        \ character rows of the screen buffer
+
+ LDX #16                \ Set bufferColumns to 16 to configure the buffer width
+ STX bufferColumns      \ to 16 character blocks
+
+ JSR FillScreen         \ Call FillScreen to clear the screen buffer to sky (the
+                        \ screenBackground variable is zeroed in DrawTitleObject
+                        \ before the gameplay starts, so alll calls to the
+                        \ FillScreen routine during gameplay fill the buffer
+                        \ with alternating colour 0/1 (blue/black) pixel rows,
+                        \ for the sky
+
+ JSR sub_C391E          \ Call sub_C2963 with A = 2 to set up loads of
+                        \ variables ???
+
+ JSR DrawLandscapeView  \ Draw the landscape view into the screen buffer
+                        \
+                        \ If the player held down the panning key throughout the
+                        \ drawing process and the whole landscape was drawn,
+                        \ then the C flag will be clear, otherwise the C flag
+                        \ will be set 
+
+ LDX viewingObject      \ Set X to the object number of the viewer, which we set
+                        \ to the player object in MainGameLoop
+
+ LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
+                        \ pressed (which may not still be held down)
+
+ BCS lpan2              \ If the call to DrawLandscapeView set the C flag then
+                        \ the landscape drawing process was aborted, so jump to
+                        \ lpan2 to revert the change to the player's yaw angle
+                        \ and return from the subroutine without updating the
+                        \ on-screen landscape view
+
+ BNE lpan1              \ If Y <> 0 then Y must be 1, in which case the pan
+                        \ angle we fetched from the panAngleToUpdate table
+                        \ doesn't need correcting, so jump to lpan1 to skip the
+                        \ following
+
+                        \ If we get here then Y = 0, so we added 20 to the
+                        \ player's yaw angle so it would draw the new part of
+                        \ the view into the screen buffer, so we now need to
+                        \ subtract 12 from the player's yaw angle so they end up
+                        \ looking in the correct direction, i.e. a net rotation
+                        \ of +8 rather than +20 yaw angles
+
+ LDA objectYawAngle,X   \ Subtract 12 from the player's yaw angle
  SEC
- SBC #&0C
+ SBC #12
  STA objectYawAngle,X
 
-.C10EC
+.lpan1
 
- LDA #&10
- JSR SetNumberOfScrolls
- RTS
+ LDA #16                \ We now need to scroll the contents of the screen
+ JSR SetNumberOfScrolls \ buffer into the side of the on-screen landscape view,
+                        \ so call SetNumberOfScrolls to configure a background
+                        \ task to scroll 16 character columns from the screen
+                        \ buffer onto the screen, using the interrupt routine
+                        \ to do it in the background
 
-.C10F2
+ RTS                    \ Return from the subroutine
 
- LDA objectYawAngle,X
- SEC
- SBC panAngle,Y
+.lpan2
+
+                        \ If we get here then the panning process was aborted
+                        \ before the landscape was drawn
+
+ LDA objectYawAngle,X   \ Reverse the rotation that we applied to the player's
+ SEC                    \ yaw angle for the pan, so this puts it back to the
+ SBC panAngleToUpdate,Y \ value it had before we started the panning process
  STA objectYawAngle,X
- RTS
 
-.C10FD
+ RTS                    \ Return from the subroutine
 
- LDA objectPitchAngle,X
- CMP L1145,Y
- BEQ CRE05
+.lpan3
+
+                        \ If we get here then Y is 2 or 3 and the panning
+                        \ direction is up or down
+
+ LDA objectPitchAngle,X     \ If the player's pitch angle is equal to either
+ CMP highestPitchAngle-2,Y  \ highestPitchAngle (if we are panning up) or
+ BEQ lpan6                  \ lowestPitchAngle (if we are panning down) then the
+                            \ player is already pitched as far back or down as
+                            \ possible, so jump to lpan6 to return from the
+                            \ subroutine without panning the landscape view, as
+                            \ we can't pan any further
+
+ CLC                    \ Rotate the player's gaze so that when we draw the
+ ADC panAngleToUpdate,Y \ updated view, the new part of the landscape that we
+ STA objectPitchAngle,X \ need to scroll in from above or below goes into the
+                        \ screen buffer (as the screen buffer is mapped to the
+                        \ top portion of the view that we are drawing)
+
+ LDA #25                \ Set A = 25 to pass to FillScreen so we fill the screen
+                        \ buffer from character row 25 onwards
+
+ LDY #8                 \ Set Y = 8 to pass to FillScreen so we fill 8 character
+                        \ rows of the screen buffer
+
+ LDX #40                \ Set bufferColumns to 40 to configure the buffer width
+ STX bufferColumns      \ to 40 character blocks
+
+ JSR FillScreen         \ Call FillScreen to clear the screen buffer to sky (the
+                        \ screenBackground variable is zeroed in DrawTitleObject
+                        \ before the gameplay starts, so alll calls to the
+                        \ FillScreen routine during gameplay fill the buffer
+                        \ with alternating colour 0/1 (blue/black) pixel rows,
+                        \ for the sky
+
+ JSR sub_C3908          \ Call sub_C2963 with A = 0 (and do more) to set up
+                        \ loads of variables ???
+
+ JSR DrawLandscapeView  \ Draw the landscape view into the screen buffer
+                        \
+                        \ If the player held down the panning key throughout the
+                        \ drawing process and the whole landscape was drawn,
+                        \ then the C flag will be clear, otherwise the C flag
+                        \ will be set 
+
+ LDX playerObject       \ Set X to the object number of the player
+                        \
+                        \ This should really be an LDX viewingObject instruction
+                        \ to be consistent with the rest of the routine, but it
+                        \ doesn't make any difference as they are the same at
+                        \ this point
+                        \
+                        \ Perhaps at some point this routine allowed panning of
+                        \ the view from viewing objects other than the player,
+                        \ which would have been interesting...
+
+ LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
+                        \ pressed (which may not still be held down)
+
+ BCS lpan7              \ If the call to DrawLandscapeView set the C flag then
+                        \ the landscape drawing process was aborted, so jump to
+                        \ lpan7 to revert the change to the player's pitch angle
+                        \ and return from the subroutine without updating the
+                        \ on-screen landscape view
+
+ CPY #3                 \ If Y <> 3 then Y must be 2, in which case the pan
+ BNE lpan4              \ angle we fetched from the panAngleToUpdate table
+                        \ doesn't need correcting, so jump to lpan4 to skip the
+                        \ following
+
+                        \ If we get here then Y = 3, so we subtracted 12 from
+                        \ the player's pitch angle so it would draw the new part
+                        \ of the view into the screen buffer, so we now need to
+                        \ add 8 to the player's pitch angle so they end up
+                        \ looking in the correct direction, i.e. a net rotation
+                        \ of -4 rather than -12 pitch angles
+
+ LDA objectPitchAngle,X \ Add 8 to the player's pitch angle
  CLC
- ADC panAngle,Y
- STA objectPitchAngle,X
- LDA #&19
- LDY #&08
- LDX #&28
- STX L0C69
- JSR FillScreen
- JSR sub_C3908
-
- JSR DrawLandscapeView  \ Draw the landscape view
-
- LDX playerObject
- LDY lastPanKeyPressed
- BCS C113A
- CPY #&03
- BNE C1131
- LDA objectPitchAngle,X
- CLC
- ADC #&08
+ ADC #8
  STA objectPitchAngle,X
 
-.C1131
+.lpan4
 
- LDA #&08
- JSR SetNumberOfScrolls
+ LDA #8                 \ We now need to scroll the contents of the screen
+ JSR SetNumberOfScrolls \ buffer into the top or bottom of the on-screen
+                        \ landscape view, so call SetNumberOfScrolls to
+                        \ configure a background task to scroll 8 character rows
+                        \ from the screen buffer onto the screen, using the
+                        \ interrupt routine to do it in the background
 
-.P1136
+.lpan5
 
- JSR sub_C3923
+ JSR sub_C3923          \ Call sub_C3923 to set some more variables ???
 
-.CRE05
+.lpan6
 
- RTS
+ RTS                    \ Return from the subroutine
 
-.C113A
+.lpan7
 
- LDA objectPitchAngle,X
- SEC
- SBC panAngle,Y
+                        \ If we get here then the panning process was aborted
+                        \ before the landscape was drawn
+
+ LDA objectPitchAngle,X \ Reverse the rotation that we applied to the player's
+ SEC                    \ pitch angle for the pan, so this puts it back to the
+ SBC panAngleToUpdate,Y \ value it had before we started the panning process
  STA objectPitchAngle,X
 
-.C1144
-
-L1145 = C1144+1
-
- JMP P1136
+ JMP lpan5              \ Jump to lpan5 to call sub_C3923 and return from the
+                        \ subroutine
 
 \ ******************************************************************************
 \
@@ -6070,8 +6207,14 @@ L1145 = C1144+1
 
  LDA #0
  STA xTitleOffset
- STA screenBackground
- RTS
+
+ STA screenBackground   \ Set screenBackground = 0 if we start the game after
+                        \ showing this title screen, the FillScreen routine will
+                        \ clear the screen buffers to the blue and black sky,
+                        \ which is the only screen background we need during
+                        \ gameplay
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12004,11 +12147,11 @@ L1145 = C1144+1
  STA objectYawAngle,X
  LDY #0
  STY lastPanKeyPressed
- LDA L0C69
+ LDA bufferColumns
  JSR sub_C2997
  LDA #&19
  LDY #&18
- LDX L0C69
+ LDX bufferColumns
  JSR FillScreen
  BIT L0C4D
  BPL C1FD2
@@ -12074,7 +12217,7 @@ L1145 = C1144+1
  STA toAddr
  LDA L2092+1
  STA toAddr+1
- LDA L0C69
+ LDA bufferColumns
  STA loopCounter
  JMP C2058
 
@@ -12098,7 +12241,19 @@ L1145 = C1144+1
 
 .C2058
 
- LDY lastPanKeyPressed
+ LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
+                        \ pressed (which may not still be held down)
+                        \
+                        \ So this contains the direction of any scrolling that
+                        \ we still need to apply, as follows:
+                        \
+                        \   * 0 = pan right
+                        \
+                        \   * 1 = pan left
+                        \
+                        \   * 2 = pan up
+                        \
+                        \   * 3 = pan down
 
  JSR DisplayViewBuffer  \ Update the player's scrolling landscape view by
                         \ copying the relevant parts of the view screen buffer
@@ -12111,14 +12266,14 @@ L1145 = C1144+1
 
  LDA L0C62
  CLC
- ADC L0C69
+ ADC bufferColumns
  STA L0C62
  LDA L0C6A
  SEC
- SBC L0C69
+ SBC bufferColumns
  BEQ C2080
  STA L0C6A
- STA L0C69
+ STA bufferColumns
  STA L2094
  JMP C1F98
 
@@ -12262,7 +12417,7 @@ L1145 = C1144+1
 
 .C2100
 
- STA L0C69
+ STA bufferColumns
  CLC
  RTS
 
@@ -23143,7 +23298,7 @@ L314A = C3148+2
 .ScrollPlayerView
 
  LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
-                        \ pressed (which may still be being held down)
+                        \ pressed (which may not still be held down)
                         \
                         \ So this contains the direction of any scrolling that
                         \ we still need to apply, as follows:
@@ -23781,16 +23936,65 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: panAngle
+\       Name: panAngleToUpdate
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: Pitch and yaw angles for panning in the four directions
+\    Summary: Pitch and yaw angles for panning the landscape view, so the output
+\             of DrawLandscapeView will be the bit we add when updating the view
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains the angles through which we need to pitch or yaw the
+\ landscape view when we need to scroll the landscape view during a pan.
+\
+\ The DrawLandscapeView routine always renders the full view, and its output is
+\ clipped to the size of the screen or screen buffer. This clipping is done on
+\ the screen x- and y-coordinates, and the clipping is done from the right or
+\ bottom edges of the screen.
+\
+\ This means that when we pan the screen, we effectively redraw the whole view,
+\ which is 20 yaw angles wide and 12 pitch angles tall, and then use the newly
+\ drawn portion from the top-left corner of that redrawn view for the new part
+\ that we scroll into the screen to complete the pan.
+\
+\ When panning left, we can simply subtract 8 from the player's current yaw
+\ angle to rotate the player's view to the left. This moves the player's gaze to
+\ the left, so when we draw the new landscape view into the screen buffer, the
+\ portion on the left of the view is the new part that the player is now seeing,
+\ so clipping the left portion of the view into the screen buffer will give us
+\ the content that we need to scroll in from the left to perform the pan.
+\
+\ Things are different when panning right. If we simply add 8 to the player's
+\ current yaw angle, then the new part of the landscape view will be on the far
+\ right of the newly drawn view, so it will be clipped when drawing into the
+\ screen buffer. So instead we add 20 to the player's yaw angle to rotate the
+\ view to the right by an entire screen's width, so when the view is drawn and
+\ clipped, the new portion will be on the left of the newly drawn view, just as
+\ it was when panning left. As long as we make sure to set the player's yaw
+\ angle correctly after we have finished drawing - by subtracting 12 from the
+\ player's yaw angle, leaving them with a net rotation of 8 to the right - then
+\ this approach ensures that the new portion of the screen is drawn into the
+\ screen buffer correctly.
+\ 
+\ The same approach is applied when panning vertically. If we pan up, then we
+\ simply add 4 to the player's yaw angle so they look up higher. This moves the
+\ player's gaze up, so when we draw the new landscape view into the screen
+\ buffer, the portion at the top of the view is the new part that the player is
+\ now seeing, so clipping the top portion of the view into the screen buffer
+\ will give us the content that we need to scroll in from the top to perform the
+\ pan.
+\
+\ However, if we are panning down then we need to jump down a whole screen's
+\ height, so we subtract 12 from the player's pitch angle, as this is the height
+\ of the screen. We then draw the new view, which puts the new portion of the
+\ view into the screen buffer. We then fix the player's pitch angle by adding 8,
+\ so the net result is a pitch rotation of -4, as required.
 \
 \ ******************************************************************************
 
-.panAngle
+.panAngleToUpdate
 
- EQUB 20                \ Direction 0 (pan right, scroll left)
+ EQUB 20                \ Direction 0 (pan right, scroll left) 
  EQUB -8                \ Direction 1 (pan left, scroll right)
  EQUB 4                 \ Direction 2 (pan up, scroll down)
  EQUB -12               \ Direction 3 (pan down, scroll up)
@@ -29241,7 +29445,7 @@ L314A = C3148+2
 
  LDA #&FF
  STA L0CD2
- LDA L0C69
+ LDA bufferColumns
  ASL A
  ASL A
  ASL A

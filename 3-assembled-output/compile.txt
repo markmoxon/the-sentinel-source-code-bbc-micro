@@ -2571,7 +2571,7 @@
      0C67   00
 .L0C68
      0C68   00
-.L0C69
+.bufferColumns
      0C69   00
 .L0C6A
      0C6A   00
@@ -3331,17 +3331,17 @@
      10E6   38         SEC
      10E7   E9 0C      SBC #&0C
      10E9   9D C0 09   STA &09C0,X
-.C10EC
+.lpan1
      10EC   A9 10      LDA #&10
      10EE   20 F8 38   JSR &38F8
      10F1   60         RTS
-.C10F2
+.lpan2
      10F2   BD C0 09   LDA &09C0,X
      10F5   38         SEC
      10F6   F9 F4 38   SBC &38F4,Y
      10F9   9D C0 09   STA &09C0,X
      10FC   60         RTS
-.C10FD
+.lpan3
      10FD   BD 40 01   LDA &0140,X
      1100   D9 45 11   CMP &1145,Y
      1103   F0 34      BEQ &1139
@@ -3364,19 +3364,18 @@
      112B   18         CLC
      112C   69 08      ADC #&08
      112E   9D 40 01   STA &0140,X
-.C1131
+.lpan4
      1131   A9 08      LDA #&08
      1133   20 F8 38   JSR &38F8
-.P1136
+.lpan5
      1136   20 23 39   JSR &3923
-.CRE05
+.lpan6
      1139   60         RTS
-.C113A
+.lpan7
      113A   BD 40 01   LDA &0140,X
      113D   38         SEC
      113E   F9 F4 38   SBC &38F4,Y
      1141   9D 40 01   STA &0140,X
-.C1144
      1144   4C 36 11   JMP &1136
 .highestPitchAngle
      1147   35
@@ -9128,7 +9127,7 @@
      38F1   80
      38F2   00
      38F3   C0
-.panAngle
+.panAngleToUpdate
      38F4   14
      38F5   F8
      38F6   04
