@@ -9132,7 +9132,7 @@
      38F5   F8
      38F6   04
      38F7   F4
-.SetNumberOfScrolls
+.StartScrollingView
      38F8   8D D1 0C   STA &0CD1
 .SetViewBufferAddr
      38FB   B9 F0 38   LDA &38F0,Y

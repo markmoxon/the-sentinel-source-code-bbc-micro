@@ -4770,8 +4770,8 @@
 .lpan1
 
  LDA #16                \ We now need to scroll the contents of the screen
- JSR SetNumberOfScrolls \ buffer into the side of the on-screen landscape view,
-                        \ so call SetNumberOfScrolls to configure a background
+ JSR StartScrollingView \ buffer into the side of the on-screen landscape view,
+                        \ so call StartScrollingView to configure a background
                         \ task to scroll 16 character columns from the screen
                         \ buffer onto the screen, using the interrupt routine
                         \ to do it in the background
@@ -4880,8 +4880,8 @@
 .lpan4
 
  LDA #8                 \ We now need to scroll the contents of the screen
- JSR SetNumberOfScrolls \ buffer into the top or bottom of the on-screen
-                        \ landscape view, so call SetNumberOfScrolls to
+ JSR StartScrollingView \ buffer into the top or bottom of the on-screen
+                        \ landscape view, so call StartScrollingView to
                         \ configure a background task to scroll 8 character rows
                         \ from the screen buffer onto the screen, using the
                         \ interrupt routine to do it in the background
@@ -12212,8 +12212,10 @@
 
 .C1FD5
 
- LDY #0
- JSR SetViewBufferAddr
+ LDY #0                 \ Set viewBufferAddr(1 0) to the address of the left
+ JSR SetViewBufferAddr  \ column of the screen buffer, less one column
+                        \ scrolling step
+
  LDX viewingObject
  LDA #0
  STA yawAdjustmentLo
@@ -23677,7 +23679,7 @@ L314A = C3148+2
                         \ We start by setting both viewBufferAddr(1 0) and
                         \ fromAddr(1 0) to the address in the view screen
                         \ buffer of the content that we need to copy into the
-                        \ screen area following the scroll ???
+                        \ screen area following the hardware scroll
                         \
                         \ We do this by taking the current value of the address
                         \ in viewBufferAddr(1 0) and applying the change in
@@ -23698,7 +23700,9 @@ L314A = C3148+2
  STA viewBufferAddr+1
 
  STA fromAddr+1         \ Store the high byte of the result in fromAddr(1 0), so
-                        \ fromAddr(1 0) = viewBufferAddr(1 0) ???
+                        \ fromAddr(1 0) = viewBufferAddr(1 0) and we copy the
+                        \ new screen content from the correct address in the
+                        \ screen buffer
 
  CPY #2                 \ If Y >= 2 then we are panning up or down, and we are
  BCS DisplayBufferRow   \ scrolling down or up, so jump to DisplayBufferRow to
@@ -23759,20 +23763,33 @@ L314A = C3148+2
  BNE dcol2              \ we have not reached the end of the view screen buffer,
                         \ so jump to dcol2 to skip the following
 
-                        \ The address in (A fromAddr) is now greater than &5300,
-                        \ so it has gone past the end of the view screen buffer,
-                        \ so we now set the following:
+                        \ At this point the screen buffer wraps around so the
+                        \ buffer entries restart at a lower address
                         \
-                        \   (A fromAddr) = viewBufferAddr(1 0) + 160
+                        \ Specifically the last buffer address before &5300 is:
                         \
-                        \ So this wraps the address around to the start of the
-                        \ view screen buffer for when we go past the end of the
-                        \ buffer ???
+                        \   &51C0 to &51FF for character row 15
+                        \
+                        \ and we now wrap around as follows:
+                        \
+                        \   &3FA0 to &3FDF for character row 16
+                        \
+                        \ The address of the new row is &A0 more than the
+                        \ address of the screen buffer, which is &3F00, so we
+                        \ can calculate the new address like this:
+                        \
+                        \   (A fromAddr) = viewBufferAddr(1 0) + &A0
+                        \
+                        \ So this wraps the address around so we can keep
+                        \ drawing content into the screen buffer
+                        \
+                        \ See bufferRowAddrLo for more information on the
+                        \ structure of the view screen buffer
 
  LDA viewBufferAddr     \ Calculate the following:
  CLC                    \
  ADC #&A0               \   (A fromAddr) = viewBufferAddr(1 0) + &A0
- STA fromAddr           \                = viewBufferAddr(1 0) + 160
+ STA fromAddr
  LDA viewBufferAddr+1    
  ADC #&00
 
@@ -24018,16 +24035,83 @@ L314A = C3148+2
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The value to add to scrollScreenHi for each direction to get the
-\             high byte of the view screen buffer address in viewBufferAddr(1 0)
+\             high byte of the screen buffer address of the content to scroll in
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains the address within the screen buffer from which the
+\ interrupt routine should start pulling screen content to scroll onto the
+\ screen, depending on the direction of the scroll. The content that should be
+\ pulled onto the screen at the start of the scrolling process is as follows:
+\
+\   * When panning right: The left column of the column-shaped screen buffer
+\     appears first as the new content scrolls in from the right
+\
+\   * When panning left: The right column of the column-shaped screen buffer
+\     appears first as the new content scrolls in from the right
+\
+\   * When panning up: The bottom row of the row-shaped screen buffer appears
+\     first as the new content scrolls in from above
+\
+\   * When panning down: The top row of the row-shaped screen buffer appears
+\     first as the new content scrolls in from below
+\
+\ This table contains the address of the new content for each panning direction,
+\ but with a slight complication. The first step in scrolling content onto the
+\ screen is to add the scrolling direction in (scrollScreenHi scrollScreenLo),
+\ so to make sure the first scroll moves the correct content onto the screen,
+\ the values in this table already have the corresponding value of
+\ (scrollScreenHi scrollScreenLo) subtracted from them, so when this is added
+\ at the start of the scroll, the address correctly points to the address of the
+\ new content in the screen buffer.
+\
+\ The screen buffer is at address &3F00, each character column takes up eight
+\ bytes of buffer space, and each character row takes up 320 bytes of buffer
+\ space.
 \
 \ ******************************************************************************
 
 .viewBufferAddrHi
 
- EQUB HI(&3EF8)         \ Direction 0 (pan right, scroll left)
- EQUB HI(&3F80)         \ Direction 1 (pan left, scroll right)
- EQUB HI(&4900)         \ Direction 2 (pan up, scroll down)
- EQUB HI(&3DC0)         \ Direction 3 (pan down, scroll up)
+ EQUB HI(&3F00 + 0 * 8 - 8)     \ Direction 0 (pan right, scroll left)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 0 * 8 = the left column (column 0) of the
+                                \         16-column screen buffer
+                                \
+                                \ -8 = - (scrollScreenHi scrollScreenLo)
+                                \    = - +8
+
+ EQUB HI(&3F00 + 15 * 8 + 8)    \ Direction 1 (pan left, scroll right)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 15 * 8 = the right column (column 15) of the
+                                \          16-column screen buffer
+                                \
+                                \ 8 = - (scrollScreenHi scrollScreenLo)
+                                \   = - -8
+
+ EQUB HI(&3F00 + 7 * 320 + 320) \ Direction 2 (pan up, scroll down)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 8 * 320 = the bottom row (row 7) of the
+                                \           8-row screen buffer
+                                \
+                                \ 320 = - (scrollScreenHi scrollScreenLo)
+                                \     = - -320
+
+ EQUB HI(&3F00 + 0 * 320 - 320) \ Direction 3 (pan down, scroll up)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 8 * 320 = the top row (row 0) of the
+                                \           8-row screen buffer
+                                \
+                                \ -320 = - (scrollScreenHi scrollScreenLo)
+                                \      = - +320
 
 \ ******************************************************************************
 \
@@ -24035,16 +24119,55 @@ L314A = C3148+2
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The value to add to scrollScreenLo for each direction to get the
-\             low byte of the view screen buffer address in viewBufferAddr(1 0)
+\             low byte of the screen buffer address of the content to scroll in
+\
+\ ------------------------------------------------------------------------------
+\
+\ See viewBufferAddrHi for an explanation of this table.
 \
 \ ******************************************************************************
 
 .viewBufferAddrLo
 
- EQUB LO(&3EF8)         \ Direction 0 (pan right, scroll left)
- EQUB LO(&3F80)         \ Direction 1 (pan left, scroll right)
- EQUB LO(&4900)         \ Direction 2 (pan up, scroll down)
- EQUB LO(&3DC0)         \ Direction 3 (pan down, scroll up)
+ EQUB LO(&3F00 + 0 * 8 - 8)     \ Direction 0 (pan right, scroll left)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 0 * 8 = the left column (column 0) of the
+                                \         16-column screen buffer
+                                \
+                                \ -8 = - (scrollScreenHi scrollScreenLo)
+                                \    = - +8
+
+ EQUB LO(&3F00 + 15 * 8 + 8)    \ Direction 1 (pan left, scroll right)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 15 * 8 = the right column (column 15) of the
+                                \          16-column screen buffer
+                                \
+                                \ 8 = - (scrollScreenHi scrollScreenLo)
+                                \   = - -8
+
+ EQUB LO(&3F00 + 7 * 320 + 320) \ Direction 2 (pan up, scroll down)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 8 * 320 = the bottom row (row 7) of the
+                                \           8-row screen buffer
+                                \
+                                \ 320 = - (scrollScreenHi scrollScreenLo)
+                                \     = - -320
+
+ EQUB LO(&3F00 + 0 * 320 - 320) \ Direction 3 (pan down, scroll up)
+                                \
+                                \ &3F00 = base address of screen buffer
+                                \
+                                \ 8 * 320 = the top row (row 0) of the
+                                \           8-row screen buffer
+                                \
+                                \ -320 = - (scrollScreenHi scrollScreenLo)
+                                \      = - +320
 
 \ ******************************************************************************
 \
@@ -24113,15 +24236,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: SetNumberOfScrolls
+\       Name: StartScrollingView
 \       Type: Subroutine
 \   Category: Screen buffer
-\    Summary: Start a scroll process by setting the number of scroll steps and
-\             the address in viewBufferAddr(1 0) ???
+\    Summary: Start a scroll process in the background by setting the number of
+\             scroll steps and the address to start copying new content from
 \
 \ ******************************************************************************
 
-.SetNumberOfScrolls
+.StartScrollingView
 
  STA numberOfScrolls    \ Store the number of scroll steps required in the
                         \ variable
@@ -24131,14 +24254,16 @@ L314A = C3148+2
                         \ background
 
                         \ Fall through into SetViewBufferAddr to set the address
-                        \ in viewBufferAddr(1 0) ???
+                        \ where the interrupt routine should start fetching new
+                        \ content to scroll onto the screen
 
 \ ******************************************************************************
 \
 \       Name: SetViewBufferAddr
 \       Type: Subroutine
 \   Category: Screen buffer
-\    Summary: Set the address in viewBufferAddr(1 0) ???
+\    Summary: Set viewBufferAddr(1 0) to the address where the interrupt routine
+\             should start fetching new content to scroll onto the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24160,8 +24285,33 @@ L314A = C3148+2
 
  LDA viewBufferAddrLo,Y \ Set viewBufferAddr(1 0) to the Y-th entry from the
  STA viewBufferAddr     \ viewBufferAddrHi and viewBufferAddrLo lookup tables
- LDA viewBufferAddrHi,Y \ ???
- STA viewBufferAddr+1
+ LDA viewBufferAddrHi,Y \
+ STA viewBufferAddr+1   \ This sets viewBufferAddr(1 0) to the address from
+                        \ which the interrupt routine should start pulling
+                        \ screen content to scroll onto the screen, so that's:
+                        \
+                        \   * When panning right: The left column of the
+                        \     column-shaped screen buffer appears first as the
+                        \     new content scrolls in from the right
+                        \
+                        \   * When panning left: The right column of the
+                        \     column-shaped screen buffer appears first as the
+                        \     new content scrolls in from the right
+                        \
+                        \   * When panning up: The bottom row of the row-shaped
+                        \     screen buffer appears first as the new content
+                        \     scrolls in from above
+                        \
+                        \   * When panning down: The top row of the row-shaped
+                        \     screen buffer appears first as the new content
+                        \     scrolls in from below
+                        \
+                        \ So this sets viewBufferAddr(1 0) to the address where
+                        \ the interrupt routine should start fetching new
+                        \ content to scroll onto the screen
+                        \
+                        \ See the documentation for viewBufferAddrHi for a
+                        \ deeper look into the exact values that are set
 
  RTS                    \ Return from the subroutine
 
