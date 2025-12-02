@@ -13163,30 +13163,31 @@
 
 \ ******************************************************************************
 \
-\       Name: L2283
+\       Name: colourPixels
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: A table that maps logical colours 0 to 3 to a four-pixel byte in
+\             that colour
 \
 \ ******************************************************************************
 
-.L2283
+.colourPixels
 
- EQUB %00000000
- EQUB %00001111
- EQUB %11110000
- EQUB %11111111
+ EQUB %00000000         \ Four pixels of colour 0
+ EQUB %00001111         \ Four pixels of colour 1
+ EQUB %11110000         \ Four pixels of colour 2
+ EQUB %11111111         \ Four pixels of colour 3
 
 \ ******************************************************************************
 \
-\       Name: L2287
+\       Name: pixelsToLeft
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Pixel byte with all the pixels to the left of position X set
 \
 \ ******************************************************************************
 
-.L2287
+.pixelsToLeft
 
  EQUB %00000000
  EQUB %10001000
@@ -13195,14 +13196,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L228B
+\       Name: pixelsToRight
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Pixel byte with all the pixels to the right of position X set
 \
 \ ******************************************************************************
 
-.L228B
+.pixelsToRight
 
  EQUB %01110111
  EQUB %00110011
@@ -13211,14 +13212,15 @@
 
 \ ******************************************************************************
 \
-\       Name: L228F
+\       Name: leftPixels
 \       Type: Variable
 \   Category: Graphics
-\    Summary: ???
+\    Summary: Pixel byte with all the pixels to the right of position X + 1 set,
+\             to give the complementary pixel byte to pixelsToRight
 \
 \ ******************************************************************************
 
-.L228F
+.leftPixels
 
  EQUB %10001000
  EQUB %11001100
@@ -13325,7 +13327,7 @@
  LSR A
  AND #&03
  TAY
- LDA L2283,Y
+ LDA colourPixels,Y
  STA L0058
  LDY tileAltitude
  STY L001A
@@ -13410,17 +13412,17 @@
  AND #&03
  TAX
  LDA L0054
- AND L2287,X
+ AND pixelsToLeft,X
 
 .C2366
 
 L2367 = C2366+1
 
  ORA L3E3C,X
- AND L228F,X
+ AND leftPixels,X
  STA T
  LDA (R),Y
- AND L228B,X
+ AND pixelsToRight,X
  ORA T
  STA (R),Y
  JMP sub_C230D
@@ -13453,7 +13455,7 @@ L2367 = C2366+1
  STY L0056
  LDA (R),Y
  STA L0054
- AND L228B,X
+ AND pixelsToRight,X
 
 .C23A1
 
@@ -13481,7 +13483,7 @@ L23A2 = C23A1+1
  AND #&03
  TAX
  LDA (R),Y
- AND L2287,X
+ AND pixelsToLeft,X
 
 .C23C6
 

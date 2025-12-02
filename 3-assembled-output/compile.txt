@@ -5803,22 +5803,22 @@
      2280   44
      2281   22
      2282   11
-.L2283
+.colourPixels
      2283   00
      2284   0F
      2285   F0
      2286   FF
-.L2287
+.pixelsToLeft
      2287   00
      2288   88
      2289   CC
      228A   EE
-.L228B
+.pixelsToRight
      228B   77
      228C   33
      228D   11
      228E   00
-.L228F
+.leftPixels
      228F   88
      2290   CC
      2291   EE
