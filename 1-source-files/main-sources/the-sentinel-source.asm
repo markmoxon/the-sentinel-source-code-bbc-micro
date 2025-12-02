@@ -5321,13 +5321,17 @@
  LDA #%10000000         \ Set bit 7 of doNotScanKeyboard to disable keyboard
  STA doNotScanKeyboard  \ scans ???
 
- STA L0C1E              \ Set bit 7 of L0C1E ???
+ STA L0C1E              \ Set bit 7 of L0C1E to return early from the sub_C5E5F
+                        \ subroutine ???
 
 .C1208
 
  LDA doNotScanKeyboard  \ Set previousDoNotScan = doNotScanKeyboard so we can
- STA previousDoNotScan  \ work out whether the value of doNotScanKeyboard has
-                        \ changed in the ProcessGameplay routine ???
+ STA previousDoNotScan  \ work out when the value of doNotScanKeyboard changes
+                        \
+                        \ This is used by the ProcessGameplay routine to detect
+                        \ whether the player is still holding the same pan key
+                        \ down after we finish scrolling the screen for the pan
 
  RTS                    \ Return from the subroutine
 
@@ -5603,9 +5607,13 @@
                         \ both points key scanning was enabled), so jump to
                         \ play2 to skip the following check for for pan keys
 
-                        \ If we get here then bit 7 of is doNotScanKeyboard
-                        \ clear and bit 7 of previousDoNotScan is set, so
-                        \ keyboard scans have been re-enabled ???
+                        \ If we get here then bit 7 of doNotScanKeyboard is
+                        \ clear and bit 7 of previousDoNotScan is set, so we
+                        \ have just called the ProcessGameplay routine after
+                        \ finishing off the scrolling process from the last pan
+                        \
+                        \ So let's check to see whether the same pan key is
+                        \ still being held down from the pan we just finished
 
  JSR CheckForSamePanKey \ Check to see whether the same pan key is being
                         \ held down compared to the last time we checked
@@ -5614,7 +5622,8 @@
                         \ play2 to skip the following
 
  SEC                    \ The same pan key is still being held down, so set bit
- ROR samePanKeyPress    \ 7 of samePanKeyPress to record this
+ ROR samePanKeyPress    \ 7 of samePanKeyPress to record this for use in the
+                        \ sub_C1AF3 routine ???
 
 .play2
 
@@ -12150,7 +12159,9 @@
  LDA #0
  STA L0C6D
  STA L0C4D
- STA L0C1E
+
+ STA L0C1E              \ Clear bit 7 of L0C1E ???
+
  RTS
 
 .sub_C1F84
@@ -22783,7 +22794,7 @@ L314A = C3148+2
                         \ but not the sights in CheckForKeyPresses
                         \
                         \ So the C flag is clear if the keyboard has been
-                        \ disabled because the player is pressing and still
+                        \ disabled because the player is pressing and is still
                         \ holding down a pan key when they want to pan (rather
                         \ than just moving the sights)
 
@@ -22811,7 +22822,7 @@ L314A = C3148+2
  LDA #0                 \ Set numberOfScrolls = 0 ???
  STA numberOfScrolls
 
- STA L0C1E              \ Set L0C1E = 0 ???
+ STA L0C1E              \ Clear bit 7 of L0C1E ???
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is set then the sights
  BMI game13             \ are being shown, so jump to game13 to skip the
@@ -29898,8 +29909,10 @@ L314A = C3148+2
  AND clearPixelMask,X
  ORA L0013
  STA (toAddr),Y
- BIT L0C1E
- BMI CRE41
+
+ BIT L0C1E              \ If bit 7 of L0C1E is set, jump to CRE41 to return from
+ BMI CRE41              \ the subroutine
+
  DEC L0CD2
  BNE C5F20
 
