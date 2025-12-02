@@ -652,9 +652,14 @@
 
  SKIP 1                 \ ???
 
-.L0055
+.screenOrBuffer
 
- SKIP 1                 \ Either 0 or 25 ???
+ SKIP 1                 \ Controls whether the graphics routines draw directly
+                        \ onto the screen, or into the screen buffer
+                        \
+                        \   * 0 = draw directly into screen memory
+                        \
+                        \   * 25 = draw into the screeen buffer
 
 .L0056
 
@@ -1945,7 +1950,8 @@
 
 .bufferColumns
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The number of character columns in the current screen
+                        \ buffer
 
 .L0C6A
 
@@ -4610,17 +4616,17 @@
 
  LDA #0                 \ Set A to the row number to start filling from in the
                         \ call to FillScreen, so this clears the player's
-                        \ scrolling landscape view from the top row down
+                        \ scrolling landscape view in screen memory (as opposed
+                        \ to the screen buffer), from the top row down
 
- LDY #24                \ Set Y to the number of character rows to fill, so this
-                        \ clears every character row in the landscape view
+ LDY #24                \ Set Y = 24 to pass to FillScreen, so we clear all 24
+                        \ character rows of the landscape view
 
- LDX #40                \ Set X to the number of character columns to fill, so
-                        \ this clears every character column in the landscape
-                        \ view
+ LDX #40                \ Set X = 16 to pass to FillScreen so we clear all 40
+                        \ character columns of the landscape view
 
- JSR FillScreen         \ Fill the entire screen with the background specified
-                        \ in screenBackground
+ JSR FillScreen         \ Call FillScreen to fill the entire screen with the
+                        \ background specified in screenBackground
 
  LDA screenBackground   \ If the screen background is not 3, jump to clrs2 to
  CMP #3                 \ return from the subroutine
@@ -4697,16 +4703,23 @@
  STA objectYawAngle,X   \ buffer (as the screen buffer is mapped to the left
                         \ portion of the view that we are drawing)
 
- LDA #25                \ Set A = 25 to pass to FillScreen so we fill the screen
-                        \ buffer from character row 25 onwards
+ LDA #25                \ Set A to the row number to start filling from in the
+                        \ call to FillScreen, so this clears the player's
+                        \ scrolling landscape view in the screen buffer (as
+                        \ opposed to screen mrmoey), from the top row down
 
- LDY #24                \ Set Y = 24 to pass to FillScreen so we fill 24
+ LDY #24                \ Set Y = 24 to pass to FillScreen, so we fill 24
                         \ character rows of the screen buffer
 
- LDX #16                \ Set bufferColumns to 16 to configure the buffer width
- STX bufferColumns      \ to 16 character blocks
+ LDX #16                \ Set X = 16 to pass to FillScreen, so we fill 16
+                        \ character columns in the screen buffer
 
- JSR FillScreen         \ Call FillScreen to clear the screen buffer to sky (the
+ STX bufferColumns      \ Set bufferColumns to 16 so we can refer to the buffer
+                        \ width during the drawing process
+
+ JSR FillScreen         \ Call FillScreen to fill the screen buffer with the
+                        \ background specified in screenBackground
+                        \
                         \ screenBackground variable is zeroed in DrawTitleObject
                         \ before the gameplay starts, so alll calls to the
                         \ FillScreen routine during gameplay fill the buffer
@@ -4794,16 +4807,23 @@
                         \ screen buffer (as the screen buffer is mapped to the
                         \ top portion of the view that we are drawing)
 
- LDA #25                \ Set A = 25 to pass to FillScreen so we fill the screen
-                        \ buffer from character row 25 onwards
+ LDA #25                \ Set A to the row number to start filling from in the
+                        \ call to FillScreen, so this clears the player's
+                        \ scrolling landscape view in the screen buffer (as
+                        \ opposed to screen mrmoey), from the top row down
 
- LDY #8                 \ Set Y = 8 to pass to FillScreen so we fill 8 character
-                        \ rows of the screen buffer
+ LDY #8                 \ Set Y = 8 to pass to FillScreen, so we fill 8
+                        \ character rows of the screen buffer
 
- LDX #40                \ Set bufferColumns to 40 to configure the buffer width
- STX bufferColumns      \ to 40 character blocks
+ LDX #40                \ Set X = 40 to pass to FillScreen, so we fill 40
+                        \ character columns in the screen buffer
 
- JSR FillScreen         \ Call FillScreen to clear the screen buffer to sky (the
+ STX bufferColumns      \ Set bufferColumns to 40 so we can refer to the buffer
+                        \ width during the drawing process
+
+ JSR FillScreen         \ Call FillScreen to fill the screen buffer with the
+                        \ background specified in screenBackground
+                        \
                         \ screenBackground variable is zeroed in DrawTitleObject
                         \ before the gameplay starts, so alll calls to the
                         \ FillScreen routine during gameplay fill the buffer
@@ -12158,10 +12178,27 @@
  STY lastPanKeyPressed
  LDA bufferColumns
  JSR sub_C2997
- LDA #&19
- LDY #&18
- LDX bufferColumns
- JSR FillScreen
+
+ LDA #25                \ Set A to the row number to start filling from in the
+                        \ call to FillScreen, so this clears the player's
+                        \ scrolling landscape view in the screen buffer (as
+                        \ opposed to screen mrmoey), from the top row down
+
+ LDY #24                \ Set Y = 24 to pass to FillScreen, so we fill 24
+                        \ character rows of the screen buffer
+
+ LDX bufferColumns      \ Set X = bufferColumns to pass to FillScreen, so we
+                        \ fill bufferColumns character columns in the screen buffer
+
+ JSR FillScreen         \ Call FillScreen to fill the screen buffer with the
+                        \ background specified in screenBackground
+                        \
+                        \ screenBackground variable is zeroed in DrawTitleObject
+                        \ before the gameplay starts, so alll calls to the
+                        \ FillScreen routine during gameplay fill the buffer
+                        \ with alternating colour 0/1 (blue/black) pixel rows,
+                        \ for the sky
+
  BIT L0C4D
  BPL C1FD2
  LDY currentObject
@@ -13287,8 +13324,14 @@
  LSR A
  LSR A
 
- CLC
- ADC L0055              \ Adds either 0 or 25
+ CLC                    \ If we are configured to draw into the screen buffer
+ ADC screenOrBuffer     \ then screenOrBuffer will be 25, so this makes us fetch
+                        \ row addresses from bufferRowAddrLo and bufferRowAddrHi
+                        \ (as bufferRowAddrLo - screenRowAddrLo is 25)
+                        \
+                        \ Otherwise vwe are configured to draw directly onto the
+                        \ screen and screenOrBuffer is zero, in which case this
+                        \ addition doesn't change anything
 
  TAX
  LDA T
@@ -22471,8 +22514,9 @@ L314A = C3148+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
- LDA #0                 \ Set L0055 = 0 ???
- STA L0055
+ LDA #0                 \ Set screenOrBuffer = 0 to configure the drawing
+ STA screenOrBuffer     \ routines to draw directly onto the screen (as opposed
+                        \ to drawing into the screen buffer)
 
  STA lastPanKeyPressed  \ Zero lastPanKeyPressed to indicate pan right ???
 
@@ -22537,8 +22581,9 @@ L314A = C3148+2
 
 .game4
 
- LDA #25                \ Set L0055 = 25 ???
- STA L0055
+ LDA #25                \ Set screenOrBuffer = 25 to configure the drawing
+ STA screenOrBuffer     \ routines to draw into the screen buffer (as opposed
+                        \ to drawing directly onto the screen)
 
  LDA #2                 \ Call sub_C2963 with A = 2 ???
  JSR sub_C2963
