@@ -358,7 +358,16 @@
 .screenRowNumber
 
  SKIP 0                 \ The number of the character row to start filling from
-                        \ in the FillScreen routine
+                        \ in the FillScreen routine, adding 25 to fill the
+                        \ screen buffer instead of the screen
+                        \
+                        \   * 0 to 24 = fill the screen from the specified row
+                        \               (this covers the 24 rows of the
+                        \               scrolling landscape view only)
+                        \
+                        \   * 25 to 49 = fill the screen buffer, starting at
+                        \                screen row 0 to 25 (this caters for a
+                        \                full 25-row screen, if required)
 
 .zTile
 
@@ -13352,9 +13361,9 @@
  ADC #&01
  CMP #&53
  BNE C232F
- LDA L3DAC
+ LDA bufferRowAddrLo+16
  STA R
- LDA L3DDE
+ LDA bufferRowAddrHi+16
 
 .C232F
 
@@ -23514,7 +23523,7 @@ L314A = C3148+2
                         \
                         \ with the address wrapped around as required
 
-                        \ By this point we now done the following to implement
+                        \ By this point we have done the following to implement
                         \ the required screen scrolling:
                         \
                         \  * Updated viewScreenAddr(1 0) to the new address of
@@ -25241,9 +25250,21 @@ L314A = C3148+2
 \
 \       Name: screenRowAddrLo
 \       Type: Variable
-\   Category: Graphics
-\    Summary: Address lookup table for character rows in screen memory and the
-\             screen buffer (low byte)
+\   Category: Screen buffer
+\    Summary: Address lookup table for character rows in screen memory (low
+\             byte)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains addresses for each of the 24 character rows in the
+\ player's scrolling landscape view in screen memory.
+\
+\ In its default, unscrolled state, screen memory starts at &7F80, so the
+\ address of the first row in the player's scrolling landscape view (i.e. the
+\ second row on-screen below the energy icon and scanner row) is &7F80 + 320,
+\ or &60C0 (as screen memory wraps around from &8000 back to &6000).
+\
+\ See the ResetScreenAddress routine for more details.
 \
 \ ******************************************************************************
 
@@ -25255,13 +25276,61 @@ L314A = C3148+2
 
  NEXT
 
+\ ******************************************************************************
+\
+\       Name: bufferRowAddrLo
+\       Type: Variable
+\   Category: Screen buffer
+\    Summary: Address lookup table for character rows in the screen buffer (low
+\             byte)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains addresses for each of the 24 character rows in the
+\ player's scrolling landscape view in the screen buffer.
+\
+\ The buffer rows wrap around in memory after the 16th row, so they can fit into
+\ the program space without overlapping with screen memory or game code. The
+\ addresses are as follows:
+\
+\   &3F00
+\   &4040
+\   &4180
+\   &42C0
+\   &4400
+\   &4540
+\   &4680
+\   &47C0
+\   &4900
+\   &4A40
+\   &4B80
+\   &4CC0
+\   &4E00
+\   &4F40
+\   &5080
+\   &51C0
+\
+\ and then they wrap around to the following locations for rows 16 to 25:
+\
+\   &3FA0
+\   &40E0
+\   &4220
+\   &4360
+\   &44A0
+\   &45E0
+\   &4720
+\   &4860
+\   &49A0
+\
+\ ******************************************************************************
+
+.bufferRowAddrLo
+
  FOR I%, 0, 15
 
   EQUB LO(&3F00 + (I% * &140))
 
  NEXT
-
-.L3DAC
 
  FOR I%, 0, 8
 
@@ -25274,18 +25343,20 @@ L314A = C3148+2
 \       Name: screenRowAddrHi
 \       Type: Variable
 \   Category: Graphics
-\    Summary: Address lookup table for character rows in screen memory and the
-\             screen buffer (high byte)
+\    Summary: Address lookup table for character rows in screen memory (high
+\             byte)
 \
 \ ------------------------------------------------------------------------------
 \
-\ The first 25 entries are the addresses for each of the 24 character rows in
-\ the player's scrolling landscape view, plus another row past the end of screen
-\ memory.
+\ This table contains addresses for each of the 24 character rows in the
+\ player's scrolling landscape view in screen memory.
 \
-\ The next 16 addresses are for character rows in the screen buffer.
+\ In its default, unscrolled state, screen memory starts at &7F80, so the
+\ address of the first row in the player's scrolling landscape view (i.e. the
+\ second row on-screen below the energy icon and scanner row) is &7F80 + 320,
+\ or &60C0 (as screen memory wraps around from &8000 back to &6000).
 \
-\ L3DDE contains 9 addresses for the screen buffer + &A0. ???
+\ See the ResetScreenAddress routine for more details.
 \
 \ ******************************************************************************
 
@@ -25297,13 +25368,61 @@ L314A = C3148+2
 
  NEXT
 
+\ ******************************************************************************
+\
+\       Name: bufferRowAddrHi
+\       Type: Variable
+\   Category: Screen buffer
+\    Summary: Address lookup table for character rows in the screen buffer (high
+\             byte)
+\
+\ ------------------------------------------------------------------------------
+\
+\ This table contains addresses for each of the 24 character rows in the
+\ player's scrolling landscape view in the screen buffer.
+\
+\ The buffer rows wrap around in memory after the 16th row, so they can fit into
+\ the program space without overlapping with screen memory or game code. The
+\ addresses are as follows:
+\
+\   &3F00
+\   &4040
+\   &4180
+\   &42C0
+\   &4400
+\   &4540
+\   &4680
+\   &47C0
+\   &4900
+\   &4A40
+\   &4B80
+\   &4CC0
+\   &4E00
+\   &4F40
+\   &5080
+\   &51C0
+\
+\ and then they wrap around to the following locations for rows 16 to 25:
+\
+\   &3FA0
+\   &40E0
+\   &4220
+\   &4360
+\   &44A0
+\   &45E0
+\   &4720
+\   &4860
+\   &49A0
+\
+\ ******************************************************************************
+
+.bufferRowAddrHi
+
  FOR I%, 0, 15
 
   EQUB HI(&3F00 + (I% * &140))
 
  NEXT
-
-.L3DDE
 
  FOR I%, 0, 8
 

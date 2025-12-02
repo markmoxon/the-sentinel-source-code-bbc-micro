@@ -10114,6 +10114,7 @@
      3D99   40
      3D9A   80
      3D9B   C0
+.bufferRowAddrLo
      3D9C   00
      3D9D   40
      3D9E   80
@@ -10130,7 +10131,6 @@
      3DA9   40
      3DAA   80
      3DAB   C0
-.L3DAC
      3DAC   A0
      3DAD   E0
      3DAE   20
@@ -10166,6 +10166,7 @@
      3DCB   7C
      3DCC   7D
      3DCD   7E
+.bufferRowAddrHi
      3DCE   3F
      3DCF   40
      3DD0   41
@@ -10182,7 +10183,6 @@
      3DDB   4F
      3DDC   50
      3DDD   51
-.L3DDE
      3DDE   3F
      3DDF   40
      3DE0   42
