@@ -186,9 +186,15 @@
 
  SKIP 1                 \ ???
 
-.L0010
+.screenBufferType
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The type of screen buffer that is currently being used
+                        \
+                        \   * 0 = row buffer (for up/down pan)
+                        \
+                        \   * 1 = ???
+                        \
+                        \   * 2 = column buffer (for left/right pan)
 
 .L0011
 
@@ -355,19 +361,17 @@
  SKIP 1                 \ A counter for the number of columns to fill in the
                         \ FillScreen routine
 
-.screenRowNumber
+.fillRowNumber
 
- SKIP 0                 \ The number of the character row to start filling from
-                        \ in the FillScreen routine, adding 25 to fill the
-                        \ screen buffer instead of the screen
+ SKIP 0                 \ The number of the character row we are currently
+                        \ filling in the FillScreen routine
                         \
-                        \   * 0 to 24 = fill the screen from the specified row
-                        \               (this covers the 24 rows of the
-                        \               scrolling landscape view only)
+                        \   * 0 to 24 = we are filling this row number in
+                        \               screen memory
                         \
-                        \   * 25 to 49 = fill the screen buffer, starting at
-                        \                screen row 0 to 25 (this caters for a
-                        \                full 25-row screen, if required)
+                        \   * 25 to 49 = we are filling this row number in the
+                        \                screen buffer (subtract 25 to get the
+                        \                actual row number)
 
 .zTile
 
@@ -636,13 +640,15 @@
 
  SKIP 1                 \ ???
 
-.L0051
+.maxPitchAngle
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The maximum pitch angle that fits into the current
+                        \ screen buffer
 
-.L0052
+.minPitchAngle
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The minimum pitch angle that fits into the current
+                        \ screen buffer
 
 .L0053
 
@@ -4612,12 +4618,10 @@
                         \ the screen
 
  LDA #0                 \ Set screen variables of some kind with A = 0 ???
- JSR sub_C2963
+ JSR ConfigureBuffer
 
- LDA #0                 \ Set A to the row number to start filling from in the
-                        \ call to FillScreen, so this clears the player's
-                        \ scrolling landscape view in screen memory (as opposed
-                        \ to the screen buffer), from the top row down
+ LDA #0                 \ Set A = 0 to pass to FillScreen, so we clear the
+                        \ screen (as opposed to the screen buffer)
 
  LDY #24                \ Set Y = 24 to pass to FillScreen, so we clear all 24
                         \ character rows of the landscape view
@@ -4703,10 +4707,8 @@
  STA objectYawAngle,X   \ buffer (as the screen buffer is mapped to the left
                         \ portion of the view that we are drawing)
 
- LDA #25                \ Set A to the row number to start filling from in the
-                        \ call to FillScreen, so this clears the player's
-                        \ scrolling landscape view in the screen buffer (as
-                        \ opposed to screen mrmoey), from the top row down
+ LDA #25                \ Set A = 25 to pass to FillScreen, so we fill the
+                        \ screen buffer (as opposed to screen memory)
 
  LDY #24                \ Set Y = 24 to pass to FillScreen, so we fill 24
                         \ character rows of the screen buffer
@@ -4726,7 +4728,7 @@
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
 
- JSR sub_C391E          \ Call sub_C2963 with A = 2 to set up loads of
+ JSR UseColumnBuffer    \ Call ConfigureBuffer with A = 2 to set up loads of
                         \ variables ???
 
  JSR DrawLandscapeView  \ Draw the landscape view into the screen buffer
@@ -4807,10 +4809,8 @@
                         \ screen buffer (as the screen buffer is mapped to the
                         \ top portion of the view that we are drawing)
 
- LDA #25                \ Set A to the row number to start filling from in the
-                        \ call to FillScreen, so this clears the player's
-                        \ scrolling landscape view in the screen buffer (as
-                        \ opposed to screen mrmoey), from the top row down
+ LDA #25                \ Set A = 25 to pass to FillScreen, so we fill the
+                        \ screen buffer (as opposed to screen memory)
 
  LDY #8                 \ Set Y = 8 to pass to FillScreen, so we fill 8
                         \ character rows of the screen buffer
@@ -4830,8 +4830,8 @@
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
 
- JSR sub_C3908          \ Call sub_C2963 with A = 0 (and do more) to set up
-                        \ loads of variables ???
+ JSR UseRowBuffer       \ Call ConfigureBuffer with A = 0 to set up loads of
+                        \ variables ???
 
  JSR DrawLandscapeView  \ Draw the landscape view into the screen buffer
                         \
@@ -4888,7 +4888,8 @@
 
 .lpan5
 
- JSR sub_C3923          \ Call sub_C3923 to set some more variables ???
+ JSR SetColumnBufferMax \ Call SetColumnBufferMax to set the maximum and minimum
+                        \ pitch angles for the column buffer
 
 .lpan6
 
@@ -4904,8 +4905,9 @@
  SBC panAngleToUpdate,Y \ value it had before we started the panning process
  STA objectPitchAngle,X
 
- JMP lpan5              \ Jump to lpan5 to call sub_C3923 and return from the
-                        \ subroutine
+ JMP lpan5              \ Jump to SetColumnBufferMax via lpan5 to set the
+                        \ maximum and minimum pitch angles for the column buffer
+                        \ and return from the subroutine via a tail call
 
 \ ******************************************************************************
 \
@@ -5052,7 +5054,8 @@
                         \ the contents of the shift register and it won't start
                         \ generating non-zero numbers)
 
- JSR sub_C3923          \ Sets L0051, L0052 ???
+ JSR SetColumnBufferMax \ Call SetColumnBufferMax to set the maximum and minimum
+                        \ pitch angles for the column buffer
 
  RTS                    \ Return from the subroutine
 
@@ -12179,10 +12182,8 @@
  LDA bufferColumns
  JSR sub_C2997
 
- LDA #25                \ Set A to the row number to start filling from in the
-                        \ call to FillScreen, so this clears the player's
-                        \ scrolling landscape view in the screen buffer (as
-                        \ opposed to screen mrmoey), from the top row down
+ LDA #25                \ Set A = 25 to pass to FillScreen, so we fill the
+                        \ screen buffer (as opposed to screen memory)
 
  LDY #24                \ Set Y = 24 to pass to FillScreen, so we fill 24
                         \ character rows of the screen buffer
@@ -12341,7 +12342,8 @@
 \       Name: viewBufferAddr
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: Storage for the address of the current view screen buffer
+\    Summary: Storage for the address for the current drawing operation in the
+\             view screen buffer
 \
 \ ******************************************************************************
 
@@ -12934,13 +12936,19 @@
 \       Name: FillScreen
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Fill a rectangular in screen memory with the specified background
+\    Summary: Fill a rectangular in screen memory or the screen buffer with the
+\             specified background
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   The character row number to start filling from
+\   A                   Determines whether we fill screen memory or the screen
+\                       buffer:
+\
+\                         * 0 = fill the screen
+\
+\                         * 25 = fill the screen buffer
 \
 \   X                   The number of character columns to fill
 \
@@ -12964,8 +12972,15 @@
 
 .FillScreen
 
- STA screenRowNumber    \ Set screenRowNumber = A, so we start filling from this
+ STA fillRowNumber      \ Set fillRowNumber = A, so we start filling from this
                         \ character row number
+                        \
+                        \ When we are filling the screen buffer, this value is
+                        \ 25 + the row number, so we can use this value as a
+                        \ lookup into the screenRowAddrLo and screenRowAddrHi
+                        \ tables, and it will return the corresponding address
+                        \ from the bufferRowAddrLo or bufferRowAddrHi table, to
+                        \ give us the row address in the screen buffer
 
  STY screenRowCounter   \ Set screenRowCounter = Y, so we will fill this many
                         \ character rows
@@ -13022,11 +13037,16 @@
 
 .fill3
 
- LDX screenRowNumber    \ Set (Q P) to the entry from the screenRowAddrLo and
+ LDX fillRowNumber      \ Set (Q P) to the entry from the screenRowAddrLo and
  LDA screenRowAddrLo,X  \ screenRowAddrHi tables for the character row whose
- STA P                  \ number is in screenRowNumber
- LDA screenRowAddrHi,X
- STA Q
+ STA P                  \ number is in fillRowNumber
+ LDA screenRowAddrHi,X  \
+ STA Q                  \ When we are filling the screen buffer, fillRowNumber
+                        \ is 25 + the row number, so we can use this value as a
+                        \ lookup into the screenRowAddrLo and screenRowAddrHi
+                        \ tables, and it will return the corresponding address
+                        \ from the bufferRowAddrLo or bufferRowAddrHi table, to
+                        \ give us the row address in the screen buffer
 
  LDX columnCounter      \ Set X to the number of columns that we need to fill
 
@@ -13122,7 +13142,7 @@
 
 .fill6
 
- INC screenRowNumber    \ Increment the row number to move down to the next
+ INC fillRowNumber      \ Increment the row number to move down to the next
                         \ character row
 
  DEC screenRowCounter   \ Decrement the row counter
@@ -13341,7 +13361,7 @@
  STA R
  LDA screenRowAddrHi,X
  STA S
- LDY L0010
+ LDY screenBufferType
  LDA R
  CLC
  ADC L2293Lo,Y          \ Adds &60 when Y = 1
@@ -17001,118 +17021,148 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C295D
+\       Name: FlipBufferType
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Flip the buffer type between buffer type 0 (row buffer) and buffer
+\             type 1 (???)
 \
 \ ******************************************************************************
 
-.sub_C295D
+.FlipBufferType
 
- LDA L0010              \ Flip bit 0 of L0010
- AND #1
+ LDA screenBufferType   \ Flip bit 0 of screenBufferType to swap between buffer
+ AND #1                 \ type 0 (row buffer) and buffer type 1 (???)
  EOR #1
 
+                        \ Fall through into ConfigureBuffer to configure the new
+                        \ buffer type
+
 \ ******************************************************************************
 \
-\       Name: sub_C2963
+\       Name: ConfigureBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Set up the variables required to configure the screen buffer to a
+\             specific buffer type
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   ??? 0, 1, 2
+\   A                   The type of buffer to configure:
+\
+\                         * 0 = row buffer (for up/down pan)
+\
+\                         * 1 = ???
+\
+\                         * 2 = column buffer (for left/right pan)
 \
 \ ******************************************************************************
 
-.sub_C2963
+.ConfigureBuffer
 
- STA L0010
+ STA screenBufferType   \ Set screenBufferType to the new buffer type
 
- TAY
+ TAY                    \ Copy the buffer type into Y so we can use it as an
+                        \ index into the various buffer configuration tables
 
- LDA L2994,Y            \ Set minYawAngleHi = 20 or 8
- STA minYawAngleHi
+ LDA minBufferYaw,Y     \ Set the high byte of (minYawAngleHi minYawAngleLo) to
+ STA minYawAngleHi      \ 20 or 8 ???
 
  LSR A                  \ Set maxYawAngleHi = 138 or 132
  EOR #%10000000         \                   = -118 or -124
  STA maxYawAngleHi      \ ???
 
- LDA L298B,Y
- STA L0011
+ LDA L298B,Y            \ Set L0011 to 10, 2, or 12 ???
+ STA L0011              \ Gets added to tileViewYawHi in sub_C2D36 ???
 
- LDA L2991,Y
- STA L0061
+ LDA L2991,Y            \ Set L0061 to 112, 112 or 64 ???
+ STA L0061              \ 112 = 14 * 8, 64 = 8 * 8
 
- LDA L298E,Y
- STA L0035
+ LDA L298E,Y            \ Set L0035 to 80, 64, 96 ???
+ STA L0035              \ Gets subtracted from values in L5B00 or L5A00 ???
 
- CLC
- ADC L0061
- STA L0036
+ CLC                    \ Set L0036 = L0035 + L0061
+ ADC L0061              \
+ STA L0036              \ i.e. 80 + 112
+                        \      64 + 112
+                        \      96 + 64 ???
 
- LDA #0
+ LDA #0                 \ Zero the low byte of (minYawAngleHi minYawAngleLo)
  STA minYawAngleLo
 
- STA L0029
+ STA L0029              \ Set L0029 = 0 ???
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: L298B
 \       Type: Variable
-\   Category: ???
+\   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L298B
 
- EQUB &0A, &02, &0C
+ EQUB 10                \ Row buffer ???
+
+ EQUB 2                 \ ??? buffer ???
+
+ EQUB 12                \ Column buffer ???
 
 \ ******************************************************************************
 \
 \       Name: L298E
 \       Type: Variable
-\   Category: ???
+\   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L298E
 
- EQUB &50, &40, &60
+ EQUB 80                \ Row buffer ???
+
+ EQUB 64                \ ??? buffer ???
+
+ EQUB 96                \ Column buffer ???
 
 \ ******************************************************************************
 \
 \       Name: L2991
 \       Type: Variable
-\   Category: ???
+\   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L2991
 
- EQUB &70, &70, &40
+ EQUB 112               \ Row buffer ???
+
+ EQUB 112               \ ??? buffer ???
+
+ EQUB 64                \ Column buffer ???
 
 \ ******************************************************************************
 \
-\       Name: L2994
+\       Name: minBufferYaw
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Minimum allowed yaw angles for points in the screen buffer
 \
 \ ******************************************************************************
 
-.L2994
+.minBufferYaw
 
- EQUB &14, &14, &08
+ EQUB 20                \ Row buffer contains yaw angles up to 20
+
+ EQUB 20                \ ??? buffer contains yaw angles up to 20
+
+ EQUB 8                 \ Column buffer contains yaw angles up to 8
 
 \ ******************************************************************************
 \
@@ -17160,7 +17210,7 @@ L23E3 = C23E2+1
  ROR A
  STA L0029
  LDA #&02
- STA L0010
+ STA screenBufferType
 
 .CRE17
 
@@ -17586,14 +17636,20 @@ L23E3 = C23E2+1
 \
 \                         * Bit 6 set for second triangle in DrawTwoFaceTile
 \
-\   L0010               ???
-
+\   screenBufferType    The type of buffer to use:
+\
+\                         * 0 = row buffer (for up/down pan)
+\
+\                         * 1 = ???
+\
+\                         * 2 = column buffer (for left/right pan)
+\
 \ ******************************************************************************
 
 .DrawPolygon
 
- LDY L0010              \ If L0010 >= 2, jump to poly2 ???
- CPY #2
+ LDY screenBufferType   \ If screenBufferType >= 2 then we must be drawing into
+ CPY #2                 \ the column buffer, so jump to poly2 ???
  BCS poly2
 
  JSR sub_C2D36          \ Seems to check something to do with drawing ???
@@ -17603,16 +17659,16 @@ L23E3 = C23E2+1
 
  JSR sub_C2299          \ Seems to do the actual drawing ???
 
- LDY L0010              \ L0010 is 0 or 1, so set A = L002C or L002D
- LDA L002C,Y
+ LDY screenBufferType   \ screenBufferType is 0 or 1, so this must be ???, so
+ LDA L002C,Y            \ set A = L002C or L002D
 
  CMP #1                 \ If L002C or L002D = 1, jump to poly3 to return from
  BEQ poly3              \ the subroutine
 
 .poly1
 
- JSR sub_C295D          \ Flip bit 0 of L0010 and set lots of variables
-                        \ accordingly ???
+ JSR FlipBufferType     \ Flip the buffer type between 0 and 1 and set lots of
+                        \ variables accordingly ???
 
 .poly2
 
@@ -19690,9 +19746,9 @@ L23E3 = C23E2+1
  LDA tileViewPitchHi,X
  BNE C2E88
  LDY tileViewPitchLo,X
- CPY L0052
+ CPY minPitchAngle
  BCC C2E88
- CPY L0051
+ CPY maxPitchAngle
  BCS C2E88
  STY L0004
  STY tileAltitude
@@ -19759,16 +19815,16 @@ L23E3 = C23E2+1
  BMI C2EC2
  BNE CRE25
  LDA L0016
- CMP L0051
+ CMP maxPitchAngle
  BCS CRE25
  CMP L0004
  BCS C2EC6
- CMP L0052
+ CMP minPitchAngle
  BCS C2EC4
 
 .C2EC2
 
- LDA L0052
+ LDA minPitchAngle
 
 .C2EC4
 
@@ -19780,16 +19836,16 @@ L23E3 = C23E2+1
  BMI CRE25
  BNE C2EDA
  LDA L001A
- CMP L0052
+ CMP minPitchAngle
  BCC CRE25
  CMP tileAltitude
  BCC C2EE1
- CMP L0051
+ CMP maxPitchAngle
  BCC C2EDF
 
 .C2EDA
 
- LDA L0051
+ LDA maxPitchAngle
  SEC
  SBC #&01
 
@@ -22585,8 +22641,8 @@ L314A = C3148+2
  STA screenOrBuffer     \ routines to draw into the screen buffer (as opposed
                         \ to drawing directly onto the screen)
 
- LDA #2                 \ Call sub_C2963 with A = 2 ???
- JSR sub_C2963
+ LDA #2                 \ Call ConfigureBuffer with A = 2 ???
+ JSR ConfigureBuffer
 
 .game5
 
@@ -23961,34 +24017,34 @@ L314A = C3148+2
 \       Name: viewBufferAddrHi
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: The value to add to updateOffsetHi for each direction to get the
+\    Summary: The value to add to scrollScreenHi for each direction to get the
 \             high byte of the view screen buffer address in viewBufferAddr(1 0)
 \
 \ ******************************************************************************
 
 .viewBufferAddrHi
 
- EQUB HI(viewBufferRight - (320 - 8))   \ Direction 0 (pan right, scroll left)
- EQUB HI(viewBufferLeft)                \ Direction 1 (pan left, scroll right)
- EQUB HI(viewBufferUp)                  \ Direction 2 (pan up, scroll down)
- EQUB HI(viewBufferDown - (320 * 23))   \ Direction 3 (pan down, scroll up)
+ EQUB HI(&3EF8)         \ Direction 0 (pan right, scroll left)
+ EQUB HI(&3F80)         \ Direction 1 (pan left, scroll right)
+ EQUB HI(&4900)         \ Direction 2 (pan up, scroll down)
+ EQUB HI(&3DC0)         \ Direction 3 (pan down, scroll up)
 
 \ ******************************************************************************
 \
 \       Name: viewBufferAddrLo
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: The value to add to updateOffsetLo for each direction to get the
+\    Summary: The value to add to scrollScreenLo for each direction to get the
 \             low byte of the view screen buffer address in viewBufferAddr(1 0)
 \
 \ ******************************************************************************
 
 .viewBufferAddrLo
 
- EQUB LO(viewBufferRight - (320 - 8))   \ Direction 0 (pan right, scroll left)
- EQUB LO(viewBufferLeft)                \ Direction 1 (pan left, scroll right)
- EQUB LO(viewBufferUp)                  \ Direction 2 (pan up, scroll down)
- EQUB LO(viewBufferDown - (320 * 23))   \ Direction 3 (pan down, scroll up)
+ EQUB LO(&3EF8)         \ Direction 0 (pan right, scroll left)
+ EQUB LO(&3F80)         \ Direction 1 (pan left, scroll right)
+ EQUB LO(&4900)         \ Direction 2 (pan up, scroll down)
+ EQUB LO(&3DC0)         \ Direction 3 (pan down, scroll up)
 
 \ ******************************************************************************
 \
@@ -24111,82 +24167,103 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C3908
+\       Name: UseRowBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Configure the row buffer for use
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   rbuf1               Set the minimum and maximum pitch angled for the buffer
+\                       specified in Y (0 = row buffer, 1 = column buffer)
 \
 \ ******************************************************************************
 
-.sub_C3908
+.UseRowBuffer
 
- LDA #0
- JSR sub_C2963
- LDY #0
+ LDA #0                 \ Call ConfigureBuffer with A = 0 to set up the screen
+ JSR ConfigureBuffer    \ buffer for use as a row buffer
 
-.P390F
+ LDY #0                 \ Set Y = 0 so we set the maximum and minimum pitch
+                        \ angles for the row buffer in the following
 
- LDA L391A,Y
- STA L0051
- LDA L391C,Y
- STA L0052
- RTS
+.rbuf1
+
+ LDA maxBufferPitch,Y   \ Set maxPitchAngle to the maximum pitch angle allowed
+ STA maxPitchAngle      \ in the buffer specified in Y
+
+ LDA minBufferPitch,Y   \ Set minPitchAngle to the minimum pitch angle allowed
+ STA minPitchAngle      \ in the buffer specified in Y
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L391A
+\       Name: maxBufferPitch
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Maximum allowed pitch angles for points in the screen buffer
 \
 \ ******************************************************************************
 
-.L391A
+.maxBufferPitch
 
- EQUB &F0, &F0
+ EQUB 240               \ Row buffer contains pitch angles from 176 to 240
+
+ EQUB 240               \ Column buffer contains pitch angles from 48 to 240
 
 \ ******************************************************************************
 \
-\       Name: L391C
+\       Name: minBufferPitch
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Minimum allowed pitch angles for points in the screen buffer
 \
 \ ******************************************************************************
 
-.L391C
+.minBufferPitch
 
- EQUB &B0, &30
+ EQUB 176               \ Row buffer contains pitch angles from 176 to 240
+
+ EQUB 48                \ Column buffer contains pitch angles from 48 to 240
 
 \ ******************************************************************************
 \
-\       Name: sub_C391E
+\       Name: UseColumnBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Configure the column buffer for use
 \
 \ ******************************************************************************
 
-.sub_C391E
+.UseColumnBuffer
 
- LDA #&02
- JSR sub_C2963
+ LDA #2                 \ Call ConfigureBuffer with A = 2 to set up the screen
+ JSR ConfigureBuffer    \ buffer for use as a column buffer
+
+                        \ Fall through into SetColumnBufferMax to set the
+                        \ maximum and minimum pitch angles for the column buffer
 
 \ ******************************************************************************
 \
-\       Name: sub_C3923
+\       Name: SetColumnBufferMax
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Set the maximum and minimum pitch angles for the column buffer
 \
 \ ******************************************************************************
 
-.sub_C3923
+.SetColumnBufferMax
 
- LDY #1
+ LDY #1                 \ Set Y = 1 so we set the maximum and minimum pitch
+                        \ angles for the column buffer when we jump to rbuf1
 
- BNE P390F              \ Jump to P390F to ??? (this BNE is effectively a JMP as
-                        \ Y is never zero)
+ BNE rbuf1              \ Jump to rbuf1 to set the maximum and minimum pitch
+                        \ angles for the column buffer and return from the
+                        \ subroutine using a tail call (this BNE is effectively
+                        \ a JMP as Y is never zero)
 
 \ ******************************************************************************
 \
@@ -25369,6 +25446,67 @@ L314A = C3148+2
 \   &4860
 \   &49A0
 \
+\ The first batch of locations need to be able to store an entire screen row of
+\ 320 bytes, so they can be used to store the screen buffer when scrolling in
+\ any direction (and specifically for the up and down scrolling, when we need to
+\ be able to store eight full character rows in the buffer).
+\
+\ We only need to use the second batch of locations when we are drawing the left
+\ or right buffers when scrolling sideways, as we then need to fit 24 character
+\ rows into the buffer. We can fit the first 16 rows into the first batch of
+\ buffer rows, but we need more. Luckily, when scrolling sideways, each row is
+\ only eight character blocks wide, so each buffer row only needs to be 64 bytes
+\ long rather than the 320 bytes needed when scrolling up or down. This means
+\ that we are only using the first 64 bytes of each buffer, so we can stick a
+\ second batch of buffers in the latter part of each of the first batch.
+\
+\ In other words, when the player pans up or down, we need to draw eight
+\ full-width character rows of new screen content into the screen buffers, each
+\ of which is 320 bytes. So we use the screen buffer space as follows:
+\
+\   &3F00 to &403F for character row 0
+\   &4040 to &417F for character row 1
+\   &4180 to &42BF for character row 2
+\   &42C0 to &43FF for character row 3
+\   &4400 to &453F for character row 4
+\   &4540 to &467F for character row 5
+\   &4680 to &47BF for character row 6
+\   &47C0 to &48FF for character row 7
+\
+\ And when the player pans left or right, the new screen content that we need to
+\ draw into the screen buffers is a strip down the side of the screen that's 24
+\ character rows tall and eight character columns wide, so each row is 64 bytes
+\ long. So we use the screen buffer space as follows:
+\
+\   &3F00 to &3F3F for character row 0
+\   &4040 to &407F for character row 1
+\   &4180 to &41BF for character row 2
+\   &42C0 to &42FF for character row 3
+\   &4400 to &443F for character row 4
+\   &4540 to &457F for character row 5
+\   &4680 to &46BF for character row 6
+\   &47C0 to &47FF for character row 7
+\   &4900 to &493F for character row 8
+\   &4A40 to &4A7F for character row 9
+\   &4B80 to &4BBF for character row 10
+\   &4CC0 to &4CFF for character row 11
+\   &4E00 to &4E3F for character row 12
+\   &4F40 to &4F7F for character row 13
+\   &5080 to &50BF for character row 14
+\   &51C0 to &51FF for character row 15
+\   &3FA0 to &3FDF for character row 16
+\   &40E0 to &411F for character row 17
+\   &4220 to &425F for character row 18
+\   &4360 to &439F for character row 19
+\   &44A0 to &43DF for character row 20
+\   &45E0 to &461F for character row 21
+\   &4720 to &475F for character row 22
+\   &4860 to &489F for character row 23
+\   &49A0 to &49DF for character row 24
+\
+\ This structure ensures that the screen buffer always fits into the range &3F00
+\ to &51FF, irrespective of the scrolling direction.
+\
 \ ******************************************************************************
 
 .bufferRowAddrLo
@@ -25425,41 +25563,7 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
-\ This table contains addresses for each of the 24 character rows in the
-\ player's scrolling landscape view in the screen buffer.
-\
-\ The buffer rows wrap around in memory after the 16th row, so they can fit into
-\ the program space without overlapping with screen memory or game code. The
-\ addresses are as follows:
-\
-\   &3F00
-\   &4040
-\   &4180
-\   &42C0
-\   &4400
-\   &4540
-\   &4680
-\   &47C0
-\   &4900
-\   &4A40
-\   &4B80
-\   &4CC0
-\   &4E00
-\   &4F40
-\   &5080
-\   &51C0
-\
-\ and then they wrap around to the following locations for rows 16 to 25:
-\
-\   &3FA0
-\   &40E0
-\   &4220
-\   &4360
-\   &44A0
-\   &45E0
-\   &4720
-\   &4860
-\   &49A0
+\ See bufferRowAddrLo for an explanation of this table.
 \
 \ ******************************************************************************
 
@@ -25590,22 +25694,6 @@ L314A = C3148+2
                         \ routines as they aren't needed again once the game
                         \ has started
 
-\ ******************************************************************************
-\
-\       Name: viewBufferLeft
-\       Type: Subroutine
-\   Category: Screen buffer
-\    Summary: The view screen buffer for buffering the new part of the player's
-\             scrolling landscape view when panning right (scrolling left)
-\
-\ ******************************************************************************
-
-.viewBufferLeft
-
- SKIP 0                 \ This variable shares the same memory as the startup
-                        \ routines as they aren't needed again once the game
-                        \ has started
-
  CLEAR &3F00, &3F80     \ Memory from &3F00 to &3F80 has two separate uses
  ORG &3F00              \
                         \ During startup it is used to store the startup
@@ -25613,13 +25701,13 @@ L314A = C3148+2
                         \ aren't needed again once the game has started
                         \
                         \ While the game is running it is used to store the
-                        \ secretCodeStash and viewBufferLeft variables
+                        \ secretCodeStash and screen buffer
                         \
                         \ These lines rewind BeebAsm's assembly back to
                         \ secretCodeStash (which is at address &3F00), and
-                        \ clear the block from that point to viewBufferLeft
-                        \ (which is at address &3F80), so we can assemble the
-                        \ startup routines
+                        \ clear the block from that point to the end of the
+                        \ stash (which is at address &3F80), so we can assemble
+                        \ the startup routines
 
 \ ******************************************************************************
 \
@@ -25979,91 +26067,47 @@ L314A = C3148+2
 
  RTS                    \ Return from the subroutine
 
- EQUB &20, &65          \ These bytes are unused until the game is in progress,
- EQUB &74, &73          \ at which point this whole section of memory is reused
- EQUB &36, &0D          \
- EQUB &12, &CA          \ The initial contents is just workspace noise and is
- EQUB &19, &20          \ ignored
- EQUB &20, &20          \
- EQUB &20, &20          \ It actually contains snippets of the original source
- EQUB &20, &4C          \ code
- EQUB &44, &58
- EQUB &23, &36
- EQUB &3A, &4A
- EQUB &53, &52
- EQUB &20, &43
- EQUB &46, &4C
- EQUB &53, &48
- EQUB &0D, &12
- EQUB &D4, &05
- EQUB &20, &0D
- EQUB &12, &DE
+ EQUB &20, &65, &74, &73, &36, &0D, &12, &CA    \ These bytes are unused until
+ EQUB &19, &20, &20, &20, &20, &20, &20, &4C    \ the game is in progress, at
+ EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
+ EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
+ EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
+ EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial content is just
+ EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored
+ EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
+ EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
+ EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
+ EQUB &24, &05, &20, &0D, &13, &2E, &2A, &2E
+ EQUB &4D, &49, &4E, &49, &20, &4C, &44, &41
+ EQUB &23, &31, &32, &38, &3A, &53, &54, &41
+ EQUB &20, &4D, &45, &41, &4E, &59, &2C, &58
+ EQUB &3A, &53, &54, &41, &20, &4D, &45, &4D
+ EQUB &4F, &52, &59, &2C, &58, &0D, &13, &38
+ EQUB &1F, &20, &20, &20, &20, &20, &20, &4C
+ EQUB &44, &41, &23, &30, &3A, &53, &54, &41
+ EQUB &20, &4D, &45, &41, &4E, &59, &53, &43
+ EQUB &41, &4E, &2C, &58, &0D, &13, &42, &22
+ EQUB &20, &20, &20, &20, &20, &20, &4C, &44
+ EQUB &41, &23, &36, &34, &3A, &53, &54, &41
+ EQUB &20, &4D, &54, &52, &59, &43, &4E, &54
+ EQUB &2C, &58, &3A, &72, &74, &73, &0D, &13
+ EQUB &4C, &05, &20, &0D, &13, &56, &1A, &2E
+ EQUB &4D, &45, &41, &4E, &20, &4C, &44, &41
+ EQUB &23, &34, &30, &3A, &53, &54, &41, &20
+ EQUB &43, &4F, &56, &45, &52, &0D, &13, &60
+ EQUB &1B, &20, &20, &20, &20, &20, &20, &4C
+ EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
+ EQUB &53, &54, &58, &20, &58, &54
 
-\ ******************************************************************************
-\
-\       Name: viewBufferRight
-\       Type: Subroutine
-\   Category: Screen buffer
-\    Summary: The view screen buffer for buffering the new part of the player's
-\             scrolling landscape view when panning left (scrolling right)
-\
-\ ------------------------------------------------------------------------------
-\
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
-\ ******************************************************************************
+ SKIPTO &4900           \ All bytes from &4100 to &48FF are zeroes in the game
+                        \ binary
 
-.viewBufferRight
-
- EQUB &0D, &2E, &65, &74, &73, &36, &20, &72
- EQUB &74, &73, &0D, &12, &E8, &05, &20, &0D
- EQUB &12, &F2, &05, &20, &0D, &12, &FC, &05
- EQUB &20, &0D, &13, &06, &05, &20, &0D, &13
- EQUB &10, &05, &20, &0D, &13, &1A, &05, &20
- EQUB &0D, &13, &24, &05, &20, &0D, &13, &2E
- EQUB &2A, &2E, &4D, &49, &4E, &49, &20, &4C
- EQUB &44, &41, &23, &31, &32, &38, &3A, &53
- EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
- EQUB &2C, &58, &3A, &53, &54, &41, &20, &4D
- EQUB &45, &4D, &4F, &52, &59, &2C, &58, &0D
- EQUB &13, &38, &1F, &20, &20, &20, &20, &20
- EQUB &20, &4C, &44, &41, &23, &30, &3A, &53
- EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
- EQUB &53, &43, &41, &4E, &2C, &58, &0D, &13
- EQUB &42, &22, &20, &20, &20, &20, &20, &20
- EQUB &4C, &44, &41, &23, &36, &34, &3A, &53
- EQUB &54, &41, &20, &4D, &54, &52, &59, &43
- EQUB &4E, &54, &2C, &58, &3A, &72, &74, &73
- EQUB &0D, &13, &4C, &05, &20, &0D, &13, &56
- EQUB &1A, &2E, &4D, &45, &41, &4E, &20, &4C
- EQUB &44, &41, &23, &34, &30, &3A, &53, &54
- EQUB &41, &20, &43, &4F, &56, &45, &52, &0D
- EQUB &13, &60, &1B, &20, &20, &20, &20, &20
- EQUB &20, &4C, &44, &58, &20, &45, &54, &45
- EQUB &4D, &3A, &53, &54, &58, &20, &58, &54
-
- SKIPTO &4900           \ All bytes from &4100 to &48FF are zeroes and appear
-                        \ to be unused
-
-\ ******************************************************************************
-\
-\       Name: viewBufferUp
-\       Type: Subroutine
-\   Category: Screen buffer
-\    Summary: The view screen buffer for buffering the new part of the player's
-\             scrolling landscape view when panning up (scrolling down)
-\
-\ ******************************************************************************
-
-.viewBufferUp
-
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes are unused until
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ the game is in progress, at
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ which point this whole section
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ The initial content is just
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ workspace noise and is ignored
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
@@ -28569,21 +28613,7 @@ L314A = C3148+2
 
 .L5A00
 
- SKIP 128
-
-\ ******************************************************************************
-\
-\       Name: viewBufferDown
-\       Type: Subroutine
-\   Category: Screen buffer
-\    Summary: The view screen buffer for buffering the new part of the player's
-\             scrolling landscape view when panning down (scrolling up)
-\
-\ ******************************************************************************
-
-.viewBufferDown
-
- SKIP 128
+ SKIP 256
 
 \ ******************************************************************************
 \
@@ -28619,8 +28649,8 @@ L314A = C3148+2
                         \ for storing tile data that can be discarded once the
                         \ landscape is generated
                         \
-                        \ During gameplay it is used to store the L5A00,
-                        \ viewBufferDown and L5B00 variables
+                        \ During gameplay it is used to store the L5A00 and
+                        \ L5B00 variables
                         \
                         \ These lines rewind BeebAsm's assembly back to L5A00
                         \ (which is at address &5A00), and clear the block

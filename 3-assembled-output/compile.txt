@@ -40,7 +40,7 @@
      000F
 .L000F
      000F
-.L0010
+.screenBufferType
      0010
 .L0011
      0011
@@ -104,7 +104,7 @@
      0025
 .columnCounter
      0025
-.screenRowNumber
+.fillRowNumber
      0026
 .zTile
      0026
@@ -204,9 +204,9 @@
      004F
 .pitchDeltaLo
      0050
-.L0051
+.maxPitchAngle
      0051
-.L0052
+.minPitchAngle
      0052
 .L0053
      0053
@@ -6824,11 +6824,11 @@
      2959   4C 45 29   JMP &2945
 .draw4
      295C   60         RTS
-.sub_C295D
+.FlipBufferType
      295D   A5 10      LDA &10
      295F   29 01      AND #&01
      2961   49 01      EOR #&01
-.sub_C2963
+.ConfigureBuffer
      2963   85 10      STA &10
      2965   A8         TAY
      2966   B9 94 29   LDA &2994,Y
@@ -6861,7 +6861,7 @@
      2991   70
      2992   70
      2993   40
-.L2994
+.minBufferYaw
      2994   14
      2995   14
      2996   08
@@ -9140,26 +9140,26 @@
      3901   B9 EC 38   LDA &38EC,Y
      3904   8D 91 20   STA &2091
      3907   60         RTS
-.sub_C3908
+.UseRowBuffer
      3908   A9 00      LDA #&00
      390A   20 63 29   JSR &2963
      390D   A0 00      LDY #&00
-.P390F
+.rbuf1
      390F   B9 1A 39   LDA &391A,Y
      3912   85 51      STA &51
      3914   B9 1C 39   LDA &391C,Y
      3917   85 52      STA &52
      3919   60         RTS
-.L391A
+.maxBufferPitch
      391A   F0
      391B   F0
-.L391C
+.minBufferPitch
      391C   B0
      391D   30
-.sub_C391E
+.UseColumnBuffer
      391E   A9 02      LDA #&02
      3920   20 63 29   JSR &2963
-.sub_C3923
+.SetColumnBufferMax
      3923   A0 01      LDY #&01
      3925   D0 E8      BNE &390F
 .MoveSights
@@ -10481,8 +10481,6 @@
      3EFF   FF
 .secretCodeStash
      3F00
-.viewBufferLeft
-     3F80
      3F00   38         SEC
      3F01   6E FC 0C   ROR &0CFC
 .ConfigureMachine
@@ -10650,7 +10648,6 @@
      402D   0D
      402E   12
      402F   DE
-.viewBufferRight
      4030   0D
      4031   2E
      4032   65
@@ -10859,7 +10856,6 @@
      40FD   20
      40FE   58
      40FF   54
-.viewBufferUp
      4900   FE
      4901   FE
      4902   FF
@@ -14952,8 +14948,6 @@
      5A00
 .L5A00
      5A00
-.viewBufferDown
-     5A80
 .L5B00
      5B00
 .stripData
