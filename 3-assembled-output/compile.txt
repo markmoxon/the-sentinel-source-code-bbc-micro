@@ -2575,9 +2575,9 @@
      0C69   00
 .L0C6A
      0C6A   00
-.L0C6B
+.objectStackCounter
      0C6B   00
-.L0C6C
+.topObjectOnStack
      0C6C   00
 .L0C6D
      0C6D   00

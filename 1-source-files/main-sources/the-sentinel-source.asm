@@ -1965,13 +1965,14 @@
 
  EQUB 0                 \ ???
 
-.L0C6B
+.objectStackCounter
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A counter for the objects in an object stack, for use
+                        \ when drawing the stack
 
-.L0C6C
+.topObjectOnStack
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The number of the object on the top of an object stack
 
 .L0C6D
 
@@ -7248,7 +7249,7 @@
                         \ of A but that doesn't matter as we are about to clear
                         \ it in the next instruction anyway)
 
- AND #%00111111         \ Set A to a number in the range 5 to 63
+ AND #63                \ Set A to a number in the range 5 to 63
  ORA #5
 
  STA objRotationTimer,X \ Set the object's entry in objRotationTimer to the
@@ -9222,8 +9223,9 @@
                         \ to make an error sound and return from the subroutine
                         \ as we can't absorb or transfer to an empty tile
 
- AND #%00111111         \ The number of the object on the tile is in bits 0 to 5
- TAX                    \ of the tile data, so extract this into X
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ TAX                    \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into X
 
  LDA keyPress           \ If bit 0 of keypress is clear then A must be 32, which
  LSR A                  \ is absorb, so jump to pkey5 to absorb the object on
@@ -11407,10 +11409,10 @@
 
                         \ If we get here then the tile contains an object
 
- AND #%00111111         \ Because the tile already has an object on it, the tile
- TAY                    \ data contains the existing object's number in bits 0
-                        \ to 5, so extract the object number into Y (so the tile
-                        \ contains object #Y)
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ TAY                    \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into Y (so
+                        \ the tile effectively contains object #Y)
 
  BIT considerObjects    \ If bit 7 of considerObjects is clear, jump to data7 to
  BPL data7              \ return the altitude of the bottom object on the tile,
@@ -11890,9 +11892,10 @@
  STY tileNumber         \ Store the tile number in tileNumber so we can refer to
                         \ it later
 
- AND #%00111111         \ Because the tile already has an object on it, the tile
- TAY                    \ data contains the existing object's number in bits 0
-                        \ to 5, so extract the object number into Y
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ TAY                    \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into Y (so
+                        \ the tile effectively contains object #Y)
 
  LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
                         \ (i.e. the type of object #Y)
@@ -12869,82 +12872,241 @@
 \
 \       Name: DrawObjectStack
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Draw an entire stack of objects
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The tile data for the tile containing the stack
 \
 \ ******************************************************************************
 
 .DrawObjectStack
 
- AND #&3F
- STA L0C6C
- LDX #0
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ STA topObjectOnStack   \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into
+                        \ topObjectOnStack
+
+ LDX #0                 \ We now count the number of objects that are stacked on
+                        \ the tile, so initialise a counter in X
 
 .stak1
 
- INX
- AND #&3F
- TAY
- LDA objectFlags,Y
- CMP #&40
- BCS stak1
- DEX
- STX L0C6B
- BEQ stak7
+ INX                    \ Increment the object counter in X to record that we
+                        \ have found an object in the stack
+
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ TAY                    \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into Y (so
+                        \ the tile effectively contains object #Y)
+
+ LDA objectFlags,Y      \ Set A to the object flags for the object on the tile
+
+ CMP #%01000000         \ If bit 6 of the object flags for object #Y is set
+ BCS stak1              \ then object #Y is stacked on top of another object,
+                        \ and that object number is in bits 0 to 5 of the object
+                        \ flags, so jump to stak1 to increase the object count,
+                        \ extract that object number from A and check the flags
+                        \ again (so this works down through the stack of objects
+                        \ until we reach the object at the bottom of the stack)
+
+ DEX                    \ Set objectStackCounter = X - 1 so we can use it as a
+ STX objectStackCounter \ counter as we work through all the objects in the
+                        \ stack
+
+ BEQ stak7              \ If there is only one object on the tile then the stack
+                        \ size will be zero, so jump to stak7 to draw the object
+                        \ stack from object #Y down (which in this case will
+                        \ just draw object #Y)
+
+                        \ If we get here then there is more than one object in
+                        \ the stack, so we now work out in which direction to
+                        \ draw the stack: top to bottom or bottom to top
+                        \
+                        \ If the player is at a lower altitude than the object
+                        \ at the bottom of the stack, then the whole stack is
+                        \ above the player and the object on the top of the
+                        \ stack is the furthest away, so we need to draw the
+                        \ stack from top to bottom
+                        \
+                        \ If it's the other way around and the player is at the
+                        \ same or higher altitude than the bottom of the stack,
+                        \ then we need to draw the stack from bottom to top, as
+                        \ the bottom object is the furthest away
+                        \
+                        \ There is one exception: if the object stack is the
+                        \ Sentinel's tower and we are at the exact same height
+                        \ as the tower, then we draw the stack from top to
+                        \ bottom to ensure the Sentinel's feet are correctly
+                        \ hidden by the platform
+                        \
+                        \ At this point, object #Y is the bottom object in the
+                        \ stack and object #topObjectOnStack is the top object
 
 .stak2
 
- LDX playerObject
- LDA yObjectLo,X
- SEC
- SBC yObjectLo,Y
- STA T
- LDA yObjectHi,X
+ LDX playerObject       \ Set X to the object number of the player
+
+ LDA yObjectLo,X        \ Set (A T) to the vertical distance between the player
+ SEC                    \ and the object we are drawing, as follows:
+ SBC yObjectLo,Y        \
+ STA T                  \   (A T) = yObject,X - yObject,Y
+                        \
+                        \ starting with the low bytes
+
+ LDA yObjectHi,X        \ And then the high bytes
  SBC yObjectHi,Y
- BMI stak6
- ORA T
- BNE stak3
- LDA objectTypes,Y
- CMP #&06
- BEQ stak6
+ 
+ BMI stak6              \ If the result is negative then the player (object #X)
+                        \ is at a lower altitude than the object we are drawing
+                        \ (object #Y), so jump to stak6 to draw the entire
+                        \ object stack from top to bottom, starting with the top
+                        \ object and working down to the bottom
+
+                        \ If we get here then the player is level with or higher
+                        \ than the object we are drawing (object #Y)
+
+ ORA T                  \ If at least one of A and T is non-zero then (A T) > 0,
+ BNE stak3              \ then the player is at a higher altitude than the object
+                        \ we are drawing, so jump to stak3 to skip the following
+                        \ check
+
+                        \ If we get here then the player is level with the
+                        \ object we are drawing, so we need to check whether
+                        \ we are thinking of drawing the Sentinel's tower,
+                        \ because if we are, we need to draw the Sentinel before
+                        \ the tower to ensure the Sentinel's feet are correctly
+                        \ hidden by the platform
+
+ LDA objectTypes,Y      \ If the object we are drawing is the Sentinel's tower
+ CMP #6                 \ (an object of type 6), then jump to stak6 to draw the
+ BEQ stak6              \ entire object stack from top to bottom, starting with
+                        \ the top object (the Sentinel) and working down to the
+                        \ bottom object (the tower)
 
 .stak3
 
- JSR DrawObject
- LDY L0C6C
- DEC L0C6B
- BMI stak8
- LDX L0C6B
- BPL stak5
+                        \ If we get here then the player is higher than the
+                        \ object we are drawing (object #Y), so we need to draw
+                        \ the object stack upwards, from the bottom to the top
+                        \
+                        \ This process is a bit convoluted, as the object flags
+                        \ only store object numbers that are below other objects
+                        \ rather than above, so we have to repeatedly count down
+                        \ the stack to work out which object to draw next
+                        \
+                        \ The first time we enter this loop, object #Y is the
+                        \ object at the bottom of the stack, so this loop draws
+                        \ the stack from the very bottom to the top
+                        \
+                        \ The second time we enter this loop, object #Y is the
+                        \ object above the original object #Y, so it's the next
+                        \ object up
+                        \
+                        \ We loop around until we have drawn the whole stack
+                        \ from bottom to top
+                        \
+                        \ This loop therefore draws object #Y and then works out
+                        \ which object is above object #Y in the stack and loops
+                        \ back to repeat the process, until we reach the top of
+                        \ the stack
+
+ JSR DrawObject         \ Draw object #Y onto the screen or into the screen
+                        \ buffer
+
+                        \ We now work out which object is above object #Y, which
+                        \ we do by counting down the stack by the right amount,
+                        \ from the top object down
+                        \
+                        \ This count is stored in objectStackCounter, which
+                        \ contains the number of objectx we still have to draw,
+                        \ which is the same as the number of objects above
+                        \ object #Y
+
+ LDY topObjectOnStack   \ Set Y to the number of the object on top of the stack,
+                        \ so we can start counting down from the top
+
+ DEC objectStackCounter \ Decrement the object stack counter as we have just
+                        \ drawn object #Y
+
+ BMI stak8              \ If we have drawn all the objects in the stack then the
+                        \ counter will now be negative, so jump to stak8 to
+                        \ return from the subroutine as we have drawn the whole
+                        \ stack
+
+ LDX objectStackCounter \ Otherwise set X to the updated object stack counter,
+                        \ which is the number of objects above the object that
+                        \ we jusr drew
+
+ BPL stak5              \ Jump to stak5 to start counting down the stack for X
+                        \ objects from the top, to give us the object that's
+                        \ above object #Y in the stack (this BPL is effectively
+                        \ a JMP as we know objectStackCounter is positive, so X
+                        \ must also be positive)
 
 .stak4
 
- LDA objectFlags,Y
- AND #&3F
- TAY
- DEX
+                        \ If we get here then we need to move down the object
+                        \ stack by one place from object #Y, updating Y to the
+                        \ number of the next object down
+
+ LDA objectFlags,Y      \ Set A to the object flags for object #Y
+
+ AND #%00111111         \ Object #Y is stacked on top of another object, so the
+ TAY                    \ number of the object below is in bits 0 to 5 of the
+                        \ object flags, so extract the next object number down
+                        \ the stack into Y
+
+ DEX                    \ Decrement the counter in X as we have just moved down
+                        \ the stack by one place
 
 .stak5
 
- BNE stak4
- BEQ stak2
+                        \ This is the entry point for the loop that counts X
+                        \ objects down the stack, from the top object down
+
+ BNE stak4              \ If X <> 0 then loop back to stak4 to move down the
+                        \ stack
+
+ BEQ stak2              \ Otherwise jump to stak2 to draw object #Y, as that is
+                        \ the next object down the stack from the object we just
+                        \ drew (this BEQ is effectively a JMP as we just passed
+                        \ through a BNE)
 
 .stak6
 
- LDY L0C6C
+ LDY topObjectOnStack   \ Set Y = topObjectOnStack so the following loop draws
+                        \ the entire object stack from top to bottom, starting
+                        \ with the top object and working down to the bottom
 
 .stak7
 
- JSR DrawObject
- LDA objectFlags,Y
- AND #&3F
- TAY
- DEC L0C6B
- BPL stak7
+                        \ This loop draws all the objects in the stack in turn,
+                        \ from object #Y at the top, all the way down to the
+                        \ object at the bottom of the stack
+
+ JSR DrawObject         \ Draw object #Y onto the screen or into the screen
+                        \ buffer
+
+ LDA objectFlags,Y      \ Set A to the object flags for the object we just drew
+
+ AND #%00111111         \ If object #Y is stacked on top of another object, then
+ TAY                    \ the number of the object below is in bits 0 to 5 of
+                        \ the object flags, so extract the next object number
+                        \ down the stack into Y, so we can draw that object next
+
+ DEC objectStackCounter \ Decrement the object stack counter as we have just
+                        \ drawn an object
+
+ BPL stak7              \ Loop back until we have drawn all the objects in the
+                        \ stack, from object #Y down to the bottom of the stack
 
 .stak8
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -16747,8 +16909,10 @@ L23E3 = C23E2+1
                         \ If we get here then the tile we are analysing contains
                         \ an object and the tile data is in A
 
- AND #%00111111         \ Bits 0 to 5 of the tile data contain the number of the
- TAY                    \ object on the tile, to extract this into Y
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ TAY                    \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into Y (so
+                        \ the tile effectively contains object #Y)
 
  LDA objectFlags,Y      \ Set A to the object flags for the object on the tile
 
@@ -16756,7 +16920,7 @@ L23E3 = C23E2+1
  BCS tang7              \ then object #Y is stacked on top of another object,
                         \ and that object number is in bits 0 to 5 of the object
                         \ flags, so jump to tang7 to extract that object number
-                        \ from A and check for flags again (so this works down
+                        \ from A and check the flags again (so this works down
                         \ through the stack of objects until we reach the object
                         \ at the bottom of the stack)
 
@@ -27312,7 +27476,7 @@ L314A = C3148+2
  LDA angleLo            \ Set (A pitchDeltaLo) = (angleHi angleLo)
  SEC                    \                        - (objectPitchAngle 32)
  SBC #32                \
- STA pitchDeltaLo       \ Starting with the low bytes
+ STA pitchDeltaLo       \ starting with the low bytes
 
  LDA angleHi            \ And then the high bytes
  SBC objectPitchAngle,X
