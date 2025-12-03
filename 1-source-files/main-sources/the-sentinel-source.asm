@@ -190,9 +190,11 @@
 
  SKIP 1                 \ The type of screen buffer that is currently being used
                         \
-                        \   * 0 = row buffer (for up/down pan)
+                        \   * 0 = left row buffer (for up/down pan)
+                        \         for the first 256 bytes of the 320-byte row
                         \
-                        \   * 1 = ???
+                        \   * 1 = right row buffer (for up/down pan)
+                        \         for the last 64 bytes of the 320-byte row
                         \
                         \   * 2 = column buffer (for left/right pan)
 
@@ -6249,7 +6251,7 @@
  LDA #0
  STA xTitleOffset
 
- STA screenBackground   \ Set screenBackground = 0 if we start the game after
+ STA screenBackground   \ Set screenBackground = 0 so if we start the game after
                         \ showing this title screen, the FillScreen routine will
                         \ clear the screen buffers to the blue and black sky,
                         \ which is the only screen background we need during
@@ -17037,16 +17039,16 @@ L23E3 = C23E2+1
 \       Name: FlipBufferType
 \       Type: Subroutine
 \   Category: Screen buffer
-\    Summary: Flip the buffer type between buffer type 0 (row buffer) and buffer
-\             type 1 (???)
+\    Summary: Flip the buffer type between buffer type 0 (left row buffer) and
+\             buffer type 1 (right row buffer)
 \
 \ ******************************************************************************
 
 .FlipBufferType
 
  LDA screenBufferType   \ Flip bit 0 of screenBufferType to swap between buffer
- AND #1                 \ type 0 (row buffer) and buffer type 1 (???)
- EOR #1
+ AND #1                 \ type 0 (left row buffer) and buffer type 1 (right row
+ EOR #1                 \ buffer)
 
                         \ Fall through into ConfigureBuffer to configure the new
                         \ buffer type
@@ -17065,9 +17067,11 @@ L23E3 = C23E2+1
 \
 \   A                   The type of buffer to configure:
 \
-\                         * 0 = row buffer (for up/down pan)
+\                         * 0 = left row buffer (for up/down pan)
+\                               for the first 256 bytes of the 320-byte row
 \
-\                         * 1 = ???
+\                         * 1 = right row buffer (for up/down pan)
+\                               for the last 64 bytes of the 320-byte row
 \
 \                         * 2 = column buffer (for left/right pan)
 \
@@ -17120,9 +17124,9 @@ L23E3 = C23E2+1
 
 .L298B
 
- EQUB 10                \ Row buffer ???
+ EQUB 10                \ Left row buffer ???
 
- EQUB 2                 \ ??? buffer ???
+ EQUB 2                 \ Right row buffer ???
 
  EQUB 12                \ Column buffer ???
 
@@ -17137,9 +17141,9 @@ L23E3 = C23E2+1
 
 .L298E
 
- EQUB 80                \ Row buffer ???
+ EQUB 80                \ Left row buffer ???
 
- EQUB 64                \ ??? buffer ???
+ EQUB 64                \ Right row buffer ???
 
  EQUB 96                \ Column buffer ???
 
@@ -17154,9 +17158,9 @@ L23E3 = C23E2+1
 
 .L2991
 
- EQUB 112               \ Row buffer ???
+ EQUB 112               \ Left row buffer ???
 
- EQUB 112               \ ??? buffer ???
+ EQUB 112               \ Right row buffer ???
 
  EQUB 64                \ Column buffer ???
 
@@ -17171,9 +17175,9 @@ L23E3 = C23E2+1
 
 .minBufferYaw
 
- EQUB 20                \ Row buffer contains yaw angles up to 20
+ EQUB 20                \ Left row buffer contains yaw angles up to 20
 
- EQUB 20                \ ??? buffer contains yaw angles up to 20
+ EQUB 20                \ Right row buffer contains yaw angles up to 20
 
  EQUB 8                 \ Column buffer contains yaw angles up to 8
 
@@ -17651,9 +17655,11 @@ L23E3 = C23E2+1
 \
 \   screenBufferType    The type of buffer to use:
 \
-\                         * 0 = row buffer (for up/down pan)
+\                         * 0 = left row buffer (for up/down pan)
+\                               for the first 256 bytes of the 320-byte row
 \
-\                         * 1 = ???
+\                         * 1 = right row buffer (for up/down pan)
+\                               for the last 64 bytes of the 320-byte row
 \
 \                         * 2 = column buffer (for left/right pan)
 \
@@ -24338,7 +24344,7 @@ L314A = C3148+2
 \ Other entry points:
 \
 \   rbuf1               Set the minimum and maximum pitch angled for the buffer
-\                       specified in Y (0 = row buffer, 1 = column buffer)
+\                       type specified in Y (0 = row buffer, 1 = column buffer)
 \
 \ ******************************************************************************
 
