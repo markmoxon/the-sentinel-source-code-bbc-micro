@@ -2726,7 +2726,7 @@
      0CD9   00
      0CDA   00
      0CDB   00
-.previousDoNotScan
+.previousFocus
      0CDC   00
 .gazeCanSeeTree
      0CDD   00
@@ -2738,7 +2738,7 @@
      0CE1   00
      0CE2   00
      0CE3   00
-.doNotScanKeyboard
+.focusOnKeyAction
      0CE4   80
 .activateSentinel
      0CE5   80
@@ -3477,11 +3477,11 @@
      11F9   A5 09      LDA &09
      11FB   30 0B      BMI &1208
      11FD   8D 1D 0C   STA &0C1D
-.PauseKeyboardScan
+.FocusOnKeyAction
      1200   A9 80      LDA #&80
      1202   8D E4 0C   STA &0CE4
      1205   8D 1E 0C   STA &0C1E
-.C1208
+.focu1
      1208   AD E4 0C   LDA &0CE4
      120B   8D DC 0C   STA &0CDC
      120E   60         RTS

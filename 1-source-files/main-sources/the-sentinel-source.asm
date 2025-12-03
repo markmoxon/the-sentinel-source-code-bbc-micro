@@ -1653,9 +1653,9 @@
 .samePanKeyPress
 
  EQUB 0                 \ Records whether the same pan key is being held down
-                        \ compared to the last time we checked
+                        \ after we have just finished panning the landscape view
                         \
-                        \   * Bit 7 clear = same pan key is bot being held down
+                        \   * Bit 7 clear = same pan key is not being held down
                         \
                         \   * Bit 7 set = same pan key is being held down
 
@@ -2236,12 +2236,13 @@
 
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
-.previousDoNotScan
+.previousFocus
 
- EQUB 0                 \ Storage for the previous setting of doNotScanKeyboard
-                        \ in the PauseKeyboardScan routine, so we can check
-                        \ whether doNotScanKeyboard has changed during the
-                        \ ProcessGameplay loop ???
+ EQUB 0                 \ Storage for the previous setting of focusOnKeyAction,
+                        \ so we can detect (in the ProcessGameplay routine)
+                        \ whether the player is still holding down a pan key
+                        \ after we finish scrolling the screen for the previous
+                        \ pan
 
 .gazeCanSeeTree
 
@@ -2284,13 +2285,15 @@
 
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
 
-.doNotScanKeyboard
+.focusOnKeyAction
 
- EQUB %10000000         \ A flag that controls whether we scan the keyboard
+ EQUB %10000000         \ A flag that determines whether the game should focus
+                        \ effort on implementing a key action, such as a pan of
+                        \ the landscape view
                         \
-                        \   * Bit 7 clear = scan the keyboard
+                        \   * Bit 7 clear = run everything normally
                         \
-                        \   * Bit 7 set = do not scan the keyboard
+                        \   * Bit 7 set = focus effort on the key action
                         \
                         \ Specifically, setting bit 7 disables the following
                         \ keyboard scans:
@@ -2300,6 +2303,10 @@
                         \   * Game key presses in IRQHandler
                         \
                         \   * Game key presses in ProcessGameplay
+                        \
+                        \ This speeds things up so the action can be implemented
+                        \ more quickly and without having to run unnecessary
+                        \ keyboard scans
 
 .activateSentinel
 
@@ -5198,9 +5205,10 @@
                         \ "B", "H", or "U" (absorb, transfer, create robot,
                         \ create tree, create boulder, hyperspace, U-turn)
 
- BPL PauseKeyboardScan  \ If there is a key press in the key logger entry, jump
-                        \ to PauseKeyboardScan to pause keyboard scanning and
-                        \ return from the subroutine using a tail call
+ BPL FocusOnKeyAction   \ If there is a key press in the key logger entry, jump
+                        \ to FocusOnKeyAction to start focusing effort on
+                        \ implementing the relevant action after returning from
+                        \ the subroutine using a tail call
 
                         \ If we get here then the player is not pressing "A",
                         \ "Q", "R", "T", "B", "H", or "U" (absorb, transfer,
@@ -5222,9 +5230,8 @@
                         \ set, so this ensures only one U-turn is performed
                         \ until we get here again, when "U" has been released
 
- BNE C1208              \ Jump to C1208 to finish off and return from the
-                        \ subroutine (this BNE is effectively a JMP as A is
-                        \ never zero)
+ BNE focu1              \ Jump to focu1 to return from the subroutine (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .ckey7
 
@@ -5243,8 +5250,8 @@
                         \ next bit from the pattern that determines the initial
                         \ movement of the sights
 
- BCS C1208              \ If we shifted a 1 out of bit 7 of sightsInitialMoves,
-                        \ jump to C1208 to return from the subroutine without
+ BCS focu1              \ If we shifted a 1 out of bit 7 of sightsInitialMoves,
+                        \ jump to focu1 to return from the subroutine without
                         \ moving the sights, as a set bit indicates a pause in
                         \ the initial movement of the sights
 
@@ -5273,10 +5280,10 @@
  LDA keyLogger+2        \ Set A to the key logger entry for "L" and "," (pan
                         \ up, pan down), which are used to move the sights
 
- BMI C1208              \ If there is no key press in the key logger entry then
-                        \ no pan keys are being pressed, so jump to C1208 to
-                        \ finish off and return from the subroutine without
-                        \ recording a pan key press in panKeyBeingPressed
+ BMI focu1              \ If there is no key press in the key logger entry then
+                        \ no pan keys are being pressed, so jump to focu1 to
+                        \ return from the subroutine without recording a pan key
+                        \ press in panKeyBeingPressed
 
 .ckey9
 
@@ -5294,43 +5301,51 @@
 .ckey10
 
  LDA panKeyBeingPressed \ If bit 7 of panKeyBeingPressed is set then no pan keys
- BMI C1208              \ are being pressed, so jump to C1208 to finish off and
-                        \ return from the subroutine
+ BMI focu1              \ are being pressed, so jump to focu1 to return from the
+                        \ subroutine
 
  STA latestPanKeyPress  \ Set latestPanKeyPress to the key logger value of the
                         \ pan key that's being pressed, so it contains the most
                         \ recent pan key press (i.e. the current one)
 
-                        \ Fall through into PauseKeyboardScan to pause keyboard
-                        \ scanning
+                        \ Fall through into FocusOnKeyAction to start focusing
+                        \ effort on the pan that the player wants us to do
 
 \ ******************************************************************************
 \
-\       Name: PauseKeyboardScan
+\       Name: FocusOnKeyAction
 \       Type: Subroutine
 \   Category: Keyboard
-\    Summary: Pause keyboard scanning
+\    Summary: Tell the game to start focusing effort on the action that has been
+\             initiated, such as a pan of the landscape, absorb, transfer etc.
 \
 \ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
-\   C1208               ???
+\   focu1               Store the current setting of focusOnKeyAction in the
+\                       previousFocus variable so we can detect (in the
+\                       ProcessGameplay routine) whether the player is still
+\                       holding down a pan key after we finish scrolling the
+\                       screen for the previous pan... and then return from the
+\                       subroutine
 \
 \ ******************************************************************************
 
-.PauseKeyboardScan
+.FocusOnKeyAction
 
- LDA #%10000000         \ Set bit 7 of doNotScanKeyboard to disable keyboard
- STA doNotScanKeyboard  \ scans ???
+ LDA #%10000000         \ Set bit 7 of focusOnKeyAction to tell the game to
+ STA focusOnKeyAction   \ focus effort on implementing the key action that has
+                        \ just been initiated, such as a pan of the landscape
+                        \ view, absorb, transfer and so on
 
  STA L0C1E              \ Set bit 7 of L0C1E to return early from the sub_C5E5F
                         \ subroutine ???
 
-.C1208
+.focu1
 
- LDA doNotScanKeyboard  \ Set previousDoNotScan = doNotScanKeyboard so we can
- STA previousDoNotScan  \ work out when the value of doNotScanKeyboard changes
+ LDA focusOnKeyAction   \ Set previousFocus = focusOnKeyAction so we can detect
+ STA previousFocus      \ whether the value of focusOnKeyAction changes
                         \
                         \ This is used by the ProcessGameplay routine to detect
                         \ whether the player is still holding the same pan key
@@ -5564,13 +5579,11 @@
 \
 \ Returns:
 \
-\   C flag              Status flag:
+\   C flag              Status flag on exit:
 \
-\                         * Clear if any of the following are true:
-\
-\                           * Keyboard scans have been disabled by a call to
-\                             PauseKeyboardScan since we first called
-\                             ProcessGameplay and a pan key is being pressed
+\                         * Clear if we have just finished processing a pan of
+\                           the landscape view, and the player is still holding
+\                           down a pan key
 \
 \                         * Set if any of the following are true:
 \
@@ -5584,36 +5597,47 @@
 
 .ProcessGameplay
 
- LDA #0                 \ Clear bit 7 of doNotScanKeyboard to enable keyboard
- STA doNotScanKeyboard  \ scans ???
+ LDA #0                 \ Clear bit 7 of focusOnKeyAction to tell the game to
+ STA focusOnKeyAction   \ stop focusing effort on implementing any key actions
+                        \ such as landscape pans, as we are now looking at the
+                        \ gameplay
 
- STA uTurnStatus        \ Clear bit 6 of uTurnStatus to prevent the "U" key
-                        \ from performing a U-turn, so that the "U" key has to
-                        \ be released before a second U-turn can be performed
-                        \ ???
+ STA uTurnStatus        \ Clear bits 6 and 7 of uTurnStatus to clear any record
+                        \ of a U-turn being in progress, and to prevent the "U"
+                        \ key from performing a U-turn, so that the "U" key has
+                        \ to be released (if applicable) before a second U-turn
+                        \ can be performed
 
 .play1
 
- LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
- BMI play5              \ scans have been disabled in the interrupt routine
-                        \ since we called ProcessGameplay, so jump to play5 to
-                        \ move on to processing action key presses
+ LDA focusOnKeyAction   \ If bit 7 of focusOnKeyAction is set then the game is
+ BMI play5              \ focusing effort on a key action such as a landscape
+                        \ pan, so jump to play5 to go straight to processing any
+                        \ action key presses, skipping all the key press logic
+                        \ below
+
+                        \ We now check whether we have just finished processing
+                        \ a landscape pan, and if so whether the player is still
+                        \ holding down the same pan key
 
  LSR samePanKeyPress    \ Clear bit 7 of samePanKeyPress to record that the same
                         \ pan key is not being held down, which we will change
                         \ below if this is not the case
 
- LDA previousDoNotScan  \ If bit 7 of previousDoNotScan is clear then it matches
- BPL play2              \ the current value of doNotScanKeyboard (so the value
-                        \ of previousDoNotScan has not changed since the last
-                        \ time we were in the PauseKeyboardScan routine, and at
-                        \ both points key scanning was enabled), so jump to
-                        \ play2 to skip the following check for for pan keys
+ LDA previousFocus      \ If bit 7 of previousFocus is clear then it matches
+ BPL play2              \ the current value of focusOnKeyAction, so the value
+                        \ of focusOnKeyAction has not changed since the last
+                        \ time we were in the FocusOnKeyAction routine, and at
+                        \ that point we were not focusing effort on implementing
+                        \ a key action such as a landscape pan
+                        \
+                        \ So jump to play2 to skip the following check for pan
+                        \ keys, as it isn't relevant
 
-                        \ If we get here then bit 7 of doNotScanKeyboard is
-                        \ clear and bit 7 of previousDoNotScan is set, so we
-                        \ have just called the ProcessGameplay routine after
-                        \ finishing off the scrolling process from the last pan
+                        \ If we get here then bit 7 of focusOnKeyAction is
+                        \ clear and bit 7 of previousFocus is set, so we must
+                        \ have called the ProcessGameplay routine just after
+                        \ implementing a key action such as a landscape pan
                         \
                         \ So let's check to see whether the same pan key is
                         \ still being held down from the pan we just finished
@@ -5625,8 +5649,8 @@
                         \ play2 to skip the following
 
  SEC                    \ The same pan key is still being held down, so set bit
- ROR samePanKeyPress    \ 7 of samePanKeyPress to record this for use in the
-                        \ sub_C1AF3 routine ???
+ ROR samePanKeyPress    \ 7 of samePanKeyPress to record this fact for use in
+                        \ the sub_C1AF3 routine ???
 
 .play2
 
@@ -5642,7 +5666,9 @@
 
 .play3
 
- JSR PauseKeyboardScan  \ Pause keyboard scans
+ JSR FocusOnKeyAction   \ Tell the game to start focusing effort on the key
+                        \ action that has been initiated (be it a pan of the
+                        \ landscape view or an action like absorb or transfer)
 
  SEC                    \ Set the C flag to indicate that ???
 
@@ -9021,8 +9047,14 @@
 
  SEC
 
- BIT samePanKeyPress
- BPL CRE10
+ BIT samePanKeyPress    \ If bit 6 of samePanKeyPress is clear then the player
+ BPL CRE10              \ if not holding down the same pan key following the
+                        \ completion of a landscape pan, so jump to CRE10 to
+                        \ return from the subroutine
+
+                        \ If we get here then we have just completed a pan of
+                        \ the landscape view and the player is still holding
+                        \ down the same pan key
 
  STA currentObject
 
@@ -9243,7 +9275,8 @@
                         \ return from the subroutine as the player can only
                         \ transfer into other robots
 
- JSR PauseKeyboardScan  \ Pause keyboard scans
+ JSR FocusOnKeyAction   \ Tell the game to start focusing effort on the key
+                        \ action that has been initiated (i.e. the transfer)
 
  STX playerObject       \ Set the player's object number to that of the robot
                         \ on the tile anchored at (xTile, zTile), so this
@@ -12850,7 +12883,8 @@
 
 .hypr2
 
- JSR PauseKeyboardScan  \ Pause keyboard scans
+ JSR FocusOnKeyAction   \ Tell the game to start focusing effort on the key
+                        \ action that has been initiated (i.e. the hyperspace)
 
  LDX currentObject      \ Set the player's object number to that of the new
  STX playerObject       \ robot that we spawned above, so this effectively
@@ -22144,10 +22178,10 @@ L314A = C3148+2
 
 .ProcessVolumeKeys
 
- LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
- BMI volk6              \ scans are disabled, so jump to volk6 to return from
-                        \ the subroutine without checking for volume-related
-                        \ key presses
+ LDA focusOnKeyAction   \ If bit 7 of focusOnKeyAction is set then the game is
+ BMI volk6              \ focusing effort on a key action such as a landscape
+                        \ pan, so jump to volk6 to return from the subroutine
+                        \ without checking for volume-related key presses
 
  LDA volumeLevel        \ Set A to the current volume level
 
@@ -22953,20 +22987,9 @@ L314A = C3148+2
                         \ loses or pans
 
  BCC game12             \ The ProcessGameplay routine will return with the C
-                        \ flag clear if keyboard scans have been disabled by a
-                        \ call to PauseKeyboardScan during the routine and a pan
-                        \ key is being pressed
-                        \
-                        \ PauseKeyboardScan is called for a number of reasons,
-                        \ such as when the player jumps to a new tile, but the
-                        \ only time that it is triggered by holding down a pan
-                        \ key is when a pan key is being pressed for a scroll
-                        \ but not the sights in CheckForKeyPresses
-                        \
-                        \ So the C flag is clear if the keyboard has been
-                        \ disabled because the player is pressing and is still
-                        \ holding down a pan key when they want to pan (rather
-                        \ than just moving the sights)
+                        \ flag clear if we just finished a landscape pan and the
+                        \ player is still holding down a pan key, in which case
+                        \ jump to game12 to process the pan
 
  JMP MainGameLoop       \ Otherwise the ProcessGameplay routine returned because
                         \ one of the following is true:
@@ -23425,8 +23448,9 @@ L314A = C3148+2
 \
 \     * If the Sentinel has been activated, call sub_C12EE and UpdateScanner
 \
-\     * If bit 7 of doNotScanKeyboard is clear then keyboard scans are enabled,
-\       so scan for and process all the game keys
+\     * If bit 7 of focusOnKeyAction is clear then the game is not currently
+\       focusing effort on implementing a key action such as a landscape pan, so
+\       scan for and process all the game keys
 \
 \ ******************************************************************************
 
@@ -23521,9 +23545,10 @@ L314A = C3148+2
 
 .irqh4
 
- LDA doNotScanKeyboard  \ If bit 7 of doNotScanKeyboard is set then keyboard
- BMI irqh8              \ scans are disabled, so jump to irqh8 to skip the
-                        \ following
+ LDA focusOnKeyAction   \ If bit 7 of focusOnKeyAction is set then the game is
+ BMI irqh8              \ currently focusing effort on implementing a key action
+                        \ such as a landscape pan, so jump to irqh8 to skip the
+                        \ following keyboard scan
 
  JSR CheckForKeyPresses \ Check for various game key presses and update the key
                         \ logger and relevant variables
