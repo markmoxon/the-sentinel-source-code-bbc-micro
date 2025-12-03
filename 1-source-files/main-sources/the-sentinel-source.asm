@@ -626,9 +626,12 @@
 
  SKIP 1                 \ ???
 
-.L004C
+.objTypeToAnalyse
 
- SKIP 2                 \ ???
+ SKIP 1                 \ The type of the object being analysed in the
+                        \ GetObjectAngles routine
+
+ SKIP 1                 \ This byte appears to be unused ???
 
 .L004E
 
@@ -682,21 +685,29 @@
 
  SKIP 1                 \ ???
 
-.L0059
+.objectGazeYawLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The difference in the yaw angle of the viewer's gaze
+                        \ and the yaw angle (i.e. the gaze) of the object being
+                        \ analysed (low byte)
 
-.L005A
+.objectGazeYawHi
 
- SKIP 2                 \ ???
+ SKIP 1                 \ The difference in the yaw angle of the viewer's gaze
+                        \ and the yaw angle (i.e. the gaze) of the object being
+                        \ analysed (low byte)
+
+ SKIP 1                 \ This byte appears to be unused ???
 
 .bLo
 
- SKIP 1                 \ The low byte of the opposite side of a triangle
+ SKIP 1                 \ The low byte of the opposite side of a triangle when
+                        \ calculating the hypotenuse
 
 .bHi
 
- SKIP 1                 \ The high byte of the opposite side of a triangle
+ SKIP 1                 \ The high byte of the opposite side of a triangle when
+                        \ calculating the hypotenuse
 
 .tileDataPage
 
@@ -778,9 +789,10 @@
  SKIP 1                 \ Used as a loop counter when adding enemies to the
                         \ landscape
 
-.L006F
+.objectToAnalyse
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The number of the object to analyse in the
+                        \ GetObjectAngles routine
 
 .P
 
@@ -826,11 +838,13 @@
 
 .aLo
 
- SKIP 1                 \ The low byte of the adjacent side of a triangle
+ SKIP 1                 \ The low byte of the adjacent side of a triangle when
+                        \ calculating the hypotenuse
 
 .aHi
 
- SKIP 1                 \ The high byte of the adjacent side of a triangle
+ SKIP 1                 \ The high byte of the adjacent side of a triangle when
+                        \ calculating the hypotenuse
 
 .hypotenuseLo
 
@@ -1840,34 +1854,36 @@
                         \
                         \   * Bit 7 set = tile contains the target object
 
-.L0C57
+.objectViewYawHi
 
- EQUB 13                \ ???
+ EQUB 13                \ The yaw angle of the object being analysed, relative
+                        \ to the current viewer (high byte)
 
 .targetObject
 
  EQUB 0                 \ The number of the object that is being targeted in the
                         \ DrainObjectEnergy routine
 
-.L0C59
+.objectViewYawLo
 
- EQUB &16               \ ???
+ EQUB &16               \ The yaw angle of the object being analysed, relative
+                        \ to the current viewer (low byte)
 
  EQUB 0                 \ This byte appears to be unused
 
-.L0C5B
+.objectOppositeLo
 
  EQUB &E0               \ ???
 
-.L0C5C
+.objectOppositeHi
 
  EQUB &B7               \ ???
 
-.L0C5D
+.objectAdjacentLo
 
  EQUB &E4               \ ???
 
-.L0C5E
+.objectAdjacentHi
 
  EQUB &52               \ ???
 
@@ -6204,11 +6220,11 @@
 \                         * 3 = fill with solid colour 1 (black) and draw 240
 \                               randomly positioned stars in on the background
 \
-\   Y                   ???
+\   Y                   The view type:
 \
-\                         * 0 = ???
+\                         * 0 = landscape preview
 \
-\                         * 1 = ???
+\                         * 1 = title screen or secret code screen
 \
 \ ******************************************************************************
 
@@ -6232,7 +6248,7 @@
 
  STX vduShadowRear+1
 
- STY L140F              \ Store the Y argument in L140F (0, 1)
+ STY viewType           \ Set viewType to the view type
 
  LDA L1403,Y
  STA yObjectHi+16
@@ -6262,10 +6278,10 @@
 
  JSR DrawLandscapeView  \ Draw the landscape view
 
- LDA L140F
+ LDA viewType
  BNE C13FA
  LDX #&7F
- STX L140F
+ STX viewType
 
 .P13F4
 
@@ -6366,14 +6382,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L140F
+\       Name: viewType
 \       Type: Variable
 \   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L140F
+.viewType
 
  EQUB &01
 
@@ -8071,7 +8087,7 @@
  BMI C174F
  LDA #0
  JSR sub_C1882
- LDA L0C57
+ LDA objectViewYawHi
  CMP #&14
  BCS C171B
  CPY playerObject
@@ -8089,7 +8105,7 @@
 .C171B
 
  LDA #&08
- BIT L0C57
+ BIT objectViewYawHi
  BPL C1724
  LDA #&F8
 
@@ -8345,7 +8361,7 @@
  LDA objectTypes,Y
  CMP T
  BNE C1911
- JSR sub_C5C01
+ JSR GetObjectAngles
 
                         \ We now have a very short interlude to set up some of
                         \ the anti-cracker code before continuing in part 2
@@ -8423,7 +8439,7 @@
  LDA L0C68
  LSR A
  STA T
- LDA L0C57
+ LDA objectViewYawHi
  SEC
  SBC #&0A
  CLC
@@ -8436,7 +8452,7 @@
  STA vectorYawAngleHi
  LDA #&02
  STA L001E
- LDA L004C
+ LDA objTypeToAnalyse
  BNE C18FF
 
  SEC                    \ Set bit 7 of L0C6E ???
@@ -12455,7 +12471,7 @@
  LDY currentObject
  CPY playerObject
  BEQ C2105
- JSR sub_C5C01
+ JSR GetObjectAngles
  LDY currentObject
  LDX objectTypes,Y
  LDA L2107,X
@@ -12469,11 +12485,11 @@
  LDA #0
  STA L0CD4
  JSR GetPitchAngleDelta
- LDA L0C59
+ LDA objectViewYawLo
  SEC
  SBC angleLo
  STA T
- LDA L0C57
+ LDA objectViewYawHi
  SBC angleHi
  BPL C20CC
  LDA #0
@@ -12489,11 +12505,11 @@
 .C20D3
 
  STA L0C62
- LDA L0C59
+ LDA objectViewYawLo
  CLC
  ADC angleLo
  STA T
- LDA L0C57
+ LDA objectViewYawHi
  ADC angleHi
  BMI C2105
  ASL T
@@ -20976,7 +20992,7 @@ L314A = C3148+2
  LDA #0                 \ Set A = 0 so the call to DrawTitleObject draws a robot
                         \ on the right of the screen
 
- BEQ titl3              \ Jump to titl3 to skip the folloiwng and draw the robot
+ BEQ titl3              \ Jump to titl3 to skip the following and draw the robot
                         \ (this BEQ is effectively a JMP as A is always zero)
 
 .titl1
@@ -29221,21 +29237,36 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5C01
+\       Name: GetObjectAngles
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: 3D objects
+\    Summary: Calculate the angles and distances of the vector from the viewer
+\             to a specific object
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   Y                   The number of the object to be analysed
 \
 \ ******************************************************************************
 
  RTS                    \ This instruction appears to be unused
 
-.sub_C5C01
+.GetObjectAngles
 
- STY L006F
- LDA objectTypes,Y
- STA L004C
- LDX viewingObject
+ STY objectToAnalyse    \ Set objectToAnalyse to the number of the object being
+                        \ analysed
+
+ LDA objectTypes,Y      \ Set objTypeToAnalyse to the type of the object being
+ STA objTypeToAnalyse   \ analysed
+
+                        \ We start by calculating the difference (the delta) in
+                        \ all three axes between the viewer and the object we
+                        \ are analysing, to give us the 3D vector from the
+                        \ viewer to the object
+
+ LDX viewingObject      \ Set X to the object number of the viewer
 
  JSR GetHorizontalDelta \ Calculate the following:
                         \
@@ -29251,7 +29282,8 @@ L314A = C3148+2
                         \   zDeltaAbsoluteHi = |zDeltaHi|
                         \
                         \ So this calculates the difference in both horizontal
-                        \ axes between object #X and object #Y
+                        \ axes between object #X (the viewer) and object #Y (the
+                        \ object being analysed)
                         \
                         \ Note that xTitleOffset is zero during gameplay, and is
                         \ only non-zero when we are drawing a title screen
@@ -29262,7 +29294,16 @@ L314A = C3148+2
                         \                         - y-coordinate of object #X
                         \
                         \ So this calculates the difference in altitude between
-                        \ object #X and object #Y
+                        \ object #X (the viewer) and object #Y (the object being
+                        \ analysed)
+
+                        \ We now have deltas for all three aces, so we now can
+                        \ calculate the angle of the hypotenuse of the triangle
+                        \ formed by the x- and z-axes axes, which is the
+                        \ projection of the 3D vector from the viewer to the
+                        \ object down onto the ground plane (so imagine a light
+                        \ shining down from above, casting the vector's shadow
+                        \ onto the y = 0 plane - that's the hypotenuse)
 
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
@@ -29274,56 +29315,136 @@ L314A = C3148+2
                         \ and return the angle in (angleHi angleLo) and the
                         \ tangent in angleTangent
 
- LDX viewingObject
- LDA angleLo
- SEC
- SBC yawAdjustmentLo
- STA L0C59
+                        \ The angle of the hypotenuse is the yaw angle of the
+                        \ 3D vector from the viewer to the object we are
+                        \ analysing
+                        \
+                        \ We also subtract the following:
+                        \
+                        \   * objectYawAngle,X from the high byte so the result
+                        \     is the relative yaw angle from object #X (the
+                        \     viewer's) to the object
+                        \
+                        \   * yawAdjustmentLo from the low byte so ???
+                        \
+                        \ and add the following:
+                        \
+                        \   * (10 0) to add half a screen width (as the screen
+                        \     is 20 yaw angles wide)
+                        \
+                        \ So the result in (objectViewYawHi objectViewYawLo) is
+                        \ the yaw angle delta from the viewer's gaze to the
+                        \ object, plus adjustments and half a screen ???
+
+ LDX viewingObject      \ Set X to the object number of the viewer
+
+ LDA angleLo            \ Set (objectViewYawHi objectViewYawLo) =
+ SEC                    \               (angleHi angleLo) - (0 yawAdjustmentLo)
+ SBC yawAdjustmentLo    \                                 - (objectYawAngle,X 0)
+ STA objectViewYawLo    \                                 + (10 0)
  LDA angleHi
  SBC objectYawAngle,X
  CLC
- ADC #&0A
- STA L0C57
- LDY L006F
- LDA #0
- SEC
- SBC angleLo
- STA L0059
- LDA objectYawAngle,Y
- SBC angleHi
- STA L005A
- JSR GetHypotenuse
- LDA L140F
- BNE C5C60
- LDA #&80
- STA L005A
- LDA #0
- STA L0059
- CPY #&3F
- BEQ C5C60
- LSR hypotenuseHi
- ROR hypotenuseLo
- SEC
- ROR yDeltaHi
- ROR yDeltaLo
- LDA yDeltaLo
- CLC
- ADC #&70
+ ADC #10
+ STA objectViewYawHi
+
+ LDY objectToAnalyse    \ Set Y to the number of the object being analysed
+
+ LDA #0                 \ Set (objectGazeYawHi objectGazeYawLo) =
+ SEC                    \               (objectYawAngle,Y 0) - (angleHi angleLo)
+ SBC angleLo            \
+ STA objectGazeYawLo    \ This is the difference in yaw angles between the
+ LDA objectYawAngle,Y   \ hypotenuse (i.e. the viewer's gaze) and the direction
+ SBC angleHi            \ direction in which the object is facing (i.e. the
+ STA objectGazeYawHi    \ object's gaze)
+
+ JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
+                        \ in (hypotenuseHi hypotenuseLo)
+
+ LDA viewType           \ If viewType is non-zero then this is not the landscape
+ BNE oang1              \ preview, so jump to oang1 to skip the following
+
+                        \ This is the landscape preview, so we rotate the object
+                        \ to face towards the back of the landscape, so the
+                        \ Sentinel and sentries all neatly look out of the
+                        \ screen in the preview
+
+ LDA #128               \ Set (objectGazeYawHi objectGazeYawLo) = (128 0)
+ STA objectGazeYawHi    \
+ LDA #0                 \ The degree system in the Sentinel looks like this:
+ STA objectGazeYawLo    \
+                        \            0
+                        \      -32   |   +32         Overhead view of object
+                        \         \  |  /
+                        \          \ | /             0 = looking straight ahead
+                        \           \|/              +64 = looking sharp right
+                        \   -64 -----+----- +64      -64 = looking sharp left
+                        \           /|\
+                        \          / | \
+                        \         /  |  \
+                        \      -96   |   +96
+                        \           128
+                        \
+                        \ So this makes the object face directly out of the
+                        \ screen
+
+ CPY #63                \ If we are analysing object #63, then this is either
+ BEQ oang1              \ a block of 3D text or the Sentinel's tower, and the
+                        \ landscape preview doesn't use 3D text so it must be
+                        \ the Sentinel's tower, so jump to oang1 to skip the
+                        \ following
+                        \
+                        \ This ensures that all objects apart from the tower
+                        \ are drawn at double size, so they stand out more
+                        \ clearly in the landscape preview (the tower is the
+                        \ biggest object by far, so doubling its size would
+                        \ make it too large)
+
+ LSR hypotenuseHi       \ Halve the hypotenuse length to make the object appear
+ ROR hypotenuseLo       \ to be half the distance away, so it is drawn at twice
+                        \ the size
+
+ SEC                    \ Halve the object's altitude in (yDeltaHi yDeltaLo) for
+ ROR yDeltaHi           \ the same reason
+ ROR yDeltaLo           \
+                        \ Because this is the landscape view, the viewer is very
+                        \ high above the landscape (as well as a long way in
+                        \ front of the front edge), so we know that (yDeltaHi
+                        \ yDeltaLo) will be negative, as it's calculated as the
+                        \ altitude of the object being analysed minus the
+                        \ altitude of the viewer, and the latter is higher than
+                        \ any object on the landscape
+                        \
+                        \ So we can halve the value of (yDeltaHi yDeltaLo) by
+                        \ shifting a set bit into the top end of yDeltaHi, so we
+                        \ keep the sign correct
+
+ LDA yDeltaLo           \ Set (yDeltaHi yDeltaLo) += 112
+ CLC                    \
+ ADC #112               \ Starting with the low bytes
  STA yDeltaLo
- BCC C5C60
- INC yDeltaHi
 
-.C5C60
+ BCC oang1              \ And then the high byte
+ INC yDeltaHi           \
+                        \ This moves the Sentinel and sentries up so they stand
+                        \ out more clearly in the landscape preview, as
+                        \ otherwise they would appear to be sinking into the
+                        \ landscape rather than perching on top of it
 
- LDA hypotenuseLo
- STA L0C5D
- LDA hypotenuseHi
- STA L0C5E
- LDA yDeltaLo
- STA L0C5B
- LDA yDeltaHi
- STA L0C5C
- RTS
+.oang1
+
+ LDA hypotenuseLo       \ Set (objectAdjacentHi objectAdjacentLo) to the length
+ STA objectAdjacentLo   \ of the hypotenuse, which is the length of the adjacent
+ LDA hypotenuseHi       \ side in the right-angled triangle with the vector from
+ STA objectAdjacentHi   \ the viewer to the object as the hypotenuse
+
+ LDA yDeltaLo           \ Set (objectOppositeHi objectOppositeLo) to the height
+ STA objectOppositeLo   \ of the object relative to the viewer, which is the
+ LDA yDeltaHi           \ length of the opposite side in the right-angled
+ STA objectOppositeHi   \ triangle with the vector from the viewer to the object
+                        \ as the hypotenuse
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -29336,7 +29457,7 @@ L314A = C3148+2
 
 .sub_C5C75
 
- LDX L004C
+ LDX objTypeToAnalyse
  LDA #&40
  STA drawingTableIndex
  LDA L49A0+1,X
@@ -29346,9 +29467,9 @@ L314A = C3148+2
 
 .C5C85
 
- LDA L0059
+ LDA objectGazeYawLo
  STA T
- LDA L005A
+ LDA objectGazeYawHi
  CLC
  ADC L4AE0,Y
 
@@ -29375,11 +29496,11 @@ L314A = C3148+2
 .C5CA9
 
  STA U
- LDA L0C5D
+ LDA objectAdjacentLo
  CLC
  ADC T
  STA zDeltaLo
- LDA L0C5E
+ LDA objectAdjacentHi
  ADC U
  STA zDeltaHi
  BPL C5CC7
@@ -29418,10 +29539,10 @@ L314A = C3148+2
  LDY drawingTableIndex
  LDA angleLo
  CLC
- ADC L0C59
+ ADC objectViewYawLo
  STA tileViewYawLo,Y
  LDA angleHi
- ADC L0C57
+ ADC objectViewYawHi
  STA tileViewYawHi,Y
  JSR GetHypotenuse
  LDY L004E
@@ -29438,10 +29559,10 @@ L314A = C3148+2
  STA U
  LDA T
  CLC
- ADC L0C5B
+ ADC objectOppositeLo
  STA xDeltaLo
  LDA U
- ADC L0C5C
+ ADC objectOppositeHi
  LDX viewingObject
  JSR GetPitchAngleDelta
  LDY drawingTableIndex
@@ -29473,11 +29594,18 @@ L314A = C3148+2
 \
 \   Y                   The number of the object to be drawn
 \
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   Y                   Y is preserved
+\
 \ ******************************************************************************
 
 .DrawObject
 
- JSR sub_C5C01
+ JSR GetObjectAngles
+
  LDA hypotenuseHi
  CMP #&0F
  ROR L0C7A
@@ -29487,20 +29615,20 @@ L314A = C3148+2
  LDA #0
  STA L0053
  STA L0C47
- LDX L004C
+ LDX objTypeToAnalyse
  LDA L49B6,X
  BEQ drob4
  LSR A
  BCS drob1
- LDA L005A
+ LDA objectGazeYawHi
  ADC #&C0
  JMP drob3
 
 .drob1
 
- LDA L0C5C
+ LDA objectOppositeHi
  BNE drob2
- LDA L0C5B
+ LDA objectOppositeLo
  BEQ drob4
  LSR A
 
@@ -29516,7 +29644,7 @@ L314A = C3148+2
 
 .drob4
 
- LDX L004C
+ LDX objTypeToAnalyse
  LDA L49AB+1,X
  STA L004F
  LDY L49AB,X
@@ -29565,8 +29693,11 @@ L314A = C3148+2
  LDA #&0C
  STA vectorYawAngleLo
  LSR L0C7A
- LDY L006F
- RTS
+
+ LDY objectToAnalyse    \ Set Y to the number of the object we just drew, so it
+                        \ is preserved
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \

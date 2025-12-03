@@ -196,8 +196,9 @@
      004A
 .viewingQuadrantOpp
      004B
-.L004C
+.objTypeToAnalyse
      004C
+     004D
 .L004E
      004E
 .L004F
@@ -220,10 +221,11 @@
      0057
 .L0058
      0058
-.L0059
+.objectGazeYawLo
      0059
-.L005A
+.objectGazeYawHi
      005A
+     005B
 .bLo
      005C
 .bHi
@@ -262,7 +264,7 @@
      006E
 .enemyCounter
      006E
-.L006F
+.objectToAnalyse
      006F
 .P
      0070
@@ -2535,20 +2537,20 @@
      0C55   00
 .targetOnTile
      0C56   00
-.L0C57
+.objectViewYawHi
      0C57   0D
 .targetObject
      0C58   00
-.L0C59
+.objectViewYawLo
      0C59   16
      0C5A   00
-.L0C5B
+.objectOppositeLo
      0C5B   E0
-.L0C5C
+.objectOppositeHi
      0C5C   B7
-.L0C5D
+.objectAdjacentLo
      0C5D   E4
-.L0C5E
+.objectAdjacentHi
      0C5E   52
 .sightsAreVisible
      0C5F   00
@@ -3779,7 +3781,7 @@
 .L140D
      140D   00
      140E   12
-.L140F
+.viewType
      140F   01
 .SpawnEnemies
      1410   AD 52 0C   LDA &0C52
@@ -15468,7 +15470,7 @@
      5BFE   20
      5BFF   5C
      5C00   60         RTS
-.sub_C5C01
+.GetObjectAngles
      5C01   84 6F      STY &6F
      5C03   B9 40 0A   LDA &0A40,Y
      5C06   85 4C      STA &4C
@@ -15514,7 +15516,7 @@
      5C5A   85 81      STA &81
      5C5C   90 02      BCC &5C60
      5C5E   E6 84      INC &84
-.C5C60
+.oang1
      5C60   A5 7C      LDA &7C
      5C62   8D 5D 0C   STA &0C5D
      5C65   A5 7D      LDA &7D
