@@ -199,8 +199,12 @@
 .objTypeToAnalyse
      004C
      004D
+.polygonNumber
+     004E
 .pointNumber
      004E
+.objectLastPolygon
+     004F
 .objectLastPoint
      004F
 .pitchDeltaLo
@@ -209,7 +213,7 @@
      0051
 .minPitchAngle
      0052
-.L0053
+.drawingPhase
      0053
 .L0054
      0054
@@ -2511,7 +2515,7 @@
      0C44   00
      0C45   00
      0C46   00
-.L0C47
+.drawingPhaseMask
      0C47   00
 .xTileLeftPrevious
      0C48   02
@@ -11036,7 +11040,7 @@
      49A8   90
      49A9   98
      49AA   A0
-.L49AB
+.objPolygonRange
      49AB   00
      49AC   1B
      49AD   34
@@ -11048,7 +11052,7 @@
      49B3   98
      49B4   9C
      49B5   A0
-.L49B6
+.objPolygonPhases
      49B6   03
      49B7   03
      49B8   00
@@ -12313,7 +12317,7 @@
      4E9D   FF
      4E9E   FF
      4E9F   FF
-.L4EA0
+.objPolygonData
      4EA0   15
      4EA1   14
      4EA2   15
@@ -12634,7 +12638,7 @@
      4FDD   FF
      4FDE   FF
      4FDF   FF
-.L4FE0
+.L003CLo
      4FE0   B4
      4FE1   B9
      4FE2   BD
@@ -12955,7 +12959,7 @@
      511D   FF
      511E   FF
      511F   FF
-.L5120
+.L003CHi
      5120   53
      5121   53
      5122   53

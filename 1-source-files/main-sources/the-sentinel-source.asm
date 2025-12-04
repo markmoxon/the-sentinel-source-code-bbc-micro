@@ -633,11 +633,21 @@
 
  SKIP 1                 \ This byte appears to be unused ???
 
+.polygonNumber
+
+ SKIP 0                 \ A counter for the polygon number as we work through
+                        \ the polygons in an object when drawing the object
+
 .pointNumber
 
  SKIP 1                 \ A counter for the point number as we work through the
                         \ points in an object when calculating the point's
                         \ angles
+
+.objectLastPolygon
+
+ SKIP 0                 \ The number of the last polygon in the object being
+                        \ drawn
 
 .objectLastPoint
 
@@ -657,9 +667,10 @@
  SKIP 1                 \ The minimum pitch angle that fits into the current
                         \ screen buffer
 
-.L0053
+.drawingPhase
 
- SKIP 1                 \ ???
+ SKIP 1                 \ For objects that need to be drawn in multiple phases,
+                        \ this keeps track of the current the drawing phase
 
 .L0054
 
@@ -1765,9 +1776,10 @@
 
  EQUB 0, 0              \ These bytes appear to be unused
 
-.L0C47
+.drawingPhaseMask
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Only draw polygons whose polygon data bytes match bit
+                        \ 7 of the mask when drawing two-phase objects
 
 .xTileLeftPrevious
 
@@ -26568,46 +26580,64 @@ L314A = C3148+2
 
 .objPointRange
 
- EQUB 0                 \ Object type 0: point   0 to point  28 = Robot
- EQUB 29                \ Object type 1: point  29 to point  50 = Sentry
- EQUB 51                \ Object type 2: point  51 to point  67 = Tree
- EQUB 68                \ Object type 3: point  68 to point  75 = Boulder
- EQUB 76                \ Object type 4: point  76 to point  93 = Meanie
- EQUB 94                \ Object type 5: point  94 to point 123 = The Sentinel
- EQUB 124               \ Object type 6: point 124 to point 135 = Tower
- EQUB 136               \ Object type 7: point 136 to point 143 = Block 1
- EQUB 144               \ Object type 8: point 144 to point 151 = Block 2
- EQUB 152               \ Object type 9: point 152 to point 159 = Block 3
+ EQUB 0                 \ Object type 0: point   0 to point  28            Robot
+ EQUB 29                \ Object type 1: point  29 to point  50           Sentry
+ EQUB 51                \ Object type 2: point  51 to point  67             Tree
+ EQUB 68                \ Object type 3: point  68 to point  75          Boulder
+ EQUB 76                \ Object type 4: point  76 to point  93           Meanie
+ EQUB 94                \ Object type 5: point  94 to point 123     The Sentinel
+ EQUB 124               \ Object type 6: point 124 to point 135            Tower
+ EQUB 136               \ Object type 7: point 136 to point 143       3D Block 1
+ EQUB 144               \ Object type 8: point 144 to point 151       3D Block 2
+ EQUB 152               \ Object type 9: point 152 to point 159       3D Block 3
  EQUB 160
 
 \ ******************************************************************************
 \
-\       Name: L49AB
+\       Name: objPolygonRange
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: The first and last polygon numbers for each object
 \
 \ ******************************************************************************
 
-.L49AB
+.objPolygonRange
 
- EQUB &00, &1B, &34, &43
- EQUB &4D, &66, &89, &94, &98, &9C, &A0
+ EQUB 0                 \ Object type 0: polygon   0 to point  26          Robot
+ EQUB 27                \ Object type 1: polygon  27 to point  51         Sentry
+ EQUB 52                \ Object type 2: polygon  52 to point  66           Tree
+ EQUB 67                \ Object type 3: polygon  67 to point  76        Boulder
+ EQUB 77                \ Object type 4: polygon  77 to point 101         Meanie
+ EQUB 102               \ Object type 5: polygon 102 to point 136   The Sentinel
+ EQUB 137               \ Object type 6: polygon 137 to point 147          Tower
+ EQUB 148               \ Object type 7: polygon 148 to point 151     3D Block 1
+ EQUB 152               \ Object type 8: polygon 152 to point 155     3D Block 2
+ EQUB 156               \ Object type 9: polygon 156 to point 159     3D Block 3
+ EQUB 160
 
 \ ******************************************************************************
 \
-\       Name: L49B6
+\       Name: objPolygonPhases
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: The phase configuration for each object
 \
 \ ******************************************************************************
 
-.L49B6
+.objPolygonPhases
 
- EQUB &03
- EQUB &03, &00, &00, &02, &03, &00, &00, &00
- EQUB &00, &00
+ EQUB 3                 \ Object type 0: two phases                        Robot
+ EQUB 3                 \ Object type 1: two phases                       Sentry
+ EQUB 0                 \ Object type 2: one phase                          Tree
+ EQUB 0                 \ Object type 3: one phase                       Boulder
+ EQUB 2                 \ Object type 4: two phases and rotate yaw        Meanie
+ EQUB 3                 \ Object type 5: two phases                 The Sentinel
+ EQUB 0                 \ Object type 6: one phase                         Tower
+ EQUB 0                 \ Object type 7: one phase                    3D Block 1
+ EQUB 0                 \ Object type 8: one phase                    3D Block 2
+ EQUB 0                 \ Object type 9: one phase                    3D Block 3
+
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -26856,14 +26886,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L4EA0
+\       Name: objPolygonData
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing object
+\    Summary: Various data for object polygons (colour, drawing phase)
 \
 \ ******************************************************************************
 
-.L4EA0
+.objPolygonData
 
  EQUB &15, &14, &15, &99, &99, &A5, &A5, &91
  EQUB &91, &99, &90, &90, &94, &94, &90, &90
@@ -26909,14 +26939,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L4FE0
+\       Name: L003CLo
 \       Type: Variable
 \   Category: ???
-\    Summary: ???
+\    Summary: Address of ??? for polygon drawing (low byte)
 \
 \ ******************************************************************************
 
-.L4FE0
+.L003CLo
 
  EQUB &B4, &B9, &BD, &C2, &C7, &CC, &D1, &D6
  EQUB &DB, &E0, &E5, &E9, &ED, &F1, &F5, &F9
@@ -26962,14 +26992,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5120
+\       Name: L003CHi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Address of ??? for polygon drawing (high byte)
 \
 \ ******************************************************************************
 
-.L5120
+.L003CHi
 
  EQUB &53, &53, &53, &53, &53, &53, &53, &53
  EQUB &53, &53, &53, &53, &53, &53, &53, &53
@@ -29667,7 +29697,7 @@ L314A = C3148+2
  STA objectLastPoint    \ objPointRange, so this now contains the number of the
                         \ first point for the next object, object #X + 1, which
                         \ is one greater than the last point number for object
-                        \ #X, as the sets of object points are sequential (so
+                        \ #X, as the lists of object points are sequential (so
                         \ object #0's points are first in the object data
                         \ tables, then object #1's points, and so on)
 
@@ -30067,7 +30097,9 @@ L314A = C3148+2
                         \     object as the hypotenuse
                         \
                         \ This also sets (hypotenuseHi hypotenuseLo) to the same
-                        \ value as as (objectOppositeHi objectOppositeLo)
+                        \ value as as (objectOppositeHi objectOppositeLo), and
+                        \ it sets objectToAnalyse to the number of the object
+                        \ that we are drawing
 
  LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectOppositeHi) is greater or
  CMP #15                \ equal to 15 then the object is a fair distance away
@@ -30080,89 +30112,174 @@ L314A = C3148+2
                         \   (pointViewYawHi pointViewYawLo)
                         \
                         \   (pointViewPitchHi pointViewPitchLo)
+                        \
+                        \ We can use these as screen x- and y-coordinates, using
+                        \ the same screen projection that is used in Revs
 
- LDA #&40
+ LDA #%01000000         \ Set bit 6 of L003B ???
  STA L003B
- LDA #0
- STA L0053
- STA L0C47
- LDX objTypeToAnalyse
- LDA L49B6,X
- BEQ drob4
- LSR A
- BCS drob1
- LDA objectGazeYawHi
- ADC #&C0
- JMP drob3
+
+ LDA #0                 \ Set drawingPhase = 0, so the default is to draw the
+ STA drawingPhase       \ object in one phase
+
+ STA drawingPhaseMask   \ Clear bit 7 of drawingPhaseMask so we start by drawing
+                        \ polygons with bit 7 set in their polygon data byte
+
+ LDX objTypeToAnalyse   \ Set X to the number of the object we are drawing
+
+ LDA objPolygonPhases,X \ Set A to the phase data value for the object we are
+                        \ drawing
+
+ BEQ drob4              \ If A = 0, jump to drob4 to skip the following
+                        \ (tree, boulder, the Sentinel's tower, 3D blocks)
+
+ LSR A                  \ If A is odd, jump to drob1 to skip the following
+ BCS drob1              \ (robot, sentry, the Sentinel)
+
+                        \ If we get here then we are drawing a meanie and
+                        \ objPolygonPhases is 2
+
+ LDA objectGazeYawHi    \ Add 192 to the object's gaze yaw angle, to turn it
+ ADC #192               \ (the addition works because the C flag is clear, as
+                        \ we just passed through a BCS)
+
+ JMP drob3              \ Jump to drob3 to ???
 
 .drob1
 
- LDA objectOppositeHi
- BNE drob2
- LDA objectOppositeLo
- BEQ drob4
- LSR A
+                        \ If we get here then we are drawing a robot, a sentry
+                        \ or the Sentinel, and objPolygonPhases is 3
+
+ LDA objectOppositeHi   \ If (objectOppositeHi objectOppositeLo) has a non-zero
+ BNE drob2              \ high byte, jump to drob2 to ???
+
+ LDA objectOppositeLo   \ If (objectOppositeHi objectOppositeLo) = 0, jump to
+ BEQ drob4              \ drob4 to ???
+
+                        \ If we get here then objectOppositeHi = 0 and A is set
+                        \ to the non-zero value of objectOppositeLo
+
+ LSR A                  \ Clear bit 7 of A, so the following EOR instruction
+                        \ will set bit 7 and this process will end up setting
+                        \ drawingPhase = 2 before falling through into drob4
+                        \ to do the actual drawing
 
 .drob2
 
- EOR #&80
+ EOR #%10000000         \ Flip bit 7 of A, which will contain objectOppositeHi
+                        \ if we jumped here
 
 .drob3
 
- BPL drob4
- LDA #&02
- STA L0053
+ BPL drob4              \ If we jumped here because we are drawing a meanie,
+                        \ then this jumps to drob4 if the updated object's gaze
+                        \ yaw angle is positive
+                        \
+                        \ If we fell through from drbo2, then this jumps to
+                        \ drob4 if bit 7 of objectOppositeHi is set, i.e. if
+                        \ (objectOppositeHi objectOppositeLo) is negative
+
+ LDA #2                 \ Set drawingPhase = 2 so we draw each polygon in the
+ STA drawingPhase       \ object in two phases
 
 .drob4
 
- LDX objTypeToAnalyse
- LDA L49AB+1,X
- STA objectLastPoint
- LDY L49AB,X
+ LDX objTypeToAnalyse   \ Set X to the number of the object we are drawing
+
+ LDA objPolygonRange+1,X    \ Set objectLastPolygon to entry X + 1 from the
+ STA objectLastPolygon      \ table at objPolygonRange, so this now contains the
+                            \ number of the first polygon for the next object,
+                            \ object #X + 1, which is one greater than the last
+                            \ polygon number for object #X, as the lists of
+                            \ object polygons are sequential (so object #0's
+                            \ polygons are first in the object data tables, then
+                            \ object #1's polygons, and so on)
+
+ LDY objPolygonRange,X  \ Set Y to entry X from the table at objPolygonRange, so
+                        \ so this now contains the number of the first polygon
+                        \ for object #X
+                        \
+                        \ This means that in the following loop, we start the
+                        \ drawing process with the first polygon for object #X
 
 .drob5
 
- STY pointNumber
- LDA L4EA0,Y
- LDX L0053
- BEQ drob6
- EOR L0C47
- BMI drob7
+ STY polygonNumber      \ Set polygonNumber to Y, so we start from the first
+                        \ polygon and work through them in order
+
+ LDA objPolygonData,Y   \ Set A to the polygon data byte for the polygon we are
+                        \ drawing
+
+ LDX drawingPhase       \ If drawingPhase = 0 then jump to drob6 to skip the
+ BEQ drob6              \ following, as there is only one drawing phase for this
+                        \ object
+
+ EOR drawingPhaseMask   \ If bit 7 of the polygon data byte is different to bit
+ BMI drob7              \ 7 of drawingPhaseMask, jump to drob7 to skip drawing
+                        \ the polygon and move on to the next one
+                        \
+                        \ So polygons only get drawn in the phase specified in
+                        \ bit 7 of the polygon data byte (so that's in the first
+                        \ phase if bit 7 is clear, or in the second phase if bit
+                        \ 7 is set)
 
 .drob6
 
- AND #&3C
- STA polygonColour
- LDA L4EA0,Y
- AND #&03
- CLC
- ADC #&03
+ AND #%00111100         \ Extract bits 2 to 5 from the polygon data byte to get
+ STA polygonColour      \ the polygon's colour, and put it in polygonColour
+
+ LDA objPolygonData,Y   \ Set A to the polygon data byte for the polygon we are
+                        \ drawing
+
+ AND #%00000011         \ Extract bits 0 to 1 from the polygon data byte to get
+ CLC                    \ the ???, add 3 and store the result in L0017
+ ADC #3
  STA L0017
- LDA L4FE0,Y
- STA L003C
- LDA L5120,Y
- STA vectorYawAngleLo
- JSR DrawPolygon
- LDY pointNumber
+
+ LDA L003CLo,Y          \ Set L003C(1 0) to the address for this polygon from
+ STA L003C              \ L003CHi and L003CLo tables
+ LDA L003CHi,Y
+ STA L003C+1
+
+ JSR DrawPolygon        \ Draw the polygon
+
+ LDY polygonNumber      \ Set Y to the polygon number once again, as the call
+                        \ to DrawPolygon will have corrupted it
 
 .drob7
 
- INY
- CPY objectLastPoint
- BCC drob5
- DEC L0053
- BMI drob8
- BEQ drob8
- LDA #&80
- STA L0C47
- BMI drob4
+ INY                    \ Increment the polygon number in Y
+
+ CPY objectLastPolygon  \ If we have not yet reached the end of the list, loop
+ BCC drob5              \ back to drob5 to draw the next polygon, until we have
+                        \ processed all the polygons in the object
+
+ DEC drawingPhase       \ Decrement the drawing phase
+
+ BMI drob8              \ If drawingPhase was zero before being decremented then
+                        \ there was only one drawing phase, so jump to drob8 to
+                        \ finish up
+
+ BEQ drob8              \ If drawingPhase was 1 before being decremented then we
+                        \ have finished drawing both phases for two-phase
+                        \ objects, so jump to drob8 to finish up
+
+                        \ If we get here then this is a two-phase object and we
+                        \ have drawn the first phase, so now we draw the second
+                        \ phase
+
+ LDA #%10000000         \ Set bit 7 of drawingPhaseMask so we now draw polygons
+ STA drawingPhaseMask   \ with bit 7 set in their polygon data byte
+
+ BMI drob4              \ Jump back to drob4 to draw the second phase for
+                        \ two-phase objects
 
 .drob8
 
- LDA #&40
+ LDA #LO(L0C40)         \ Set L003C(1 0) = L0C40 ???
  STA L003C
- LDA #&0C
- STA vectorYawAngleLo
+ LDA #HI(L0C40)
+ STA L003C+1
 
  LSR L0C7A              \ Cleat bit 7 of L0C7A to ???
 
