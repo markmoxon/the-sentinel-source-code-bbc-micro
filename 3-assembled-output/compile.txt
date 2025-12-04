@@ -199,9 +199,9 @@
 .objTypeToAnalyse
      004C
      004D
-.L004E
+.pointNumber
      004E
-.L004F
+.objectLastPoint
      004F
 .pitchDeltaLo
      0050
@@ -2015,6 +2015,8 @@
      0A7D   00
      0A7E   00
      0A7F   09
+.pointViewPitchLo
+     0A80
 .tileViewPitchLo
      0A80   6F
      0A81   70
@@ -2112,6 +2114,8 @@
      0ADD   C4
      0ADE   00
      0ADF   00
+.pointViewPitchHi
+     0AE0
 .tileViewPitchHi
      0AE0   00
      0AE1   00
@@ -2306,6 +2310,8 @@
      0B9D   10
      0B9E   10
      0B9F   10
+.pointViewYawLo
+     0BA0
 .tileViewYawLo
      0BA0   3B
      0BA1   C1
@@ -11018,7 +11024,7 @@
      499D   FF
      499E   FF
      499F   FF
-.L49A0
+.objPointRange
      49A0   00
      49A1   1D
      49A2   33
@@ -11344,7 +11350,7 @@
      4ADD   FF
      4ADE   FF
      4ADF   FF
-.L4AE0
+.objPointYaw
      4AE0   CF
      4AE1   31
      4AE2   5F
@@ -11665,7 +11671,7 @@
      4C1D   FF
      4C1E   FF
      4C1F   FF
-.L4C20
+.objPointHeight
      4C20   F0
      4C21   F0
      4C22   F0
@@ -11986,7 +11992,7 @@
      4D5D   FF
      4D5E   FF
      4D5F   FF
-.L4D60
+.objPointDistance
      4D60   14
      4D61   14
      4D62   1B
@@ -13944,6 +13950,8 @@
      54FD   A3
      54FE   00
      54FF   00
+.pointViewYawHi
+     5500
 .tileViewYawHi
      5500   01
      5501   01
@@ -15526,7 +15534,7 @@
      5C6F   A5 84      LDA &84
      5C71   8D 5C 0C   STA &0C5C
      5C74   60         RTS
-.sub_C5C75
+.GetObjPointAngles
      5C75   A6 4C      LDX &4C
      5C77   A9 40      LDA #&40
      5C79   85 21      STA &21
@@ -15534,7 +15542,7 @@
      5C7E   85 4F      STA &4F
      5C80   BC A0 49   LDY &49A0,X
      5C83   84 4E      STY &4E
-.C5C85
+.obpt1
      5C85   A5 59      LDA &59
      5C87   85 74      STA &74
      5C89   A5 5A      LDA &5A
@@ -15551,7 +15559,7 @@
      5CA2   24 67      BIT &67
      5CA4   50 03      BVC &5CA9
      5CA6   20 09 10   JSR &1009
-.C5CA9
+.obpt2
      5CA9   85 75      STA &75
      5CAB   AD 5D 0C   LDA &0C5D
      5CAE   18         CLC
@@ -15567,7 +15575,7 @@
      5CC1   85 82      STA &82
      5CC3   A9 00      LDA #&00
      5CC5   E5 88      SBC &88
-.C5CC7
+.obpt3
      5CC7   85 85      STA &85
      5CC9   B9 60 4D   LDA &4D60,Y
      5CCC   85 75      STA &75
@@ -15595,7 +15603,7 @@
      5CFE   A9 00      LDA #&00
      5D00   90 03      BCC &5D05
      5D02   20 09 10   JSR &1009
-.C5D05
+.obpt4
      5D05   85 75      STA &75
      5D07   A5 74      LDA &74
      5D09   18         CLC
@@ -15616,7 +15624,7 @@
      5D2B   C4 4F      CPY &4F
      5D2D   F0 03      BEQ &5D32
      5D2F   4C 85 5C   JMP &5C85
-.CRE39
+.obpt5
      5D32   60         RTS
 .DrawObject
      5D33   20 01 5C   JSR &5C01

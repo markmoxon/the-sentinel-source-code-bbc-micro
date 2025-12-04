@@ -633,13 +633,15 @@
 
  SKIP 1                 \ This byte appears to be unused ???
 
-.L004E
+.pointNumber
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A counter for the point number as we work through the
+                        \ points in an object when calculating the point's
+                        \ angles
 
-.L004F
+.objectLastPoint
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The number of the last point in the object being drawn
 
 .pitchDeltaLo
 
@@ -1407,6 +1409,23 @@
 
 \ ******************************************************************************
 \
+\       Name: pointViewPitchLo
+\       Type: Variable
+\   Category: Drawing objects
+\    Summary: Storage for the pitch angles of object points in the current
+\             landscape view (low bytes)
+\
+\ ******************************************************************************
+
+.pointViewPitchLo
+
+ SKIP 0                 \ This table shares the same memory as tileViewPitchLo,
+                        \ but tile angles are stored in the first 64 bytes and
+                        \ object point angles are stored from offset 64 onwards,
+                        \ so the data does not overlap
+
+\ ******************************************************************************
+\
 \       Name: tileViewPitchLo
 \       Type: Variable
 \   Category: Drawing the landscape
@@ -1429,6 +1448,23 @@
  EQUB &58, &59, &5A, &5A, &A1, &A3, &B1, &B0
  EQUB &AC, &AD, &B3, &B3, &A9, &AA, &B9, &B9
  EQUB &BC, &BC, &C6, &C6, &C4, &C4, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: pointViewPitchHi
+\       Type: Variable
+\   Category: Drawing objects
+\    Summary: Storage for the pitch angles of object points in the current
+\             landscape view (high bytes)
+\
+\ ******************************************************************************
+
+.pointViewPitchHi
+
+ SKIP 0                 \ This table shares the same memory as tileViewPitchHi,
+                        \ but tile angles are stored in the first 64 bytes and
+                        \ object point angles are stored from offset 64 onwards,
+                        \ so the data does not overlap
 
 \ ******************************************************************************
 \
@@ -1478,6 +1514,23 @@
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
+
+\ ******************************************************************************
+\
+\       Name: pointViewYawLo
+\       Type: Variable
+\   Category: Drawing objects
+\    Summary: Storage for the yaw angles of object points in the current
+\             landscape view (low bytes)
+\
+\ ******************************************************************************
+
+.pointViewYawLo
+
+ SKIP 0                 \ This table shares the same memory as tileViewPitchHi,
+                        \ but tile angles are stored in the first 64 bytes and
+                        \ object point angles are stored from offset 64 onwards,
+                        \ so the data does not overlap
 
 \ ******************************************************************************
 \
@@ -3808,6 +3861,8 @@
 \
 \   cosA                The value of |cos(A)|
 \
+\   H                   The quadrant of the angle in bits 6 and 7 ???
+\
 \ ******************************************************************************
 
 .GetSineAndCosine
@@ -4142,7 +4197,6 @@
                         \   A = |cos(A)|
                         \
                         \   X = |sin(A)|
-
 
  STA cosA               \ Store A in cosA to return |cos(A)|
 
@@ -16670,8 +16724,10 @@ L23E3 = C23E2+1
                         \
                         \   * (zDeltaHi zDeltaLo)
                         \
-                        \ and return the angle in (angleHi angleLo) and the
-                        \ tangent in angleTangent
+                        \ and return the angle in (angleHi angleLo), the tangent
+                        \ in angleTangent, the length of the longer side in
+                        \ (aHi aLo) and the length of the shorter side in
+                        \ (bHi bLo)
 
                         \ The angle of the hypotenuse is the yaw angle of the
                         \ 3D vector from the viewer to the tile corner we are
@@ -16700,10 +16756,16 @@ L23E3 = C23E2+1
  SBC screenLeftYawHi
  STA tileViewYawHi,Y
 
- JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
-                        \ in (hypotenuseHi hypotenuseLo), so we can use it to
-                        \ calculate the pitch angle of the viewer-to-tile vector
-                        \ in part 3
+ JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
+                        \ with side lengths of (aHi aLo) and (bHi bLo) and angle
+                        \ angleTangent, which are still set from the call to
+                        \ GetHypotenuseAngle above to the values for the 3D
+                        \ vector from the viewer to the tile corner we are
+                        \ analysing
+                        \
+                        \ The hypotenuse length is returned in (hypotenuseHi
+                        \ hypotenuseLo), so we can use it to calculate the pitch
+                        \ angle of the viewer-to-tile vector in part 3
 
                         \ Fall through into part 2 to start the pitch angle
                         \ calculations
@@ -17060,7 +17122,7 @@ L23E3 = C23E2+1
  SBC yObjectLo,X        \ We set U above to the altitude of the tile that we are
  STA xDeltaLo           \ analysing, so (A xDeltaLo) now contains the vertical
  LDA U                  \ distance between the viewer and the tile we are
- SBC yObjectHi,X        \ analysing
+ SBC yObjectHi,X        \ analysing, ready to pass to GetPitchAngleDelta
 
  JSR GetPitchAngleDelta \ Set (pitchDeltaHi pitchDeltaLo) to the pitch angle of
                         \ the vector relative to the viewer's pitch angle
@@ -26497,17 +26559,26 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L49A0
+\       Name: objPointRange
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: The first and last point numbers for each object
 \
 \ ******************************************************************************
 
-.L49A0
+.objPointRange
 
- EQUB &00, &1D, &33, &44, &4C, &5E, &7C
- EQUB &88, &90, &98, &A0
+ EQUB 0                 \ Object type 0: point   0 to point  28 = Robot
+ EQUB 29                \ Object type 1: point  29 to point  50 = Sentry
+ EQUB 51                \ Object type 2: point  51 to point  67 = Tree
+ EQUB 68                \ Object type 3: point  68 to point  75 = Boulder
+ EQUB 76                \ Object type 4: point  76 to point  93 = Meanie
+ EQUB 94                \ Object type 5: point  94 to point 123 = The Sentinel
+ EQUB 124               \ Object type 6: point 124 to point 135 = Tower
+ EQUB 136               \ Object type 7: point 136 to point 143 = Block 1
+ EQUB 144               \ Object type 8: point 144 to point 151 = Block 2
+ EQUB 152               \ Object type 9: point 152 to point 159 = Block 3
+ EQUB 160
 
 \ ******************************************************************************
 \
@@ -26617,14 +26688,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L4AE0
+\       Name: objPointYaw
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Polar yaw angles for each of the points in each of the objects
 \
 \ ******************************************************************************
 
-.L4AE0
+.objPointYaw
 
  EQUB &CF, &31, &5F, &A1, &D9, &27, &57, &A9
  EQUB &CB, &00, &35, &55, &AB, &C5, &3B, &52
@@ -26670,14 +26741,23 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L4C20
+\       Name: objPointHeight
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: The height of each of the points in each of the objects, relative
+\             to the object's origin
+\
+\ ------------------------------------------------------------------------------
+\
+\ The height is stored as follows:
+\
+\   * Bit 7 contains the sign bit
+\
+\   * Bits 0 to 6 contain half the magnitude of the height
 \
 \ ******************************************************************************
 
-.L4C20
+.objPointHeight
 
  EQUB &F0, &F0, &F0, &F0, &B8, &B8, &B8, &B8
  EQUB &B8, &B8, &B8, &B8, &B8, &92, &92, &92
@@ -26723,14 +26803,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L4D60
+\       Name: objPointDistance
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Polar distances for each of the points in each of the objects
 \
 \ ******************************************************************************
 
-.L4D60
+.objPointDistance
 
  EQUB &14, &14, &1B, &1B, &1F, &1F, &23, &23
  EQUB &2A, &20, &2A, &30, &30, &34, &34, &38
@@ -27043,6 +27123,23 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
+\       Name: pointViewYawHi
+\       Type: Variable
+\   Category: Drawing objects
+\    Summary: Storage for the yaw angles of object points in the current
+\             landscape view (high bytes)
+\
+\ ******************************************************************************
+
+.pointViewYawHi
+
+ SKIP 0                 \ This table shares the same memory as tileViewYawHi,
+                        \ but tile angles are stored in the first 64 bytes and
+                        \ object point angles are stored from offset 64 onwards,
+                        \ so the data does not overlap
+
+\ ******************************************************************************
+\
 \       Name: tileViewYawHi
 \       Type: Variable
 \   Category: Drawing the landscape
@@ -27113,6 +27210,10 @@ L314A = C3148+2
 \   angleTangent        The tangent of the angle of the hypotenuse
 \
 \   (angleHi angleLo)   The angle of the hypotenuse
+\
+\   (aHi aLo)           The length of the longer side in the triangle
+\
+\   (bHi bLo)           The length of the shorter side in the triangle
 \
 \ ******************************************************************************
 
@@ -27511,8 +27612,10 @@ L314A = C3148+2
                         \
                         \   * (hypotenuseHi hypotenuseLo)
                         \
-                        \ and return the angle in (angleHi angleLo) and the
-                        \ tangent in angleTangent
+                        \ and return the angle in (angleHi angleLo), the tangent
+                        \ in angleTangent, the length of the longer side in
+                        \ (aHi aLo) and the length of the shorter side in
+                        \ (bHi bLo)
 
  LDA angleLo            \ Set (A pitchDeltaLo) = (angleHi angleLo)
  SEC                    \                        - (objectPitchAngle 32)
@@ -29245,6 +29348,34 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
+\ This routine calculates the following for an object:
+\
+\ 1. (xDeltaHi xDeltaLo) etc.: Calculate the difference (the delta) in all three
+\ axes between the viewer and the object we are analysing, to give us the 3D
+\ vector from the viewer to the object.
+\
+\ 2. (angleHi angleLo): Calculate the angle of the hypotenuse of the triangle
+\ formed by the x- and z-axes axes, which is the projection of the 3D vector
+\ from the viewer to the object down onto the ground plane (so imagine a light
+\ shining down from above, casting the vector's shadow onto the y = 0 plane -
+\ that's the hypotenuse)
+\
+\ 3. (objectViewYawHi objectViewYawLo): The angle of the hypotenuse is the yaw
+\ angle of the 3D vector from the viewer to the object we are analysing. We
+\ subtract the viewer's yaw angle and the yaw adjustment, and add half a screen
+\ width to get the yaw angle delta from the viewer's gaze to the object,
+\ relative to the viewer's gaze, i.e. the screen). This gives us the yaw angle
+\ relative to the view. You can think of this as the screen x-coordinate of the
+\ object, or how far the object appears from the left edge of the screen.
+\
+\ 4. (objectGazeYawHi objectGazeYawLo) and (hypotenuseHi hypotenuseLo): Set to
+\ the object's gaze relative to the viewer's gaze.
+\
+\ 5. If this is the landscape preview, rotate the object to face forwards and
+\ scale it so it looks good.
+\
+\ ------------------------------------------------------------------------------
+\
 \ Arguments:
 \
 \   Y                   The number of the object to be analysed
@@ -29297,7 +29428,7 @@ L314A = C3148+2
                         \ object #X (the viewer) and object #Y (the object being
                         \ analysed)
 
-                        \ We now have deltas for all three aces, so we now can
+                        \ We now have deltas for all three axes, so we now can
                         \ calculate the angle of the hypotenuse of the triangle
                         \ formed by the x- and z-axes axes, which is the
                         \ projection of the 3D vector from the viewer to the
@@ -29312,8 +29443,13 @@ L314A = C3148+2
                         \
                         \   * (zDeltaHi zDeltaLo)
                         \
-                        \ and return the angle in (angleHi angleLo) and the
-                        \ tangent in angleTangent
+                        \ and return the angle in (angleHi angleLo), the tangent
+                        \ in angleTangent, the length of the longer side in
+                        \ (aHi aLo) and the length of the shorter side in
+                        \ (bHi bLo)
+                        \
+                        \ This call also sets the (aHi aLo) and (bHi bLo)
+                        \ variables so we can call GetHypotenuse below ???
 
                         \ The angle of the hypotenuse is the yaw angle of the
                         \ 3D vector from the viewer to the object we are
@@ -29323,7 +29459,7 @@ L314A = C3148+2
                         \
                         \   * objectYawAngle,X from the high byte so the result
                         \     is the relative yaw angle from object #X (the
-                        \     viewer's) to the object
+                        \     viewer's gaze) to the object
                         \
                         \   * yawAdjustmentLo from the low byte so ???
                         \
@@ -29334,7 +29470,12 @@ L314A = C3148+2
                         \
                         \ So the result in (objectViewYawHi objectViewYawLo) is
                         \ the yaw angle delta from the viewer's gaze to the
-                        \ object, plus adjustments and half a screen ???
+                        \ object, plus adjustments and half a screen, to give us
+                        \ the yaw angle relative to the view
+                        \
+                        \ You can think of this as the screen x-coordinate of
+                        \ the object, or how far the object appears from the
+                        \ left edge of the screen
 
  LDX viewingObject      \ Set X to the object number of the viewer
 
@@ -29355,11 +29496,19 @@ L314A = C3148+2
  SBC angleLo            \
  STA objectGazeYawLo    \ This is the difference in yaw angles between the
  LDA objectYawAngle,Y   \ hypotenuse (i.e. the viewer's gaze) and the direction
- SBC angleHi            \ direction in which the object is facing (i.e. the
- STA objectGazeYawHi    \ object's gaze)
+ SBC angleHi            \ in which the object is facing (i.e. the object's gaze
+ STA objectGazeYawHi    \ to wherever it is looking), so that's the object's
+                        \ gaze relative to the viewer's gaze
 
- JSR GetHypotenuse      \ Calculate the length of the hypotenuse and return it
-                        \ in (hypotenuseHi hypotenuseLo)
+ JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
+                        \ with side lengths of (aHi aLo) and (bHi bLo) and angle
+                        \ angleTangent, which are still set from the call to
+                        \ GetHypotenuseAngle above to the values for the
+                        \ projection of the 3D vector from the viewer to the
+                        \ object down onto the ground plane
+                        \
+                        \ The hypotenuse length is returned in (hypotenuseHi
+                        \ hypotenuseLo)
 
  LDA viewType           \ If viewType is non-zero then this is not the landscape
  BNE oang1              \ preview, so jump to oang1 to skip the following
@@ -29448,83 +29597,220 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5C75
+\       Name: GetObjPointAngles
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Calculate the view-relative pitch and yaw angles of all the points
+\             in an object
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine loops through each point in an object definition and calculates
+\ the following, storing the results in the last 32 bytes of the drawing tables
+\ at (pointViewYawHi pointViewYawLo) and (pointViewPitchHi pointViewPitchLo):
+\
+\ 1. A: Calculate the yaw angle of the point, rotated by the rotation of the
+\ object itself (i.e. its gaze), so this is the yaw angle of the object point
+\ within the object, but with the the correct rotation for the direction the
+\ object is facing.
+\
+\ 2. (xDeltaHi xDeltaLo), (zDeltaHi zDeltaLo): Convert this yaw angle and the
+\ polar distance into x- and z-coordinates for the point in the y = 0 plane
+\ (i.e. on the ground) using cos(A) and sin(A) on a triangle with the line along
+\ the polar distance to the point as the hypotenuse. So these are the x- and
+\ z-coordinates of the object point within the object itself (i.e. relative to
+\ the object's origin and rotated to the correct gaze).
+\
+\ 3. (angleHi angleLo): Calculate the angle of the right-angled triangle made
+\ up of the object point's object-relative x- and z-coordinates, to give us the
+\ angle of the vector from the object's origin to the to the point within the
+\ object.
+\
+\ 4. (pointViewYawHi pointViewYawLo): Rotate the yaw angle of the point within
+\ the object definition by the object's view-relative yaw angle to get the
+\ view-relative yaw angle of the point. This is the yaw angle of the vector from
+\ the viewer to the object point.
+\
+\ 5. (pointViewPitchHi pointViewPitchLo): Construct the vertical triangle that
+\ has the viewer-to-point vector as the hypotenuse, the point altitude as the
+\ opposite side and the projection onto the ground of the vector as the adjacent
+\ side, and use this to calculate the pitch angle of the vector from the viewer
+\ to the object point.
 \
 \ ******************************************************************************
 
-.sub_C5C75
+.GetObjPointAngles
 
- LDX objTypeToAnalyse
- LDA #&40
- STA drawingTableIndex
- LDA L49A0+1,X
- STA L004F
- LDY L49A0,X
- STY L004E
+ LDX objTypeToAnalyse   \ Set X to the number of the object we are drawing
 
-.C5C85
+ LDA #64                \ Set drawingTableIndex to 64 to use as the index into
+ STA drawingTableIndex  \ the drawing tables for the object we are drawing, so
+                        \ we store the results in the following drawing tables:
+                        \
+                        \   (pointViewYawHi pointViewYawLo)
+                        \
+                        \   (pointViewPitchHi pointViewPitchLo)
+                        \
+                        \ Note that these drawing tables live just after the
+                        \ tile drawing tables in memory, and the index is set
+                        \ accordingly
+                        \
+                        \ Specifically, the tile view angles is stored with a
+                        \ drawing index of 0 or 32, thus taking up the first 64
+                        \ bytes of each table, while the object point angles
+                        \ are stored from drawing index 64
+                        \
+                        \ Each drawing table is 96 bytes in total, so they fit
+                        \ together nicely
 
- LDA objectGazeYawLo
- STA T
- LDA objectGazeYawHi
- CLC
- ADC L4AE0,Y
+ LDA objPointRange+1,X  \ Set objectLastPoint to entry X + 1 from the table at
+ STA objectLastPoint    \ objPointRange, so this now contains the number of the
+                        \ first point for the next object, object #X + 1, which
+                        \ is one greater than the last point number for object
+                        \ #X, as the sets of object points are sequential (so
+                        \ object #0's points are first in the object data
+                        \ tables, then object #1's points, and so on)
+
+ LDY objPointRange,X    \ Set Y and pointNumber to entry X from the table at
+ STY pointNumber        \ objPointRange, so this now contains the number of the
+                        \ first point for object #X
+
+                        \ We now work through the points in the object, using Y
+                        \ as the point number and working through the points
+                        \ from first to last
+                        \
+                        \ Object points are stored as polar coordinates plus a
+                        \ height, to define where they appear within the object
+                        \
+                        \ The polar coordinate consists of a polar yaw angle and
+                        \ a polar distance (where these are relative to the gaze
+                        \ and origin of the object in the object's definition),
+                        \ which together define the position of the point on the
+                        \ ground plane (y = 0), as if we were looking at the
+                        \ object from above
+                        \
+                        \ The height defines the y-coordinate of the point
+                        \ relative to the object's origin, so that's the height
+                        \ of the point within the object
+                        \
+                        \ You can think of the polar coordinate as defining the
+                        \ positions of the points on a piece of paper, and the
+                        \ height then extruding those points up and down, away
+                        \ from the paper, to create a 3D model
+
+.obpt1
+
+ LDA objectGazeYawLo    \ Set (A T) =   (objectGazeYawHi objectGazeYawLo)
+ STA T                  \             + yaw angle for point Y
+ LDA objectGazeYawHi    \
+ CLC                    \ So this is the yaw angle of point Y in the object,
+ ADC objPointYaw,Y      \ rotated by the rotation of the object itself (i.e. its
+                        \ gaze), so this is the yaw angle of the object point
+                        \ within the object, but with the correct rotation for
+                        \ the direction the object is facing
 
  JSR GetSineAndCosine   \ Calculate the following:
                         \
                         \   sinA = |sin(A)|
                         \
                         \   cosA = |cos(A)|
+                        \
+                        \ where A is the yaw angle of the object point
+                        \
+                        \ This also returns the quadrant of the angle in bits 6
+                        \ and 7 of H ???
 
- LDY L004E
- LDA L4D60,Y
+ LDY pointNumber        \ Set U to the polar distance of the object point
+ LDA objPointDistance,Y
  STA U
- LDA cosA
 
- JSR Multiply8x8        \ Set (A T) = A * U
+ LDA cosA               \ Set (A T) = A * U
+ JSR Multiply8x8        \           = distance * cos(A)
 
- STA T
- LDA #0
- BIT H
- BVC C5CA9
+ STA T                  \ Set (A T) = distance * cos(A) / 256
+ LDA #0                 \
+                        \ This discards the fractional part of the result
+
+ BIT H                  \ If bit 6 of H is clear then the result already has the
+ BVC obpt2              \ correct sign, so jump to obpt2 to skip the following
+                        \ ???
 
  JSR Negate16Bit        \ Set (A T) = -(A T)
+                        \
+                        \ So the result now has the correct sign
 
-.C5CA9
+.obpt2
 
- STA U
- LDA objectAdjacentLo
- CLC
- ADC T
- STA zDeltaLo
- LDA objectAdjacentHi
- ADC U
- STA zDeltaHi
- BPL C5CC7
- LDA #0
- SEC
+ STA U                  \ Set (U T) = (A T)
+                        \           = distance * cos(A)
+                        \
+                        \ So this is the length of the adjacent side in the
+                        \ triangle with the polar distance as the hypotenuse
+
+ LDA objectAdjacentLo   \ Set (zDeltaHi zDeltaLo) =
+ CLC                    \     (objectAdjacentHi objectAdjacentLo) + (U T)
+ ADC T                  \
+ STA zDeltaLo           \ So this adds the adjacent side of the vector from the
+ LDA objectAdjacentHi   \ viewer to the object, to the adjacent side of the
+ ADC U                  \ polar coordinate of the object point
+ STA zDeltaHi           \
+                        \ This gives the distance along the axis of the object
+                        \ point, i.e. the point's coordinate
+
+ BPL obpt3              \ If the high byte of the result is positive, jump to
+                        \ obpt3 as the result in A is already correct for the
+                        \ absolute value (i.e. A = zDeltaHi = |zDeltaHi|)
+
+ LDA #0                 \ Negate (zDeltaHi zDeltaLo) so it contains the absolute
+ SEC                    \ value of the coordinate
  SBC zDeltaLo
  STA zDeltaLo
  LDA #0
  SBC zDeltaHi
 
-.C5CC7
+.obpt3
 
- STA zDeltaAbsoluteHi
- LDA L4D60,Y
+                        \ As the angle of the triangle is at the viewer end of
+                        \ the hypotenuse, the length of the adjacent side is
+                        \ effectively the length of the side along the z-axis,
+                        \ so we can use the distance as a z-coordinate
+
+ STA zDeltaAbsoluteHi   \ Set zDeltaAbsoluteHi = |zDeltaHi|
+                        \
+                        \ So we now have the absolute z-axis length in:
+                        \
+                        \   (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and the original high byte of the signed z-axis length
+                        \ is still in zDeltaHi
+
+                        \ We now do a similar calculation for the x-axis, but
+                        \ using sin(A) instead of cos(A) to get the length of
+                        \ the opposite side of the triangle instead of the
+                        \ adjacent
+
+ LDA objPointDistance,Y \ Set U to the polar distance of the object point
  STA U
- LDA sinA
 
- JSR Multiply8x8        \ Set (A T) = A * U
+ LDA sinA               \ Set (A T) = A * U
+ JSR Multiply8x8        \           = distance * sin(A)
 
- STA xDeltaLo
+ STA xDeltaLo           \ Set (A xDeltaLo) = distance * sin(A) / 256
  LDA #0
- STA xDeltaAbsoluteHi
- LDA H
- STA xDeltaHi
+
+ STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = 0 so it is correctly set to the
+                        \ high byte of (A xDeltaLo), as A is 0
+
+ LDA H                  \ Set xDeltaHi to the quadrant of the angle so that
+ STA xDeltaHi           \ (xDeltaHi xDeltaLo) is the correctly signed length of
+                        \ the opposite ???
+
+                        \ So we now have the x- and z-coordinates of the object
+                        \ point within the object itself (i.e. relative to the
+                        \ object's origin and rotated to the correct gaze), so
+                        \ we can calculate the angle in that triangle, to give
+                        \ us the yaw angle of the point relative to the object's
+                        \ origin
 
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
@@ -29533,53 +29819,206 @@ L314A = C3148+2
                         \
                         \   * (zDeltaHi zDeltaLo)
                         \
-                        \ and return the angle in (angleHi angleLo) and the
-                        \ tangent in angleTangent
+                        \ and return the angle in (angleHi angleLo), the tangent
+                        \ in angleTangent, the length of the longer side in
+                        \ (aHi aLo) and the length of the shorter side in
+                        \ (bHi bLo)
+                        \
+                        \ So (angleHi angleLo) is the angle of the right-angled
+                        \ triangle made up of the object point's object-relative
+                        \ x- and z-coordinates, i.e. the yaw angle of the point
+                        \ within the object, or the angle of the vector from the
+                        \ object's origin to the to the point within the object
 
- LDY drawingTableIndex
- LDA angleLo
- CLC
- ADC objectViewYawLo
- STA tileViewYawLo,Y
- LDA angleHi
- ADC objectViewYawHi
- STA tileViewYawHi,Y
- JSR GetHypotenuse
- LDY L004E
- LDA L4C20,Y
- ASL A
- STA T
+                        \ We now calculate the yaw and pitch angles of the point
+                        \ in terms of the 3D world, storing the results in the
+                        \ following tables:
+                        \
+                        \   (pointViewYawHi pointViewYawLo)
+                        \
+                        \   (pointViewPitchHi pointViewPitchLo)
+                        \
+                        \ We do this by constructing two right-angled triangles,
+                        \ one flat on the ground (to calculate the yaw angle)
+                        \ and the other standing vertically (to calculate the
+                        \ pitch angle)
+                        \
+                        \ Let's start with the triangle on the ground
+                        \
+                        \ The object has a view-relative yaw angle of:
+                        \
+                        \   (objectViewYawHi objectViewYawLo)
+                        \
+                        \ which was set up by the call to the GetObjectAngles
+                        \ routine before we called this routine
+                        \
+                        \ This contains the yaw angle of the object relative to
+                        \ the view
+                        \
+                        \ We just calculated the object-relative yaw angle of
+                        \ the object point in:
+                        \
+                        \   (angleHi angleLo)
+                        \
+                        \ If we add these two yaw angles together to get:
+                        \
+                        \   (angleHi angleLo) + (objectViewYawHi objectViewYawLo)
+                        \
+                        \ then this gives us the view-relative yaw angle of the
+                        \ object point, which is what we are trying to calculate
+                        \ in this routine
+
+ LDY drawingTableIndex  \ Set Y to the drawing table index for this object point
+                        \ so we store the results in the last 32 bytes of the
+                        \ tile view drawing tables (i.e. in the object point
+                        \ drawing tables)
+
+ LDA angleLo            \ Set (pointViewYawHi pointViewYawLo) for this point to:
+ CLC                    \
+ ADC objectViewYawLo    \   (angleHi angleLo) + (objectViewYawHi objectViewYawLo)
+ STA pointViewYawLo,Y   \
+ LDA angleHi            \ So this is the angle in our first triangle, which is
+ ADC objectViewYawHi    \ the view-relative yaw angle of the object point, so
+ STA pointViewYawHi,Y   \ store this in the drawing table at (pointViewYawHi
+                        \ pointViewYawLo)
+
+                        \ We now move on to calculating the view-relative pitch
+                        \ angle of the object point by looking at the second
+                        \ triangle
+                        \
+                        \ In the first triangle, we calculated the length and
+                        \ angle of the hypotenuse along the ground, which
+                        \ represents the projection from above of the vector
+                        \ from the viewer to the object point
+                        \
+                        \ We're now interested in the y-axis element, so let's
+                        \ construct a triangle that stands vertically, and whose
+                        \ hypotenuse is the 3D vector from the viewer to the
+                        \ object point
+                        \
+                        \ The hypotenuse that we used to calculate the yaw angle
+                        \ is now along the ground, acting as the bottom side
+                        \ of the new triangle, i.e. the adjacent side where the
+                        \ triangle's angle is the pitch angle
+                        \
+                        \ The opposite side of the triangle is the height of the
+                        \ point above the ground (if we're looking up) or below
+                        \ ground (if we're looking down), which we can calculate
+                        \ using the objPointHeight table, which contains the
+                        \ height of the point within the object, and adding the
+                        \ view-relative y-coordinate of the object
+                        \
+                        \ Given these two sides, we can then calculate the pitch
+                        \ angle of our new triangle to give the view-relative
+                        \ pitch angle of the object point, which is what we are
+                        \ trying to calculate in this routine
+
+ JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
+                        \ with side lengths of (aHi aLo) and (bHi bLo) and angle
+                        \ angleTangent, which are still set from the call to
+                        \ GetHypotenuseAngle above to the values for the vector
+                        \ from the object's origin to the to the point within
+                        \ the object
+                        \
+                        \ So this is the adjacent side of our new triangle,
+                        \ along the ground
+                        \
+                        \ The hypotenuse length is returned in (hypotenuseHi
+                        \ hypotenuseLo)
+
+ LDY pointNumber        \ Set A to the objPointHeight entry for the object point
+ LDA objPointHeight,Y   \
+                        \ The height is stored in objPointHeight as follows:
+                        \
+                        \   * Bit 7 contains the sign bit
+                        \
+                        \   * Bits 0 to 6 contain half the magnitude of the
+                        \     height
+                        \
+                        \ So the height stored as a scaled, sign-magnitude value
+                        \ that we now need to extract into a signed number
+
+ ASL A                  \ Shift the sign bit into the C flag and double the
+                        \ value in bits 0 to 6 to get the magnitude of the
+                        \ height in A, so:
+                        \
+                        \   A = |height|
+
+ STA T                  \ Set (A T) = |height|
  LDA #0
- BCC C5D05
+
+ BCC obpt4              \ If the sign bit is clear then the height is positive
+                        \ and (A T) already has the correct sign, so jump to
+                        \ obpt4 to skip the following
+
+                        \ Otherwise the sign bit is set and the height is
+                        \ negative, so we need to negate the absolute value to
+                        \ get the signed height
 
  JSR Negate16Bit        \ Set (A T) = -(A T)
+                        \
+                        \ So the result now has the correct sign
 
-.C5D05
+.obpt4
 
- STA U
- LDA T
- CLC
- ADC objectOppositeLo
- STA xDeltaLo
- LDA U
+ STA U                  \ Set (U T) = (A T)
+                        \
+                        \ So (U T) contains the height of the object point
+                        \ relative to the object's origin, i.e. within the
+                        \ object
+
+                        \ We already calculated the object's view-relative
+                        \ y-coordinate in (objectOppositeHi objectOppositeLo),
+                        \ so now we add the two together to get the height
+                        \ of the object point, relative to the view
+
+ LDA T                  \ Set (A xDeltaLo) = (U T) + 
+ CLC                    \                    (objectOppositeHi objectOppositeLo)
+ ADC objectOppositeLo   \
+ STA xDeltaLo           \ So (A xDeltaLo) now contains the vertical delta, ready
+ LDA U                  \ to pass to GetPitchAngleDelta
  ADC objectOppositeHi
- LDX viewingObject
- JSR GetPitchAngleDelta
- LDY drawingTableIndex
- LDA pitchDeltaHi
- STA tileViewPitchHi,Y
+
+ LDX viewingObject      \ Set X to the object number of the viewer so the call
+                        \ to GetPitchAngleDelta calculates the pitch angle
+                        \ relative to the viewing object's gaze
+
+ JSR GetPitchAngleDelta \ Set (pitchDeltaHi pitchDeltaLo) to the pitch angle of
+                        \ the vector along the hypotenuse of our new triangle,
+                        \ given the length of the vertical side in (A xDeltaLo)
+                        \ and the length of the adjacent side in (hypotenuseHi
+                        \ hypotenuseLo), relative to the viewing object's gaze
+                        \
+                        \ So we now have the view-relative pitch angle of the
+                        \ object point, which is what we are trying to calculate
+                        \ in this routine
+
+ LDY drawingTableIndex  \ Set Y to the drawing table index for this object point
+                        \ so we store the results in the last 32 bytes of the
+                        \ tile view drawing tables (i.e. in the object point
+                        \ drawing tables)
+
+ LDA pitchDeltaHi       \ Store (pitchDeltaHi pitchDeltaLo) in the drawing table
+ STA pointViewPitchHi,Y \ as (pointViewPitchHi pointViewPitchLo)
  LDA pitchDeltaLo
- STA tileViewPitchLo,Y
- INC L004E
- INC drawingTableIndex
- LDY L004E
- CPY L004F
- BEQ CRE39
- JMP C5C85
+ STA pointViewPitchLo,Y
 
-.CRE39
+ INC pointNumber        \ Increment the point number to move on to the next
+                        \ point in the object
 
- RTS
+ INC drawingTableIndex  \ Increment the index into the drawing table so we store
+                        \ the results for the next point in the next byte in the
+                        \ drawing tables
+
+ LDY pointNumber        \ If we have reached the first point of the next object
+ CPY objectLastPoint    \ then we have processed all the points in this object,
+ BEQ obpt5              \ so jump to obpt5 to return from the subroutine
+
+ JMP obpt1              \ Loop back to process the next point in the object
+
+.obpt5
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -29604,12 +30043,44 @@ L314A = C3148+2
 
 .DrawObject
 
- JSR GetObjectAngles
+ JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
+                        \ the viewer to the object into the following variables:
+                        \
+                        \   * Set (objectViewYawHi objectViewYawLo) to the yaw
+                        \     angle of the viewer's gaze towards the object,
+                        \     relative to the screen
+                        \
+                        \   * Set (objectGazeYawHi objectGazeYawLo) to the
+                        \     difference in yaw angles between the viewer's gaze
+                        \     towards the object and the object's gaze to
+                        \     wherever it is looking (so that's the object's
+                        \     gaze relative to the viewer's gaze)
+                        \
+                        \   * Set (objectAdjacentHi objectAdjacentLo) to the
+                        \     length of the adjacent side in the right-angled
+                        \     triangle with the vector from the viewer to the
+                        \     object as the hypotenuse
+                        \
+                        \   * Set (objectOppositeHi objectOppositeLo) to the
+                        \     length of the opposite side in the right-angled
+                        \     triangle with the vector from the viewer to the
+                        \     object as the hypotenuse
+                        \
+                        \ This also sets (hypotenuseHi hypotenuseLo) to the same
+                        \ value as as (objectOppositeHi objectOppositeLo)
 
- LDA hypotenuseHi
- CMP #&0F
- ROR L0C7A
- JSR sub_C5C75
+ LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectOppositeHi) is greater or
+ CMP #15                \ equal to 15 then the object is a fair distance away
+ ROR L0C7A              \ from the viewer, so set bit 7 of L0C7A to ???
+
+ JSR GetObjPointAngles  \ Calculate the view-relative pitch and yaw angles of
+                        \ all the points in the object and put them into the
+                        \ drawing tables at:
+                        \
+                        \   (pointViewYawHi pointViewYawLo)
+                        \
+                        \   (pointViewPitchHi pointViewPitchLo)
+
  LDA #&40
  STA L003B
  LDA #0
@@ -29646,12 +30117,12 @@ L314A = C3148+2
 
  LDX objTypeToAnalyse
  LDA L49AB+1,X
- STA L004F
+ STA objectLastPoint
  LDY L49AB,X
 
 .drob5
 
- STY L004E
+ STY pointNumber
  LDA L4EA0,Y
  LDX L0053
  BEQ drob6
@@ -29672,12 +30143,12 @@ L314A = C3148+2
  LDA L5120,Y
  STA vectorYawAngleLo
  JSR DrawPolygon
- LDY L004E
+ LDY pointNumber
 
 .drob7
 
  INY
- CPY L004F
+ CPY objectLastPoint
  BCC drob5
  DEC L0053
  BMI drob8
@@ -29692,7 +30163,8 @@ L314A = C3148+2
  STA L003C
  LDA #&0C
  STA vectorYawAngleLo
- LSR L0C7A
+
+ LSR L0C7A              \ Cleat bit 7 of L0C7A to ???
 
  LDY objectToAnalyse    \ Set Y to the number of the object we just drew, so it
                         \ is preserved
@@ -29784,6 +30256,13 @@ L314A = C3148+2
 .delt1
 
  STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = |xDeltaHi|
+                        \
+                        \ So we now have the absolute x-axis length in:
+                        \
+                        \   (xDeltaAbsoluteHi xDeltaLo)
+                        \
+                        \ and the original high byte of the signed x-axis length
+                        \ is still in xDeltaHi
 
                         \ We now do the same thing, but with the z-coordinates
                         \
@@ -29815,6 +30294,13 @@ L314A = C3148+2
 .delt2
 
  STA zDeltaAbsoluteHi   \ Set zDeltaAbsoluteHi = |zDeltaHi|
+                        \
+                        \ So we now have the absolute z-axis length in:
+                        \
+                        \   (zDeltaAbsoluteHi zDeltaLo)
+                        \
+                        \ and the original high byte of the signed z-axis length
+                        \ is still in zDeltaHi
 
  RTS                    \ Return from the subroutine
 
