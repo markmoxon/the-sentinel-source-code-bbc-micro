@@ -26580,16 +26580,16 @@ L314A = C3148+2
 
 .objPointRange
 
- EQUB 0                 \ Object type 0: point   0 to point  28            Robot
- EQUB 29                \ Object type 1: point  29 to point  50           Sentry
- EQUB 51                \ Object type 2: point  51 to point  67             Tree
- EQUB 68                \ Object type 3: point  68 to point  75          Boulder
- EQUB 76                \ Object type 4: point  76 to point  93           Meanie
- EQUB 94                \ Object type 5: point  94 to point 123     The Sentinel
- EQUB 124               \ Object type 6: point 124 to point 135            Tower
- EQUB 136               \ Object type 7: point 136 to point 143       3D Block 1
- EQUB 144               \ Object type 8: point 144 to point 151       3D Block 2
- EQUB 152               \ Object type 9: point 152 to point 159       3D Block 3
+ EQUB 0                 \ Object type 0: Robot                 Points   0 to  28
+ EQUB 29                \ Object type 1: Sentry                Points  29 to  50
+ EQUB 51                \ Object type 2: Tree                  Points  51 to  67
+ EQUB 68                \ Object type 3: Boulder               Points  68 to  75
+ EQUB 76                \ Object type 4: Meanie                Points  76 to  93
+ EQUB 94                \ Object type 5: The Sentinel          Points  94 to 123
+ EQUB 124               \ Object type 6: Sentinel's tower      Points 124 to 135
+ EQUB 136               \ Object type 7: 3D text block 1       Points 136 to 143
+ EQUB 144               \ Object type 8: 3D text block 2       Points 144 to 151
+ EQUB 152               \ Object type 9: 3D text block 3       Points 152 to 159
  EQUB 160
 
 \ ******************************************************************************
@@ -26603,16 +26603,16 @@ L314A = C3148+2
 
 .objPolygonRange
 
- EQUB 0                 \ Object type 0: polygon   0 to point  26          Robot
- EQUB 27                \ Object type 1: polygon  27 to point  51         Sentry
- EQUB 52                \ Object type 2: polygon  52 to point  66           Tree
- EQUB 67                \ Object type 3: polygon  67 to point  76        Boulder
- EQUB 77                \ Object type 4: polygon  77 to point 101         Meanie
- EQUB 102               \ Object type 5: polygon 102 to point 136   The Sentinel
- EQUB 137               \ Object type 6: polygon 137 to point 147          Tower
- EQUB 148               \ Object type 7: polygon 148 to point 151     3D Block 1
- EQUB 152               \ Object type 8: polygon 152 to point 155     3D Block 2
- EQUB 156               \ Object type 9: polygon 156 to point 159     3D Block 3
+ EQUB 0                 \ Object type 0: Robot               Polygons   0 to  26
+ EQUB 27                \ Object type 1: Sentry              Polygons  27 to  51
+ EQUB 52                \ Object type 2: Tree                Polygons  52 to  66
+ EQUB 67                \ Object type 3: Boulder             Polygons  67 to  76
+ EQUB 77                \ Object type 4: Meanie              Polygons  77 to 101
+ EQUB 102               \ Object type 5: The Sentinel        Polygons 102 to 136
+ EQUB 137               \ Object type 6: Sentinel's Tower    Polygons 137 to 147
+ EQUB 148               \ Object type 7: 3D Block 1          Polygons 148 to 151
+ EQUB 152               \ Object type 8: 3D Block 2          Polygons 152 to 155
+ EQUB 156               \ Object type 9: 3D Block 3          Polygons 156 to 159
  EQUB 160
 
 \ ******************************************************************************
@@ -26626,18 +26626,18 @@ L314A = C3148+2
 
 .objPolygonPhases
 
- EQUB 3                 \ Object type 0: two phases                        Robot
- EQUB 3                 \ Object type 1: two phases                       Sentry
- EQUB 0                 \ Object type 2: one phase                          Tree
- EQUB 0                 \ Object type 3: one phase                       Boulder
- EQUB 2                 \ Object type 4: two phases and rotate yaw        Meanie
- EQUB 3                 \ Object type 5: two phases                 The Sentinel
- EQUB 0                 \ Object type 6: one phase                         Tower
- EQUB 0                 \ Object type 7: one phase                    3D Block 1
- EQUB 0                 \ Object type 8: one phase                    3D Block 2
- EQUB 0                 \ Object type 9: one phase                    3D Block 3
+ EQUB %11               \ Object type 0: Robot          No rotation    Phases: 2
+ EQUB %11               \ Object type 1: Sentry         No rotation    Phases: 2
+ EQUB %00               \ Object type 2: Tree           No rotation    Phases: 1
+ EQUB %00               \ Object type 3: Boulder        No rotation    Phases: 1
+ EQUB %10               \ Object type 4: Meanie         Rotate yaw     Phases: 2
+ EQUB %11               \ Object type 5: The Sentinel   No rotation    Phases: 2
+ EQUB %00               \ Object type 6: Tower          No rotation    Phases: 1
+ EQUB %00               \ Object type 7: 3D Block 1     No rotation    Phases: 1
+ EQUB %00               \ Object type 8: 3D Block 2     No rotation    Phases: 1
+ EQUB %00               \ Object type 9: 3D Block 3     No rotation    Phases: 1
 
- EQUB 0
+ EQUB 0                 \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -26651,8 +26651,8 @@ L314A = C3148+2
 
 .sightsByteAddrLo
 
- EQUB &00, &00, &00, &00, &00, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00, &FF, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF                            \ noise and have no meaning
 
 \ ******************************************************************************
 \
@@ -27027,7 +27027,7 @@ L314A = C3148+2
 
 .L003CHi
 
- EQUB HI(objPolygon000)
+ EQUB HI(objPolygon000) \ Object type 0: Robot (polygons 0 to 26)
  EQUB HI(objPolygon001)
  EQUB HI(objPolygon002)
  EQUB HI(objPolygon003)
@@ -27039,7 +27039,6 @@ L314A = C3148+2
  EQUB HI(objPolygon009)
  EQUB HI(objPolygon010)
  EQUB HI(objPolygon011)
-
  EQUB HI(objPolygon012)
  EQUB HI(objPolygon013)
  EQUB HI(objPolygon014)
@@ -27057,7 +27056,7 @@ L314A = C3148+2
  EQUB HI(objPolygon026)
  EQUB HI(objPolygon027)
 
- EQUB  &54, &54, &54, &54
+ EQUB &54, &54, &54, &54
  EQUB &54, &54, &54, &54, &54, &54, &54, &54
  EQUB &54, &54, &54, &54, &54, &54, &54, &54
  EQUB &54, &54, &54, &54, &53, &53, &53, &53
