@@ -26626,16 +26626,16 @@ L314A = C3148+2
 
 .objPolygonPhases
 
- EQUB %11               \ Object type 0: Robot          No rotation    Phases: 2
- EQUB %11               \ Object type 1: Sentry         No rotation    Phases: 2
- EQUB %00               \ Object type 2: Tree           No rotation    Phases: 1
- EQUB %00               \ Object type 3: Boulder        No rotation    Phases: 1
- EQUB %10               \ Object type 4: Meanie         Rotate yaw     Phases: 2
- EQUB %11               \ Object type 5: The Sentinel   No rotation    Phases: 2
- EQUB %00               \ Object type 6: Tower          No rotation    Phases: 1
- EQUB %00               \ Object type 7: 3D Block 1     No rotation    Phases: 1
- EQUB %00               \ Object type 8: 3D Block 2     No rotation    Phases: 1
- EQUB %00               \ Object type 9: 3D Block 3     No rotation    Phases: 1
+ EQUB %11               \ Object type 0: Robot         Distance determines phase
+ EQUB %11               \ Object type 1: Sentry        Phases: 1 or 2 (distance)
+ EQUB %00               \ Object type 2: Tree                          Phases: 1
+ EQUB %00               \ Object type 3: Boulder                       Phases: 1
+ EQUB %10               \ Object type 4: Meanie            Phases: 1 or 2 (gaze)
+ EQUB %11               \ Object type 5: The Sentinel  Phases: 1 or 2 (distance)
+ EQUB %00               \ Object type 6: Tower                         Phases: 1
+ EQUB %00               \ Object type 7: 3D Block 1                    Phases: 1
+ EQUB %00               \ Object type 8: 3D Block 2                    Phases: 1
+ EQUB %00               \ Object type 9: 3D Block 3                    Phases: 1
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -30320,13 +30320,14 @@ L314A = C3148+2
                         \     object as the hypotenuse
                         \
                         \ This also sets (hypotenuseHi hypotenuseLo) to the same
-                        \ value as as (objectOppositeHi objectOppositeLo), and
+                        \ value as as (objectAdjacentHi objectAdjacentLo), and
                         \ it sets objectToAnalyse to the number of the object
                         \ that we are drawing
 
- LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectOppositeHi) is greater or
+ LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectAdjacentHi) is greater or
  CMP #15                \ equal to 15 then the object is a fair distance away
- ROR L0C7A              \ from the viewer, so set bit 7 of L0C7A to ???
+ ROR L0C7A              \ from the viewer along the z-axis, so set bit 7 of
+                        \ L0C7A to ???
 
  JSR GetObjPointAngles  \ Calculate the view-relative pitch and yaw angles of
                         \ all the points in the object and put them into the
@@ -30350,47 +30351,78 @@ L314A = C3148+2
 
  LDX objTypeToAnalyse   \ Set X to the number of the object we are drawing
 
- LDA objPolygonPhases,X \ Set A to the phase data value for the object we are
-                        \ drawing
+ LDA objPolygonPhases,X \ Set A to the phase data for the object we are drawing,
+                        \ which determines the number of drawing phases
 
- BEQ drob4              \ If A = 0, jump to drob4 to skip the following
-                        \ (tree, boulder, the Sentinel's tower, 3D blocks)
+ BEQ drob4              \ If A = 0 then this object only has one drawing phase,
+                        \ so jump to drob4 to move on to drawing the object
+                        \ (this applies to the tree, the boulder, the Sentinel's
+                        \ tower and the 3D text blocks)
 
- LSR A                  \ If A is odd, jump to drob1 to skip the following
- BCS drob1              \ (robot, sentry, the Sentinel)
+                        \ If we get here then bit 1 of A must be set, as the
+                        \ only values used in the objPolygonPhases are %00, %10
+                        \ and %11
 
-                        \ If we get here then we are drawing a meanie and
-                        \ objPolygonPhases is 2
+ LSR A                  \ If bit 0 of A is set then this object might need two
+ BCS drob1              \ drawing phases, so jump to drob1 to work out how many
+                        \ phases are required (this applies to the robot, the
+                        \ sentry and the Sentinel)
 
- LDA objectGazeYawHi    \ Add 192 to the object's gaze yaw angle, to turn it
- ADC #192               \ (the addition works because the C flag is clear, as
-                        \ we just passed through a BCS)
+                        \ If we get here then bit 0 of A is clear (and bit 1 is
+                        \ set), so we need to apply an additional rotation (this
+                        \ applies to the meanie only)
 
- JMP drob3              \ Jump to drob3 to ???
+ LDA objectGazeYawHi    \ Set A to object's gaze yaw angle + 192, to turn it
+ ADC #192               \ anticlockwise (left) through 90 degrees for the phase
+                        \ calculation (the addition works because the C flag is
+                        \ clear, as we just passed through a BCS)
+
+ JMP drob3              \ Jump to drob3 to set drawingPhase to 0 or 2, depending
+                        \ on the direction on which the meanie is now facing:
+                        \
+                        \   * One phase if the meanie's gaze yaw angle is
+                        \     positive after the rotation, which means it must
+                        \     be facing towards the viewer (drawingPhase = 0)
+                        \
+                        \   * Two phases if the meanie's gaze yaw angle is
+                        \     negative after the rotation, which means it must
+                        \     be facing away from the viewer (drawingPhase = 2)
 
 .drob1
 
                         \ If we get here then we are drawing a robot, a sentry
-                        \ or the Sentinel, and objPolygonPhases is 3
+                        \ or the Sentinel, so we need to work out how many
+                        \ drawing phases are required
 
  LDA objectOppositeHi   \ If (objectOppositeHi objectOppositeLo) has a non-zero
- BNE drob2              \ high byte, jump to drob2 to ???
+ BNE drob2              \ high byte, then jump to drob2 to:
+                        \
+                        \   * Draw the object in two phases if objectOppositeHi
+                        \     is positive (i.e. the object is reasonably far
+                        \     above the viewer)
+                        \
+                        \   * Draw the object in one phase if objectOppositeHi
+                        \     is negative (i.e. the object is below the viewer)
 
- LDA objectOppositeLo   \ If (objectOppositeHi objectOppositeLo) = 0, jump to
- BEQ drob4              \ drob4 to ???
+ LDA objectOppositeLo   \ If (objectOppositeHi objectOppositeLo) = 0 then the
+ BEQ drob4              \ object is at the same height as the viewer, so jump to
+                        \ drob4 to draw the object in one phase (by leaving
+                        \ drawingPhase = 0)
 
-                        \ If we get here then objectOppositeHi = 0 and A is set
-                        \ to the non-zero value of objectOppositeLo
+                        \ If we get here then objectOppositeHi is zero but
+                        \ objectOppositeLo is non-zero, so the object is only a
+                        \ little bit above the viewer and we draw the object in
+                        \ two phases (so now we set drawingPhase = 2)
 
  LSR A                  \ Clear bit 7 of A, so the following EOR instruction
-                        \ will set bit 7 and this process will end up setting
-                        \ drawingPhase = 2 before falling through into drob4
-                        \ to do the actual drawing
+                        \ will set bit 7, so we pass through the BPL instruction
+                        \ and set drawingPhase = 2 before falling through into
+                        \ drob4 to do the actual drawing
 
 .drob2
 
  EOR #%10000000         \ Flip bit 7 of A, which will contain objectOppositeHi
-                        \ if we jumped here
+                        \ if we jumped here from the BNE above
 
 .drob3
 
@@ -30398,12 +30430,31 @@ L314A = C3148+2
                         \ then this jumps to drob4 if the updated object's gaze
                         \ yaw angle is positive
                         \
-                        \ If we fell through from drbo2, then this jumps to
+                        \ If we fell through from drob2, then this jumps to
                         \ drob4 if bit 7 of objectOppositeHi is set, i.e. if
                         \ (objectOppositeHi objectOppositeLo) is negative
 
- LDA #2                 \ Set drawingPhase = 2 so we draw each polygon in the
- STA drawingPhase       \ object in two phases
+                        \ If we get here then one of these is true:
+                        \
+                        \   * We are drawing a meanie and it is facing away from
+                        \     the viewer
+                        \
+                        \   * We are drawing a robot, a sentry or the Sentinel
+                        \     and one of these is true:
+                        \
+                        \     * (objectOppositeHi objectOppositeLo) is positive
+                        \       and objectOppositeHi > 0 (so the object is
+                        \       reasonably far above the viewer)
+                        \
+                        \     * objectOppositeHi is zero and objectOppositeLo is
+                        \       non-zero (so the object is a little bit above the
+                        \       viewer)
+                        \
+                        \     In other words we are drawing a robot, a sentry or
+                        \     the Sentinel and the object is above the viewer
+
+ LDA #2                 \ Set drawingPhase = 2 so we draw the object in two
+ STA drawingPhase       \ phases
 
 .drob4
 
