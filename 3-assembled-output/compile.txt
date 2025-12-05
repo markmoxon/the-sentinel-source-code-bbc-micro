@@ -11077,7 +11077,7 @@
      49CA   FF
      49CB   FF
      49CC   FF
-.L49CD
+.objMeanie
      49CD   47
      49CE   4C
      49CF   4B
@@ -13280,7 +13280,7 @@
      525D   FF
      525E   FF
      525F   FF
-.L5260
+.objSentinel
      5260   54
      5261   50
      5262   51
@@ -13441,6 +13441,7 @@
      52FD   59
      52FE   54
      52FF   10
+.objTree
      5300   48
      5301   4F
      5302   4E
@@ -13508,6 +13509,7 @@
      5340   50
      5341   4E
      5342   4F
+.objBoulder
      5343   41
      5344   40
      5345   47
@@ -13550,6 +13552,7 @@
      536A   44
      536B   46
      536C   40
+.objTower
      536D   41
      536E   46
      536F   45
@@ -13601,6 +13604,7 @@
      539D   4B
      539E   44
      539F   45
+.objTextBlock
      53A0   40
      53A1   44
      53A2   47
@@ -13621,129 +13625,159 @@
      53B1   47
      53B2   44
      53B3   45
+.objRobot
+.objPolygon000
      53B4   4B
      53B5   4A
      53B6   48
      53B7   4C
      53B8   4B
+.objPolygon001
      53B9   4A
      53BA   49
      53BB   48
      53BC   4A
+.objPolygon002
      53BD   54
      53BE   53
      53BF   52
      53C0   55
      53C1   54
+.objPolygon003
      53C2   40
      53C3   44
      53C4   47
      53C5   43
      53C6   40
+.objPolygon004
      53C7   42
      53C8   46
      53C9   45
      53CA   41
      53CB   42
+.objPolygon005
      53CC   43
      53CD   47
      53CE   46
      53CF   42
      53D0   43
+.objPolygon006
      53D1   41
      53D2   45
      53D3   44
      53D4   40
      53D5   41
+.objPolygon007
      53D6   48
      53D7   4D
      53D8   50
      53D9   4C
      53DA   48
+.objPolygon008
      53DB   4B
      53DC   4F
      53DD   4E
      53DE   4A
      53DF   4B
+.objPolygon009
      53E0   4C
      53E1   50
      53E2   4F
      53E3   4B
      53E4   4C
+.objPolygon010
      53E5   4A
      53E6   5C
      53E7   49
      53E8   4A
+.objPolygon011
      53E9   49
      53EA   5C
      53EB   48
      53EC   49
+.objPolygon012
      53ED   4A
      53EE   4E
      53EF   5C
      53F0   4A
+.objPolygon013
      53F1   48
      53F2   5C
      53F3   4D
      53F4   48
+.objPolygon014
      53F5   4E
      53F6   51
      53F7   5C
      53F8   4E
+.objPolygon015
      53F9   5C
      53FA   51
      53FB   4D
      53FC   5C
+.objPolygon016
      53FD   4F
      53FE   51
      53FF   4E
      5400   4F
+.objPolygon017
      5401   4D
      5402   51
      5403   50
      5404   4D
+.objPolygon018
      5405   50
      5406   51
      5407   4F
      5408   50
+.objPolygon019
      5409   53
      540A   5A
      540B   5B
      540C   52
      540D   53
+.objPolygon020
      540E   52
      540F   5B
      5410   55
      5411   52
+.objPolygon021
      5412   54
      5413   5A
      5414   53
      5415   54
+.objPolygon022
      5416   5B
      5417   56
      5418   59
      5419   55
      541A   5B
+.objPolygon023
      541B   54
      541C   58
      541D   57
      541E   5A
      541F   54
+.objPolygon024
      5420   55
      5421   59
      5422   58
      5423   54
      5424   55
+.objPolygon025
      5425   57
      5426   58
      5427   59
      5428   56
      5429   57
+.objPolygon026
      542A   5A
      542B   57
      542C   56
      542D   5B
      542E   5A
+.objSentry
+.objPolygon027
      542F   43
      5430   48
      5431   47
