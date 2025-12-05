@@ -26609,10 +26609,10 @@ L314A = C3148+2
  EQUB 67                \ Object type 3: Boulder             Polygons  67 to  76
  EQUB 77                \ Object type 4: Meanie              Polygons  77 to 101
  EQUB 102               \ Object type 5: The Sentinel        Polygons 102 to 136
- EQUB 137               \ Object type 6: Sentinel's Tower    Polygons 137 to 147
- EQUB 148               \ Object type 7: 3D Block 1          Polygons 148 to 151
- EQUB 152               \ Object type 8: 3D Block 2          Polygons 152 to 155
- EQUB 156               \ Object type 9: 3D Block 3          Polygons 156 to 159
+ EQUB 137               \ Object type 6: Sentinel's tower    Polygons 137 to 147
+ EQUB 148               \ Object type 7: 3D text block 1     Polygons 148 to 151
+ EQUB 152               \ Object type 8: 3D text block 2     Polygons 152 to 155
+ EQUB 156               \ Object type 9: 3D text block 3     Polygons 156 to 159
  EQUB 160
 
 \ ******************************************************************************
@@ -26626,16 +26626,16 @@ L314A = C3148+2
 
 .objPolygonPhases
 
- EQUB %11               \ Object type 0: Robot         Distance determines phase
- EQUB %11               \ Object type 1: Sentry        Phases: 1 or 2 (distance)
+ EQUB %11               \ Object type 0: Robot           Phases: 1 or 2 (height)
+ EQUB %11               \ Object type 1: Sentry          Phases: 1 or 2 (height)
  EQUB %00               \ Object type 2: Tree                          Phases: 1
  EQUB %00               \ Object type 3: Boulder                       Phases: 1
  EQUB %10               \ Object type 4: Meanie            Phases: 1 or 2 (gaze)
- EQUB %11               \ Object type 5: The Sentinel  Phases: 1 or 2 (distance)
- EQUB %00               \ Object type 6: Tower                         Phases: 1
- EQUB %00               \ Object type 7: 3D Block 1                    Phases: 1
- EQUB %00               \ Object type 8: 3D Block 2                    Phases: 1
- EQUB %00               \ Object type 9: 3D Block 3                    Phases: 1
+ EQUB %11               \ Object type 5: The Sentinel    Phases: 1 or 2 (height)
+ EQUB %00               \ Object type 6: Sentinel's tower              Phases: 1
+ EQUB %00               \ Object type 7: 3D text block 1               Phases: 1
+ EQUB %00               \ Object type 8: 3D text block 2               Phases: 1
+ EQUB %00               \ Object type 9: 3D text block 3               Phases: 1
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -26659,26 +26659,112 @@ L314A = C3148+2
 \       Name: objMeanie
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for a meanie
+\    Summary: The list of polygons and points for the meanie object (polygons
+\             77 to 101, using points 76 to 93)
 \
 \ ******************************************************************************
 
 .objMeanie
 
- EQUB &47, &4C
- EQUB &4B, &46, &47, &40, &45, &42, &40, &41
- EQUB &44, &40, &41, &40, &44, &43, &40, &40
- EQUB &43, &45, &40, &42, &45, &44, &41, &42
- EQUB &45, &46, &49, &45, &44, &48, &47, &44
- EQUB &45, &49, &48, &44, &45, &43, &46, &45
- EQUB &43, &44, &47, &43, &44, &43, &47, &46
- EQUB &43, &4B, &4A, &46, &4B, &47, &4D, &4C
- EQUB &47, &4B, &4E, &4A, &4B, &4C, &4D, &4F
- EQUB &4C, &4C, &4F, &4E, &4B, &4C, &46, &4A
- EQUB &49, &46, &47, &48, &4D, &47, &4A, &50
- EQUB &49, &4A, &48, &51, &4D, &48, &4A, &4E
- EQUB &50, &4A, &4D, &51, &4F, &4D, &49, &50
- EQUB &51, &48, &49, &4F, &51, &50, &4E, &4F
+.objPolygon077
+
+ EQUB &47, &4C, &4B, &46, &47
+
+.objPolygon078
+
+ EQUB &40, &45, &42, &40
+
+.objPolygon079
+
+ EQUB &41, &44, &40, &41
+
+.objPolygon080
+
+ EQUB &40, &44, &43, &40
+
+.objPolygon081
+
+ EQUB &40, &43, &45, &40
+
+.objPolygon082
+
+ EQUB &42, &45, &44, &41, &42
+
+.objPolygon083
+
+ EQUB &45, &46, &49, &45
+
+.objPolygon084
+
+ EQUB &44, &48, &47, &44
+
+.objPolygon085
+
+ EQUB &45, &49, &48, &44, &45
+
+.objPolygon086
+
+ EQUB &43, &46, &45, &43
+
+.objPolygon087
+
+ EQUB &44, &47, &43, &44
+
+.objPolygon088
+
+ EQUB &43, &47, &46, &43
+
+.objPolygon089
+
+ EQUB &4B, &4A, &46, &4B
+
+.objPolygon090
+
+ EQUB &47, &4D, &4C, &47
+
+.objPolygon091
+
+ EQUB &4B, &4E, &4A, &4B
+
+.objPolygon092
+
+ EQUB &4C, &4D, &4F, &4C
+
+.objPolygon093
+
+ EQUB &4C, &4F, &4E, &4B, &4C
+
+.objPolygon094
+
+ EQUB &46, &4A, &49, &46
+
+.objPolygon095
+
+ EQUB &47, &48, &4D, &47
+
+.objPolygon096
+
+ EQUB &4A, &50, &49, &4A
+
+.objPolygon097
+
+ EQUB &48, &51, &4D, &48
+
+.objPolygon098
+
+ EQUB &4A, &4E, &50, &4A
+
+.objPolygon099
+
+ EQUB &4D, &51, &4F, &4D
+
+.objPolygon100
+
+ EQUB &49, &50, &51, &48, &49
+
+.objPolygon101
+
+ EQUB &4F, &51, &50, &4E, &4F
 
 \ ******************************************************************************
 \
@@ -26939,16 +27025,17 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L003CLo
+\       Name: objPolygonAddrLo
 \       Type: Variable
-\   Category: ???
-\    Summary: Address of ??? for polygon drawing (low byte)
+\   Category: Drawing objects
+\    Summary: Addresses for the list of polygons and points for each object
+\             (low byte)
 \
 \ ******************************************************************************
 
-.L003CLo
+.objPolygonAddrLo
 
- EQUB LO(objPolygon000)
+ EQUB LO(objPolygon000) \ Object type 0: Robot (polygons 0 to 26)
  EQUB LO(objPolygon001)
  EQUB LO(objPolygon002)
  EQUB LO(objPolygon003)
@@ -26975,25 +27062,148 @@ L314A = C3148+2
  EQUB LO(objPolygon024)
  EQUB LO(objPolygon025)
  EQUB LO(objPolygon026)
- EQUB LO(objPolygon027)
 
- EQUB &34, &38, &3C, &41
- EQUB &45, &49, &4D, &51, &55, &5A, &5E, &62
- EQUB &67, &6B, &6F, &73, &78, &7D, &82, &87
- EQUB &8C, &91, &96, &9B, &00, &05, &0A, &0F
- EQUB &14, &19, &1E, &23, &27, &2B, &2F, &33
- EQUB &37, &3B, &3F, &43, &47, &4B, &4F, &53
- EQUB &57, &5B, &5F, &63, &68, &CD, &D2, &D6
- EQUB &DA, &DE, &E2, &E7, &EB, &EF, &F4, &F8
- EQUB &FC, &00, &04, &08, &0C, &10, &15, &19
- EQUB &1D, &21, &25, &29, &2D, &32, &60, &65
- EQUB &69, &6D, &72, &77, &7C, &81, &86, &8B
- EQUB &8F, &93, &98, &9C, &A0, &A4, &A8, &AC
- EQUB &B0, &B5, &B9, &BD, &C1, &C5, &CA, &CF
- EQUB &D4, &D8, &DC, &E1, &E6, &EB, &F0, &F5
- EQUB &FA, &6D, &72, &77, &7C, &81, &85, &89
- EQUB &8D, &91, &96, &9B, &A0, &A5, &AA, &AF
- EQUB &A0, &A5, &AA, &AF, &A0, &A5, &AA, &AF
+ EQUB LO(objPolygon027) \ Object type 1: Sentry (polygons 27 to 51)
+ EQUB LO(objPolygon028)
+ EQUB LO(objPolygon029)
+ EQUB LO(objPolygon030)
+ EQUB LO(objPolygon031)
+ EQUB LO(objPolygon032)
+ EQUB LO(objPolygon033)
+ EQUB LO(objPolygon034)
+ EQUB LO(objPolygon035)
+ EQUB LO(objPolygon036)
+ EQUB LO(objPolygon037)
+ EQUB LO(objPolygon038)
+ EQUB LO(objPolygon039)
+ EQUB LO(objPolygon040)
+ EQUB LO(objPolygon041)
+ EQUB LO(objPolygon042)
+ EQUB LO(objPolygon043)
+ EQUB LO(objPolygon044)
+ EQUB LO(objPolygon045)
+ EQUB LO(objPolygon046)
+ EQUB LO(objPolygon047)
+ EQUB LO(objPolygon048)
+ EQUB LO(objPolygon049)
+ EQUB LO(objPolygon050)
+ EQUB LO(objPolygon051)
+
+ EQUB LO(objPolygon052) \ Object type 2: Tree (polygons 52 to 66)
+ EQUB LO(objPolygon053)
+ EQUB LO(objPolygon054)
+ EQUB LO(objPolygon055)
+ EQUB LO(objPolygon056)
+ EQUB LO(objPolygon057)
+ EQUB LO(objPolygon058)
+ EQUB LO(objPolygon059)
+ EQUB LO(objPolygon060)
+ EQUB LO(objPolygon061)
+ EQUB LO(objPolygon062)
+ EQUB LO(objPolygon063)
+ EQUB LO(objPolygon064)
+ EQUB LO(objPolygon065)
+ EQUB LO(objPolygon066)
+
+ EQUB LO(objPolygon067) \ Object type 3: Boulder (polygons 67 to 76)
+ EQUB LO(objPolygon068)
+ EQUB LO(objPolygon069)
+ EQUB LO(objPolygon070)
+ EQUB LO(objPolygon071)
+ EQUB LO(objPolygon072)
+ EQUB LO(objPolygon073)
+ EQUB LO(objPolygon074)
+ EQUB LO(objPolygon075)
+ EQUB LO(objPolygon076)
+
+ EQUB LO(objPolygon077) \ Object type 4: Meanie (polygons 77 to 101)
+ EQUB LO(objPolygon078)
+ EQUB LO(objPolygon079)
+ EQUB LO(objPolygon080)
+ EQUB LO(objPolygon081)
+ EQUB LO(objPolygon082)
+ EQUB LO(objPolygon083)
+ EQUB LO(objPolygon084)
+ EQUB LO(objPolygon085)
+ EQUB LO(objPolygon086)
+ EQUB LO(objPolygon087)
+ EQUB LO(objPolygon088)
+ EQUB LO(objPolygon089)
+ EQUB LO(objPolygon090)
+ EQUB LO(objPolygon091)
+ EQUB LO(objPolygon092)
+ EQUB LO(objPolygon093)
+ EQUB LO(objPolygon094)
+ EQUB LO(objPolygon095)
+ EQUB LO(objPolygon096)
+ EQUB LO(objPolygon097)
+ EQUB LO(objPolygon098)
+ EQUB LO(objPolygon099)
+ EQUB LO(objPolygon100)
+ EQUB LO(objPolygon101)
+
+ EQUB LO(objPolygon102) \ Object type 5: The Sentinel (polygons 102 to 136)
+ EQUB LO(objPolygon103)
+ EQUB LO(objPolygon104)
+ EQUB LO(objPolygon105)
+ EQUB LO(objPolygon106)
+ EQUB LO(objPolygon107)
+ EQUB LO(objPolygon108)
+ EQUB LO(objPolygon109)
+ EQUB LO(objPolygon110)
+ EQUB LO(objPolygon111)
+ EQUB LO(objPolygon112)
+ EQUB LO(objPolygon113)
+ EQUB LO(objPolygon114)
+ EQUB LO(objPolygon115)
+ EQUB LO(objPolygon116)
+ EQUB LO(objPolygon117)
+ EQUB LO(objPolygon118)
+ EQUB LO(objPolygon119)
+ EQUB LO(objPolygon120)
+ EQUB LO(objPolygon121)
+ EQUB LO(objPolygon122)
+ EQUB LO(objPolygon123)
+ EQUB LO(objPolygon124)
+ EQUB LO(objPolygon125)
+ EQUB LO(objPolygon126)
+ EQUB LO(objPolygon127)
+ EQUB LO(objPolygon128)
+ EQUB LO(objPolygon129)
+ EQUB LO(objPolygon130)
+ EQUB LO(objPolygon131)
+ EQUB LO(objPolygon132)
+ EQUB LO(objPolygon133)
+ EQUB LO(objPolygon134)
+ EQUB LO(objPolygon135)
+ EQUB LO(objPolygon136)
+
+ EQUB LO(objPolygon137) \ Object type 6: Sentinel's tower (polygons 137 to 147)
+ EQUB LO(objPolygon138)
+ EQUB LO(objPolygon139)
+ EQUB LO(objPolygon140)
+ EQUB LO(objPolygon141)
+ EQUB LO(objPolygon142)
+ EQUB LO(objPolygon143)
+ EQUB LO(objPolygon144)
+ EQUB LO(objPolygon145)
+ EQUB LO(objPolygon146)
+ EQUB LO(objPolygon147)
+
+ EQUB LO(objPolygon148) \ Object type 7: 3D text block 1 (polygons 148 to 151)
+ EQUB LO(objPolygon149)
+ EQUB LO(objPolygon150)
+ EQUB LO(objPolygon151)
+
+ EQUB LO(objPolygon148) \ Object type 8: 3D text block 2 (polygons 152 to 155)
+ EQUB LO(objPolygon149) \
+ EQUB LO(objPolygon150) \ Polygons 152 to 155 reuse the points from 148 to 151
+ EQUB LO(objPolygon151)
+
+ EQUB LO(objPolygon148) \ Object type 9: 3D text block 3 (polygons 156 to 159)
+ EQUB LO(objPolygon149) \
+ EQUB LO(objPolygon150) \ Polygons 156 to 159 reuse the points from 148 to 151
+ EQUB LO(objPolygon151)
 
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
@@ -27018,14 +27228,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L003CHi
+\       Name: objPolygonAddrHi
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: Address of ??? for polygon drawing (high byte)
+\    Summary: Addresses for the list of polygons and points for each object
+\             (high byte)
 \
 \ ******************************************************************************
 
-.L003CHi
+.objPolygonAddrHi
 
  EQUB HI(objPolygon000) \ Object type 0: Robot (polygons 0 to 26)
  EQUB HI(objPolygon001)
@@ -27054,25 +27265,148 @@ L314A = C3148+2
  EQUB HI(objPolygon024)
  EQUB HI(objPolygon025)
  EQUB HI(objPolygon026)
- EQUB HI(objPolygon027)
 
- EQUB &54, &54, &54, &54
- EQUB &54, &54, &54, &54, &54, &54, &54, &54
- EQUB &54, &54, &54, &54, &54, &54, &54, &54
- EQUB &54, &54, &54, &54, &53, &53, &53, &53
- EQUB &53, &53, &53, &53, &53, &53, &53, &53
- EQUB &53, &53, &53, &53, &53, &53, &53, &53
- EQUB &53, &53, &53, &53, &53, &49, &49, &49
- EQUB &49, &49, &49, &49, &49, &49, &49, &49
- EQUB &49, &4A, &4A, &4A, &4A, &4A, &4A, &4A
- EQUB &4A, &4A, &4A, &4A, &4A, &4A, &52, &52
- EQUB &52, &52, &52, &52, &52, &52, &52, &52
- EQUB &52, &52, &52, &52, &52, &52, &52, &52
- EQUB &52, &52, &52, &52, &52, &52, &52, &52
- EQUB &52, &52, &52, &52, &52, &52, &52, &52
- EQUB &52, &53, &53, &53, &53, &53, &53, &53
- EQUB &53, &53, &53, &53, &53, &53, &53, &53
- EQUB &53, &53, &53, &53, &53, &53, &53, &53
+ EQUB HI(objPolygon027) \ Object type 1: Sentry (polygons 27 to 51)
+ EQUB HI(objPolygon028)
+ EQUB HI(objPolygon029)
+ EQUB HI(objPolygon030)
+ EQUB HI(objPolygon031)
+ EQUB HI(objPolygon032)
+ EQUB HI(objPolygon033)
+ EQUB HI(objPolygon034)
+ EQUB HI(objPolygon035)
+ EQUB HI(objPolygon036)
+ EQUB HI(objPolygon037)
+ EQUB HI(objPolygon038)
+ EQUB HI(objPolygon039)
+ EQUB HI(objPolygon040)
+ EQUB HI(objPolygon041)
+ EQUB HI(objPolygon042)
+ EQUB HI(objPolygon043)
+ EQUB HI(objPolygon044)
+ EQUB HI(objPolygon045)
+ EQUB HI(objPolygon046)
+ EQUB HI(objPolygon047)
+ EQUB HI(objPolygon048)
+ EQUB HI(objPolygon049)
+ EQUB HI(objPolygon050)
+ EQUB HI(objPolygon051)
+
+ EQUB HI(objPolygon052) \ Object type 2: Tree (polygons 52 to 66)
+ EQUB HI(objPolygon053)
+ EQUB HI(objPolygon054)
+ EQUB HI(objPolygon055)
+ EQUB HI(objPolygon056)
+ EQUB HI(objPolygon057)
+ EQUB HI(objPolygon058)
+ EQUB HI(objPolygon059)
+ EQUB HI(objPolygon060)
+ EQUB HI(objPolygon061)
+ EQUB HI(objPolygon062)
+ EQUB HI(objPolygon063)
+ EQUB HI(objPolygon064)
+ EQUB HI(objPolygon065)
+ EQUB HI(objPolygon066)
+
+ EQUB HI(objPolygon067) \ Object type 3: Boulder (polygons 67 to 76)
+ EQUB HI(objPolygon068)
+ EQUB HI(objPolygon069)
+ EQUB HI(objPolygon070)
+ EQUB HI(objPolygon071)
+ EQUB HI(objPolygon072)
+ EQUB HI(objPolygon073)
+ EQUB HI(objPolygon074)
+ EQUB HI(objPolygon075)
+ EQUB HI(objPolygon076)
+
+ EQUB HI(objPolygon077) \ Object type 4: Meanie (polygons 77 to 101)
+ EQUB HI(objPolygon078)
+ EQUB HI(objPolygon079)
+ EQUB HI(objPolygon080)
+ EQUB HI(objPolygon081)
+ EQUB HI(objPolygon082)
+ EQUB HI(objPolygon083)
+ EQUB HI(objPolygon084)
+ EQUB HI(objPolygon085)
+ EQUB HI(objPolygon086)
+ EQUB HI(objPolygon087)
+ EQUB HI(objPolygon088)
+ EQUB HI(objPolygon089)
+ EQUB HI(objPolygon090)
+ EQUB HI(objPolygon091)
+ EQUB HI(objPolygon092)
+ EQUB HI(objPolygon093)
+ EQUB HI(objPolygon094)
+ EQUB HI(objPolygon095)
+ EQUB HI(objPolygon096)
+ EQUB HI(objPolygon097)
+ EQUB HI(objPolygon098)
+ EQUB HI(objPolygon099)
+ EQUB HI(objPolygon100)
+ EQUB HI(objPolygon101)
+
+ EQUB HI(objPolygon102) \ Object type 5: The Sentinel (polygons 102 to 136)
+ EQUB HI(objPolygon103)
+ EQUB HI(objPolygon104)
+ EQUB HI(objPolygon105)
+ EQUB HI(objPolygon106)
+ EQUB HI(objPolygon107)
+ EQUB HI(objPolygon108)
+ EQUB HI(objPolygon109)
+ EQUB HI(objPolygon110)
+ EQUB HI(objPolygon111)
+ EQUB HI(objPolygon112)
+ EQUB HI(objPolygon113)
+ EQUB HI(objPolygon114)
+ EQUB HI(objPolygon115)
+ EQUB HI(objPolygon116)
+ EQUB HI(objPolygon117)
+ EQUB HI(objPolygon118)
+ EQUB HI(objPolygon119)
+ EQUB HI(objPolygon120)
+ EQUB HI(objPolygon121)
+ EQUB HI(objPolygon122)
+ EQUB HI(objPolygon123)
+ EQUB HI(objPolygon124)
+ EQUB HI(objPolygon125)
+ EQUB HI(objPolygon126)
+ EQUB HI(objPolygon127)
+ EQUB HI(objPolygon128)
+ EQUB HI(objPolygon129)
+ EQUB HI(objPolygon130)
+ EQUB HI(objPolygon131)
+ EQUB HI(objPolygon132)
+ EQUB HI(objPolygon133)
+ EQUB HI(objPolygon134)
+ EQUB HI(objPolygon135)
+ EQUB HI(objPolygon136)
+
+ EQUB HI(objPolygon137) \ Object type 6: Sentinel's tower (polygons 137 to 147)
+ EQUB HI(objPolygon138)
+ EQUB HI(objPolygon139)
+ EQUB HI(objPolygon140)
+ EQUB HI(objPolygon141)
+ EQUB HI(objPolygon142)
+ EQUB HI(objPolygon143)
+ EQUB HI(objPolygon144)
+ EQUB HI(objPolygon145)
+ EQUB HI(objPolygon146)
+ EQUB HI(objPolygon147)
+
+ EQUB HI(objPolygon148) \ Object type 7: 3D text block 1 (polygons 148 to 151)
+ EQUB HI(objPolygon149)
+ EQUB HI(objPolygon150)
+ EQUB HI(objPolygon151)
+
+ EQUB HI(objPolygon148) \ Object type 8: 3D text block 2 (polygons 152 to 155)
+ EQUB HI(objPolygon149) \
+ EQUB HI(objPolygon150) \ Polygons 152 to 155 reuse the points from 148 to 151
+ EQUB HI(objPolygon151)
+
+ EQUB HI(objPolygon148) \ Object type 9: 3D text block 3 (polygons 156 to 159)
+ EQUB HI(objPolygon149) \
+ EQUB HI(objPolygon150) \ Polygons 156 to 159 reuse the points from 148 to 151
+ EQUB HI(objPolygon151)
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
@@ -27100,32 +27434,152 @@ L314A = C3148+2
 \       Name: objSentinel
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for the Sentinel
+\    Summary: The list of polygons and points for the Sentinel object (polygons
+\             102 to 136, using points 94 to 123)
 \
 \ ******************************************************************************
 
 .objSentinel
 
- EQUB &54, &50, &51, &55, &54, &51, &4E, &55
- EQUB &51, &54, &4F, &50, &54, &4F, &53, &52
- EQUB &4E, &4F, &43, &47, &46, &42, &43, &40
- EQUB &44, &47, &43, &40, &42, &46, &45, &41
- EQUB &42, &41, &45, &44, &40, &41, &47, &4C
- EQUB &4B, &46, &47, &44, &4D, &47, &44, &46
- EQUB &4A, &45, &46, &45, &49, &48, &44, &45
- EQUB &47, &4D, &4C, &47, &46, &4B, &4A, &46
- EQUB &44, &48, &4D, &44, &45, &4A, &49, &45
- EQUB &4D, &51, &4C, &4D, &4B, &50, &4A, &4B
- EQUB &4C, &51, &50, &4B, &4C, &4D, &4E, &51
- EQUB &4D, &4A, &50, &4F, &4A, &48, &4E, &4D
- EQUB &48, &49, &4A, &4F, &49, &49, &4F, &4E
- EQUB &48, &49, &59, &5B, &5A, &58, &59, &55
- EQUB &5D, &5C, &54, &55, &4E, &58, &55, &4E
- EQUB &54, &59, &4F, &54, &52, &56, &58, &4E
- EQUB &52, &4F, &59, &57, &53, &4F, &57, &59
- EQUB &58, &56, &57, &53, &57, &56, &52, &53
- EQUB &5B, &5C, &5D, &5A, &5B, &58, &5A, &5D
- EQUB &55, &58, &54, &5C, &5B, &59, &54
+.objPolygon102
+
+ EQUB &54, &50, &51, &55, &54
+
+.objPolygon103
+
+ EQUB &51, &4E, &55, &51
+
+.objPolygon104
+
+ EQUB &54, &4F, &50, &54
+
+.objPolygon105
+
+ EQUB &4F, &53, &52, &4E, &4F
+
+.objPolygon106
+
+ EQUB &43, &47, &46, &42, &43
+
+.objPolygon107
+
+ EQUB &40, &44, &47, &43, &40
+
+.objPolygon108
+
+ EQUB &42, &46, &45, &41, &42
+
+.objPolygon109
+
+ EQUB &41, &45, &44, &40, &41
+
+.objPolygon110
+
+ EQUB &47, &4C, &4B, &46, &47
+
+.objPolygon111
+
+ EQUB &44, &4D, &47, &44
+
+.objPolygon112
+
+ EQUB &46, &4A, &45, &46
+
+.objPolygon113
+
+ EQUB &45, &49, &48, &44, &45
+
+.objPolygon114
+
+ EQUB &47, &4D, &4C, &47
+
+.objPolygon115
+
+ EQUB &46, &4B, &4A, &46
+
+.objPolygon116
+
+ EQUB &44, &48, &4D, &44
+
+.objPolygon117
+
+ EQUB &45, &4A, &49, &45
+
+.objPolygon118
+
+ EQUB &4D, &51, &4C, &4D
+
+.objPolygon119
+
+ EQUB &4B, &50, &4A, &4B
+
+.objPolygon120
+
+ EQUB &4C, &51, &50, &4B, &4C
+
+.objPolygon121
+
+ EQUB &4D, &4E, &51, &4D
+
+.objPolygon122
+
+ EQUB &4A, &50, &4F, &4A
+
+.objPolygon123
+
+ EQUB &48, &4E, &4D, &48
+
+.objPolygon124
+
+ EQUB &49, &4A, &4F, &49
+
+.objPolygon125
+
+ EQUB &49, &4F, &4E, &48, &49
+
+.objPolygon126
+
+ EQUB &59, &5B, &5A, &58, &59
+
+.objPolygon127
+
+ EQUB &55, &5D, &5C, &54, &55
+
+.objPolygon128
+
+ EQUB &4E, &58, &55, &4E
+
+.objPolygon129
+
+ EQUB &54, &59, &4F, &54
+
+.objPolygon130
+
+ EQUB &52, &56, &58, &4E, &52
+
+.objPolygon131
+
+ EQUB &4F, &59, &57, &53, &4F
+
+.objPolygon132
+
+ EQUB &57, &59, &58, &56, &57
+
+.objPolygon133
+
+ EQUB &53, &57, &56, &52, &53
+
+.objPolygon134
+
+ EQUB &5B, &5C, &5D, &5A, &5B
+
+.objPolygon135
+
+ EQUB &58, &5A, &5D, &55, &58
+
+.objPolygon136
+
+ EQUB &54, &5C, &5B, &59, &54
 
  EQUB &10               \ This byte appears to be unused
 
@@ -27134,38 +27588,123 @@ L314A = C3148+2
 \       Name: objTree
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for a tree
+\    Summary: The list of polygons and points for the tree object (polygons 52
+\             to 66, using points 51 to 67)
 \
 \ ******************************************************************************
 
 .objTree
 
- EQUB &48, &4F, &4E, &49, &48, &49, &4E, &4D
- EQUB &4A, &49, &4A, &4D, &4C, &4B, &4A, &41
- EQUB &45, &44, &40, &41, &42, &46, &45, &41
- EQUB &42, &40, &44, &47, &43, &40, &43, &47
- EQUB &46, &42, &43, &48, &50, &4F, &48, &49
- EQUB &50, &48, &49, &4A, &50, &49, &4A, &4B
- EQUB &50, &4A, &4B, &4C, &50, &4B, &4C, &4D
- EQUB &50, &4C, &4D, &4E, &50, &4D, &4E, &4F
- EQUB &50, &4E, &4F
+.objPolygon052
+
+ EQUB &48, &4F, &4E, &49, &48
+
+.objPolygon053
+
+ EQUB &49, &4E, &4D, &4A, &49
+
+.objPolygon054
+
+ EQUB &4A, &4D, &4C, &4B, &4A
+
+.objPolygon055
+
+ EQUB &41, &45, &44, &40, &41
+
+.objPolygon056
+
+ EQUB &42, &46, &45, &41, &42
+
+.objPolygon057
+
+ EQUB &40, &44, &47, &43, &40
+
+.objPolygon058
+
+ EQUB &43, &47, &46, &42, &43
+
+.objPolygon059
+
+ EQUB &48, &50, &4F, &48
+
+.objPolygon060
+
+ EQUB &49, &50, &48, &49
+
+.objPolygon061
+
+ EQUB &4A, &50, &49, &4A
+
+.objPolygon062
+
+ EQUB &4B, &50, &4A, &4B
+
+.objPolygon063
+
+ EQUB &4C, &50, &4B, &4C
+
+.objPolygon064
+
+ EQUB &4D, &50, &4C, &4D
+
+.objPolygon065
+
+ EQUB &4E, &50, &4D, &4E
+
+.objPolygon066
+
+ EQUB &4F, &50, &4E, &4F
 
 \ ******************************************************************************
 \
 \       Name: objBoulder
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for a boulder
+\    Summary: The list of polygons and points for the boulder object (polygons
+\             67 to 76, using points 68 to 75)
 \
 \ ******************************************************************************
 
 .objBoulder
 
- EQUB &41, &40, &47, &41, &43
- EQUB &42, &41, &43, &45, &44, &43, &45, &47
- EQUB &46, &45, &47, &41, &42, &40, &41, &43
- EQUB &44, &42, &43, &45, &46, &44, &45, &47
- EQUB &40, &46, &47, &41, &47, &45, &43, &41
+.objPolygon067
+
+ EQUB &41, &40, &47, &41
+
+.objPolygon068
+
+ EQUB &43, &42, &41, &43
+
+.objPolygon069
+
+ EQUB &45, &44, &43, &45
+
+.objPolygon070
+
+ EQUB &47, &46, &45, &47
+
+.objPolygon071
+
+ EQUB &41, &42, &40, &41
+
+.objPolygon072
+
+ EQUB &43, &44, &42, &43
+
+.objPolygon073
+
+ EQUB &45, &46, &44, &45
+
+.objPolygon074
+
+ EQUB &47, &40, &46, &47
+
+.objPolygon075
+
+ EQUB &41, &47, &45, &43, &41
+
+.objPolygon076
+
  EQUB &40, &42, &44, &46, &40
 
 \ ******************************************************************************
@@ -27173,41 +27712,92 @@ L314A = C3148+2
 \       Name: objTower
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for the Sentinel's tower
+\    Summary: The list of polygons and points for the Sentinel's tower object
+\             (polygons 137 to 147, using points 124 to 135)
 \
 \ ******************************************************************************
 
 .objTower
 
- EQUB &41, &46, &45
- EQUB &40, &41, &42, &48, &47, &41, &42, &43
- EQUB &4A, &49, &42, &43, &40, &44, &4B, &43
- EQUB &40, &40, &45, &44, &40, &41, &47, &46
- EQUB &41, &42, &49, &48, &42, &43, &4B, &4A
- EQUB &43, &46, &47, &48, &49, &46, &46, &49
- EQUB &4A, &45, &46, &45, &4A, &4B, &44, &45
+.objPolygon137
+
+ EQUB &41, &46, &45, &40, &41
+
+.objPolygon138
+
+ EQUB &42, &48, &47, &41, &42
+
+.objPolygon139
+
+ EQUB &43, &4A, &49, &42, &43
+
+.objPolygon140
+
+ EQUB &40, &44, &4B, &43, &40
+
+.objPolygon141
+
+ EQUB &40, &45, &44, &40
+
+.objPolygon142
+
+ EQUB &41, &47, &46, &41
+
+.objPolygon143
+
+ EQUB &42, &49, &48, &42
+
+.objPolygon144
+
+ EQUB &43, &4B, &4A, &43
+
+.objPolygon145
+
+ EQUB &46, &47, &48, &49, &46
+
+.objPolygon146
+
+ EQUB &46, &49, &4A, &45, &46
+
+.objPolygon147
+
+ EQUB &45, &4A, &4B, &44, &45
 
 \ ******************************************************************************
 \
 \       Name: objTextBlock
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for a 3D text block
+\    Summary: The list of polygons and points for the 3D text block object
+\             (polygons 148 to 151, using points 136 to 143)
 \
 \ ******************************************************************************
 
 .objTextBlock
 
- EQUB &40, &44, &47, &43, &40, &42, &46, &45
- EQUB &41, &42, &41, &45, &44, &40, &41, &45
- EQUB &46, &47, &44, &45
+.objPolygon148
+
+ EQUB &40, &44, &47, &43, &40
+
+.objPolygon149
+
+ EQUB &42, &46, &45, &41, &42
+
+.objPolygon150
+
+ EQUB &41, &45, &44, &40, &41
+
+.objPolygon151
+
+ EQUB &45, &46, &47, &44, &45
 
 \ ******************************************************************************
 \
 \       Name: objRobot
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for a robot
+\    Summary: The list of polygons and points for the robot object (polygons 0
+\             to 26, using points 0 to 28)
 \
 \ ******************************************************************************
 
@@ -27326,7 +27916,8 @@ L314A = C3148+2
 \       Name: objSentry
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: The object polygon list for a sentry
+\    Summary: The list of polygons and points for the sentry object (polygons
+\             27 to 51, using points 29 to 50)
 \
 \ ******************************************************************************
 
@@ -27334,21 +27925,103 @@ L314A = C3148+2
 
 .objPolygon027
 
- EQUB &43
- EQUB &48, &47, &42, &43, &40, &49, &43, &40
- EQUB &42, &46, &41, &42, &41, &45, &44, &40
- EQUB &41, &43, &49, &48, &43, &42, &47, &46
- EQUB &42, &41, &46, &45, &41, &40, &44, &49
- EQUB &40, &49, &4D, &48, &49, &48, &4D, &4C
- EQUB &47, &48, &47, &4C, &46, &47, &46, &4B
- EQUB &45, &46, &45, &4B, &4A, &44, &45, &44
- EQUB &4A, &49, &44, &49, &4A, &4D, &49, &46
- EQUB &4C, &4B, &46, &4B, &4F, &4E, &4A, &4B
- EQUB &4D, &55, &54, &4C, &4D, &4A, &52, &55
- EQUB &4D, &4A, &4C, &54, &53, &4B, &4C, &53
- EQUB &54, &55, &52, &53, &51, &53, &52, &50
- EQUB &51, &4E, &50, &52, &4A, &4E, &4B, &53
- EQUB &51, &4F, &4B, &4F, &51, &50, &4E, &4F
+ EQUB &43, &48, &47, &42, &43
+
+.objPolygon028
+
+ EQUB &40, &49, &43, &40
+
+.objPolygon029
+
+ EQUB &42, &46, &41, &42
+
+.objPolygon030
+
+ EQUB &41, &45, &44, &40, &41
+
+.objPolygon031
+
+ EQUB &43, &49, &48, &43
+
+.objPolygon032
+
+ EQUB &42, &47, &46, &42
+
+.objPolygon033
+
+ EQUB &41, &46, &45, &41
+
+.objPolygon034
+
+ EQUB &40, &44, &49, &40
+
+.objPolygon035
+
+ EQUB &49, &4D, &48, &49
+
+.objPolygon036
+
+ EQUB &48, &4D, &4C, &47, &48
+
+.objPolygon037
+
+ EQUB &47, &4C, &46, &47
+
+.objPolygon038
+
+ EQUB &46, &4B, &45, &46
+
+.objPolygon039
+
+ EQUB &45, &4B, &4A, &44, &45
+
+.objPolygon040
+
+ EQUB &44, &4A, &49, &44
+
+.objPolygon041
+
+ EQUB &49, &4A, &4D, &49
+
+.objPolygon042
+
+ EQUB &46, &4C, &4B, &46
+
+.objPolygon043
+
+ EQUB &4B, &4F, &4E, &4A, &4B
+
+.objPolygon044
+
+ EQUB &4D, &55, &54, &4C, &4D
+
+.objPolygon045
+
+ EQUB &4A, &52, &55, &4D, &4A
+
+.objPolygon046
+
+ EQUB &4C, &54, &53, &4B, &4C
+
+.objPolygon047
+
+ EQUB &53, &54, &55, &52, &53
+
+.objPolygon048
+
+ EQUB &51, &53, &52, &50, &51
+
+.objPolygon049
+
+ EQUB &4E, &50, &52, &4A, &4E
+
+.objPolygon050
+
+ EQUB &4B, &53, &51, &4F, &4B
+
+.objPolygon051
+
+ EQUB &4F, &51, &50, &4E, &4F
 
 \ ******************************************************************************
 \
@@ -30510,10 +31183,10 @@ L314A = C3148+2
  ADC #3
  STA L0017
 
- LDA L003CLo,Y          \ Set L003C(1 0) to the address for this polygon from
- STA L003C              \ L003CHi and L003CLo tables
- LDA L003CHi,Y
- STA L003C+1
+ LDA objPolygonAddrLo,Y \ Point L003C(1 0) to the list of point numbers for this
+ STA L003C              \ polygon so the DrawPolygon routine can use the yaw and 
+ LDA objPolygonAddrHi,Y \ pitch angles that we calculated for the points in the
+ STA L003C+1            \ GetObjPointAngles routine ???
 
  JSR DrawPolygon        \ Draw the polygon
 
