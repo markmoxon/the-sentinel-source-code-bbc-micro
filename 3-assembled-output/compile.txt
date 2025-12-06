@@ -213,7 +213,7 @@
      0051
 .minPitchAngle
      0052
-.drawingPhase
+.drawingPhaseCount
      0053
 .L0054
      0054
@@ -2515,7 +2515,7 @@
      0C44   00
      0C45   00
      0C46   00
-.drawingPhaseMask
+.drawingPhase
      0C47   00
 .xTileLeftPrevious
      0C48   02
