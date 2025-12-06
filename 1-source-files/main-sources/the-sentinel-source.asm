@@ -26675,103 +26675,184 @@ L314A = C3148+2
 
 .objPolygon077
 
- EQUB &47, &4C, &4B, &46, &47
+ EQUB 64 + 7
+ EQUB 64 + 12
+ EQUB 64 + 11
+ EQUB 64 + 6
+ EQUB 64 + 7
 
 .objPolygon078
 
- EQUB &40, &45, &42, &40
+ EQUB 64 + 0
+ EQUB 64 + 5
+ EQUB 64 + 2
+ EQUB 64 + 0
 
 .objPolygon079
 
- EQUB &41, &44, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 4
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon080
 
- EQUB &40, &44, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon081
 
- EQUB &40, &43, &45, &40
+ EQUB 64 + 0
+ EQUB 64 + 3
+ EQUB 64 + 5
+ EQUB 64 + 0
 
 .objPolygon082
 
- EQUB &42, &45, &44, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon083
 
- EQUB &45, &46, &49, &45
+ EQUB 64 + 5
+ EQUB 64 + 6
+ EQUB 64 + 9
+ EQUB 64 + 5
 
 .objPolygon084
 
- EQUB &44, &48, &47, &44
+ EQUB 64 + 4
+ EQUB 64 + 8
+ EQUB 64 + 7
+ EQUB 64 + 4
 
 .objPolygon085
 
- EQUB &45, &49, &48, &44, &45
+ EQUB 64 + 5
+ EQUB 64 + 9
+ EQUB 64 + 8
+ EQUB 64 + 4
+ EQUB 64 + 5
 
 .objPolygon086
 
- EQUB &43, &46, &45, &43
+ EQUB 64 + 3
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 3
 
 .objPolygon087
 
- EQUB &44, &47, &43, &44
+ EQUB 64 + 4
+ EQUB 64 + 7
+ EQUB 64 + 3
+ EQUB 64 + 4
 
 .objPolygon088
 
- EQUB &43, &47, &46, &43
+ EQUB 64 + 3
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 3
 
 .objPolygon089
 
- EQUB &4B, &4A, &46, &4B
+ EQUB 64 + 11
+ EQUB 64 + 10
+ EQUB 64 + 6
+ EQUB 64 + 11
 
 .objPolygon090
 
- EQUB &47, &4D, &4C, &47
+ EQUB 64 + 7
+ EQUB 64 + 13
+ EQUB 64 + 12
+ EQUB 64 + 7
 
 .objPolygon091
 
- EQUB &4B, &4E, &4A, &4B
+ EQUB 64 + 11
+ EQUB 64 + 14
+ EQUB 64 + 10
+ EQUB 64 + 11
 
 .objPolygon092
 
- EQUB &4C, &4D, &4F, &4C
+ EQUB 64 + 12
+ EQUB 64 + 13
+ EQUB 64 + 15
+ EQUB 64 + 12
 
 .objPolygon093
 
- EQUB &4C, &4F, &4E, &4B, &4C
+ EQUB 64 + 12
+ EQUB 64 + 15
+ EQUB 64 + 14
+ EQUB 64 + 11
+ EQUB 64 + 12
 
 .objPolygon094
 
- EQUB &46, &4A, &49, &46
+ EQUB 64 + 6
+ EQUB 64 + 10
+ EQUB 64 + 9
+ EQUB 64 + 6
 
 .objPolygon095
 
- EQUB &47, &48, &4D, &47
+ EQUB 64 + 7
+ EQUB 64 + 8
+ EQUB 64 + 13
+ EQUB 64 + 7
 
 .objPolygon096
 
- EQUB &4A, &50, &49, &4A
+ EQUB 64 + 10
+ EQUB 64 + 16
+ EQUB 64 + 9
+ EQUB 64 + 10
 
 .objPolygon097
 
- EQUB &48, &51, &4D, &48
+ EQUB 64 + 8
+ EQUB 64 + 17
+ EQUB 64 + 13
+ EQUB 64 + 8
 
 .objPolygon098
 
- EQUB &4A, &4E, &50, &4A
+ EQUB 64 + 10
+ EQUB 64 + 14
+ EQUB 64 + 16
+ EQUB 64 + 10
 
 .objPolygon099
 
- EQUB &4D, &51, &4F, &4D
+ EQUB 64 + 13
+ EQUB 64 + 17
+ EQUB 64 + 15
+ EQUB 64 + 13
 
 .objPolygon100
 
- EQUB &49, &50, &51, &48, &49
+ EQUB 64 + 9
+ EQUB 64 + 16
+ EQUB 64 + 17
+ EQUB 64 + 8
+ EQUB 64 + 9
 
 .objPolygon101
 
- EQUB &4F, &51, &50, &4E, &4F
+ EQUB 64 + 15
+ EQUB 64 + 17
+ EQUB 64 + 16
+ EQUB 64 + 14
+ EQUB 64 + 15
 
 \ ******************************************************************************
 \
@@ -28566,143 +28647,267 @@ L314A = C3148+2
 
 .objPolygon102
 
- EQUB &54, &50, &51, &55, &54
+ EQUB 64 + 20
+ EQUB 64 + 16
+ EQUB 64 + 17
+ EQUB 64 + 21
+ EQUB 64 + 20
 
 .objPolygon103
 
- EQUB &51, &4E, &55, &51
+ EQUB 64 + 17
+ EQUB 64 + 14
+ EQUB 64 + 21
+ EQUB 64 + 17
 
 .objPolygon104
 
- EQUB &54, &4F, &50, &54
+ EQUB 64 + 20
+ EQUB 64 + 15
+ EQUB 64 + 16
+ EQUB 64 + 20
 
 .objPolygon105
 
- EQUB &4F, &53, &52, &4E, &4F
+ EQUB 64 + 15
+ EQUB 64 + 19
+ EQUB 64 + 18
+ EQUB 64 + 14
+ EQUB 64 + 15
 
 .objPolygon106
 
- EQUB &43, &47, &46, &42, &43
+ EQUB 64 + 3
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 2
+ EQUB 64 + 3
 
 .objPolygon107
 
- EQUB &40, &44, &47, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 7
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon108
 
- EQUB &42, &46, &45, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon109
 
- EQUB &41, &45, &44, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon110
 
- EQUB &47, &4C, &4B, &46, &47
+ EQUB 64 + 7
+ EQUB 64 + 12
+ EQUB 64 + 11
+ EQUB 64 + 6
+ EQUB 64 + 7
 
 .objPolygon111
 
- EQUB &44, &4D, &47, &44
+ EQUB 64 + 4
+ EQUB 64 + 13
+ EQUB 64 + 7
+ EQUB 64 + 4
 
 .objPolygon112
 
- EQUB &46, &4A, &45, &46
+ EQUB 64 + 6
+ EQUB 64 + 10
+ EQUB 64 + 5
+ EQUB 64 + 6
 
 .objPolygon113
 
- EQUB &45, &49, &48, &44, &45
+ EQUB 64 + 5
+ EQUB 64 + 9
+ EQUB 64 + 8
+ EQUB 64 + 4
+ EQUB 64 + 5
 
 .objPolygon114
 
- EQUB &47, &4D, &4C, &47
+ EQUB 64 + 7
+ EQUB 64 + 13
+ EQUB 64 + 12
+ EQUB 64 + 7
 
 .objPolygon115
 
- EQUB &46, &4B, &4A, &46
+ EQUB 64 + 6
+ EQUB 64 + 11
+ EQUB 64 + 10
+ EQUB 64 + 6
 
 .objPolygon116
 
- EQUB &44, &48, &4D, &44
+ EQUB 64 + 4
+ EQUB 64 + 8
+ EQUB 64 + 13
+ EQUB 64 + 4
 
 .objPolygon117
 
- EQUB &45, &4A, &49, &45
+ EQUB 64 + 5
+ EQUB 64 + 10
+ EQUB 64 + 9
+ EQUB 64 + 5
 
 .objPolygon118
 
- EQUB &4D, &51, &4C, &4D
+ EQUB 64 + 13
+ EQUB 64 + 17
+ EQUB 64 + 12
+ EQUB 64 + 13
 
 .objPolygon119
 
- EQUB &4B, &50, &4A, &4B
+ EQUB 64 + 11
+ EQUB 64 + 16
+ EQUB 64 + 10
+ EQUB 64 + 11
 
 .objPolygon120
 
- EQUB &4C, &51, &50, &4B, &4C
+ EQUB 64 + 12
+ EQUB 64 + 17
+ EQUB 64 + 16
+ EQUB 64 + 11
+ EQUB 64 + 12
 
 .objPolygon121
 
- EQUB &4D, &4E, &51, &4D
+ EQUB 64 + 13
+ EQUB 64 + 14
+ EQUB 64 + 17
+ EQUB 64 + 13
 
 .objPolygon122
 
- EQUB &4A, &50, &4F, &4A
+ EQUB 64 + 10
+ EQUB 64 + 16
+ EQUB 64 + 15
+ EQUB 64 + 10
 
 .objPolygon123
 
- EQUB &48, &4E, &4D, &48
+ EQUB 64 + 8
+ EQUB 64 + 14
+ EQUB 64 + 13
+ EQUB 64 + 8
 
 .objPolygon124
 
- EQUB &49, &4A, &4F, &49
+ EQUB 64 + 9
+ EQUB 64 + 10
+ EQUB 64 + 15
+ EQUB 64 + 9
 
 .objPolygon125
 
- EQUB &49, &4F, &4E, &48, &49
+ EQUB 64 + 9
+ EQUB 64 + 15
+ EQUB 64 + 14
+ EQUB 64 + 8
+ EQUB 64 + 9
 
 .objPolygon126
 
- EQUB &59, &5B, &5A, &58, &59
+ EQUB 64 + 25
+ EQUB 64 + 27
+ EQUB 64 + 26
+ EQUB 64 + 24
+ EQUB 64 + 25
 
 .objPolygon127
 
- EQUB &55, &5D, &5C, &54, &55
+ EQUB 64 + 21
+ EQUB 64 + 29
+ EQUB 64 + 28
+ EQUB 64 + 20
+ EQUB 64 + 21
 
 .objPolygon128
 
- EQUB &4E, &58, &55, &4E
+ EQUB 64 + 14
+ EQUB 64 + 24
+ EQUB 64 + 21
+ EQUB 64 + 14
 
 .objPolygon129
 
- EQUB &54, &59, &4F, &54
+ EQUB 64 + 20
+ EQUB 64 + 25
+ EQUB 64 + 15
+ EQUB 64 + 20
 
 .objPolygon130
 
- EQUB &52, &56, &58, &4E, &52
+ EQUB 64 + 18
+ EQUB 64 + 22
+ EQUB 64 + 24
+ EQUB 64 + 14
+ EQUB 64 + 18
 
 .objPolygon131
 
- EQUB &4F, &59, &57, &53, &4F
+ EQUB 64 + 15
+ EQUB 64 + 25
+ EQUB 64 + 23
+ EQUB 64 + 19
+ EQUB 64 + 15
 
 .objPolygon132
 
- EQUB &57, &59, &58, &56, &57
+ EQUB 64 + 23
+ EQUB 64 + 25
+ EQUB 64 + 24
+ EQUB 64 + 22
+ EQUB 64 + 23
 
 .objPolygon133
 
- EQUB &53, &57, &56, &52, &53
+ EQUB 64 + 19
+ EQUB 64 + 23
+ EQUB 64 + 22
+ EQUB 64 + 18
+ EQUB 64 + 19
 
 .objPolygon134
 
- EQUB &5B, &5C, &5D, &5A, &5B
+ EQUB 64 + 27
+ EQUB 64 + 28
+ EQUB 64 + 29
+ EQUB 64 + 26
+ EQUB 64 + 27
 
 .objPolygon135
 
- EQUB &58, &5A, &5D, &55, &58
+ EQUB 64 + 24
+ EQUB 64 + 26
+ EQUB 64 + 29
+ EQUB 64 + 21
+ EQUB 64 + 24
 
 .objPolygon136
 
- EQUB &54, &5C, &5B, &59, &54
+ EQUB 64 + 20
+ EQUB 64 + 28
+ EQUB 64 + 27
+ EQUB 64 + 25
+ EQUB 64 + 20
 
  EQUB &10               \ This byte appears to be unused
 
@@ -28720,63 +28925,115 @@ L314A = C3148+2
 
 .objPolygon052
 
- EQUB &48, &4F, &4E, &49, &48
+ EQUB 64 + 8
+ EQUB 64 + 15
+ EQUB 64 + 14
+ EQUB 64 + 9
+ EQUB 64 + 8
 
 .objPolygon053
 
- EQUB &49, &4E, &4D, &4A, &49
+ EQUB 64 + 9
+ EQUB 64 + 14
+ EQUB 64 + 13
+ EQUB 64 + 10
+ EQUB 64 + 9
 
 .objPolygon054
 
- EQUB &4A, &4D, &4C, &4B, &4A
+ EQUB 64 + 10
+ EQUB 64 + 13
+ EQUB 64 + 12
+ EQUB 64 + 11
+ EQUB 64 + 10
 
 .objPolygon055
 
- EQUB &41, &45, &44, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon056
 
- EQUB &42, &46, &45, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon057
 
- EQUB &40, &44, &47, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 7
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon058
 
- EQUB &43, &47, &46, &42, &43
+ EQUB 64 + 3
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 2
+ EQUB 64 + 3
 
 .objPolygon059
 
- EQUB &48, &50, &4F, &48
+ EQUB 64 + 8
+ EQUB 64 + 16
+ EQUB 64 + 15
+ EQUB 64 + 8
 
 .objPolygon060
 
- EQUB &49, &50, &48, &49
+ EQUB 64 + 9
+ EQUB 64 + 16
+ EQUB 64 + 8
+ EQUB 64 + 9
 
 .objPolygon061
 
- EQUB &4A, &50, &49, &4A
+ EQUB 64 + 10
+ EQUB 64 + 16
+ EQUB 64 + 9
+ EQUB 64 + 10
 
 .objPolygon062
 
- EQUB &4B, &50, &4A, &4B
+ EQUB 64 + 11
+ EQUB 64 + 16
+ EQUB 64 + 10
+ EQUB 64 + 11
 
 .objPolygon063
 
- EQUB &4C, &50, &4B, &4C
+ EQUB 64 + 12
+ EQUB 64 + 16
+ EQUB 64 + 11
+ EQUB 64 + 12
 
 .objPolygon064
 
- EQUB &4D, &50, &4C, &4D
+ EQUB 64 + 13
+ EQUB 64 + 16
+ EQUB 64 + 12
+ EQUB 64 + 13
 
 .objPolygon065
 
- EQUB &4E, &50, &4D, &4E
+ EQUB 64 + 14
+ EQUB 64 + 16
+ EQUB 64 + 13
+ EQUB 64 + 14
 
 .objPolygon066
 
- EQUB &4F, &50, &4E, &4F
+ EQUB 64 + 15
+ EQUB 64 + 16
+ EQUB 64 + 14
+ EQUB 64 + 15
 
 \ ******************************************************************************
 \
@@ -28792,43 +29049,75 @@ L314A = C3148+2
 
 .objPolygon067
 
- EQUB &41, &40, &47, &41
+ EQUB 64 + 1
+ EQUB 64 + 0
+ EQUB 64 + 7
+ EQUB 64 + 1
 
 .objPolygon068
 
- EQUB &43, &42, &41, &43
+ EQUB 64 + 3
+ EQUB 64 + 2
+ EQUB 64 + 1
+ EQUB 64 + 3
 
 .objPolygon069
 
- EQUB &45, &44, &43, &45
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 3
+ EQUB 64 + 5
 
 .objPolygon070
 
- EQUB &47, &46, &45, &47
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 7
 
 .objPolygon071
 
- EQUB &41, &42, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 2
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon072
 
- EQUB &43, &44, &42, &43
+ EQUB 64 + 3
+ EQUB 64 + 4
+ EQUB 64 + 2
+ EQUB 64 + 3
 
 .objPolygon073
 
- EQUB &45, &46, &44, &45
+ EQUB 64 + 5
+ EQUB 64 + 6
+ EQUB 64 + 4
+ EQUB 64 + 5
 
 .objPolygon074
 
- EQUB &47, &40, &46, &47
+ EQUB 64 + 7
+ EQUB 64 + 0
+ EQUB 64 + 6
+ EQUB 64 + 7
 
 .objPolygon075
 
- EQUB &41, &47, &45, &43, &41
+ EQUB 64 + 1
+ EQUB 64 + 7
+ EQUB 64 + 5
+ EQUB 64 + 3
+ EQUB 64 + 1
 
 .objPolygon076
 
- EQUB &40, &42, &44, &46, &40
+ EQUB 64 + 0
+ EQUB 64 + 2
+ EQUB 64 + 4
+ EQUB 64 + 6
+ EQUB 64 + 0
 
 \ ******************************************************************************
 \
@@ -28844,47 +29133,87 @@ L314A = C3148+2
 
 .objPolygon137
 
- EQUB &41, &46, &45, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon138
 
- EQUB &42, &48, &47, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 8
+ EQUB 64 + 7
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon139
 
- EQUB &43, &4A, &49, &42, &43
+ EQUB 64 + 3
+ EQUB 64 + 10
+ EQUB 64 + 9
+ EQUB 64 + 2
+ EQUB 64 + 3
 
 .objPolygon140
 
- EQUB &40, &44, &4B, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 11
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon141
 
- EQUB &40, &45, &44, &40
+ EQUB 64 + 0
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 0
 
 .objPolygon142
 
- EQUB &41, &47, &46, &41
+ EQUB 64 + 1
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 1
 
 .objPolygon143
 
- EQUB &42, &49, &48, &42
+ EQUB 64 + 2
+ EQUB 64 + 9
+ EQUB 64 + 8
+ EQUB 64 + 2
 
 .objPolygon144
 
- EQUB &43, &4B, &4A, &43
+ EQUB 64 + 3
+ EQUB 64 + 11
+ EQUB 64 + 10
+ EQUB 64 + 3
 
 .objPolygon145
 
- EQUB &46, &47, &48, &49, &46
+ EQUB 64 + 6
+ EQUB 64 + 7
+ EQUB 64 + 8
+ EQUB 64 + 9
+ EQUB 64 + 6
 
 .objPolygon146
 
- EQUB &46, &49, &4A, &45, &46
+ EQUB 64 + 6
+ EQUB 64 + 9
+ EQUB 64 + 10
+ EQUB 64 + 5
+ EQUB 64 + 6
 
 .objPolygon147
 
- EQUB &45, &4A, &4B, &44, &45
+ EQUB 64 + 5
+ EQUB 64 + 10
+ EQUB 64 + 11
+ EQUB 64 + 4
+ EQUB 64 + 5
 
 \ ******************************************************************************
 \
@@ -28900,19 +29229,35 @@ L314A = C3148+2
 
 .objPolygon148
 
- EQUB &40, &44, &47, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 7
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon149
 
- EQUB &42, &46, &45, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon150
 
- EQUB &41, &45, &44, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon151
 
- EQUB &45, &46, &47, &44, &45
+ EQUB 64 + 5
+ EQUB 64 + 6
+ EQUB 64 + 7
+ EQUB 64 + 4
+ EQUB 64 + 5
 
 \ ******************************************************************************
 \
@@ -28928,111 +29273,207 @@ L314A = C3148+2
 
 .objPolygon000
 
- EQUB &4B, &4A, &48, &4C, &4B
+ EQUB 64 + 11
+ EQUB 64 + 10
+ EQUB 64 + 8
+ EQUB 64 + 12
+ EQUB 64 + 11
 
 .objPolygon001
 
- EQUB &4A, &49, &48, &4A
+ EQUB 64 + 10
+ EQUB 64 + 9
+ EQUB 64 + 8
+ EQUB 64 + 10
 
 .objPolygon002
 
- EQUB &54, &53, &52, &55, &54
+ EQUB 64 + 20
+ EQUB 64 + 19
+ EQUB 64 + 18
+ EQUB 64 + 21
+ EQUB 64 + 20
 
 .objPolygon003
 
- EQUB &40, &44, &47, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 7
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon004
 
- EQUB &42, &46, &45, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon005
 
- EQUB &43, &47, &46, &42, &43
+ EQUB 64 + 3
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 2
+ EQUB 64 + 3
 
 .objPolygon006
 
- EQUB &41, &45, &44, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon007
 
- EQUB &48, &4D, &50, &4C, &48
+ EQUB 64 + 8
+ EQUB 64 + 13
+ EQUB 64 + 16
+ EQUB 64 + 12
+ EQUB 64 + 8
 
 .objPolygon008
 
- EQUB &4B, &4F, &4E, &4A, &4B
+ EQUB 64 + 11
+ EQUB 64 + 15
+ EQUB 64 + 14
+ EQUB 64 + 10
+ EQUB 64 + 11
 
 .objPolygon009
 
- EQUB &4C, &50, &4F, &4B, &4C
+ EQUB 64 + 12
+ EQUB 64 + 16
+ EQUB 64 + 15
+ EQUB 64 + 11
+ EQUB 64 + 12
 
 .objPolygon010
 
- EQUB &4A, &5C, &49, &4A
+ EQUB 64 + 10
+ EQUB 64 + 28
+ EQUB 64 + 9
+ EQUB 64 + 10
 
 .objPolygon011
 
- EQUB &49, &5C, &48, &49
+ EQUB 64 + 9
+ EQUB 64 + 28
+ EQUB 64 + 8
+ EQUB 64 + 9
 
 .objPolygon012
 
- EQUB &4A, &4E, &5C, &4A
+ EQUB 64 + 10
+ EQUB 64 + 14
+ EQUB 64 + 28
+ EQUB 64 + 10
 
 .objPolygon013
 
- EQUB &48, &5C, &4D, &48
+ EQUB 64 + 8
+ EQUB 64 + 28
+ EQUB 64 + 13
+ EQUB 64 + 8
 
 .objPolygon014
 
- EQUB &4E, &51, &5C, &4E
+ EQUB 64 + 14
+ EQUB 64 + 17
+ EQUB 64 + 28
+ EQUB 64 + 14
 
 .objPolygon015
 
- EQUB &5C, &51, &4D, &5C
+ EQUB 64 + 28
+ EQUB 64 + 17
+ EQUB 64 + 13
+ EQUB 64 + 28
 
 .objPolygon016
 
- EQUB &4F, &51, &4E, &4F
+ EQUB 64 + 15
+ EQUB 64 + 17
+ EQUB 64 + 14
+ EQUB 64 + 15
 
 .objPolygon017
 
- EQUB &4D, &51, &50, &4D
+ EQUB 64 + 13
+ EQUB 64 + 17
+ EQUB 64 + 16
+ EQUB 64 + 13
 
 .objPolygon018
 
- EQUB &50, &51, &4F, &50
+ EQUB 64 + 16
+ EQUB 64 + 17
+ EQUB 64 + 15
+ EQUB 64 + 16
 
 .objPolygon019
 
- EQUB &53, &5A, &5B, &52, &53
+ EQUB 64 + 19
+ EQUB 64 + 26
+ EQUB 64 + 27
+ EQUB 64 + 18
+ EQUB 64 + 19
 
 .objPolygon020
 
- EQUB &52, &5B, &55, &52
+ EQUB 64 + 18
+ EQUB 64 + 27
+ EQUB 64 + 21
+ EQUB 64 + 18
 
 .objPolygon021
 
- EQUB &54, &5A, &53, &54
+ EQUB 64 + 20
+ EQUB 64 + 26
+ EQUB 64 + 19
+ EQUB 64 + 20
 
 .objPolygon022
 
- EQUB &5B, &56, &59, &55, &5B
+ EQUB 64 + 27
+ EQUB 64 + 22
+ EQUB 64 + 25
+ EQUB 64 + 21
+ EQUB 64 + 27
 
 .objPolygon023
 
- EQUB &54, &58, &57, &5A, &54
+ EQUB 64 + 20
+ EQUB 64 + 24
+ EQUB 64 + 23
+ EQUB 64 + 26
+ EQUB 64 + 20
 
 .objPolygon024
 
- EQUB &55, &59, &58, &54, &55
+ EQUB 64 + 21
+ EQUB 64 + 25
+ EQUB 64 + 24
+ EQUB 64 + 20
+ EQUB 64 + 21
 
 .objPolygon025
 
- EQUB &57, &58, &59, &56, &57
+ EQUB 64 + 23
+ EQUB 64 + 24
+ EQUB 64 + 25
+ EQUB 64 + 22
+ EQUB 64 + 23
 
 .objPolygon026
 
- EQUB &5A, &57, &56, &5B, &5A
+ EQUB 64 + 26
+ EQUB 64 + 23
+ EQUB 64 + 22
+ EQUB 64 + 27
+ EQUB 64 + 26
 
 \ ******************************************************************************
 \
@@ -29048,103 +29489,191 @@ L314A = C3148+2
 
 .objPolygon027
 
- EQUB &43, &48, &47, &42, &43
+ EQUB 64 + 3
+ EQUB 64 + 8
+ EQUB 64 + 7
+ EQUB 64 + 2
+ EQUB 64 + 3
 
 .objPolygon028
 
- EQUB &40, &49, &43, &40
+ EQUB 64 + 0
+ EQUB 64 + 9
+ EQUB 64 + 3
+ EQUB 64 + 0
 
 .objPolygon029
 
- EQUB &42, &46, &41, &42
+ EQUB 64 + 2
+ EQUB 64 + 6
+ EQUB 64 + 1
+ EQUB 64 + 2
 
 .objPolygon030
 
- EQUB &41, &45, &44, &40, &41
+ EQUB 64 + 1
+ EQUB 64 + 5
+ EQUB 64 + 4
+ EQUB 64 + 0
+ EQUB 64 + 1
 
 .objPolygon031
 
- EQUB &43, &49, &48, &43
+ EQUB 64 + 3
+ EQUB 64 + 9
+ EQUB 64 + 8
+ EQUB 64 + 3
 
 .objPolygon032
 
- EQUB &42, &47, &46, &42
+ EQUB 64 + 2
+ EQUB 64 + 7
+ EQUB 64 + 6
+ EQUB 64 + 2
 
 .objPolygon033
 
- EQUB &41, &46, &45, &41
+ EQUB 64 + 1
+ EQUB 64 + 6
+ EQUB 64 + 5
+ EQUB 64 + 1
 
 .objPolygon034
 
- EQUB &40, &44, &49, &40
+ EQUB 64 + 0
+ EQUB 64 + 4
+ EQUB 64 + 9
+ EQUB 64 + 0
 
 .objPolygon035
 
- EQUB &49, &4D, &48, &49
+ EQUB 64 + 9
+ EQUB 64 + 13
+ EQUB 64 + 8
+ EQUB 64 + 9
 
 .objPolygon036
 
- EQUB &48, &4D, &4C, &47, &48
+ EQUB 64 + 8
+ EQUB 64 + 13
+ EQUB 64 + 12
+ EQUB 64 + 7
+ EQUB 64 + 8
 
 .objPolygon037
 
- EQUB &47, &4C, &46, &47
+ EQUB 64 + 7
+ EQUB 64 + 12
+ EQUB 64 + 6
+ EQUB 64 + 7
 
 .objPolygon038
 
- EQUB &46, &4B, &45, &46
+ EQUB 64 + 6
+ EQUB 64 + 11
+ EQUB 64 + 5
+ EQUB 64 + 6
 
 .objPolygon039
 
- EQUB &45, &4B, &4A, &44, &45
+ EQUB 64 + 5
+ EQUB 64 + 11
+ EQUB 64 + 10
+ EQUB 64 + 4
+ EQUB 64 + 5
 
 .objPolygon040
 
- EQUB &44, &4A, &49, &44
+ EQUB 64 + 4
+ EQUB 64 + 10
+ EQUB 64 + 9
+ EQUB 64 + 4
 
 .objPolygon041
 
- EQUB &49, &4A, &4D, &49
+ EQUB 64 + 9
+ EQUB 64 + 10
+ EQUB 64 + 13
+ EQUB 64 + 9
 
 .objPolygon042
 
- EQUB &46, &4C, &4B, &46
+ EQUB 64 + 6
+ EQUB 64 + 12
+ EQUB 64 + 11
+ EQUB 64 + 6
 
 .objPolygon043
 
- EQUB &4B, &4F, &4E, &4A, &4B
+ EQUB 64 + 11
+ EQUB 64 + 15
+ EQUB 64 + 14
+ EQUB 64 + 10
+ EQUB 64 + 11
 
 .objPolygon044
 
- EQUB &4D, &55, &54, &4C, &4D
+ EQUB 64 + 13
+ EQUB 64 + 21
+ EQUB 64 + 20
+ EQUB 64 + 12
+ EQUB 64 + 13
 
 .objPolygon045
 
- EQUB &4A, &52, &55, &4D, &4A
+ EQUB 64 + 10
+ EQUB 64 + 18
+ EQUB 64 + 21
+ EQUB 64 + 13
+ EQUB 64 + 10
 
 .objPolygon046
 
- EQUB &4C, &54, &53, &4B, &4C
+ EQUB 64 + 12
+ EQUB 64 + 20
+ EQUB 64 + 19
+ EQUB 64 + 11
+ EQUB 64 + 12
 
 .objPolygon047
 
- EQUB &53, &54, &55, &52, &53
+ EQUB 64 + 19
+ EQUB 64 + 20
+ EQUB 64 + 21
+ EQUB 64 + 18
+ EQUB 64 + 19
 
 .objPolygon048
 
- EQUB &51, &53, &52, &50, &51
+ EQUB 64 + 17
+ EQUB 64 + 19
+ EQUB 64 + 18
+ EQUB 64 + 16
+ EQUB 64 + 17
 
 .objPolygon049
 
- EQUB &4E, &50, &52, &4A, &4E
+ EQUB 64 + 14
+ EQUB 64 + 16
+ EQUB 64 + 18
+ EQUB 64 + 10
+ EQUB 64 + 14
 
 .objPolygon050
 
- EQUB &4B, &53, &51, &4F, &4B
+ EQUB 64 + 11
+ EQUB 64 + 19
+ EQUB 64 + 17
+ EQUB 64 + 15
+ EQUB 64 + 11
 
 .objPolygon051
 
- EQUB &4F, &51, &50, &4E, &4F
+ EQUB 64 + 15
+ EQUB 64 + 17
+ EQUB 64 + 16
+ EQUB 64 + 14
+ EQUB 64 + 15
 
 \ ******************************************************************************
 \
