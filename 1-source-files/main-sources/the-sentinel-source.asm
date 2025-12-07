@@ -27506,1120 +27506,1120 @@ L314A = C3148+2
 
 .objPolygonData
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 0 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 0 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 1 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 1 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 2 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 2 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 3 data:
+ EQUB 1 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 3 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 4 data:
+ EQUB 1 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 4 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 2 << 4 + 1 << 2 + 1	\ Polygon 5 data:
+ EQUB 1 << 7 + 2 << 4 + 1 << 2 + 1  \ Polygon 5 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 2 << 4 + 1 << 2 + 1	\ Polygon 6 data:
+ EQUB 1 << 7 + 2 << 4 + 1 << 2 + 1  \ Polygon 6 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 1	\ Polygon 7 data:
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 1  \ Polygon 7 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 0 (blue)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 1	\ Polygon 8 data:
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 1  \ Polygon 8 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 0 (blue)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 9 data:
+ EQUB 1 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 9 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0	\ Polygon 10 data:
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0  \ Polygon 10 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 0 (blue)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0	\ Polygon 11 data:
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0  \ Polygon 11 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 0 (blue)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 12 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 12 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 13 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 13 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0	\ Polygon 14 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 1 (black)
-                                    \   * Fill colour = 0 (blue)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0	\ Polygon 15 data:
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0  \ Polygon 14 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 0 (blue)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 16 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 1 (black)
-                                    \   * Fill colour = 3 (green etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 17 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 1 (black)
-                                    \   * Fill colour = 3 (green etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0	\ Polygon 18 data:
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0  \ Polygon 15 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 0 (blue)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 19 data:
+ EQUB 1 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 16 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 1 (black)
+                                    \   * Fill colour = 3 (green etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 17 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 1 (black)
+                                    \   * Fill colour = 3 (green etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 1 << 4 + 0 << 2 + 0  \ Polygon 18 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 1 (black)
+                                    \   * Fill colour = 0 (blue)
+                                    \   * Polygon has three sides
+
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 19 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 20 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 20 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 21 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 21 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 22 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 22 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 23 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 23 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 24 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 24 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 25 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 25 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 26 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 26 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 27 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 27 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 28 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 28 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 29 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 29 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 30 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 1 (black)
-                                    \   * Fill colour = 1 (black)
-                                    \   * Polygon has four sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 31 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 32 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 33 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 34 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 35 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 36 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has four sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 37 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 38 data:
-                                    \
-                                    \   * Draw polygon in second phase
-                                    \   * Line colour = 2 (white etc.)
-                                    \   * Fill colour = 2 (white etc.)
-                                    \   * Polygon has three sides
-
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 39 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 30 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 40 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 31 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 41 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 32 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 33 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 34 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 35 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 36 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has four sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 37 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 38 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 39 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 1 (black)
+                                    \   * Fill colour = 1 (black)
+                                    \   * Polygon has four sides
+
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 40 data:
+                                    \
+                                    \   * Draw polygon in second phase
+                                    \   * Line colour = 2 (white etc.)
+                                    \   * Fill colour = 2 (white etc.)
+                                    \   * Polygon has three sides
+
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 41 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 42 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 42 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 43 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 43 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 44 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 44 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 45 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 45 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 46 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 46 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 47 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 47 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 48 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 48 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 49 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 49 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 50 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 50 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 51 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 51 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 52 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 52 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 53 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 53 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 54 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 54 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 55 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 55 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 56 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 56 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1	\ Polygon 57 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 1  \ Polygon 57 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 58 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 58 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 59 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 59 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 60 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 60 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 61 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 61 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 62 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 62 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 63 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 63 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 64 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 64 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 65 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 65 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 66 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 66 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 67 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 67 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 68 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 68 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 69 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 69 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 70 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 70 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 71 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 71 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 72 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 72 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 73 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 73 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 74 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 74 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 75 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 75 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 76 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 76 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 77 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 77 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 78 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 78 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 79 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 79 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 80 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 80 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0	\ Polygon 81 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 0  \ Polygon 81 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 1 << 2 + 1	\ Polygon 82 data:
+ EQUB 0 << 7 + 3 << 4 + 1 << 2 + 1  \ Polygon 82 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 83 data:
+ EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 83 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 84 data:
+ EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 84 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 3 << 4 + 2 << 2 + 1	\ Polygon 85 data:
+ EQUB 1 << 7 + 3 << 4 + 2 << 2 + 1  \ Polygon 85 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 86 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 86 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 87 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 87 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 88 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 88 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 89 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 89 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 90 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 90 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 91 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 91 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 92 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 92 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 93 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 93 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 94 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 94 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0	\ Polygon 95 data:
+ EQUB 0 << 7 + 1 << 4 + 2 << 2 + 0  \ Polygon 95 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 96 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 96 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 97 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 97 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 98 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 98 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 99 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 99 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 1 << 2 + 1	\ Polygon 100 data:
+ EQUB 0 << 7 + 3 << 4 + 1 << 2 + 1  \ Polygon 100 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 1 << 2 + 1	\ Polygon 101 data:
+ EQUB 0 << 7 + 3 << 4 + 1 << 2 + 1  \ Polygon 101 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 102 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 102 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 103 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 103 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 104 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 104 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 105 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 105 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 106 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 106 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 107 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 107 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 108 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 108 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 109 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 109 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 110 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 110 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 111 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 111 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 112 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 112 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 113 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 113 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 114 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 114 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 115 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 115 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 116 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 116 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 117 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 117 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 118 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 118 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0	\ Polygon 119 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 0  \ Polygon 119 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 120 data:
+ EQUB 1 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 120 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 121 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 121 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 122 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 122 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 123 data:
+ EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 123 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 124 data:
+ EQUB 1 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 124 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 125 data:
+ EQUB 1 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 125 data:
                                     \
                                     \   * Draw polygon in second phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 126 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 126 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 127 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 127 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 128 data:
-                                    \
-                                    \   * Draw polygon in first phase
-                                    \   * Line colour = 1 (black)
-                                    \   * Fill colour = 1 (black)
-                                    \   * Polygon has three sides
-
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0	\ Polygon 129 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 128 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 130 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 0  \ Polygon 129 data:
+                                    \
+                                    \   * Draw polygon in first phase
+                                    \   * Line colour = 1 (black)
+                                    \   * Fill colour = 1 (black)
+                                    \   * Polygon has three sides
+
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 130 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 131 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 131 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 132 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 132 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1	\ Polygon 133 data:
+ EQUB 0 << 7 + 1 << 4 + 3 << 2 + 1  \ Polygon 133 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 134 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 134 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 135 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 135 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 136 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 136 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 137 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 137 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 138 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 138 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 139 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 139 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 140 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 140 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 141 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 141 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 142 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 142 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 143 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 143 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0	\ Polygon 144 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 0  \ Polygon 144 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has three sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 145 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 145 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 146 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 146 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 147 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 147 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 148 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 148 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 149 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 149 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 150 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 150 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 151 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 151 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 152 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 152 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 153 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 153 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 154 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 154 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 155 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 155 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
                                     \   * Fill colour = 3 (green etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 156 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 156 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1	\ Polygon 157 data:
+ EQUB 0 << 7 + 1 << 4 + 1 << 2 + 1  \ Polygon 157 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 1 (black)
                                     \   * Fill colour = 1 (black)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1	\ Polygon 158 data:
+ EQUB 0 << 7 + 2 << 4 + 2 << 2 + 1  \ Polygon 158 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 2 (white etc.)
                                     \   * Fill colour = 2 (white etc.)
                                     \   * Polygon has four sides
 
- EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1	\ Polygon 159 data:
+ EQUB 0 << 7 + 3 << 4 + 3 << 2 + 1  \ Polygon 159 data:
                                     \
                                     \   * Draw polygon in first phase
                                     \   * Line colour = 3 (green etc.)
