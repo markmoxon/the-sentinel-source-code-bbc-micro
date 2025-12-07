@@ -26901,26 +26901,166 @@ L314A = C3148+2
 
 .objPointYaw
 
- EQUB &CF, &31, &5F, &A1, &D9, &27, &57, &A9
- EQUB &CB, &00, &35, &55, &AB, &C5, &3B, &52
- EQUB &AE, &00, &EC, &14, &63, &9D, &C0, &40
- EQUB &69, &97, &21, &DF, &00, &DA, &26, &5A
- EQUB &A6, &F5, &0B, &40, &5A, &A6, &C0, &DA
- EQUB &26, &5A, &A6, &F5, &0B, &F8, &08, &E2
- EQUB &1E, &5C, &A4, &E0, &20, &60, &A0, &E0
- EQUB &20, &60, &A0, &00, &20, &40, &60, &80
- EQUB &A0, &C0, &E0, &00, &00, &20, &40, &60
- EQUB &80, &A0, &C0, &E0, &00, &59, &A7, &80
- EQUB &72, &8E, &E1, &1F, &59, &A7, &D5, &F6
- EQUB &0A, &2B, &FB, &05, &E9, &17, &DA, &26
- EQUB &5A, &A6, &DA, &26, &5A, &A6, &F5, &0B
- EQUB &40, &5A, &A6, &C0, &DA, &26, &5A, &A6
- EQUB &F5, &0B, &53, &AD, &F8, &08, &E2, &1E
- EQUB &DC, &24, &66, &9A, &E0, &20, &60, &A0
- EQUB &D4, &EC, &14, &2C, &54, &6C, &94, &AC
- EQUB &E0, &FD, &83, &A0, &E0, &FD, &83, &A0
- EQUB &03, &20, &60, &7D, &03, &20, &60, &7D
- EQUB &E0, &20, &60, &A0, &E0, &20, &60, &A0
+ EQUB 207               \ Point   0: yaw = 207, distance =  20, height = -112
+ EQUB  49               \ Point   1: yaw =  49, distance =  20, height = -112
+ EQUB  95               \ Point   2: yaw =  95, distance =  27, height = -112
+ EQUB 161               \ Point   3: yaw = 161, distance =  27, height = -112
+ EQUB 217               \ Point   4: yaw = 217, distance =  31, height =  -56
+ EQUB  39               \ Point   5: yaw =  39, distance =  31, height =  -56
+ EQUB  87               \ Point   6: yaw =  87, distance =  35, height =  -56
+ EQUB 169               \ Point   7: yaw = 169, distance =  35, height =  -56
+ EQUB 203               \ Point   8: yaw = 203, distance =  42, height =  -56
+ EQUB   0               \ Point   9: yaw =   0, distance =  32, height =  -56
+ EQUB  53               \ Point  10: yaw =  53, distance =  42, height =  -56
+ EQUB  85               \ Point  11: yaw =  85, distance =  48, height =  -56
+ EQUB 171               \ Point  12: yaw = 171, distance =  48, height =  -56
+ EQUB 197               \ Point  13: yaw = 197, distance =  52, height =  -18
+ EQUB  59               \ Point  14: yaw =  59, distance =  52, height =  -18
+ EQUB  82               \ Point  15: yaw =  82, distance =  56, height =  -18
+ EQUB 174               \ Point  16: yaw = 174, distance =  56, height =  -18
+ EQUB   0               \ Point  17: yaw =   0, distance =   0, height =  -10
+ EQUB 236               \ Point  18: yaw = 236, distance =  19, height =  -11
+ EQUB  20               \ Point  19: yaw =  20, distance =  19, height =  -11
+ EQUB  99               \ Point  20: yaw =  99, distance =  29, height =  -11
+ EQUB 157               \ Point  21: yaw = 157, distance =  29, height =  -11
+ EQUB 192               \ Point  22: yaw = 192, distance =  12, height =   +8
+ EQUB  64               \ Point  23: yaw =  64, distance =  12, height =   +8
+ EQUB 105               \ Point  24: yaw = 105, distance =  19, height =   +8
+ EQUB 151               \ Point  25: yaw = 151, distance =  19, height =   +8
+ EQUB  33               \ Point  26: yaw =  33, distance =  28, height =   -3
+ EQUB 223               \ Point  27: yaw = 223, distance =  28, height =   -3
+ EQUB   0               \ Point  28: yaw =   0, distance =  32, height =  -21
+ EQUB 218               \ Point  29: yaw = 218, distance =  42, height = -112
+ EQUB  38               \ Point  30: yaw =  38, distance =  42, height = -112
+ EQUB  90               \ Point  31: yaw =  90, distance =  42, height = -112
+ EQUB 166               \ Point  32: yaw = 166, distance =  42, height = -112
+ EQUB 245               \ Point  33: yaw = 245, distance =  50, height =  -24
+ EQUB  11               \ Point  34: yaw =  11, distance =  50, height =  -24
+ EQUB  64               \ Point  35: yaw =  64, distance =  54, height =  -27
+ EQUB  90               \ Point  36: yaw =  90, distance =  42, height =  -27
+ EQUB 166               \ Point  37: yaw = 166, distance =  42, height =  -27
+ EQUB 192               \ Point  38: yaw = 192, distance =  54, height =  -27
+ EQUB 218               \ Point  39: yaw = 218, distance =  34, height =   -8
+ EQUB  38               \ Point  40: yaw =  38, distance =  34, height =   -8
+ EQUB  90               \ Point  41: yaw =  90, distance =  34, height =   -8
+ EQUB 166               \ Point  42: yaw = 166, distance =  34, height =   -8
+ EQUB 245               \ Point  43: yaw = 245, distance =  64, height =   -8
+ EQUB  11               \ Point  44: yaw =  11, distance =  64, height =   -8
+ EQUB 248               \ Point  45: yaw = 248, distance =  63, height =   +1
+ EQUB   8               \ Point  46: yaw =   8, distance =  63, height =   +1
+ EQUB 226               \ Point  47: yaw = 226, distance =  34, height =   +8
+ EQUB  30               \ Point  48: yaw =  30, distance =  34, height =   +8
+ EQUB  92               \ Point  49: yaw =  92, distance =  31, height =   +5
+ EQUB 164               \ Point  50: yaw = 164, distance =  31, height =   +5
+ EQUB 224               \ Point  51: yaw = 224, distance =  24, height = -112
+ EQUB  32               \ Point  52: yaw =  32, distance =  24, height = -112
+ EQUB  96               \ Point  53: yaw =  96, distance =  24, height = -112
+ EQUB 160               \ Point  54: yaw = 160, distance =  24, height = -112
+ EQUB 224               \ Point  55: yaw = 224, distance =  24, height =  -72
+ EQUB  32               \ Point  56: yaw =  32, distance =  24, height =  -72
+ EQUB  96               \ Point  57: yaw =  96, distance =  24, height =  -72
+ EQUB 160               \ Point  58: yaw = 160, distance =  24, height =  -72
+ EQUB   0               \ Point  59: yaw =   0, distance = 104, height =  -72
+ EQUB  32               \ Point  60: yaw =  32, distance = 104, height =  -72
+ EQUB  64               \ Point  61: yaw =  64, distance = 104, height =  -72
+ EQUB  96               \ Point  62: yaw =  96, distance = 104, height =  -72
+ EQUB 128               \ Point  63: yaw = 128, distance = 104, height =  -72
+ EQUB 160               \ Point  64: yaw = 160, distance = 104, height =  -72
+ EQUB 192               \ Point  65: yaw = 192, distance = 104, height =  -72
+ EQUB 224               \ Point  66: yaw = 224, distance = 104, height =  -72
+ EQUB   0               \ Point  67: yaw =   0, distance =   0, height = +120
+ EQUB   0               \ Point  68: yaw =   0, distance = 112, height =  -48
+ EQUB  32               \ Point  69: yaw =  32, distance = 112, height = -112
+ EQUB  64               \ Point  70: yaw =  64, distance = 112, height =  -48
+ EQUB  96               \ Point  71: yaw =  96, distance = 112, height = -112
+ EQUB 128               \ Point  72: yaw = 128, distance = 112, height =  -48
+ EQUB 160               \ Point  73: yaw = 160, distance = 112, height = -112
+ EQUB 192               \ Point  74: yaw = 192, distance = 112, height =  -48
+ EQUB 224               \ Point  75: yaw = 224, distance = 112, height = -112
+ EQUB   0               \ Point  76: yaw =   0, distance =  52, height = -112
+ EQUB  89               \ Point  77: yaw =  89, distance =  68, height = -112
+ EQUB 167               \ Point  78: yaw = 167, distance =  68, height = -112
+ EQUB 128               \ Point  79: yaw = 128, distance =  26, height =  -60
+ EQUB 114               \ Point  80: yaw = 114, distance =  41, height =  -60
+ EQUB 142               \ Point  81: yaw = 142, distance =  41, height =  -60
+ EQUB 225               \ Point  82: yaw = 225, distance =  12, height =  -10
+ EQUB  31               \ Point  83: yaw =  31, distance =  12, height =  -10
+ EQUB  89               \ Point  84: yaw =  89, distance =  23, height =   +1
+ EQUB 167               \ Point  85: yaw = 167, distance =  23, height =   +1
+ EQUB 213               \ Point  86: yaw = 213, distance =  46, height =   -8
+ EQUB 246               \ Point  87: yaw = 246, distance =  54, height =  -14
+ EQUB  10               \ Point  88: yaw =  10, distance =  54, height =  -14
+ EQUB  43               \ Point  89: yaw =  43, distance =  46, height =   -8
+ EQUB 251               \ Point  90: yaw = 251, distance =  58, height =   -5
+ EQUB   5               \ Point  91: yaw =   5, distance =  58, height =   -5
+ EQUB 233               \ Point  92: yaw = 233, distance =  34, height =   +6
+ EQUB  23               \ Point  93: yaw =  23, distance =  34, height =   +6
+ EQUB 218               \ Point  94: yaw = 218, distance =  56, height = -112
+ EQUB  38               \ Point  95: yaw =  38, distance =  56, height = -112
+ EQUB  90               \ Point  96: yaw =  90, distance =  56, height = -112
+ EQUB 166               \ Point  97: yaw = 166, distance =  56, height = -112
+ EQUB 218               \ Point  98: yaw = 218, distance =  42, height =  -96
+ EQUB  38               \ Point  99: yaw =  38, distance =  42, height =  -96
+ EQUB  90               \ Point 100: yaw =  90, distance =  42, height =  -96
+ EQUB 166               \ Point 101: yaw = 166, distance =  42, height =  -96
+ EQUB 245               \ Point 102: yaw = 245, distance =  50, height =   -8
+ EQUB  11               \ Point 103: yaw =  11, distance =  50, height =   -8
+ EQUB  64               \ Point 104: yaw =  64, distance =  54, height =  -11
+ EQUB  90               \ Point 105: yaw =  90, distance =  42, height =  -11
+ EQUB 166               \ Point 106: yaw = 166, distance =  42, height =  -11
+ EQUB 192               \ Point 107: yaw = 192, distance =  54, height =  -11
+ EQUB 218               \ Point 108: yaw = 218, distance =  34, height =   +8
+ EQUB  38               \ Point 109: yaw =  38, distance =  34, height =   +8
+ EQUB  90               \ Point 110: yaw =  90, distance =  34, height =   +5
+ EQUB 166               \ Point 111: yaw = 166, distance =  34, height =   +5
+ EQUB 245               \ Point 112: yaw = 245, distance =  64, height =   +8
+ EQUB  11               \ Point 113: yaw =  11, distance =  64, height =   +8
+ EQUB  83               \ Point 114: yaw =  83, distance =  70, height =   +2
+ EQUB 173               \ Point 115: yaw = 173, distance =  70, height =   +2
+ EQUB 248               \ Point 116: yaw = 248, distance =  63, height =  +17
+ EQUB   8               \ Point 117: yaw =   8, distance =  63, height =  +17
+ EQUB 226               \ Point 118: yaw = 226, distance =  34, height =  +24
+ EQUB  30               \ Point 119: yaw =  30, distance =  34, height =  +24
+ EQUB 220               \ Point 120: yaw = 220, distance =  19, height =  +39
+ EQUB  36               \ Point 121: yaw =  36, distance =  19, height =  +39
+ EQUB 102               \ Point 122: yaw = 102, distance =  24, height =  +39
+ EQUB 154               \ Point 123: yaw = 154, distance =  24, height =  +39
+ EQUB 224               \ Point 124: yaw = 224, distance = 181, height = -112
+ EQUB  32               \ Point 125: yaw =  32, distance = 181, height = -112
+ EQUB  96               \ Point 126: yaw =  96, distance = 181, height = -112
+ EQUB 160               \ Point 127: yaw = 160, distance = 181, height = -112
+ EQUB 212               \ Point 128: yaw = 212, distance = 145, height =  +16
+ EQUB 236               \ Point 129: yaw = 236, distance = 145, height =  +16
+ EQUB  20               \ Point 130: yaw =  20, distance = 145, height =  +16
+ EQUB  44               \ Point 131: yaw =  44, distance = 145, height =  +16
+ EQUB  84               \ Point 132: yaw =  84, distance = 145, height =  +16
+ EQUB 108               \ Point 133: yaw = 108, distance = 145, height =  +16
+ EQUB 148               \ Point 134: yaw = 148, distance = 145, height =  +16
+ EQUB 172               \ Point 135: yaw = 172, distance = 145, height =  +16
+ EQUB 224               \ Point 136: yaw = 224, distance = 192, height = -112
+ EQUB 253               \ Point 137: yaw = 253, distance = 136, height = -112
+ EQUB 131               \ Point 138: yaw = 131, distance = 136, height = -112
+ EQUB 160               \ Point 139: yaw = 160, distance = 192, height = -112
+ EQUB 224               \ Point 140: yaw = 224, distance = 192, height = +112
+ EQUB 253               \ Point 141: yaw = 253, distance = 136, height = +112
+ EQUB 131               \ Point 142: yaw = 131, distance = 136, height = +112
+ EQUB 160               \ Point 143: yaw = 160, distance = 192, height = +112
+ EQUB   3               \ Point 144: yaw =   3, distance = 136, height = -112
+ EQUB  32               \ Point 145: yaw =  32, distance = 192, height = -112
+ EQUB  96               \ Point 146: yaw =  96, distance = 192, height = -112
+ EQUB 125               \ Point 147: yaw = 125, distance = 136, height = -112
+ EQUB   3               \ Point 148: yaw =   3, distance = 136, height = +112
+ EQUB  32               \ Point 149: yaw =  32, distance = 192, height = +112
+ EQUB  96               \ Point 150: yaw =  96, distance = 192, height = +112
+ EQUB 125               \ Point 151: yaw = 125, distance = 136, height = +112
+ EQUB 224               \ Point 152: yaw = 224, distance = 192, height = -112
+ EQUB  32               \ Point 153: yaw =  32, distance = 192, height = -112
+ EQUB  96               \ Point 154: yaw =  96, distance = 192, height = -112
+ EQUB 160               \ Point 155: yaw = 160, distance = 192, height = -112
+ EQUB 224               \ Point 156: yaw = 224, distance = 192, height = +112
+ EQUB  32               \ Point 157: yaw =  32, distance = 192, height = +112
+ EQUB  96               \ Point 158: yaw =  96, distance = 192, height = +112
+ EQUB 160               \ Point 159: yaw = 160, distance = 192, height = +112
 
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
@@ -26963,26 +27103,166 @@ L314A = C3148+2
 
 .objPointHeight
 
- EQUB &F0, &F0, &F0, &F0, &B8, &B8, &B8, &B8
- EQUB &B8, &B8, &B8, &B8, &B8, &92, &92, &92
- EQUB &92, &8A, &8B, &8B, &8B, &8B, &08, &08
- EQUB &08, &08, &83, &83, &95, &F0, &F0, &F0
- EQUB &F0, &98, &98, &9B, &9B, &9B, &9B, &88
- EQUB &88, &88, &88, &88, &88, &01, &01, &08
- EQUB &08, &05, &05, &F0, &F0, &F0, &F0, &C8
- EQUB &C8, &C8, &C8, &C8, &C8, &C8, &C8, &C8
- EQUB &C8, &C8, &C8, &78, &B0, &F0, &B0, &F0
- EQUB &B0, &F0, &B0, &F0, &F0, &F0, &F0, &BC
- EQUB &BC, &BC, &8A, &8A, &01, &01, &88, &8E
- EQUB &8E, &88, &85, &85, &06, &06, &F0, &F0
- EQUB &F0, &F0, &E0, &E0, &E0, &E0, &88, &88
- EQUB &8B, &8B, &8B, &8B, &08, &08, &05, &05
- EQUB &08, &08, &02, &02, &11, &11, &18, &18
- EQUB &27, &27, &27, &27, &F0, &F0, &F0, &F0
- EQUB &10, &10, &10, &10, &10, &10, &10, &10
- EQUB &F0, &F0, &F0, &F0, &70, &70, &70, &70
- EQUB &F0, &F0, &F0, &F0, &70, &70, &70, &70
- EQUB &F0, &F0, &F0, &F0, &70, &70, &70, &70
+ EQUB 240               \ Point   0: yaw = 207, distance =  20, height = -112
+ EQUB 240               \ Point   1: yaw =  49, distance =  20, height = -112
+ EQUB 240               \ Point   2: yaw =  95, distance =  27, height = -112
+ EQUB 240               \ Point   3: yaw = 161, distance =  27, height = -112
+ EQUB 184               \ Point   4: yaw = 217, distance =  31, height =  -56
+ EQUB 184               \ Point   5: yaw =  39, distance =  31, height =  -56
+ EQUB 184               \ Point   6: yaw =  87, distance =  35, height =  -56
+ EQUB 184               \ Point   7: yaw = 169, distance =  35, height =  -56
+ EQUB 184               \ Point   8: yaw = 203, distance =  42, height =  -56
+ EQUB 184               \ Point   9: yaw =   0, distance =  32, height =  -56
+ EQUB 184               \ Point  10: yaw =  53, distance =  42, height =  -56
+ EQUB 184               \ Point  11: yaw =  85, distance =  48, height =  -56
+ EQUB 184               \ Point  12: yaw = 171, distance =  48, height =  -56
+ EQUB 146               \ Point  13: yaw = 197, distance =  52, height =  -18
+ EQUB 146               \ Point  14: yaw =  59, distance =  52, height =  -18
+ EQUB 146               \ Point  15: yaw =  82, distance =  56, height =  -18
+ EQUB 146               \ Point  16: yaw = 174, distance =  56, height =  -18
+ EQUB 138               \ Point  17: yaw =   0, distance =   0, height =  -10
+ EQUB 139               \ Point  18: yaw = 236, distance =  19, height =  -11
+ EQUB 139               \ Point  19: yaw =  20, distance =  19, height =  -11
+ EQUB 139               \ Point  20: yaw =  99, distance =  29, height =  -11
+ EQUB 139               \ Point  21: yaw = 157, distance =  29, height =  -11
+ EQUB   8               \ Point  22: yaw = 192, distance =  12, height =   +8
+ EQUB   8               \ Point  23: yaw =  64, distance =  12, height =   +8
+ EQUB   8               \ Point  24: yaw = 105, distance =  19, height =   +8
+ EQUB   8               \ Point  25: yaw = 151, distance =  19, height =   +8
+ EQUB 131               \ Point  26: yaw =  33, distance =  28, height =   -3
+ EQUB 131               \ Point  27: yaw = 223, distance =  28, height =   -3
+ EQUB 149               \ Point  28: yaw =   0, distance =  32, height =  -21
+ EQUB 240               \ Point  29: yaw = 218, distance =  42, height = -112
+ EQUB 240               \ Point  30: yaw =  38, distance =  42, height = -112
+ EQUB 240               \ Point  31: yaw =  90, distance =  42, height = -112
+ EQUB 240               \ Point  32: yaw = 166, distance =  42, height = -112
+ EQUB 152               \ Point  33: yaw = 245, distance =  50, height =  -24
+ EQUB 152               \ Point  34: yaw =  11, distance =  50, height =  -24
+ EQUB 155               \ Point  35: yaw =  64, distance =  54, height =  -27
+ EQUB 155               \ Point  36: yaw =  90, distance =  42, height =  -27
+ EQUB 155               \ Point  37: yaw = 166, distance =  42, height =  -27
+ EQUB 155               \ Point  38: yaw = 192, distance =  54, height =  -27
+ EQUB 136               \ Point  39: yaw = 218, distance =  34, height =   -8
+ EQUB 136               \ Point  40: yaw =  38, distance =  34, height =   -8
+ EQUB 136               \ Point  41: yaw =  90, distance =  34, height =   -8
+ EQUB 136               \ Point  42: yaw = 166, distance =  34, height =   -8
+ EQUB 136               \ Point  43: yaw = 245, distance =  64, height =   -8
+ EQUB 136               \ Point  44: yaw =  11, distance =  64, height =   -8
+ EQUB   1               \ Point  45: yaw = 248, distance =  63, height =   +1
+ EQUB   1               \ Point  46: yaw =   8, distance =  63, height =   +1
+ EQUB   8               \ Point  47: yaw = 226, distance =  34, height =   +8
+ EQUB   8               \ Point  48: yaw =  30, distance =  34, height =   +8
+ EQUB   5               \ Point  49: yaw =  92, distance =  31, height =   +5
+ EQUB   5               \ Point  50: yaw = 164, distance =  31, height =   +5
+ EQUB 240               \ Point  51: yaw = 224, distance =  24, height = -112
+ EQUB 240               \ Point  52: yaw =  32, distance =  24, height = -112
+ EQUB 240               \ Point  53: yaw =  96, distance =  24, height = -112
+ EQUB 240               \ Point  54: yaw = 160, distance =  24, height = -112
+ EQUB 200               \ Point  55: yaw = 224, distance =  24, height =  -72
+ EQUB 200               \ Point  56: yaw =  32, distance =  24, height =  -72
+ EQUB 200               \ Point  57: yaw =  96, distance =  24, height =  -72
+ EQUB 200               \ Point  58: yaw = 160, distance =  24, height =  -72
+ EQUB 200               \ Point  59: yaw =   0, distance = 104, height =  -72
+ EQUB 200               \ Point  60: yaw =  32, distance = 104, height =  -72
+ EQUB 200               \ Point  61: yaw =  64, distance = 104, height =  -72
+ EQUB 200               \ Point  62: yaw =  96, distance = 104, height =  -72
+ EQUB 200               \ Point  63: yaw = 128, distance = 104, height =  -72
+ EQUB 200               \ Point  64: yaw = 160, distance = 104, height =  -72
+ EQUB 200               \ Point  65: yaw = 192, distance = 104, height =  -72
+ EQUB 200               \ Point  66: yaw = 224, distance = 104, height =  -72
+ EQUB 120               \ Point  67: yaw =   0, distance =   0, height = +120
+ EQUB 176               \ Point  68: yaw =   0, distance = 112, height =  -48
+ EQUB 240               \ Point  69: yaw =  32, distance = 112, height = -112
+ EQUB 176               \ Point  70: yaw =  64, distance = 112, height =  -48
+ EQUB 240               \ Point  71: yaw =  96, distance = 112, height = -112
+ EQUB 176               \ Point  72: yaw = 128, distance = 112, height =  -48
+ EQUB 240               \ Point  73: yaw = 160, distance = 112, height = -112
+ EQUB 176               \ Point  74: yaw = 192, distance = 112, height =  -48
+ EQUB 240               \ Point  75: yaw = 224, distance = 112, height = -112
+ EQUB 240               \ Point  76: yaw =   0, distance =  52, height = -112
+ EQUB 240               \ Point  77: yaw =  89, distance =  68, height = -112
+ EQUB 240               \ Point  78: yaw = 167, distance =  68, height = -112
+ EQUB 188               \ Point  79: yaw = 128, distance =  26, height =  -60
+ EQUB 188               \ Point  80: yaw = 114, distance =  41, height =  -60
+ EQUB 188               \ Point  81: yaw = 142, distance =  41, height =  -60
+ EQUB 138               \ Point  82: yaw = 225, distance =  12, height =  -10
+ EQUB 138               \ Point  83: yaw =  31, distance =  12, height =  -10
+ EQUB   1               \ Point  84: yaw =  89, distance =  23, height =   +1
+ EQUB   1               \ Point  85: yaw = 167, distance =  23, height =   +1
+ EQUB 136               \ Point  86: yaw = 213, distance =  46, height =   -8
+ EQUB 142               \ Point  87: yaw = 246, distance =  54, height =  -14
+ EQUB 142               \ Point  88: yaw =  10, distance =  54, height =  -14
+ EQUB 136               \ Point  89: yaw =  43, distance =  46, height =   -8
+ EQUB 133               \ Point  90: yaw = 251, distance =  58, height =   -5
+ EQUB 133               \ Point  91: yaw =   5, distance =  58, height =   -5
+ EQUB   6               \ Point  92: yaw = 233, distance =  34, height =   +6
+ EQUB   6               \ Point  93: yaw =  23, distance =  34, height =   +6
+ EQUB 240               \ Point  94: yaw = 218, distance =  56, height = -112
+ EQUB 240               \ Point  95: yaw =  38, distance =  56, height = -112
+ EQUB 240               \ Point  96: yaw =  90, distance =  56, height = -112
+ EQUB 240               \ Point  97: yaw = 166, distance =  56, height = -112
+ EQUB 224               \ Point  98: yaw = 218, distance =  42, height =  -96
+ EQUB 224               \ Point  99: yaw =  38, distance =  42, height =  -96
+ EQUB 224               \ Point 100: yaw =  90, distance =  42, height =  -96
+ EQUB 224               \ Point 101: yaw = 166, distance =  42, height =  -96
+ EQUB 136               \ Point 102: yaw = 245, distance =  50, height =   -8
+ EQUB 136               \ Point 103: yaw =  11, distance =  50, height =   -8
+ EQUB 139               \ Point 104: yaw =  64, distance =  54, height =  -11
+ EQUB 139               \ Point 105: yaw =  90, distance =  42, height =  -11
+ EQUB 139               \ Point 106: yaw = 166, distance =  42, height =  -11
+ EQUB 139               \ Point 107: yaw = 192, distance =  54, height =  -11
+ EQUB   8               \ Point 108: yaw = 218, distance =  34, height =   +8
+ EQUB   8               \ Point 109: yaw =  38, distance =  34, height =   +8
+ EQUB   5               \ Point 110: yaw =  90, distance =  34, height =   +5
+ EQUB   5               \ Point 111: yaw = 166, distance =  34, height =   +5
+ EQUB   8               \ Point 112: yaw = 245, distance =  64, height =   +8
+ EQUB   8               \ Point 113: yaw =  11, distance =  64, height =   +8
+ EQUB   2               \ Point 114: yaw =  83, distance =  70, height =   +2
+ EQUB   2               \ Point 115: yaw = 173, distance =  70, height =   +2
+ EQUB  17               \ Point 116: yaw = 248, distance =  63, height =  +17
+ EQUB  17               \ Point 117: yaw =   8, distance =  63, height =  +17
+ EQUB  24               \ Point 118: yaw = 226, distance =  34, height =  +24
+ EQUB  24               \ Point 119: yaw =  30, distance =  34, height =  +24
+ EQUB  39               \ Point 120: yaw = 220, distance =  19, height =  +39
+ EQUB  39               \ Point 121: yaw =  36, distance =  19, height =  +39
+ EQUB  39               \ Point 122: yaw = 102, distance =  24, height =  +39
+ EQUB  39               \ Point 123: yaw = 154, distance =  24, height =  +39
+ EQUB 240               \ Point 124: yaw = 224, distance = 181, height = -112
+ EQUB 240               \ Point 125: yaw =  32, distance = 181, height = -112
+ EQUB 240               \ Point 126: yaw =  96, distance = 181, height = -112
+ EQUB 240               \ Point 127: yaw = 160, distance = 181, height = -112
+ EQUB  16               \ Point 128: yaw = 212, distance = 145, height =  +16
+ EQUB  16               \ Point 129: yaw = 236, distance = 145, height =  +16
+ EQUB  16               \ Point 130: yaw =  20, distance = 145, height =  +16
+ EQUB  16               \ Point 131: yaw =  44, distance = 145, height =  +16
+ EQUB  16               \ Point 132: yaw =  84, distance = 145, height =  +16
+ EQUB  16               \ Point 133: yaw = 108, distance = 145, height =  +16
+ EQUB  16               \ Point 134: yaw = 148, distance = 145, height =  +16
+ EQUB  16               \ Point 135: yaw = 172, distance = 145, height =  +16
+ EQUB 240               \ Point 136: yaw = 224, distance = 192, height = -112
+ EQUB 240               \ Point 137: yaw = 253, distance = 136, height = -112
+ EQUB 240               \ Point 138: yaw = 131, distance = 136, height = -112
+ EQUB 240               \ Point 139: yaw = 160, distance = 192, height = -112
+ EQUB 112               \ Point 140: yaw = 224, distance = 192, height = +112
+ EQUB 112               \ Point 141: yaw = 253, distance = 136, height = +112
+ EQUB 112               \ Point 142: yaw = 131, distance = 136, height = +112
+ EQUB 112               \ Point 143: yaw = 160, distance = 192, height = +112
+ EQUB 240               \ Point 144: yaw =   3, distance = 136, height = -112
+ EQUB 240               \ Point 145: yaw =  32, distance = 192, height = -112
+ EQUB 240               \ Point 146: yaw =  96, distance = 192, height = -112
+ EQUB 240               \ Point 147: yaw = 125, distance = 136, height = -112
+ EQUB 112               \ Point 148: yaw =   3, distance = 136, height = +112
+ EQUB 112               \ Point 149: yaw =  32, distance = 192, height = +112
+ EQUB 112               \ Point 150: yaw =  96, distance = 192, height = +112
+ EQUB 112               \ Point 151: yaw = 125, distance = 136, height = +112
+ EQUB 240               \ Point 152: yaw = 224, distance = 192, height = -112
+ EQUB 240               \ Point 153: yaw =  32, distance = 192, height = -112
+ EQUB 240               \ Point 154: yaw =  96, distance = 192, height = -112
+ EQUB 240               \ Point 155: yaw = 160, distance = 192, height = -112
+ EQUB 112               \ Point 156: yaw = 224, distance = 192, height = +112
+ EQUB 112               \ Point 157: yaw =  32, distance = 192, height = +112
+ EQUB 112               \ Point 158: yaw =  96, distance = 192, height = +112
+ EQUB 112               \ Point 159: yaw = 160, distance = 192, height = +112
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
@@ -27016,26 +27296,166 @@ L314A = C3148+2
 
 .objPointDistance
 
- EQUB &14, &14, &1B, &1B, &1F, &1F, &23, &23
- EQUB &2A, &20, &2A, &30, &30, &34, &34, &38
- EQUB &38, &00, &13, &13, &1D, &1D, &0C, &0C
- EQUB &13, &13, &1C, &1C, &20, &2A, &2A, &2A
- EQUB &2A, &32, &32, &36, &2A, &2A, &36, &22
- EQUB &22, &22, &22, &40, &40, &3F, &3F, &22
- EQUB &22, &1F, &1F, &18, &18, &18, &18, &18
- EQUB &18, &18, &18, &68, &68, &68, &68, &68
- EQUB &68, &68, &68, &00, &70, &70, &70, &70
- EQUB &70, &70, &70, &70, &34, &44, &44, &1A
- EQUB &29, &29, &0C, &0C, &17, &17, &2E, &36
- EQUB &36, &2E, &3A, &3A, &22, &22, &38, &38
- EQUB &38, &38, &2A, &2A, &2A, &2A, &32, &32
- EQUB &36, &2A, &2A, &36, &22, &22, &22, &22
- EQUB &40, &40, &46, &46, &3F, &3F, &22, &22
- EQUB &13, &13, &18, &18, &B5, &B5, &B5, &B5
- EQUB &91, &91, &91, &91, &91, &91, &91, &91
- EQUB &C0, &88, &88, &C0, &C0, &88, &88, &C0
- EQUB &88, &C0, &C0, &88, &88, &C0, &C0, &88
- EQUB &C0, &C0, &C0, &C0, &C0, &C0, &C0, &C0
+ EQUB  20               \ Point   0: yaw = 207, distance =  20, height = -112
+ EQUB  20               \ Point   1: yaw =  49, distance =  20, height = -112
+ EQUB  27               \ Point   2: yaw =  95, distance =  27, height = -112
+ EQUB  27               \ Point   3: yaw = 161, distance =  27, height = -112
+ EQUB  31               \ Point   4: yaw = 217, distance =  31, height =  -56
+ EQUB  31               \ Point   5: yaw =  39, distance =  31, height =  -56
+ EQUB  35               \ Point   6: yaw =  87, distance =  35, height =  -56
+ EQUB  35               \ Point   7: yaw = 169, distance =  35, height =  -56
+ EQUB  42               \ Point   8: yaw = 203, distance =  42, height =  -56
+ EQUB  32               \ Point   9: yaw =   0, distance =  32, height =  -56
+ EQUB  42               \ Point  10: yaw =  53, distance =  42, height =  -56
+ EQUB  48               \ Point  11: yaw =  85, distance =  48, height =  -56
+ EQUB  48               \ Point  12: yaw = 171, distance =  48, height =  -56
+ EQUB  52               \ Point  13: yaw = 197, distance =  52, height =  -18
+ EQUB  52               \ Point  14: yaw =  59, distance =  52, height =  -18
+ EQUB  56               \ Point  15: yaw =  82, distance =  56, height =  -18
+ EQUB  56               \ Point  16: yaw = 174, distance =  56, height =  -18
+ EQUB   0               \ Point  17: yaw =   0, distance =   0, height =  -10
+ EQUB  19               \ Point  18: yaw = 236, distance =  19, height =  -11
+ EQUB  19               \ Point  19: yaw =  20, distance =  19, height =  -11
+ EQUB  29               \ Point  20: yaw =  99, distance =  29, height =  -11
+ EQUB  29               \ Point  21: yaw = 157, distance =  29, height =  -11
+ EQUB  12               \ Point  22: yaw = 192, distance =  12, height =   +8
+ EQUB  12               \ Point  23: yaw =  64, distance =  12, height =   +8
+ EQUB  19               \ Point  24: yaw = 105, distance =  19, height =   +8
+ EQUB  19               \ Point  25: yaw = 151, distance =  19, height =   +8
+ EQUB  28               \ Point  26: yaw =  33, distance =  28, height =   -3
+ EQUB  28               \ Point  27: yaw = 223, distance =  28, height =   -3
+ EQUB  32               \ Point  28: yaw =   0, distance =  32, height =  -21
+ EQUB  42               \ Point  29: yaw = 218, distance =  42, height = -112
+ EQUB  42               \ Point  30: yaw =  38, distance =  42, height = -112
+ EQUB  42               \ Point  31: yaw =  90, distance =  42, height = -112
+ EQUB  42               \ Point  32: yaw = 166, distance =  42, height = -112
+ EQUB  50               \ Point  33: yaw = 245, distance =  50, height =  -24
+ EQUB  50               \ Point  34: yaw =  11, distance =  50, height =  -24
+ EQUB  54               \ Point  35: yaw =  64, distance =  54, height =  -27
+ EQUB  42               \ Point  36: yaw =  90, distance =  42, height =  -27
+ EQUB  42               \ Point  37: yaw = 166, distance =  42, height =  -27
+ EQUB  54               \ Point  38: yaw = 192, distance =  54, height =  -27
+ EQUB  34               \ Point  39: yaw = 218, distance =  34, height =   -8
+ EQUB  34               \ Point  40: yaw =  38, distance =  34, height =   -8
+ EQUB  34               \ Point  41: yaw =  90, distance =  34, height =   -8
+ EQUB  34               \ Point  42: yaw = 166, distance =  34, height =   -8
+ EQUB  64               \ Point  43: yaw = 245, distance =  64, height =   -8
+ EQUB  64               \ Point  44: yaw =  11, distance =  64, height =   -8
+ EQUB  63               \ Point  45: yaw = 248, distance =  63, height =   +1
+ EQUB  63               \ Point  46: yaw =   8, distance =  63, height =   +1
+ EQUB  34               \ Point  47: yaw = 226, distance =  34, height =   +8
+ EQUB  34               \ Point  48: yaw =  30, distance =  34, height =   +8
+ EQUB  31               \ Point  49: yaw =  92, distance =  31, height =   +5
+ EQUB  31               \ Point  50: yaw = 164, distance =  31, height =   +5
+ EQUB  24               \ Point  51: yaw = 224, distance =  24, height = -112
+ EQUB  24               \ Point  52: yaw =  32, distance =  24, height = -112
+ EQUB  24               \ Point  53: yaw =  96, distance =  24, height = -112
+ EQUB  24               \ Point  54: yaw = 160, distance =  24, height = -112
+ EQUB  24               \ Point  55: yaw = 224, distance =  24, height =  -72
+ EQUB  24               \ Point  56: yaw =  32, distance =  24, height =  -72
+ EQUB  24               \ Point  57: yaw =  96, distance =  24, height =  -72
+ EQUB  24               \ Point  58: yaw = 160, distance =  24, height =  -72
+ EQUB 104               \ Point  59: yaw =   0, distance = 104, height =  -72
+ EQUB 104               \ Point  60: yaw =  32, distance = 104, height =  -72
+ EQUB 104               \ Point  61: yaw =  64, distance = 104, height =  -72
+ EQUB 104               \ Point  62: yaw =  96, distance = 104, height =  -72
+ EQUB 104               \ Point  63: yaw = 128, distance = 104, height =  -72
+ EQUB 104               \ Point  64: yaw = 160, distance = 104, height =  -72
+ EQUB 104               \ Point  65: yaw = 192, distance = 104, height =  -72
+ EQUB 104               \ Point  66: yaw = 224, distance = 104, height =  -72
+ EQUB   0               \ Point  67: yaw =   0, distance =   0, height = +120
+ EQUB 112               \ Point  68: yaw =   0, distance = 112, height =  -48
+ EQUB 112               \ Point  69: yaw =  32, distance = 112, height = -112
+ EQUB 112               \ Point  70: yaw =  64, distance = 112, height =  -48
+ EQUB 112               \ Point  71: yaw =  96, distance = 112, height = -112
+ EQUB 112               \ Point  72: yaw = 128, distance = 112, height =  -48
+ EQUB 112               \ Point  73: yaw = 160, distance = 112, height = -112
+ EQUB 112               \ Point  74: yaw = 192, distance = 112, height =  -48
+ EQUB 112               \ Point  75: yaw = 224, distance = 112, height = -112
+ EQUB  52               \ Point  76: yaw =   0, distance =  52, height = -112
+ EQUB  68               \ Point  77: yaw =  89, distance =  68, height = -112
+ EQUB  68               \ Point  78: yaw = 167, distance =  68, height = -112
+ EQUB  26               \ Point  79: yaw = 128, distance =  26, height =  -60
+ EQUB  41               \ Point  80: yaw = 114, distance =  41, height =  -60
+ EQUB  41               \ Point  81: yaw = 142, distance =  41, height =  -60
+ EQUB  12               \ Point  82: yaw = 225, distance =  12, height =  -10
+ EQUB  12               \ Point  83: yaw =  31, distance =  12, height =  -10
+ EQUB  23               \ Point  84: yaw =  89, distance =  23, height =   +1
+ EQUB  23               \ Point  85: yaw = 167, distance =  23, height =   +1
+ EQUB  46               \ Point  86: yaw = 213, distance =  46, height =   -8
+ EQUB  54               \ Point  87: yaw = 246, distance =  54, height =  -14
+ EQUB  54               \ Point  88: yaw =  10, distance =  54, height =  -14
+ EQUB  46               \ Point  89: yaw =  43, distance =  46, height =   -8
+ EQUB  58               \ Point  90: yaw = 251, distance =  58, height =   -5
+ EQUB  58               \ Point  91: yaw =   5, distance =  58, height =   -5
+ EQUB  34               \ Point  92: yaw = 233, distance =  34, height =   +6
+ EQUB  34               \ Point  93: yaw =  23, distance =  34, height =   +6
+ EQUB  56               \ Point  94: yaw = 218, distance =  56, height = -112
+ EQUB  56               \ Point  95: yaw =  38, distance =  56, height = -112
+ EQUB  56               \ Point  96: yaw =  90, distance =  56, height = -112
+ EQUB  56               \ Point  97: yaw = 166, distance =  56, height = -112
+ EQUB  42               \ Point  98: yaw = 218, distance =  42, height =  -96
+ EQUB  42               \ Point  99: yaw =  38, distance =  42, height =  -96
+ EQUB  42               \ Point 100: yaw =  90, distance =  42, height =  -96
+ EQUB  42               \ Point 101: yaw = 166, distance =  42, height =  -96
+ EQUB  50               \ Point 102: yaw = 245, distance =  50, height =   -8
+ EQUB  50               \ Point 103: yaw =  11, distance =  50, height =   -8
+ EQUB  54               \ Point 104: yaw =  64, distance =  54, height =  -11
+ EQUB  42               \ Point 105: yaw =  90, distance =  42, height =  -11
+ EQUB  42               \ Point 106: yaw = 166, distance =  42, height =  -11
+ EQUB  54               \ Point 107: yaw = 192, distance =  54, height =  -11
+ EQUB  34               \ Point 108: yaw = 218, distance =  34, height =   +8
+ EQUB  34               \ Point 109: yaw =  38, distance =  34, height =   +8
+ EQUB  34               \ Point 110: yaw =  90, distance =  34, height =   +5
+ EQUB  34               \ Point 111: yaw = 166, distance =  34, height =   +5
+ EQUB  64               \ Point 112: yaw = 245, distance =  64, height =   +8
+ EQUB  64               \ Point 113: yaw =  11, distance =  64, height =   +8
+ EQUB  70               \ Point 114: yaw =  83, distance =  70, height =   +2
+ EQUB  70               \ Point 115: yaw = 173, distance =  70, height =   +2
+ EQUB  63               \ Point 116: yaw = 248, distance =  63, height =  +17
+ EQUB  63               \ Point 117: yaw =   8, distance =  63, height =  +17
+ EQUB  34               \ Point 118: yaw = 226, distance =  34, height =  +24
+ EQUB  34               \ Point 119: yaw =  30, distance =  34, height =  +24
+ EQUB  19               \ Point 120: yaw = 220, distance =  19, height =  +39
+ EQUB  19               \ Point 121: yaw =  36, distance =  19, height =  +39
+ EQUB  24               \ Point 122: yaw = 102, distance =  24, height =  +39
+ EQUB  24               \ Point 123: yaw = 154, distance =  24, height =  +39
+ EQUB 181               \ Point 124: yaw = 224, distance = 181, height = -112
+ EQUB 181               \ Point 125: yaw =  32, distance = 181, height = -112
+ EQUB 181               \ Point 126: yaw =  96, distance = 181, height = -112
+ EQUB 181               \ Point 127: yaw = 160, distance = 181, height = -112
+ EQUB 145               \ Point 128: yaw = 212, distance = 145, height =  +16
+ EQUB 145               \ Point 129: yaw = 236, distance = 145, height =  +16
+ EQUB 145               \ Point 130: yaw =  20, distance = 145, height =  +16
+ EQUB 145               \ Point 131: yaw =  44, distance = 145, height =  +16
+ EQUB 145               \ Point 132: yaw =  84, distance = 145, height =  +16
+ EQUB 145               \ Point 133: yaw = 108, distance = 145, height =  +16
+ EQUB 145               \ Point 134: yaw = 148, distance = 145, height =  +16
+ EQUB 145               \ Point 135: yaw = 172, distance = 145, height =  +16
+ EQUB 192               \ Point 136: yaw = 224, distance = 192, height = -112
+ EQUB 136               \ Point 137: yaw = 253, distance = 136, height = -112
+ EQUB 136               \ Point 138: yaw = 131, distance = 136, height = -112
+ EQUB 192               \ Point 139: yaw = 160, distance = 192, height = -112
+ EQUB 192               \ Point 140: yaw = 224, distance = 192, height = +112
+ EQUB 136               \ Point 141: yaw = 253, distance = 136, height = +112
+ EQUB 136               \ Point 142: yaw = 131, distance = 136, height = +112
+ EQUB 192               \ Point 143: yaw = 160, distance = 192, height = +112
+ EQUB 136               \ Point 144: yaw =   3, distance = 136, height = -112
+ EQUB 192               \ Point 145: yaw =  32, distance = 192, height = -112
+ EQUB 192               \ Point 146: yaw =  96, distance = 192, height = -112
+ EQUB 136               \ Point 147: yaw = 125, distance = 136, height = -112
+ EQUB 136               \ Point 148: yaw =   3, distance = 136, height = +112
+ EQUB 192               \ Point 149: yaw =  32, distance = 192, height = +112
+ EQUB 192               \ Point 150: yaw =  96, distance = 192, height = +112
+ EQUB 136               \ Point 151: yaw = 125, distance = 136, height = +112
+ EQUB 192               \ Point 152: yaw = 224, distance = 192, height = -112
+ EQUB 192               \ Point 153: yaw =  32, distance = 192, height = -112
+ EQUB 192               \ Point 154: yaw =  96, distance = 192, height = -112
+ EQUB 192               \ Point 155: yaw = 160, distance = 192, height = -112
+ EQUB 192               \ Point 156: yaw = 224, distance = 192, height = +112
+ EQUB 192               \ Point 157: yaw =  32, distance = 192, height = +112
+ EQUB 192               \ Point 158: yaw =  96, distance = 192, height = +112
+ EQUB 192               \ Point 159: yaw = 160, distance = 192, height = +112
 
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
