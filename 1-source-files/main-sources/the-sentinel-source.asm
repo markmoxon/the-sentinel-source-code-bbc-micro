@@ -27456,26 +27456,24 @@ L314A = C3148+2
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
-
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &10, &FE, &FE, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &FF, &FF, &FF, &FF, &FF, &7F, &FF
+ EQUB &00, &00, &00, &00, &00, &00, &00, &10
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
 
 \ ******************************************************************************
 \
