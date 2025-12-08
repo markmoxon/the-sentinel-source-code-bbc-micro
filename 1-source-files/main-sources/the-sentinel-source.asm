@@ -651,7 +651,7 @@
  SKIP 1                 \ The type of the object being analysed in the
                         \ GetObjectAngles routine
 
- SKIP 1                 \ This byte appears to be unused ???
+ SKIP 1                 \ This byte appears to be unused
 
 .polygonNumber
 
@@ -730,7 +730,7 @@
                         \ and the yaw angle (i.e. the gaze) of the object being
                         \ analysed (low byte)
 
- SKIP 1                 \ This byte appears to be unused ???
+ SKIP 1                 \ This byte appears to be unused
 
 .bLo
 
@@ -1637,7 +1637,7 @@
 
 .J
 
- SKIP 1                 \ Temporary storage, used in the maths routines from
+ EQUB 0                 \ Temporary storage, used in the maths routines from
                         \ Revs
 
 .gameplayStack
@@ -25890,41 +25890,43 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
-\ This table contains addresses for each of the 24 character rows in the
-\ player's scrolling landscape view in the screen buffer.
+\ This table contains addresses for each of the 24 character rows in the screen
+\ buffer for the player's scrolling landscape view. There is an additional
+\ address for a 25th character row, but this clashes with the object data and
+\ is unused.
 \
 \ The buffer rows wrap around in memory after the 16th row, so they can fit into
 \ the program space without overlapping with screen memory or game code. The
 \ addresses are as follows:
 \
-\   &3F00
-\   &4040
-\   &4180
-\   &42C0
-\   &4400
-\   &4540
-\   &4680
-\   &47C0
-\   &4900
-\   &4A40
-\   &4B80
-\   &4CC0
-\   &4E00
-\   &4F40
-\   &5080
-\   &51C0
+\   &3F00 (viewBufferRow0)
+\   &4040 (viewBufferRow1)
+\   &4180 (viewBufferRow2)
+\   &42C0 (viewBufferRow3)
+\   &4400 (viewBufferRow4)
+\   &4540 (viewBufferRow5)
+\   &4680 (viewBufferRow6)
+\   &47C0 (viewBufferRow7)
+\   &4900 (viewBufferRow8)
+\   &4A40 (viewBufferRow9)
+\   &4B80 (viewBufferRow10)
+\   &4CC0 (viewBufferRow11)
+\   &4E00 (viewBufferRow12)
+\   &4F40 (viewBufferRow13)
+\   &5080 (viewBufferRow14)
+\   &51C0 (viewBufferRow15)
 \
 \ and then they wrap around to the following locations for rows 16 to 25:
 \
-\   &3FA0
-\   &40E0
-\   &4220
-\   &4360
-\   &44A0
-\   &45E0
-\   &4720
-\   &4860
-\   &49A0
+\   &3FA0 (viewBufferRow16)
+\   &40E0 (viewBufferRow17)
+\   &4220 (viewBufferRow18)
+\   &4360 (viewBufferRow19)
+\   &44A0 (viewBufferRow20)
+\   &45E0 (viewBufferRow21)
+\   &4720 (viewBufferRow22)
+\   &4860 (viewBufferRow23)
+\   &49A0 (unused)
 \
 \ The first batch of locations need to be able to store an entire screen row of
 \ 320 bytes, so they can be used to store the screen buffer when scrolling in
@@ -26141,6 +26143,8 @@ L314A = C3148+2
 
 .tileVisibility
 
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
@@ -26155,8 +26159,91 @@ L314A = C3148+2
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow0
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 0
+\
+\ ******************************************************************************
+
+.viewBufferRow0
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow16
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 16 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow16
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+ CLEAR &3F00, &4040     \ Memory from &3F00 to &4040 has three separate uses
+ ORG &3F00              \
+                        \ During startup it is used to store the startup
+                        \ routines ConfigureMachine and ClearMemory, which
+                        \ aren't needed again once the game has started
+                        \
+                        \ While the landscape is being generated it is used to
+                        \ store the secret code stash
+                        \
+                        \ While the game is running it is used to store the
+                        \ screen buffer for character row 0 (when part of a row
+                        \ buffer), or for character rows 0 and 16 (when part of
+                        \ a column buffer)
+                        \
+                        \ These lines rewind BeebAsm's assembly back to
+                        \ viewBufferRow0 (which is at address &3F00), and
+                        \ clear the block from that point to the end of the
+                        \ buffer (which is at address &4040), so we can assemble
+                        \ the secret code stash
 
 \ ******************************************************************************
 \
@@ -26170,18 +26257,36 @@ L314A = C3148+2
 
 .secretCodeStash
 
- SKIP 128               \ This variable shares the same memory as the startup
-                        \ routines as they aren't needed again once the game
-                        \ has started
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
- CLEAR &3F00, &3F80     \ Memory from &3F00 to &3F80 has two separate uses
+ CLEAR &3F00, &3F80     \ Memory from &3F00 to &3F80 has three separate uses
  ORG &3F00              \
                         \ During startup it is used to store the startup
                         \ routines ConfigureMachine and ClearMemory, which
                         \ aren't needed again once the game has started
                         \
+                        \ While the landscape is being generated it is used to
+                        \ store the secret code stash
+                        \
                         \ While the game is running it is used to store the
-                        \ secretCodeStash and screen buffer
+                        \ screen buffer for character row 0 (when part of a row
+                        \ buffer), or for character rows 0 and 16 (when part of
+                        \ a column buffer)
                         \
                         \ These lines rewind BeebAsm's assembly back to
                         \ secretCodeStash (which is at address &3F00), and
@@ -26553,41 +26658,483 @@ L314A = C3148+2
  EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
  EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
  EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial content is just
- EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored
- EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
- EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
- EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
- EQUB &24, &05, &20, &0D, &13, &2E, &2A, &2E
- EQUB &4D, &49, &4E, &49, &20, &4C, &44, &41
- EQUB &23, &31, &32, &38, &3A, &53, &54, &41
- EQUB &20, &4D, &45, &41, &4E, &59, &2C, &58
- EQUB &3A, &53, &54, &41, &20, &4D, &45, &4D
- EQUB &4F, &52, &59, &2C, &58, &0D, &13, &38
- EQUB &1F, &20, &20, &20, &20, &20, &20, &4C
- EQUB &44, &41, &23, &30, &3A, &53, &54, &41
- EQUB &20, &4D, &45, &41, &4E, &59, &53, &43
- EQUB &41, &4E, &2C, &58, &0D, &13, &42, &22
- EQUB &20, &20, &20, &20, &20, &20, &4C, &44
- EQUB &41, &23, &36, &34, &3A, &53, &54, &41
- EQUB &20, &4D, &54, &52, &59, &43, &4E, &54
- EQUB &2C, &58, &3A, &72, &74, &73, &0D, &13
- EQUB &4C, &05, &20, &0D, &13, &56, &1A, &2E
- EQUB &4D, &45, &41, &4E, &20, &4C, &44, &41
- EQUB &23, &34, &30, &3A, &53, &54, &41, &20
- EQUB &43, &4F, &56, &45, &52, &0D, &13, &60
- EQUB &1B, &20, &20, &20, &20, &20, &20, &4C
- EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
- EQUB &53, &54, &58, &20, &58, &54
+ EQUB &0D, &12, &E8, &05, &20, &0D              \ workspace noise and is ignored
+                                                \
+                                                \ It actually contains snippets
+                                                \ of the original source code
 
- SKIPTO &4900           \ All bytes from &4100 to &48FF are zeroes in the game
-                        \ binary
+\ ******************************************************************************
+\
+\       Name: viewBufferRow1
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 1
+\
+\ ******************************************************************************
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes are unused until
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ the game is in progress, at
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ which point this whole section
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \
- EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ The initial content is just
- EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ workspace noise and is ignored
+.viewBufferRow1
+
+ EQUB &12, &F2, &05, &20, &0D, &12, &FC, &05    \ The initial content is just
+ EQUB &20, &0D, &13, &06, &05, &20, &0D, &13    \ workspace noise and is ignored
+ EQUB &10, &05, &20, &0D, &13, &1A, &05, &20    \
+ EQUB &0D, &13, &24, &05, &20, &0D, &13, &2E    \ It actually contains snippets
+ EQUB &2A, &2E, &4D, &49, &4E, &49, &20, &4C    \ of the original source code
+ EQUB &44, &41, &23, &31, &32, &38, &3A, &53
+ EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
+ EQUB &2C, &58, &3A, &53, &54, &41, &20, &4D
+ EQUB &45, &4D, &4F, &52, &59, &2C, &58, &0D
+ EQUB &13, &38, &1F, &20, &20, &20, &20, &20
+ EQUB &20, &4C, &44, &41, &23, &30, &3A, &53
+ EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
+ EQUB &53, &43, &41, &4E, &2C, &58, &0D, &13
+ EQUB &42, &22, &20, &20, &20, &20, &20, &20
+ EQUB &4C, &44, &41, &23, &36, &34, &3A, &53
+ EQUB &54, &41, &20, &4D, &54, &52, &59, &43
+ EQUB &4E, &54, &2C, &58, &3A, &72, &74, &73
+ EQUB &0D, &13, &4C, &05, &20, &0D, &13, &56
+ EQUB &1A, &2E, &4D, &45, &41, &4E, &20, &4C
+ EQUB &44, &41, &23, &34, &30, &3A, &53, &54
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow17
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 17 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow17
+
+ EQUB &41, &20, &43, &4F, &56, &45, &52, &0D    \ The initial content is just
+ EQUB &13, &60, &1B, &20, &20, &20, &20, &20    \ workspace noise and is ignored
+ EQUB &20, &4C, &44, &58, &20, &45, &54, &45    \
+ EQUB &4D, &3A, &53, &54, &58, &20, &58, &54    \ It actually contains snippets
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ of the original source code
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow2
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 2
+\
+\ ******************************************************************************
+
+.viewBufferRow2
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow18
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 18 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow18
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow3
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 3
+\
+\ ******************************************************************************
+
+.viewBufferRow3
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow19
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 19 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow19
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow4
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 4
+\
+\ ******************************************************************************
+
+.viewBufferRow4
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow20
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 20 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow20
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow5
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 5
+\
+\ ******************************************************************************
+
+.viewBufferRow5
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow21
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 21 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow21
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow6
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 6
+\
+\ ******************************************************************************
+
+.viewBufferRow6
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow22
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 22 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow22
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow7
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 7
+\
+\ ******************************************************************************
+
+.viewBufferRow7
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow23
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 23 (as part of a column
+\             buffer)
+\
+\ ******************************************************************************
+
+.viewBufferRow23
+
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow8
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 8
+\
+\ ******************************************************************************
+
+.viewBufferRow8
+
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
@@ -26893,17 +27440,30 @@ L314A = C3148+2
 
 .objRotationSpeed
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &FF, &FF, &FF, &FF, &FF, &7F, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
+ EQUB &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00
+
+\ ******************************************************************************
+\
+\       Name: viewBufferRow9
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 9
+\
+\ ******************************************************************************
+
+.viewBufferRow9
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These bytes appear to be
- EQUB &10, &FE, &FE, &FF, &FF, &FF, &FF, &FF    \ unused
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &10, &FE, &FE, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
@@ -27089,8 +27649,19 @@ L314A = C3148+2
  EQUB  96               \ Point 158: yaw =  96, distance = 192, height = +112
  EQUB 160               \ Point 159: yaw = 160, distance = 192, height = +112
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+\ ******************************************************************************
+\
+\       Name: viewBufferRow10
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 10
+\
+\ ******************************************************************************
+
+.viewBufferRow10
+
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27291,8 +27862,19 @@ L314A = C3148+2
  EQUB 112               \ Point 158: yaw =  96, distance = 192, height = +112
  EQUB 112               \ Point 159: yaw = 160, distance = 192, height = +112
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+\ ******************************************************************************
+\
+\       Name: viewBufferRow11
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 11
+\
+\ ******************************************************************************
+
+.viewBufferRow11
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27484,8 +28066,19 @@ L314A = C3148+2
  EQUB 192               \ Point 158: yaw =  96, distance = 192, height = +112
  EQUB 192               \ Point 159: yaw = 160, distance = 192, height = +112
 
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+\ ******************************************************************************
+\
+\       Name: viewBufferRow12
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 12
+\
+\ ******************************************************************************
+
+.viewBufferRow12
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -28654,8 +29247,19 @@ L314A = C3148+2
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+\ ******************************************************************************
+\
+\       Name: viewBufferRow13
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 13
+\
+\ ******************************************************************************
+
+.viewBufferRow13
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -28857,8 +29461,19 @@ L314A = C3148+2
  EQUB LO(objPolygon150) \ Polygons 156 to 159 reuse the points from 148 to 151
  EQUB LO(objPolygon151)
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+\ ******************************************************************************
+\
+\       Name: viewBufferRow14
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 14
+\
+\ ******************************************************************************
+
+.viewBufferRow14
+
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -29060,8 +29675,19 @@ L314A = C3148+2
  EQUB HI(objPolygon150) \ Polygons 156 to 159 reuse the points from 148 to 151
  EQUB HI(objPolygon151)
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These bytes appear to be
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ unused
+\ ******************************************************************************
+\
+\       Name: viewBufferRow15
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: The view screen buffer for character row 15
+\
+\ ******************************************************************************
+
+.viewBufferRow15
+
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
