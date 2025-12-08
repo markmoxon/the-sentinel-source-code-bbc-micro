@@ -2019,9 +2019,7 @@
      0A7D   00
      0A7E   00
      0A7F   09
-.pointViewPitchLo
-     0A80
-.tileViewPitchLo
+.drawViewPitchLo
      0A80   6F
      0A81   70
      0A82   71
@@ -2118,9 +2116,7 @@
      0ADD   C4
      0ADE   00
      0ADF   00
-.pointViewPitchHi
-     0AE0
-.tileViewPitchHi
+.drawViewPitchHi
      0AE0   00
      0AE1   00
      0AE2   00
@@ -2314,9 +2310,7 @@
      0B9D   10
      0B9E   10
      0B9F   10
-.pointViewYawLo
-     0BA0
-.tileViewYawLo
+.drawViewYawLo
      0BA0   3B
      0BA1   C1
      0BA2   48
@@ -14112,9 +14106,7 @@
      54FD   A3
      54FE   00
      54FF   00
-.pointViewYawHi
-     5500
-.tileViewYawHi
+.drawViewYawHi
      5500   01
      5501   01
      5502   02

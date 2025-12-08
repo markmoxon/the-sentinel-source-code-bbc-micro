@@ -1440,32 +1440,20 @@
 
 \ ******************************************************************************
 \
-\       Name: pointViewPitchLo
-\       Type: Variable
-\   Category: Drawing objects
-\    Summary: Storage for the pitch angles of object points in the current
-\             landscape view (low bytes)
-\
-\ ******************************************************************************
-
-.pointViewPitchLo
-
- SKIP 0                 \ This table shares the same memory as tileViewPitchLo,
-                        \ but tile angles are stored in the first 64 bytes and
-                        \ object point angles are stored from offset 64 onwards,
-                        \ so the data does not overlap
-
-\ ******************************************************************************
-\
-\       Name: tileViewPitchLo
+\       Name: drawViewPitchLo
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: Storage for the pitch angles of tiles in the current landscape
-\             view (low bytes)
+\    Summary: Storage for the pitch angles of tiles and object points for
+\             drawing the current landscape view (low bytes)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Tile angles are stored in the first 64 bytes (in two sets of 32 bytes), and
+\ object point angles are stored in the last 32 bytes, from offset 64 onwards.
 \
 \ ******************************************************************************
 
-.tileViewPitchLo
+.drawViewPitchLo
 
  EQUB &6F, &70, &71, &73, &74, &75, &76, &78        \ These values are workspace
  EQUB &79, &7B, &7C, &7E, &7F, &81, &82, &84        \ noise and have no meaning
@@ -1482,32 +1470,20 @@
 
 \ ******************************************************************************
 \
-\       Name: pointViewPitchHi
-\       Type: Variable
-\   Category: Drawing objects
-\    Summary: Storage for the pitch angles of object points in the current
-\             landscape view (high bytes)
-\
-\ ******************************************************************************
-
-.pointViewPitchHi
-
- SKIP 0                 \ This table shares the same memory as tileViewPitchHi,
-                        \ but tile angles are stored in the first 64 bytes and
-                        \ object point angles are stored from offset 64 onwards,
-                        \ so the data does not overlap
-
-\ ******************************************************************************
-\
-\       Name: tileViewPitchHi
+\       Name: drawViewPitchHi
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: Storage for the pitch angles of tiles in the current landscape
-\             view (high bytes)
+\    Summary: Storage for the pitch angles of tiles and object points for
+\             drawing the current landscape view (high bytes)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Tile angles are stored in the first 64 bytes (in two sets of 32 bytes), and
+\ object point angles are stored in the last 32 bytes, from offset 64 onwards.
 \
 \ ******************************************************************************
 
-.tileViewPitchHi
+.drawViewPitchHi
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -1548,32 +1524,20 @@
 
 \ ******************************************************************************
 \
-\       Name: pointViewYawLo
-\       Type: Variable
-\   Category: Drawing objects
-\    Summary: Storage for the yaw angles of object points in the current
-\             landscape view (low bytes)
-\
-\ ******************************************************************************
-
-.pointViewYawLo
-
- SKIP 0                 \ This table shares the same memory as tileViewPitchHi,
-                        \ but tile angles are stored in the first 64 bytes and
-                        \ object point angles are stored from offset 64 onwards,
-                        \ so the data does not overlap
-
-\ ******************************************************************************
-\
-\       Name: tileViewYawLo
+\       Name: drawViewYawLo
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: Storage for the yaw angles of tiles in the current landscape view
-\             (low bytes)
+\    Summary: Storage for the yaw angles of tiles and object points for drawing
+\             the current landscape view (low bytes)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Tile angles are stored in the first 64 bytes (in two sets of 32 bytes), and
+\ object point angles are stored in the last 32 bytes, from offset 64 onwards.
 \
 \ ******************************************************************************
 
-.tileViewYawLo
+.drawViewYawLo
 
  EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB        \ These values are workspace
  EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7        \ noise and have no meaning
@@ -15614,17 +15578,17 @@ L23E3 = C23E2+1
  EOR #32                \ to GetTileViewEdges and GetTileViewAngles alternates
  STA drawingTableOffset \ between storing the tile view data in:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
                         \ and storing it in:
                         \
-                        \   * (tileViewYawHi+32 tileViewYawLo+32)
+                        \   * (drawViewYawHi+32 drawViewYawLo+32)
                         \
-                        \   * (tileViewPitchHi+32 tileViewPitchLo+32)
+                        \   * (drawViewPitchHi+32 drawViewPitchLo+32)
                         \
                         \   * tileViewData+32
                         \
@@ -15715,9 +15679,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -15770,9 +15734,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -15827,9 +15791,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -15882,9 +15846,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16021,9 +15985,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16036,9 +16000,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16071,9 +16035,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16094,29 +16058,29 @@ L23E3 = C23E2+1
                         \ Y is the offset of the viewer's tile within these
                         \ tables, so, for example:
                         \
-                        \    * tileViewPitchHi,Y is the corner at the front
+                        \    * drawViewPitchHi,Y is the corner at the front
                         \      left of the viewer's tile
                         \
-                        \    * tileViewPitchHi+1,Y is the corner at the front
+                        \    * drawViewPitchHi+1,Y is the corner at the front
                         \      right of the viewer's tile
                         \
-                        \    * tileViewPitchHi+32,Y is the corner at the rear
+                        \    * drawViewPitchHi+32,Y is the corner at the rear
                         \      left of the viewer's tile
                         \
-                        \    * tileViewPitchHi+32+1,Y is the corner at the rear
+                        \    * drawViewPitchHi+32+1,Y is the corner at the rear
                         \      right of the viewer's tile
                         \
                         \ We now set up the angles for the tile to ensure that
                         \ it looks correct
 
- LDA tileViewPitchHi,Y  \ If the high byte of the pitch angle of the front-left
+ LDA drawViewPitchHi,Y  \ If the high byte of the pitch angle of the front-left
  CMP #2                 \ edge of the viewer's tile is 2 or more, then it is off
  BCS dlan22             \ the top of the screen, so jump to dlan22 to skip
                         \ drawing it and instead return from the subroutine ???
 
- STA tileViewPitchHi+1,Y    \ Set the pitch angle for the tile corner in the
- LDA tileViewPitchLo,Y      \ front-right corner of the viewer's tile to be the
- STA tileViewPitchLo+1,Y    \ same as the front-left corner, so this ensures
+ STA drawViewPitchHi+1,Y    \ Set the pitch angle for the tile corner in the
+ LDA drawViewPitchLo,Y      \ front-right corner of the viewer's tile to be the
+ STA drawViewPitchLo+1,Y    \ same as the front-left corner, so this ensures
                             \ that the two front corners of the tile containing
                             \ the viewer are horizontally level
 
@@ -16134,15 +16098,15 @@ L23E3 = C23E2+1
                         \ down to the bottom of the screen as well)
 
  LDA #&FF                       \ Set the pitch angle for the two rear tile
- STA tileViewPitchHi+32,Y       \ corners to be as low down as possible (as the
- STA tileViewPitchHi+32+1,Y     \ high byte of &FF makes the angle negative)
+ STA drawViewPitchHi+32,Y       \ corners to be as low down as possible (as the
+ STA drawViewPitchHi+32+1,Y     \ high byte of &FF makes the angle negative)
 
- STA tileViewYawHi+32,Y \ Set the yaw angle for the two left tile corners to be
- STA tileViewYawHi,Y    \ as far left as possible
+ STA drawViewYawHi+32,Y \ Set the yaw angle for the two left tile corners to be
+ STA drawViewYawHi,Y    \ as far left as possible
 
  LDA #20                    \ Set the yaw angle for the two right tile corners
- STA tileViewYawHi+32+1,Y   \ to 20, which is a full screen width, so this puts
- STA tileViewYawHi+1,Y      \ them on the right edge of the screen
+ STA drawViewYawHi+32+1,Y   \ to 20, which is a full screen width, so this puts
+ STA drawViewYawHi+1,Y      \ them on the right edge of the screen
 
  LDA xTileViewer        \ Set xTileToDraw to the column of the viewer's tile, so
  STA xTileToDraw        \ the call to DrawFlatTile draws this tile
@@ -16221,16 +16185,16 @@ L23E3 = C23E2+1
 \   tileViewData        Tile data for all the tile corners analysed while
 \                       looking for the edges
 \
-\   tileViewYawHi       High byte of the yaw angles for all the tile corners
+\   drawViewYawHi       High byte of the yaw angles for all the tile corners
 \                       analysed while looking for the edges
 \
-\   tileViewYawLo       Low byte of the yaw angles for all the tile corners
+\   drawViewYawLo       Low byte of the yaw angles for all the tile corners
 \                       analysed while looking for the edges
 \
-\   tileViewPitchHi     High byte of the pitch angles for all the tile corners
+\   drawViewPitchHi     High byte of the pitch angles for all the tile corners
 \                       analysed while looking for the edges
 \
-\   tileViewPitchLo     Low byte of the pitch angles for all the tile corners
+\   drawViewPitchLo     Low byte of the pitch angles for all the tile corners
 \                       analysed while looking for the edges
 \
 \   tileIsOnScreen      Information on whether a tile corner is on-screen for
@@ -16249,9 +16213,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16297,9 +16261,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16338,9 +16302,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16399,9 +16363,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16441,9 +16405,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16487,9 +16451,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (tileViewYawHi tileViewYawLo)
+                        \   * (drawViewYawHi drawViewYawLo)
                         \
-                        \   * (tileViewPitchHi tileViewPitchLo)
+                        \   * (drawViewPitchHi drawViewPitchLo)
                         \
                         \   * tileViewData
                         \
@@ -16621,16 +16585,16 @@ L23E3 = C23E2+1
 \   tileViewData        Tile data for this tile corner, stored in the relevant
 \                       entry for this tile corner
 \
-\   tileViewYawHi       High byte of the yaw angle, stored in the relevant entry
+\   drawViewYawHi       High byte of the yaw angle, stored in the relevant entry
 \                       for this tile corner
 \
-\   tileViewYawLo       Low byte of the yaw angle, stored in the relevant entry
+\   drawViewYawLo       Low byte of the yaw angle, stored in the relevant entry
 \                       for this tile corner
 \
-\   tileViewPitchHi     High byte of the pitch angle, stored in the relevant
+\   drawViewPitchHi     High byte of the pitch angle, stored in the relevant
 \                       entry for this tile corner
 \
-\   tileViewPitchLo     Low byte of the pitch angle, stored in the relevant
+\   drawViewPitchLo     Low byte of the pitch angle, stored in the relevant
 \                       entry for this tile corner
 \
 \   tileIsOnScreen      Determines whether the tile corner is on-screen (i.e.
@@ -16787,8 +16751,8 @@ L23E3 = C23E2+1
 
                         \ The angle of the hypotenuse is the yaw angle of the
                         \ 3D vector from the viewer to the tile corner we are
-                        \ analysing, so store it in the table at (tileViewYawHi
-                        \ tileViewYawLo)
+                        \ analysing, so store it in the table at (drawViewYawHi
+                        \ drawViewYawLo)
                         \
                         \ We also subtract the following:
                         \
@@ -16801,16 +16765,16 @@ L23E3 = C23E2+1
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
- LDA angleLo            \ Set (tileViewYawHi tileViewYawLo) for this tile to:
+ LDA angleLo            \ Set (drawViewYawHi drawViewYawLo) for this tile to:
  SEC                    \
  SBC yawAdjustmentLo    \   (angleHi angleLo) - (screenLeftYawHi 0)
- STA tileViewYawLo,Y    \                     - (0 yawAdjustmentLo)
+ STA drawViewYawLo,Y    \                     - (0 yawAdjustmentLo)
                         \
                         \ starting with the low bytes
 
  LDA angleHi            \ And then the high bytes
  SBC screenLeftYawHi
- STA tileViewYawHi,Y
+ STA drawViewYawHi,Y
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
                         \ with side lengths of (aHi aLo) and (bHi bLo) and angle
@@ -17199,15 +17163,15 @@ L23E3 = C23E2+1
                         \ So this call calculates the relative pitch angle for
                         \ the vector between the viewer and the tile that we are
                         \ analysing, so store it in the correct entry in the
-                        \ table at (tileViewPitchHi tileViewPitchLo)
+                        \ table at (drawViewPitchHi drawViewPitchLo)
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
  LDA pitchDeltaHi       \ Store the high byte of the pitch vector in the correct
- STA tileViewPitchHi,Y  \ part of the tileViewPitchHi table
+ STA drawViewPitchHi,Y  \ part of the drawViewPitchHi table
 
  LDA pitchDeltaLo       \ Store the low byte of the pitch vector in the correct
- STA tileViewPitchLo,Y  \ part of the tileViewPitchLo table
+ STA drawViewPitchLo,Y  \ part of the drawViewPitchLo table
 
                         \ Fall through into part 4 to work out how much of the
                         \ tile is on-screen
@@ -17233,9 +17197,9 @@ L23E3 = C23E2+1
                         \
                         \   * Set bit 7 when tileViewYaw >= minYawAngle
                         \
-                        \   * Set bit 0 when tileViewYawHi >= maxYawAngleHi
+                        \   * Set bit 0 when drawViewYawHi >= maxYawAngleHi
                         \
-                        \ where tileViewYaw is (tileViewYawHi tileViewYawLo)
+                        \ where tileViewYaw is (drawViewYawHi drawViewYawLo)
                         \ and minYawAngle is (minYawAngleHi minYawAngleLo)
                         \
                         \ So bit 7 is set when the tile corner is inside the
@@ -17245,22 +17209,22 @@ L23E3 = C23E2+1
                         \ If the yaw limit is the screen size, then the two bits
                         \ determine whether the tile is on-screen
 
- LDA tileViewYawHi,Y    \ If tileViewYawHi < minYawAngleHi, jump to tang11 to
+ LDA drawViewYawHi,Y    \ If drawViewYawHi < minYawAngleHi, jump to tang11 to
  CMP minYawAngleHi      \ return with tileIsOnScreen = 0, as the tile is off the
  BCC tang11             \ left of the screen edge
 
- BNE tang10             \ If tileViewYawHi > minYawAngleHi, jump to tang10 with
+ BNE tang10             \ If drawViewYawHi > minYawAngleHi, jump to tang10 with
                         \ the C flag set to set bit 7 of tileIsOnScreen
 
-                        \ If we get here then tileViewYawHi = minYawAngleHi, so
+                        \ If we get here then drawViewYawHi = minYawAngleHi, so
                         \ we now check the low bytes
 
- LDA tileViewYawLo,Y    \ If tileViewYawLo < minYawAngleLo, jump to tang11 to
+ LDA drawViewYawLo,Y    \ If drawViewYawLo < minYawAngleLo, jump to tang11 to
  CMP minYawAngleLo      \ return with tileIsOnScreen = 0
  BCC tang11
 
- LDA tileViewYawHi,Y    \ If we get here then tileViewYawLo >= minYawAngleLo, so
-                        \ the C flag is set, and we set A to tileViewYawHi for
+ LDA drawViewYawHi,Y    \ If we get here then drawViewYawLo >= minYawAngleLo, so
+                        \ the C flag is set, and we set A to drawViewYawHi for
                         \ the comparison below
 
 .tang10
@@ -17272,11 +17236,11 @@ L23E3 = C23E2+1
                         \ tile is on or to the right of the minimum yaw limit,
                         \ i.e. to the right of the left edge of the screen
 
- CMP maxYawAngleHi      \ If tileViewYawHi < maxYawAngleHi, jump to tang11 to
+ CMP maxYawAngleHi      \ If drawViewYawHi < maxYawAngleHi, jump to tang11 to
  BCC tang11             \ return from the routine with bit 0 of tileIsOnScreen
                         \ clear
 
-                        \ If we get here then tileViewYawHi >= maxYawAngleHi,
+                        \ If we get here then drawViewYawHi >= maxYawAngleHi,
                         \ so the tile is off-screen to the right
 
  INC tileIsOnScreen     \ Set bit 0 of tileIsOnScreen to indicate that the tile
@@ -17424,7 +17388,7 @@ L23E3 = C23E2+1
  STA maxYawAngleHi      \ ???
 
  LDA L298B,Y            \ Set L0011 to 10, 2, or 12 ???
- STA L0011              \ Gets added to tileViewYawHi in sub_C2D36 ???
+ STA L0011              \ Gets added to drawViewYawHi in sub_C2D36 ???
 
  LDA L2991,Y            \ Set L0061 to 112, 112 or 64 ???
  STA L0061              \ 112 = 14 * 8, 64 = 8 * 8
@@ -19963,11 +19927,11 @@ L23E3 = C23E2+1
 
  LDA (drawViewAngles),Y
  TAX
- LDA tileViewYawLo,X
+ LDA drawViewYawLo,X
  CLC
  ADC L0029
  STA T
- LDA tileViewYawHi,X
+ LDA drawViewYawHi,X
  ADC L0011
  ASL T
  ROL A
@@ -20000,11 +19964,11 @@ L23E3 = C23E2+1
 
  LDA (drawViewAngles),Y
  TAX
- LDA tileViewYawLo,X
+ LDA drawViewYawLo,X
  CLC
  ADC L0029
  STA T
- LDA tileViewYawHi,X
+ LDA drawViewYawHi,X
  ADC L0011
  CMP #&20
  BCS C2D5D
@@ -20040,12 +20004,12 @@ L23E3 = C23E2+1
  TAY
  LDA #&5A
  STA L0002
- LDA tileViewPitchLo,Y
+ LDA drawViewPitchLo,Y
  SEC
- SBC tileViewPitchLo,X
+ SBC drawViewPitchLo,X
  STA L000C
- LDA tileViewPitchHi,Y
- SBC tileViewPitchHi,X
+ LDA drawViewPitchHi,Y
+ SBC drawViewPitchHi,X
  BPL C2E03
  STA V
  INC L0002
@@ -20090,13 +20054,13 @@ L23E3 = C23E2+1
 
  LDA L000C
  BEQ C2E96
- LDA tileViewPitchHi,Y
+ LDA drawViewPitchHi,Y
  STA vectorYawAngleHi
- LDA tileViewPitchLo,Y
+ LDA drawViewPitchLo,Y
  STA L001A
- LDA tileViewPitchHi,X
+ LDA drawViewPitchHi,X
  STA vectorPitchAngleLo
- LDA tileViewPitchLo,X
+ LDA drawViewPitchLo,X
  STA L0016
  LDA L54A0,Y
  STA L0018
@@ -20120,9 +20084,9 @@ L23E3 = C23E2+1
  LDA L001E
  CMP polygonPointCount
  BNE C2E88
- LDA tileViewPitchHi,X
+ LDA drawViewPitchHi,X
  BNE C2E88
- LDY tileViewPitchLo,X
+ LDY drawViewPitchLo,X
  CPY minPitchAngle
  BCC C2E88
  CPY maxPitchAngle
@@ -20480,9 +20444,9 @@ L2F79 = C2F77+2
  STA L0039
  LDA L0B40,Y
  STA L0042
- LDA tileViewPitchHi,Y
+ LDA drawViewPitchHi,Y
  STA vectorPitchAngleLo
- LDA tileViewPitchLo,Y
+ LDA drawViewPitchLo,Y
  STA L0016
  LDA vectorPitchAngleHi
  BEQ C3054
@@ -20522,9 +20486,9 @@ L2F79 = C2F77+2
  LDA L0042
  STA L0041
  LDX L000E
- LDA tileViewPitchLo,X
+ LDA drawViewPitchLo,X
  STA L0016
- LDA tileViewPitchHi,X
+ LDA drawViewPitchHi,X
  STA vectorPitchAngleLo
  LDA L54A0,X
  STA L0039
@@ -30185,32 +30149,20 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: pointViewYawHi
-\       Type: Variable
-\   Category: Drawing objects
-\    Summary: Storage for the yaw angles of object points in the current
-\             landscape view (high bytes)
-\
-\ ******************************************************************************
-
-.pointViewYawHi
-
- SKIP 0                 \ This table shares the same memory as tileViewYawHi,
-                        \ but tile angles are stored in the first 64 bytes and
-                        \ object point angles are stored from offset 64 onwards,
-                        \ so the data does not overlap
-
-\ ******************************************************************************
-\
-\       Name: tileViewYawHi
+\       Name: drawViewYawHi
 \       Type: Variable
 \   Category: Drawing the landscape
-\    Summary: Storage for the yaw angles of tiles in the current landscape view
-\             (high bytes)
+\    Summary: Storage for the yaw angles of tiles and object points for drawing
+\             the current landscape view (high bytes)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Tile angles are stored in the first 64 bytes (in two sets of 32 bytes), and
+\ object point angles are stored in the last 32 bytes, from offset 64 onwards.
 \
 \ ******************************************************************************
 
-.tileViewYawHi
+.drawViewYawHi
 
  EQUB &01, &01, &02, &02, &03, &03, &04, &04
  EQUB &05, &05, &06, &06, &07, &07, &08, &08
@@ -32669,7 +32621,7 @@ L314A = C3148+2
 \
 \ This routine loops through each point in an object definition and calculates
 \ the following, storing the results in the last 32 bytes of the drawing tables
-\ at (pointViewYawHi pointViewYawLo) and (pointViewPitchHi pointViewPitchLo):
+\ at (drawViewYawHi drawViewYawLo) and (drawViewPitchHi drawViewPitchLo):
 \
 \ 1. A: Calculate the yaw angle of the point, rotated by the rotation of the
 \ object itself (i.e. its gaze), so this is the yaw angle of the object point
@@ -32688,12 +32640,12 @@ L314A = C3148+2
 \ angle of the vector from the object's origin to the to the point within the
 \ object.
 \
-\ 4. (pointViewYawHi pointViewYawLo): Rotate the yaw angle of the point within
+\ 4. (drawViewYawHi drawViewYawLo): Rotate the yaw angle of the point within
 \ the object definition by the object's view-relative yaw angle to get the
 \ view-relative yaw angle of the point. This is the yaw angle of the vector from
 \ the viewer to the object point.
 \
-\ 5. (pointViewPitchHi pointViewPitchLo): Construct the vertical triangle that
+\ 5. (drawViewPitchHi drawViewPitchLo): Construct the vertical triangle that
 \ has the viewer-to-point vector as the hypotenuse, the point altitude as the
 \ opposite side and the projection onto the ground of the vector as the adjacent
 \ side, and use this to calculate the pitch angle of the vector from the viewer
@@ -32709,9 +32661,9 @@ L314A = C3148+2
  STA drawingTableIndex  \ the drawing tables for the object we are drawing, so
                         \ we store the results in the following drawing tables:
                         \
-                        \   (pointViewYawHi pointViewYawLo)
+                        \   (drawViewYawHi drawViewYawLo)
                         \
-                        \   (pointViewPitchHi pointViewPitchLo)
+                        \   (drawViewPitchHi drawViewPitchLo)
                         \
                         \ Note that these drawing tables live just after the
                         \ tile drawing tables in memory, and the index is set
@@ -32896,9 +32848,9 @@ L314A = C3148+2
                         \ in terms of the 3D world, storing the results in the
                         \ following tables:
                         \
-                        \   (pointViewYawHi pointViewYawLo)
+                        \   (drawViewYawHi drawViewYawLo)
                         \
-                        \   (pointViewPitchHi pointViewPitchLo)
+                        \   (drawViewPitchHi drawViewPitchLo)
                         \
                         \ We do this by constructing two right-angled triangles,
                         \ one flat on the ground (to calculate the yaw angle)
@@ -32935,14 +32887,14 @@ L314A = C3148+2
                         \ tile view drawing tables (i.e. in the object point
                         \ drawing tables)
 
- LDA angleLo            \ Set (pointViewYawHi pointViewYawLo) for this point to:
+ LDA angleLo            \ Set (drawViewYawHi drawViewYawLo) for this point to:
  CLC                    \
  ADC objectViewYawLo    \  (angleHi angleLo) + (objectViewYawHi objectViewYawLo)
- STA pointViewYawLo,Y   \
+ STA drawViewYawLo,Y    \
  LDA angleHi            \ So this is the angle in our first triangle, which is
  ADC objectViewYawHi    \ the view-relative yaw angle of the object point, so
- STA pointViewYawHi,Y   \ store this in the drawing table at (pointViewYawHi
-                        \ pointViewYawLo)
+ STA drawViewYawHi,Y    \ store this in the drawing table at (drawViewYawHi
+                        \ drawViewYawLo)
 
                         \ We now move on to calculating the view-relative pitch
                         \ angle of the object point by looking at the second
@@ -33061,9 +33013,9 @@ L314A = C3148+2
                         \ drawing tables)
 
  LDA pitchDeltaHi       \ Store (pitchDeltaHi pitchDeltaLo) in the drawing table
- STA pointViewPitchHi,Y \ as (pointViewPitchHi pointViewPitchLo)
+ STA drawViewPitchHi,Y  \ as (drawViewPitchHi drawViewPitchLo)
  LDA pitchDeltaLo
- STA pointViewPitchLo,Y
+ STA drawViewPitchLo,Y
 
  INC pointNumber        \ Increment the point number to move on to the next
                         \ point in the object
@@ -33147,9 +33099,9 @@ L314A = C3148+2
                         \ all the points in the object and put them into the
                         \ drawing tables at:
                         \
-                        \   (pointViewYawHi pointViewYawLo)
+                        \   (drawViewYawHi drawViewYawLo)
                         \
-                        \   (pointViewPitchHi pointViewPitchLo)
+                        \   (drawViewPitchHi drawViewPitchLo)
                         \
                         \ We can use these as screen x- and y-coordinates, using
                         \ the same screen projection that is used in Revs
