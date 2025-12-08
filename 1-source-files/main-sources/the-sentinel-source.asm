@@ -228,9 +228,14 @@
                         \ calculating tile visibility in the GetRowVisibility
                         \ routine
 
-.L0017
+.polygonPointCount
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The number of points in the polygon point list for the
+                        \ polygon being drawn
+                        \
+                        \ This will be four for a triangle or five for a
+                        \ quadrilateral, as the list includes the first point
+                        \ repeated at the end
 
 .L0018
 
@@ -251,10 +256,14 @@
  SKIP 0                 \ Used to store the tile y-coordinate of the tile we are
                         \ analysing in the GetRowVisibility routine
 
-.polygonColour
+.polygonColours
 
- SKIP 1                 \ The colour of the polygon that's being drawn in the
+ SKIP 1                 \ The colours of the polygon that's being drawn in the
                         \ DrawPolygon routine
+                        \
+                        \   * Bits 2-3 = fill colour
+                        \
+                        \   * Bits 24-5 = edge colour
 
 .L001A
 
@@ -559,9 +568,19 @@
                         \
                         \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
 
-.L003B
+.polygonType
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Bits 6 and 7 determine the type of polygon to draw in
+                        \ the DrawPolygon routine (the calling subroutine is in
+                        \ brackets)
+                        \
+                        \   * %00xxxxxx = quadrilateral (DrawOneFaceTile)
+                        \
+                        \   * %01xxxxxx = object polygon (DrawObject)
+                        \
+                        \   * %10xxxxxx = first triangle (DrawTwoFaceTile)
+                        \
+                        \   * %11xxxxxx = second triangle (DrawTwoFaceTile)
 
 .zCoordHi
 
@@ -569,10 +588,11 @@
                         \
                         \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
 
-.L003C
+.drawViewAngles
 
- SKIP 1                 \ ??? An address that uses vectorYawAngleLo for the high
-                        \ byte
+ SKIP 1                 \ The address in drawViewAngles(1 0) of the pitch and yaw
+                        \ angles of the tile and polygon points that we are
+                        \ drawing in the landscape view
 
 .vectorYawAngleLo
 
@@ -2153,9 +2173,16 @@
 
  EQUB 0                 \ This byte appears to be unused
 
-.L0C7A
+.blendPolygonEdges
 
- EQUB &AA               \ ???
+ EQUB &AA               \ A flag to determine whether polygon edges are drawn
+                        \ in the same colour as the polygon fill, thus blending
+                        \ the edges into the polygon body
+                        \
+                        \   * Bit 7 set = draw edges in the fill colour so they
+                        \                 blend with the polygon body
+                        \
+                        \   * Bit 7 clear = draw edges in the edge colour
 
 .seedNumberLFSR
 
@@ -13668,14 +13695,23 @@
  ADC L2293Hi,Y          \ Adds &60 when Y = 1
  STA S
 
- LDA polygonColour
+ LDA polygonColours
 
- BIT L0C7A
- BPL C22EF
+ BIT blendPolygonEdges  \ If bit 7 of blendPolygonEdges is clear then polygon
+ BPL C22EF              \ edges should be drawn in the edge colour, so jump to
+                        \ C22EF to skip the following
 
- AND #%11001111         \ Move bits 2-3 of the polygon colour to bits 4-5 and
- STA T                  \ clear bits 2-3
- LDA polygonColour
+                        \ If we get here then bit 7 of blendPolygonEdges is set,
+                        \ so we draw the polygon edges in the same colour as the
+                        \ polygon body (i.e. the fill colour), so the edges
+                        \ blend into the body
+                        \
+                        \ We typically do this for distant objects, as distinct
+                        \ edge colours can make those object look messy
+
+ AND #%11001111         \ Copy the fill colour from bits 2-3 of the polygon
+ STA T                  \ colour byte into to the edge colour in bits 4-5, so
+ LDA polygonColours     \ the polygon edge colour merges into the polygon body
  ASL A
  ASL A
  AND #%00110000
@@ -15253,10 +15289,10 @@ L23E3 = C23E2+1
  LDX viewingObject      \ Set X to the number of the object that is viewing the
                         \ landscape
 
- LDA #LO(L0C40)         \ Set L003C(1 0) = L0C40 ???
- STA L003C
+ LDA #LO(L0C40)         \ Set drawViewAngles(1 0) = L0C40 ???
+ STA drawViewAngles
  LDA #HI(L0C40)
- STA L003C+1
+ STA drawViewAngles+1
 
  LDA objectYawAngle,X   \ Set A to the yaw angle of the viewer's object
 
@@ -17745,11 +17781,12 @@ L23E3 = C23E2+1
 
 .DrawOneFaceTile
 
- LDA tileShapeColour,X  \ Set polygonColour to the entry for the reference shape
- STA polygonColour      \ from the tileShapeColour or tileShapeColour+16 table
+ LDA tileShapeColour,X  \ Set polygonColours to the entry for the reference shape
+ STA polygonColours     \ from the tileShapeColour or tileShapeColour+16 table,
+                        \ so we draw the polygon in the correct colour
 
- LDA #0                 \ Set L003B = 0 ???
- STA L003B
+ LDA #%00000000         \ Clear bits 6 and 7 of polygonType so the following
+ STA polygonType        \ call to DrawPolygon draws a quadrilateral
 
  JMP DrawPolygon        \ Jump to DrawPolygon to draw the quadrilateral and
                         \ return from the subroutine using a tail call
@@ -17906,23 +17943,24 @@ L23E3 = C23E2+1
  TAX                    \ Set X to the tile shape so we can use it as an index
                         \ into the tileShapeColour table
 
- LDA #%10000000         \ Set bit 7 of L003B ???
- STA L003B
+ LDA #%10000000         \ Set bit 7 and clear bit 6 of polygonType so the call
+ STA polygonType        \ to DrawPolygon draws the first triangle in the tile
 
- LDA tileShapeColour,X  \ Set polygonColour to the entry for this shape from the
- STA polygonColour      \ tileShapeColour or tileShapeColour+16 table
+ LDA tileShapeColour,X  \ Set polygonColours to the entry for this shape from
+ STA polygonColours     \ the tileShapeColour or tileShapeColour+16 table, so ww
+                        \ draw the first polygon in the correct colour
 
  JSR DrawPolygon        \ Draw the first trianglar face
 
- LDA L0034              \ Set polygonColour to the entry for this shape from the
- EOR #16                \ other tileShapeColour table (e.g. tileShapeColour+16
- TAX                    \ if the previous colour was from tileShapeColour)
- LDA tileShapeColour,X
- STA polygonColour
+ LDA L0034              \ Set polygonColours to the entry for this shape from
+ EOR #16                \ the other tileShapeColour table (so if the previous
+ TAX                    \ colour was from tileShapeColour then we pick the next
+ LDA tileShapeColour,X  \ colour from tileShapeColour+16)
+ STA polygonColours
 
- LDA L003B              \ Set bit 6 of L003B ???
- ORA #%01000000
- STA L003B
+ LDA polygonType        \ Set bit 6 of polygonType so both bits 6 and 7 are set,
+ ORA #%01000000         \ so the call to DrawPolygon draws the second triangle
+ STA polygonType        \ in the tile
 
                         \ Fall into DrawPolygon to draw the second trianglar
                         \ face
@@ -17941,13 +17979,16 @@ L23E3 = C23E2+1
 \   L0034               The tile shape, amended to use as an offset into the
 \                       tileShapeColour table
 \
-\   L003B               The shape to draw ???
+\   polygonType         Bits 6 and 7 determine the type of polygon to draw (the
+\                       calling subroutine is in brackets)
 \
-\                         * 0 for four-sided shape
+\                         * %00xxxxxx = quadrilateral (DrawOneFaceTile)
 \
-\                         * Bit 7 set for first triangle in DrawTwoFaceTile
+\                         * %01xxxxxx = object polygon (DrawObject)
 \
-\                         * Bit 6 set for second triangle in DrawTwoFaceTile
+\                         * %10xxxxxx = first triangle (DrawTwoFaceTile)
+\
+\                         * %11xxxxxx = second triangle (DrawTwoFaceTile)
 \
 \   screenBufferType    The type of buffer to use:
 \
@@ -19843,12 +19884,24 @@ L23E3 = C23E2+1
 \
 \   L0045               ???
 \
+\   polygonType         The polygon type, in which we know bit 7 is set
+\
+\   V flag              Set according to bit 6 of polygonType
+\
 \ ******************************************************************************
 
 .C2D13
 
  LDY L0045
- BVC C2D1E
+
+ BVC C2D1E              \ If bit 6 of polygonType is clear then we are drawing
+                        \ the first triangle in a two-face tile, so jump to
+                        \ C2D1E to do this
+
+                        \ If we get here then bit 6 and 7 of polygonType are
+                        \ both set, so we are drawing the first triangle in a
+                        \ two-face file
+
  CLC
  ADC #&21
  AND #&3F
@@ -19872,9 +19925,18 @@ L23E3 = C23E2+1
 
  LDA xTileToDraw
  ORA drawingTableOffset
- BIT L003B
- BMI C2D13
- BVS C2D93
+
+ BIT polygonType        \ If bit 7 of polygonType is set then we are drawing a
+ BMI C2D13              \ two-face tile as a pair of triangles, so jump to C2D13
+                        \ to do this
+
+ BVS C2D93              \ If bit 7 of polygonType is clear and bit 6 is set then
+                        \ we are drawing an object, so jump to C2D93 to do this
+
+                        \ If we get here then both bits 6 and 7 of polygonType
+                        \ are clear, so we are drawing a tile as a four-sided
+                        \ shape (quadrilateral)
+
  STA L0C40
  STA L0C44
  EOR #&20
@@ -19888,18 +19950,18 @@ L23E3 = C23E2+1
 
 .C2D58
 
- STX L0017
+ STX polygonPointCount
  JMP C2D93
 
 .C2D5D
 
  LDA #&C0
  STA L006C
- LDY L0017
+ LDY polygonPointCount
 
 .C2D63
 
- LDA (L003C),Y
+ LDA (drawViewAngles),Y
  TAX
  LDA tileViewYawLo,X
  CLC
@@ -19932,11 +19994,11 @@ L23E3 = C23E2+1
 
  LDA #0
  STA L006C
- LDY L0017
+ LDY polygonPointCount
 
 .C2D99
 
- LDA (L003C),Y
+ LDA (drawViewAngles),Y
  TAX
  LDA tileViewYawLo,X
  CLC
@@ -19971,10 +20033,10 @@ L23E3 = C23E2+1
 .C2DCE
 
  STY L004A
- LDA (L003C),Y
+ LDA (drawViewAngles),Y
  TAX
  INY
- LDA (L003C),Y
+ LDA (drawViewAngles),Y
  TAY
  LDA #&5A
  STA L0002
@@ -20049,14 +20111,14 @@ L23E3 = C23E2+1
 
  LDY L004A
  INY
- CPY L0017
+ CPY polygonPointCount
  BEQ C2E60
  JMP C2DCE
 
 .C2E60
 
  LDA L001E
- CMP L0017
+ CMP polygonPointCount
  BNE C2E88
  LDA tileViewPitchHi,X
  BNE C2E88
@@ -27495,7 +27557,7 @@ L314A = C3148+2
 \
 \   * Bit 6 is unused and is always clear
 \
-\   * Bits 4-5 contain the line colour (0 to 3)
+\   * Bits 4-5 contain the edge colour (0 to 3)
 \
 \   * Bits 2-3 contain the fill colour (0 to 3)
 \
@@ -27511,1120 +27573,1120 @@ L314A = C3148+2
  EQUB %00010101         \ Polygon 0 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010100         \ Polygon 1 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010101         \ Polygon 2 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10011001         \ Polygon 3 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10011001         \ Polygon 4 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10100101         \ Polygon 5 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10100101         \ Polygon 6 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010001         \ Polygon 7 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010001         \ Polygon 8 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10011001         \ Polygon 9 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010000         \ Polygon 10 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010000         \ Polygon 11 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 12 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 13 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010000         \ Polygon 14 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010000         \ Polygon 15 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10011100         \ Polygon 16 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10011100         \ Polygon 17 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010000         \ Polygon 18 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx00xx: Fill colour 0 (blue)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010101         \ Polygon 19 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111100         \ Polygon 20 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111100         \ Polygon 21 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011001         \ Polygon 22 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011001         \ Polygon 23 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 24 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 25 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111101         \ Polygon 26 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010101         \ Polygon 27 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010100         \ Polygon 28 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 29 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010101         \ Polygon 30 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10101000         \ Polygon 31 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 32 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 33 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 34 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 35 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101001         \ Polygon 36 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10101000         \ Polygon 37 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 38 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010101         \ Polygon 39 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10101000         \ Polygon 40 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 41 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 42 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010101         \ Polygon 43 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 44 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 45 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 46 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 47 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 48 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 49 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 50 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 51 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 52 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 53 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 54 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 55 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011001         \ Polygon 56 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011001         \ Polygon 57 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 58 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011000         \ Polygon 59 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011100         \ Polygon 60 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 61 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011100         \ Polygon 62 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 63 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011100         \ Polygon 64 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 65 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011100         \ Polygon 66 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 67 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 68 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 69 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 70 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 71 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 72 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 73 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 74 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010101         \ Polygon 75 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 76 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 77 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101000         \ Polygon 78 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00101000         \ Polygon 79 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011100         \ Polygon 80 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011100         \ Polygon 81 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00110101         \ Polygon 82 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10111100         \ Polygon 83 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10111100         \ Polygon 84 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10111001         \ Polygon 85 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010100         \ Polygon 86 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 87 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 88 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 89 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 90 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 91 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 92 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111101         \ Polygon 93 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011000         \ Polygon 94 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011000         \ Polygon 95 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 96 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 97 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111100         \ Polygon 98 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111100         \ Polygon 99 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00110101         \ Polygon 100 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00110101         \ Polygon 101 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 102 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010100         \ Polygon 103 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 104 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010101         \ Polygon 105 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10101001         \ Polygon 106 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010101         \ Polygon 107 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010101         \ Polygon 108 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010101         \ Polygon 109 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010101         \ Polygon 110 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010100         \ Polygon 111 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 112 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010101         \ Polygon 113 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10101000         \ Polygon 114 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 115 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 116 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 117 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 118 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101000         \ Polygon 119 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10101001         \ Polygon 120 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %10010100         \ Polygon 121 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010100         \ Polygon 122 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10111100         \ Polygon 123 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10111100         \ Polygon 124 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %10010101         \ Polygon 125 data:
                         \
                         \   * %1xxxxxxx: Draw polygon in second phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 126 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 127 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010100         \ Polygon 128 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00010100         \ Polygon 129 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00011101         \ Polygon 130 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 131 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 132 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00011101         \ Polygon 133 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 134 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 135 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 136 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 137 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 138 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 139 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 140 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111100         \ Polygon 141 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111100         \ Polygon 142 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111100         \ Polygon 143 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111100         \ Polygon 144 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx00: Polygon has three sides (triangle)
 
  EQUB %00111101         \ Polygon 145 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111101         \ Polygon 146 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111101         \ Polygon 147 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 148 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 149 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 150 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111101         \ Polygon 151 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 152 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 153 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 154 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111101         \ Polygon 155 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 156 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00010101         \ Polygon 157 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx01xxxx: Line colour 1 (black)
+                        \   * %xx01xxxx: Edge colour 1 (black)
                         \   * %xxxx01xx: Fill colour 1 (black)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00101001         \ Polygon 158 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx10xxxx: Line colour 2 (white/yellow/cyan/red)
+                        \   * %xx10xxxx: Edge colour 2 (white/yellow/cyan/red)
                         \   * %xxxx10xx: Fill colour 2 (white/yellow/cyan/red)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
  EQUB %00111101         \ Polygon 159 data:
                         \
                         \   * %0xxxxxxx: Draw polygon in first phase
-                        \   * %xx11xxxx: Line colour 3 (green/red/yellow/cyan)
+                        \   * %xx11xxxx: Edge colour 3 (green/red/yellow/cyan)
                         \   * %xxxx11xx: Fill colour 3 (green/red/yellow/cyan)
                         \   * %xxxxxx01: Polygon has four sides (quadrilateral)
 
@@ -33073,8 +33135,13 @@ L314A = C3148+2
 
  LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectAdjacentHi) is greater or
  CMP #15                \ equal to 15 then the object is a fair distance away
- ROR L0C7A              \ from the viewer along the z-axis, so set bit 7 of
-                        \ L0C7A to ???
+ ROR blendPolygonEdges  \ from the viewer along the z-axis, so set bit 7 of
+                        \ blendPolygonEdges so we draw the polygon edges in the
+                        \ same colour as the polygon body (i.e. the fill
+                        \ colour), so the edges blend into the body
+                        \
+                        \ We do this for distant objects because distinct edge
+                        \ colours can make those object look messy
 
  JSR GetObjPointAngles  \ Calculate the view-relative pitch and yaw angles of
                         \ all the points in the object and put them into the
@@ -33087,8 +33154,9 @@ L314A = C3148+2
                         \ We can use these as screen x- and y-coordinates, using
                         \ the same screen projection that is used in Revs
 
- LDA #%01000000         \ Set bit 6 of L003B ???
- STA L003B
+ LDA #%01000000         \ Clear bit 7 and set bit 6 of polygonType so the call
+ STA polygonType        \ to DrawPolygon below draws the polygon as part of an
+                        \ object
 
  LDA #0                 \ Set drawingPhaseCount = 0, so the default is to draw
  STA drawingPhaseCount  \ the object in one phase
@@ -33251,20 +33319,28 @@ L314A = C3148+2
 .drob6
 
  AND #%00111100         \ Extract bits 2 to 5 from the polygon data byte to get
- STA polygonColour      \ the polygon's colour, and put it in polygonColour
+ STA polygonColours     \ the polygon's edge and fill colours, and put then into
+                        \ polygonColours
 
  LDA objPolygonData,Y   \ Set A to the polygon data byte for the polygon we are
                         \ drawing
 
  AND #%00000011         \ Extract bits 0 to 1 from the polygon data byte to get
- CLC                    \ the ???, add 3 and store the result in L0017
- ADC #3
- STA L0017
+ CLC                    \ the number of sides in the polygon (where 0 means
+ ADC #3                 \ three sides and 1 means four sides)
+ STA polygonPointCount  \
+                        \ Then add 3 to get the number of points in the polygon
+                        \ point list, which will be four for a triangle or five
+                        \ for a quadrilateral, as the list includes the first
+                        \ point repeated at the end
+                        \
+                        \ And store the result in polygonPointCount
 
- LDA objPolygonAddrLo,Y \ Point L003C(1 0) to the list of point numbers for this
- STA L003C              \ polygon so the DrawPolygon routine can use the yaw and
- LDA objPolygonAddrHi,Y \ pitch angles that we calculated for the points in the
- STA L003C+1            \ GetObjPointAngles routine ???
+ LDA objPolygonAddrLo,Y \ Set drawViewAngles(1 0) to the address of the list of
+ STA drawViewAngles     \ point numbers for this polygon so the DrawPolygon
+ LDA objPolygonAddrHi,Y \ routine can use the yaw and pitch angles that we
+ STA drawViewAngles+1   \ calculated for the points in the GetObjPointAngles
+                        \ routine ???
 
  JSR DrawPolygon        \ Draw the polygon
 
@@ -33302,12 +33378,14 @@ L314A = C3148+2
 
 .drob8
 
- LDA #LO(L0C40)         \ Set L003C(1 0) = L0C40 ???
- STA L003C
+ LDA #LO(L0C40)         \ Set drawViewAngles(1 0) = L0C40 ???
+ STA drawViewAngles
  LDA #HI(L0C40)
- STA L003C+1
+ STA drawViewAngles+1
 
- LSR L0C7A              \ Clear bit 7 of L0C7A to ???
+ LSR blendPolygonEdges  \ Clear bit 7 of blendPolygonEdges so we return to the
+                        \ default setting of allowing drawing polygon edges to
+                        \ be a different colour to the polygon fill
 
  LDY objectToAnalyse    \ Set Y to the number of the object we just drew, so it
                         \ is preserved

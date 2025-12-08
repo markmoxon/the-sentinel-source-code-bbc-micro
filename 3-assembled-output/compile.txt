@@ -56,7 +56,7 @@
      0016
 .traceStepCounter
      0017
-.L0017
+.polygonPointCount
      0017
 .L0018
      0018
@@ -66,7 +66,7 @@
      0018
 .yTileRow
      0019
-.polygonColour
+.polygonColours
      0019
 .L001A
      001A
@@ -170,11 +170,11 @@
      003A
 .yCoordHi
      003B
-.L003B
+.polygonType
      003B
 .zCoordHi
      003C
-.L003C
+.drawViewAngles
      003C
 .vectorYawAngleLo
      003D
@@ -2615,7 +2615,7 @@
 .xTitleOffset
      0C78   EF
      0C79   00
-.L0C7A
+.blendPolygonEdges
      0C7A   AA
 .seedNumberLFSR
      0C7B   00
