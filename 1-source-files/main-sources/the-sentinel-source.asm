@@ -4519,7 +4519,8 @@
                         \ black
 
  LDA #&87               \ Set the palette to the second set of colours from the
- JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
+ JSR SetColourPalette   \ colourPalettes table, which contains the fixed palette
+                        \ for the title screens (blue, black, red, yellow)
 
  JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
                         \ read a character from it (so this waits for a key
@@ -4644,7 +4645,8 @@
  JSR DrawTitleScreen    \ screen
 
  LDA #&87               \ Set the palette to the second set of colours from the
- JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
+ JSR SetColourPalette   \ colourPalettes table, which contains the fixed palette
+                        \ for the title screens (blue, black, red, yellow)
 
  LDX #3                 \ Print text token 3: Background colour blue, print
  JSR PrintTextToken     \ "WRONG SECRET CODE" at (64, 768), print "PRESS ANY
@@ -6297,11 +6299,20 @@
  STX screenBackground   \ Set screenBackground to the type of background for
                         \ the title screen
 
- TXA
+                        \ We start by setting the correct colour for any drop
+                        \ shadow text on the title screen (i.e. text that uses
+                        \ the standard font and which is printed twice with an
+                        \ offset to give a drop-shadow effect, as opposed to the
+                        \ large 3D text which is drawn as 3D objects)
 
- LDX #&02
- EOR #&03
+ TXA                    \ Set A to the background type
+
+ LDX #2                 \ Set X = 2 to use as the colour for the rear character
+                        \ of a drop shadow (red or cyan)
+
+ EOR #3
  STA vduShadowFront+1
+
  BEQ C13AC
  INX
 
@@ -22846,7 +22857,14 @@ L314A = C3148+2
 .PlayGame
 
  LDA #&83               \ Set the palette to the first set of colours from the
- JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
+ JSR SetColourPalette   \ colourPalettes table, which the SpawnEnemies routine
+                        \ set to the correct palette for playing the game (so
+                        \ for landscape 0000 that would be blue, black, white
+                        \ and green, for example)
+                        \
+                        \ So this displays the landscape preview screen that we
+                        \ drew in PreviewLandscape with an all-blue palette
+                        \ before jumping here
 
  JSR ReadKeyboard       \ Enable the keyboard, flush the keyboard buffer and
                         \ read a character from it (so this waits for a key
@@ -23003,7 +23021,10 @@ L314A = C3148+2
                         \ played, we wait until it has finished
 
  LDA #&83               \ Set the palette to the first set of colours from the
- JSR SetColourPalette   \ colourPalettes table (blue, black, cyan, yellow)
+ JSR SetColourPalette   \ colourPalettes table, which the SpawnEnemies routine
+                        \ set to the correct palette for playing the game (so
+                        \ for landscape 0000 that would be blue, black, white
+                        \ and green, for example)
 
  LDA hyperspaceEndsGame \ Set A to the hyperspace status flag
 
@@ -23080,7 +23101,8 @@ L314A = C3148+2
                         \ landscape's secret code as a title screen
 
  LDA #&87               \ Set the palette to the second set of colours from the
- JSR SetColourPalette   \ colourPalettes table (blue, black, red, yellow)
+ JSR SetColourPalette   \ colourPalettes table, which contains the fixed palette
+                        \ for the title screens (blue, black, red, yellow)
 
  LDA #10                \ Set soundCounter = 10 to count down while the next
  STA soundCounter       \ sound is made
@@ -31936,6 +31958,8 @@ L314A = C3148+2
                         \
                         \ Set the foreground colour to colour 2 (red or cyan,
                         \ depending on the current palette)
+                        \
+                        \ The "2" is replaced by the colour to be drawn
 
  EQUB &00, &04          \ 7. VDU 25, 0, 0; 4;
  EQUW 0                 \
@@ -31979,6 +32003,8 @@ L314A = C3148+2
  EQUB 3, 0, 18          \ 4. VDU 18, 0, 3
                         \
                         \ Set the foreground colour to colour 3 (yellow)
+                        \
+                        \ The "3" is replaced by the colour to be drawn
 
  EQUB &FF, &FC          \ 3. VDU 25, 0, 0; -4;
  EQUW 0                 \
@@ -34370,29 +34396,12 @@ L314A = C3148+2
 \ routine when it is called with an argument with bit 7 set. This routine is
 \ only ever called with an argument of &83 or &87.
 \
-\ If the argument to SetColourPalette is &83, the palette is set as follows:
-\
-\   * Colour 0 = 4 (blue)
-\
-\   * Colour 1 = 0 (black)
-\
-\   * Colour 2 = 6 (cyan)
-\
-\   * Colour 3 = 3 (yellow)
-\
-\ If the argument to SetColourPalette is &87, the palette is set as follows:
-\
-\   * Colour 0 = 4 (blue)
-\
-\   * Colour 1 = 0 (black)
-\
-\   * Colour 2 = 1 (red)
-\
-\   * Colour 3 = 3 (yellow)
-\
-\ Note that while colours 0 and 1 are always blue and black, during gameplay
-\ colours 2 and 3 are set to different physical colours, depending on the number
-\ of enemies in the landscape. The gameplaye palettes are as follows:
+\ If the argument to SetColourPalette is &83 then the palette is set to the
+\ correct colours for playing the current landscape. The colours are set in the
+\ SpawnEnemies routine when the landscape is generated. Colours 0 and 1 are
+\ always blue and black, but colours 2 and 3 are set to different physical
+\ colours depending on the number of enemies in the landscape. The different
+\ palettes are as follows:
 \
 \   * Enemy count = 1: blue, black, white, green
 \
@@ -34412,6 +34421,18 @@ L314A = C3148+2
 \
 \ Landscape 0000 has one enemy, so the starting landscape is therefore in blue,
 \ black, white and green.
+\
+\ If the argument to SetColourPalette is &87, the palette is set as follows:
+\
+\   * Colour 0 = 4 (blue)
+\
+\   * Colour 1 = 0 (black)
+\
+\   * Colour 2 = 1 (red)
+\
+\   * Colour 3 = 3 (yellow)
+\
+\ This palette is fixed and is used for the title screens.
 \
 \ ******************************************************************************
 
