@@ -1691,8 +1691,7 @@
 
 .titleObjectToDraw
 
- EQUB 5                 \ The object we are drawing in the DrawTitleObject
-                        \ routine
+ EQUB 5                 \ The object we are drawing in the DrawTitleView routine
 
 .latestPanKeyPress
 
@@ -4811,7 +4810,7 @@
  JSR FillScreen         \ Call FillScreen to fill the screen buffer with the
                         \ background specified in screenBackground
                         \
-                        \ screenBackground variable is zeroed in DrawTitleObject
+                        \ screenBackground variable is zeroed in DrawTitleView
                         \ before the gameplay starts, so alll calls to the
                         \ FillScreen routine during gameplay fill the buffer
                         \ with alternating colour 0/1 (blue/black) pixel rows,
@@ -4913,7 +4912,7 @@
  JSR FillScreen         \ Call FillScreen to fill the screen buffer with the
                         \ background specified in screenBackground
                         \
-                        \ screenBackground variable is zeroed in DrawTitleObject
+                        \ screenBackground variable is zeroed in DrawTitleView
                         \ before the gameplay starts, so alll calls to the
                         \ FillScreen routine during gameplay fill the buffer
                         \ with alternating colour 0/1 (blue/black) pixel rows,
@@ -6248,40 +6247,35 @@
 
 \ ******************************************************************************
 \
-\       Name: DrawTitleObject
+\       Name: DrawTitleView
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: ???
+\    Summary: Draw the main title screen, the secret code screen or the
+\             landscape preview
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   The object to draw on the title screen (or subsequent
-\                       screens):
+\   A                   The object to draw on the title screen:
 \
-\                         * 0 = draw a robot on the right of the screen (for the
-\                               secret code screen)
+\                         * 0 = draw a robot on the right of the screen for the
+\                               secret code screen
 \
-\                         * 5 = draw the Sentinel on the right of the screen
-\                               (for the title screen)
+\                         * 5 = draw the Sentinel on the right of the screen for
+\                               the main title screen
 \
 \                         * &80 = draw the landscape preview
 \
 \   X                   The screen background:
 \
-\                         * 0 = fill with alternating colour 0/1 (blue/black)
-\                               pixel rows, for the sky during gameplay
-\
-\                         * 1 = fill with solid colour 0 (blue)
-\
-\                         * 2 = fill with dithered pixels in colour 0 (blue)
-\                               and colour 3 (e.g. green in landscape 0000)
-\                               by alternating colour 3/0/3/0 and 0/3/0/3
-\                               pixel bytes
+\                         * 1 = fill with solid colour 0 (blue) for the main
+\                               title screen
 \
 \                         * 3 = fill with solid colour 1 (black) and draw 240
-\                               randomly positioned stars in on the background
+\                               randomly positioned stars in colour 2 (white,
+\                               yellow, cyan or red), for the secret code screen
+\                               and landscape preview
 \
 \   Y                   The view type:
 \
@@ -6291,13 +6285,14 @@
 \
 \ ******************************************************************************
 
-.DrawTitleObject
+.DrawTitleView
 
  STA titleObjectToDraw  \ Set titleObjectToDraw to the object that we are
-                        \ drawing so we can refer to it later
+                        \ drawing so we can refer to it throughout the title
+                        \ routines
 
- STX screenBackground   \ Set screenBackground to the type of background for
-                        \ the title screen
+ STX screenBackground   \ Set screenBackground to the type of background to draw
+                        \ for the title screen or landscape preview
 
                         \ We start by setting the correct colour for any drop
                         \ shadow text on the title screen (i.e. text that uses
@@ -6308,60 +6303,98 @@
  TXA                    \ Set A to the background type
 
  LDX #2                 \ Set X = 2 to use as the colour for the rear character
-                        \ of a drop shadow (red or cyan)
+                        \ of a drop shadow (this is red on the title screens or
+                        \ white/yellow/cyan/red in the landscape preview)
 
- EOR #3
- STA vduShadowFront+1
+ EOR #3                 \ Update the VDU codes at vduShadowFront so the front
+ STA vduShadowFront+1   \ character of the dropdown text is printed in colour
+                        \ A EOR 3, so that's:
+                        \
+                        \   * Colour 2 (red) for the solid blue background
+                        \
+                        \   * Colour 0 (blue) for the star background
 
- BEQ C13AC
- INX
+ BEQ tvew1              \ If we just set the colour of the front character to
+                        \ blue, skip the following instruction
 
-.C13AC
+ INX                    \ Set X = 3 to use as the colour for the rear character
+                        \ of a drop shadow (this is yellow on the title screens
+                        \ green/red/yellow/cyan in the landscape preview)
 
- STX vduShadowRear+1
+.tvew1
 
- STY viewType           \ Set viewType to the view type
+ STX vduShadowRear+1    \ Update the VDU codes at vduShadowRear so the rear
+                        \ character of the dropdown text is printed in colour X,
+                        \ so that's:
+                        \
+                        \   * Colour 3 (yellow) for the solid blue background
+                        \
+                        \   * Colour 2 for the star background, which is red for
+                        \     the secret code screen, or white/yellow/cyan/red
+                        \     in the landscape preview)
 
- LDA L1403,Y
+ STY viewType           \ Set viewType to the view type so we can use it as an
+                        \ index into the screen configuration tables to set up
+                        \ the correct perspective depending on whether this is
+                        \ a landscape preview (Y = 0) or a title screen (Y = 1)
+
+                        \ We now set up object #16 to use as the viewing object
+                        \ for the large 3D text blocks, using the values from
+                        \ the configuration tables
+
+ LDA yTextViewer,Y      \ Set the y-coordinate of the viewer in object #16
  STA yObjectHi+16
- LDA L1405,Y
+
+ LDA textViewerPitch,Y  \ Set the pitch angle of the viewer in object #16
  STA objectPitchAngle+16
- LDA L1407,Y
+
+ LDA xTextViewer,Y      \ Set the x-coordinate of the viewer in object #16
  STA xObject+16
- LDA L140B,Y
+
+ LDA zTextViewer,Y      \ Set the z-coordinate of the viewer in object #16
  STA zObject+16
- LDA L140D,Y
+
+ LDA textViewerYaw,Y    \ Set the yaw angle of the viewer in object #16
  STA objectYawAngle+16
- LDA L1409,Y
- PHA
+
+ LDA titleOffset,Y      \ Store the title offset on the stack so we can retrieve
+ PHA                    \ it below
 
  JSR ClearScreen        \ Clear the screen
 
- LDA titleObjectToDraw
- BMI C13DF
- JSR sub_C5FE5
+ LDA titleObjectToDraw  \ If bit 7 of titleObjectToDraw is set then we are
+ BMI tvew2              \ drawing the landscape preview, so skip the following
+                        \ instruction as there is no 3D object on the right of
+                        \ the screen
 
-.C13DF
+ JSR DrawTitleObjects   \ Otherwise call DrawTitleObjects to draw an object of
+                        \ type A (so that's 0 for a robot or 5 for the Sentinel)
+                        \ standing on top of a tower on the right side of the
+                        \ screen
 
- PLA
- STA xTitleOffset
- LDX #&10
+.tvew2
+
+ PLA                    \ Set xTitleOffset to the title offset, which will only
+ STA xTitleOffset       \ be non-zero when we are drawing the large 3D text on
+                        \ the main title screen or secret code screen
+
+ LDX #16                \ Set the viewing object to object #16
  STX viewingObject
 
- JSR DrawLandscapeView  \ Draw the landscape view
+ JSR DrawLandscapeView  \ Draw the landscape view to display the text
 
  LDA viewType
- BNE C13FA
+ BNE tvew4
  LDX #&7F
  STX viewType
 
-.P13F4
+.tvew3
 
  STA tileVisibility,X
  DEX
- BPL P13F4
+ BPL tvew3
 
-.C13FA
+.tvew4
 
  LDA #0
  STA xTitleOffset
@@ -6376,94 +6409,112 @@
 
 \ ******************************************************************************
 \
-\       Name: L1403
+\       Name: yTextViewer
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: The y-coordinate of the viewer for the large 3D text on the title
+\             screen
 \
 \ ******************************************************************************
 
-.L1403
+.yTextViewer
 
- EQUB &21, &4B
+ EQUB 33                \ Landscape preview
+
+ EQUB 75                \ Title screen or secret code screen
 
 \ ******************************************************************************
 \
-\       Name: L1405
+\       Name: textViewerPitch
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: The pitch angle of the viewer for the large 3D text on the title
+\             screen
 \
 \ ******************************************************************************
 
-.L1405
+.textViewerPitch
 
- EQUB &EA, &D9
+ EQUB -22               \ Landscape preview
+
+ EQUB -39               \ Title screen or secret code screen
 
 \ ******************************************************************************
 \
-\       Name: L1407
+\       Name: xTextViewer
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: The x-coordinate of the viewer for the large 3D text on the title
+\             screen
 \
 \ ******************************************************************************
 
-.L1407
+.xTextViewer
 
- EQUB &0F, &00
+ EQUB 15                \ Landscape preview
+
+ EQUB 0                 \ Title screen or secret code screen
 
 \ ******************************************************************************
 \
-\       Name: L1409
+\       Name: titleOffset
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: An offset to apply to the large 3D text for the title screen
 \
 \ ******************************************************************************
 
-.L1409
+.titleOffset
 
- EQUB &00, &EF
+ EQUB 0                 \ Landscape preview
+
+ EQUB -17               \ Title screen or secret code screen
 
 \ ******************************************************************************
 \
-\       Name: L140B
+\       Name: zTextViewer
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: The z-coordinate of the viewer for the large 3D text on the title
+\             screen
 \
 \ ******************************************************************************
 
-.L140B
+.zTextViewer
 
- EQUB &C2, &BF
+ EQUB 194               \ Landscape preview
+
+ EQUB 191               \ Title screen or secret code screen
 
 \ ******************************************************************************
 \
-\       Name: L140D
+\       Name: textViewerYaw
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: The yaw angle of the viewer for the large 3D text on the title
+\             screen
 \
 \ ******************************************************************************
 
-.L140D
+.textViewerYaw
 
- EQUB &00, &12
+ EQUB 0                 \ Landscape preview
+
+ EQUB 18                \ Title screen or secret code screen
 
 \ ******************************************************************************
 \
 \       Name: viewType
 \       Type: Variable
 \   Category: Title screen
-\    Summary: ???
+\    Summary: Storage for the type of title view we are drawing in DrawTitleView
+\             (title screen or landscape preview)
 \
 \ ******************************************************************************
 
 .viewType
 
- EQUB &01
+ EQUB 1
 
 \ ******************************************************************************
 \
@@ -6712,8 +6763,8 @@
 \ left to right (so in the order that they are written down).
 \
 \ If we are displaying the landscape number on-screen at the end of a level,
-\ then the last four numbers are generated in the DrawSecretCode routine, but if
-\ we are checking the secret code entered by the player, then we generate the
+\ then the last four numbers are generated in the SpawnSecretCode3D routine, but
+\ if we are checking the secret code entered by the player, then we generate the
 \ last four numbers in this routine (plus one extra number that is ignored).
 \ This behaviour is controlled by the doNotPlayLandscape variable.
 \
@@ -6728,7 +6779,7 @@
 \                           after generating the secret code sequence up to, but
 \                           not including, the last four BCD numbers (i.e. the
 \                           secret code itself), so these can be generated and
-\                           drawn by the DrawSecretCode routine
+\                           drawn by the SpawnSecretCode3D routine
 \
 \                         * If bit 7 is clear, jump to part 2 after generating
 \                           the whole secret code sequence, plus one more code,
@@ -6780,7 +6831,7 @@
                         \ is set, so that's when we are not going to play the
                         \ game but are just generating the secret code, in which
                         \ case we stop iterating just before the secret code is
-                        \ generated so the DrawSecretCode can finish the job
+                        \ generated so the SpawnSecretCode3D can finish the job
 
                         \ We now loop through a number of iterations, counting
                         \ X down towards 128
@@ -9409,7 +9460,7 @@
                         \ code for the completed landscape, so if crackers have
                         \ jumped straight to the end of the level without
                         \ setting playerIsOnTower to 6, then the wrong code will
-                        \ be generated in the DrawSecretCode routine
+                        \ be generated in the SpawnSecretCode3D routine
 
 .ptow1
 
@@ -12332,7 +12383,7 @@
  JSR FillScreen         \ Call FillScreen to fill the screen buffer with the
                         \ background specified in screenBackground
                         \
-                        \ screenBackground variable is zeroed in DrawTitleObject
+                        \ screenBackground variable is zeroed in DrawTitleView
                         \ before the gameplay starts, so alll calls to the
                         \ FillScreen routine during gameplay fill the buffer
                         \ with alternating colour 0/1 (blue/black) pixel rows,
@@ -16666,8 +16717,9 @@ L23E3 = C23E2+1
  SEC                    \   xTile - xTileViewer - 1 - xTitleOffset
  SBC xTitleOffset       \
  STA xDeltaHi           \ Note that xTitleOffset is zero during gameplay, and is
-                        \ only non-zero when we are drawing a title screen, so
-                        \ let's ignore it for now
+                        \ only non-zero when we are drawing large 3D text on the
+                        \ title screen, so let's ignore it for now to keep
+                        \ things simple
                         \
                         \ Setting the low byte to 128 effectively adds 0.5 to
                         \ the result, so we get this:
@@ -19284,7 +19336,7 @@ L23E3 = C23E2+1
                         \ This value is altered in the AlterCrackerSeed routine
                         \ that runs as part of the gameplay routines, and is
                         \ checked in the CheckCrackerSeed routine that runs as
-                        \ part of the DrawLetter3D routine when drawing the
+                        \ part of the SpawnCharacter3D routine when drawing the
                         \ landscape's secret code
 
                         \ Fall through into part 4 of SmoothTileCorners to
@@ -20887,8 +20939,8 @@ L314A = C3148+2
 .zero1
 
  BIT printTextIn3D      \ If bit 7 of printTextIn3D is set then we are printing
- BMI DrawLetter3D       \ 3D text, so jump to DrawLetter3D to draw the character
-                        \ in 3D
+ BMI SpawnCharacter3D   \ 3D text, so jump to SpawnCharacter3D to spawn the
+                        \ character in 3D text blocks
 
  JMP PrintCharacter     \ Otherwise jump to PrintCharacter to print the single-
                         \ byte VDU command or character in A, returning from the
@@ -20896,14 +20948,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DrawLetter3D (Part 1 of 2)
+\       Name: SpawnCharacter3D (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.DrawLetter3D
+.SpawnCharacter3D
 
  PHA
  STA L0C10
@@ -20976,12 +21028,12 @@ L314A = C3148+2
                         \ by moving one step too far in the landscape's sequence
                         \ of seed numbers
 
-                        \ Fall through into part 2 of DrawLetter3D to continue
-                        \ with the letter-drawing process
+                        \ Fall through into part 2 of SpawnCharacter3D to
+                        \ continue with the letter-drawing process
 
 \ ******************************************************************************
 \
-\       Name: DrawLetter3D (Part 2 of 2)
+\       Name: SpawnCharacter3D (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: ???
@@ -21095,10 +21147,12 @@ L314A = C3148+2
                         \ So this makes object #63 face directly out of the
                         \ screen
 
- LDA #&E0               \ Set (yObjectHi yObjectLo) for object #63 to 736 (&2E0)
- STA yObjectLo+63
- LDA #&02
- STA yObjectHi+63
+ LDA #&E0               \ For object #63, set the following:
+ STA yObjectLo+63       \
+ LDA #&02               \   (yObjectHi yObjectLo) = &2E0
+ STA yObjectHi+63       \                         = 736
+                        \
+                        \ so this sets ???
 
  SEC                    \ Set bit 7 of drawingTitleScreen to indicate that we
  ROR drawingTitleScreen \ are drawing a title screen
@@ -21107,16 +21161,18 @@ L314A = C3148+2
  JSR ProcessTileData    \ for the whole landscape
 
  BIT screenType         \ If bit 7 of the screen type is clear, jump to titl1 to
- BPL titl1              \ print "THE SENTINEL" on the title screen
+ BPL titl1              \ draw "THE SENTINEL" in large 3D text for the main title
+                        \ screen
 
                         \ If we get here then bit 7 of the argument is set, so
                         \ we now draw the secret code
 
- JSR DrawSecretCode     \ Draw the secret code in 3D ???
+ JSR SpawnSecretCode3D  \ Spawn the secret code in large 3D text blocks
 
- LDX #3                 \ Set X = 3 to pass to DrawTitleObject ???
+ LDX #3                 \ Set X = 3 to pass to DrawTitleView so the background
+                        \ of the secret code screen is black with stars
 
- LDA #0                 \ Set A = 0 so the call to DrawTitleObject draws a robot
+ LDA #0                 \ Set A = 0 so the call to DrawTitleView draws a robot
                         \ on the right of the screen
 
  BEQ titl3              \ Jump to titl3 to skip the following and draw the robot
@@ -21132,24 +21188,28 @@ L314A = C3148+2
 
  LDA titleText,X        \ Set A to the X-th character in the title text
 
- JSR DrawLetter3D       \ Draw the character in A in 3D ???
+ JSR SpawnCharacter3D   \ Spawn the 3D text blocks for drawing the character in
+                        \ A in large 3D text
 
  INX                    \ Increment the character index
 
  CPX #15                \ Loop back until we have drawn all 15 characters in the
  BCC titl2              \ title text
 
- LDX #1                 \ Set X = 1 to pass to DrawTitleObject ???
+ LDX #1                 \ Set X = 1 to pass to DrawTitleView so the background
+                        \ of the landscape preview is solid blue
 
- LDA #5                 \ Set A = 5 so the call to DrawTitleObject draws the
+ LDA #5                 \ Set A = 5 so the call to DrawTitleView draws the
                         \ Sentinel on the right of the screen
 
 .titl3
 
- LDY #1                 \ Set Y = 1 to pass to DrawTitleObject ???
+ LDY #1                 \ Set Y = 1 to pass to DrawTitleView so it draws the
+                        \ screen with the correct perspective for the title
+                        \ screen
 
- JSR DrawTitleObject    \ Draw the Sentinel on the title screen or the robot on
-                        \ the secret code screen ???
+ JSR DrawTitleView      \ Draw the title screen with the object and background
+                        \ defined in A and X
 
  LSR drawingTitleScreen \ Clear bit 7 of drawingTitleScreen to indicate we are
                         \ no longer drawing a title screen
@@ -21678,23 +21738,25 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DrawSecretCode
+\       Name: SpawnSecretCode3D
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: Draw the landscape's secret code in 3D text
+\    Summary: Draw the landscape's secret code by spawning a set of large 3D
+\             text block objects
 \
 \ ******************************************************************************
 
-.DrawSecretCode
+.SpawnSecretCode3D
 
  LDA #%10000000         \ Set bit 7 of printTextIn3D so we print the landscape's
  STA printTextIn3D      \ secret code in 3D text when we call Print2DigitBCD
                         \ below
 
- JSR DrawLetter3D       \ ???
+ JSR SpawnCharacter3D   \ Spawn the 3D text blocks for drawing the character in
+                        \ A in large 3D text ???
 
- LDA #&C7               \ ???
- JSR DrawLetter3D
+ LDA #&C7               \ Spawn the 3D text blocks for drawing ??? in large 3D
+ JSR SpawnCharacter3D   \ text ???
 
  LSR playerIsOnTower    \ If we got here legally (i.e. without crackers getting
                         \ involved, then the ProcessActionKeys will have set
@@ -21736,7 +21798,8 @@ L314A = C3148+2
  BCS dsec2              \ skip printing the four correct secret code numbers if
                         \ X starts the loop at 64
 
- JSR Print2DigitBCD     \ Print the binary coded decimal (BCD) number in A
+ JSR Print2DigitBCD     \ Draw the binary coded decimal (BCD) number in A in
+                        \ large 3D text
 
 .dsec2
 
@@ -33098,7 +33161,8 @@ L314A = C3148+2
                         \ object being analysed)
                         \
                         \ Note that xTitleOffset is zero during gameplay, and is
-                        \ only non-zero when we are drawing a title screen
+                        \ only non-zero when we are drawing large 3D text on the
+                        \ title screen
 
  JSR GetVerticalDelta   \ Calculate the following:
                         \
@@ -34042,8 +34106,8 @@ L314A = C3148+2
 \ z-coordinate between the two objects, which are the differences along the
 \ left-right x-axis and the z-axis the goes into the screen.
 \
-\ Note that xTitleOffset is zero during gameplay, and is only non-zero when
-\ drawing a title screen.
+\ Note that xTitleOffset is zero during gameplay, and is only non-zero when we
+\ are drawing large 3D text on the title screen.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -34638,8 +34702,10 @@ L314A = C3148+2
  STY sightsAreVisible   \ Clear bit 7 of sightsAreVisible to indicate that the
                         \ sights are not visible
 
- LDA titleObjectToDraw  \ Draw the title object specified by titleObjectToDraw
- JSR sub_C5F80
+ LDA titleObjectToDraw  \ Call SpawnTitleObject to spawn an object of type
+ JSR SpawnTitleObject   \ titleObjectToDraw as object #1, using the
+                        \ configuration specified in Y (i.e. 0) so the object
+                        \ is spawned for use in the game over screen
 
  LDA #3                 \ Set screenBackground = 3 so the next time the screen
  STA screenBackground   \ is cleared, it shows a black background with stars
@@ -34752,51 +34818,134 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5F80
+\       Name: SpawnTitleObject
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: Spawn the title object (robot or the Sentinel) as object #1
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The type of object to spawn
+\
+\   Y                   The configuration to use when spawning the object:
+\
+\                         * 0 = the object on the game over screen (i.e. the
+\                               enemy that ended the game)
+\
+\                         * 1 = the Sentinel on the main title screen or the
+\                               robot on the secret code screen
+\
+\                         * 2 = the tower on which the Sentinel or robot stands
 \
 \ ******************************************************************************
 
-.sub_C5F80
+.SpawnTitleObject
 
- STA objectTypes+1
- LDA L5FBC,Y
- CLC
- ADC zObject+2
+                        \ We set up the object that we want to draw on the title
+                        \ screen in object #1, and we set up the viewing object
+                        \ for that object in object #2
+                        \
+                        \ The values come from the Y-th entry in each of the
+                        \ following configuration tables, so this routine sets
+                        \ up the following, depending on the object that we are
+                        \ spawning:
+                        \
+                        \   * Object #1 (the object to draw) is set to a yaw
+                        \     of 128 for the game over screen (so the enemy
+                        \     stares directly out of the screen), or -114 for the
+                        \     object on the tower (so it looks towards the left
+                        \     of the viewer) or -50 for the tower (so it is
+                        \     rotated slightly to the left)
+                        \
+                        \   * Object #1 (the object to draw) is set to a yaw
+                        \     of 128 for the game over screen, so the enemy
+                        \     stares directly out of the screen
+                        \
+                        \   * Object #1 (the object to draw) is set to a yaw
+                        \     of -114 for the object on the tower, so the robot
+                        \     or Sentinel looks out of the screen, towards the
+                        \     left of the viewer
+                        \
+                        \   * Object #1 (the object to draw) is set to a yaw
+                        \     of -50 for the tower, so it is rotated slightly to
+                        \     the left
+                        \
+                        \   * Object #2 (the viewing object) is set to a pitch
+                        \     of -12 for the game over screen, so the camera
+                        \     points down, thus moving the object down the
+                        \     screen
+                        \
+                        \   * Object #2 (the viewing object) is set to a pitch
+                        \     of -5 and a yaw of -8 for the title screen, so the
+                        \     camera points down and left, thus moving the tower
+                        \     and object to the right
+                        \
+                        \   * Object #1 is always at the same x-coordinate as
+                        \     the viewing object
+                        \
+                        \   * The tower and game over objects are at the same
+                        \     y-coordinate as the viewer (so they at the same
+                        \     altitude)
+                        \
+                        \   * The object on the tower is higher than the viewer
+                        \     by one y-coordinate
+                        \
+                        \   * The game over object is at a z-coordinate distance
+                        \     of 5 from the viewer, while the object and tower
+                        \     are at a distance of 7
+
+ STA objectTypes+1      \ Set the object type for object #1 to the argument in A
+
+ LDA zTitleObject,Y     \ Set the z-coordinate for object #1 to the z-coordinate
+ CLC                    \ of object #2 plus the Y-th entry from the zTitleObject
+ ADC zObject+2          \ table
  STA zObject+1
- LDA yObjectHi+2
- CLC
- ADC L5FDC,Y
+
+ LDA yObjectHi+2        \ Set the high byte of the y-coordinate for object #1 to
+ CLC                    \ the high byte of the y-coordinate of object #2 plus
+ ADC yTitleObject,Y     \ the Y-th entry from the yTitleObject table
  STA yObjectHi+1
- LDA xObject+2
- STA xObject+1
- LDA L5FD9,Y
- STA objectPitchAngle+2
- LDA L5FE2,Y
- STA objectYawAngle+2
- LDA #0
- STA yObjectLo+2
+
+ LDA xObject+2          \ Set the x-coordinate for object #1 to the x-coordinate
+ STA xObject+1          \ of object #2
+
+ LDA titleViewerPitch,Y \ Set the pitch angle of the viewer in object #2 to the
+ STA objectPitchAngle+2 \ Y-th entry from the titleViewerPitch table
+
+ LDA titleViewerYaw,Y   \ Set the yaw angle of the viewer in object #2 to the
+ STA objectYawAngle+2   \ Y-th entry from the titleViewerYaw table
+
+ LDA #0                 \ Zero the low bytes of the y-coordinates for both
+ STA yObjectLo+2        \ objects
  STA yObjectLo+1
- LDA L5FDF,Y
- STA objectYawAngle+1
- LDX #&02
- STX viewingObject
- RTS
+
+ LDA titleObjectYaw,Y   \ Set the yaw angle of object #1 to the Y-th entry from
+ STA objectYawAngle+1   \ the titleObjectYaw
+
+ LDX #2                 \ Set the viewing object to object #2 so the screen will
+ STX viewingObject      \ be drawn from this perspective
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L5FBC
+\       Name: zTitleObject
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: The z-coordinate of an object on the title screen, as a delta from
+\             the z-coordinate of the viewing object
 \
 \ ******************************************************************************
 
-.L5FBC
+.zTitleObject
 
- EQUB &05, &07, &07
+ EQUB 5                 \ Object 0 = the game over object
+
+ EQUB 7                 \ Object 1 = the object on the tower
+
+ EQUB 7                 \ Object 2 = the tower
 
 \ ******************************************************************************
 \
@@ -34813,14 +34962,17 @@ L314A = C3148+2
                         \ add them to the landscape and set the palette
                         \ accordingly
 
- LDX #3                 \ Set X = 3 to pass to DrawTitleObject ???
+ LDX #3                 \ Set X = 3 to pass to DrawTitleView so the background
+                        \ of the landscape preview is black with stars
 
- LDY #0                 \ Set Y = 0 to pass to DrawTitleObject ???
+ LDY #0                 \ Set Y = 0 to pass to DrawTitleView so it draws the
+                        \ screen with the correct perspective for the landscape
+                        \ preview
 
- LDA #&80               \ Set A = &80 so the call to DrawTitleObject draws the
+ LDA #&80               \ Set A = &80 so the call to DrawTitleView draws the
                         \ landscape preview
 
- JSR DrawTitleObject    \ Draw the landscape preview
+ JSR DrawTitleView      \ Draw the landscape preview
 
  LDX #4                 \ Print text token 4: Background colour black, print
  JSR PrintTextToken     \ "PRESS ANY KEY" at (192, 64), print "LANDSCAPE" two
@@ -34846,60 +34998,147 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5FD9
+\       Name: titleViewerPitch
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: The pitch angle of the viewer for objects on the title screen
 \
 \ ******************************************************************************
 
-.L5FD9
+.titleViewerPitch
 
- EQUB &F4, &FB, &FB
+ EQUB -12               \ Object 0 = when viewing the game over object
 
-.L5FDC
+ EQUB -5                \ Object 1 = when viewing the object on the tower
 
- EQUB &00, &01, &00
-
-.L5FDF
-
- EQUB &80, &8E
- EQUB &CE
-
-.L5FE2
-
- EQUB &00, &F8, &F8
+ EQUB -5                \ Object 2 = when viewing the tower
 
 \ ******************************************************************************
 \
-\       Name: sub_C5FE5
+\       Name: yTitleObject
+\       Type: Variable
+\   Category: Title screen
+\    Summary: The y-coordinate of an object on the title screen, as a delta from
+\             the y-coordinate of the viewing object
+\
+\ ******************************************************************************
+
+.yTitleObject
+
+ EQUB 0                 \ Object 0 = the game over object
+
+ EQUB 1                 \ Object 1 = the object on the tower
+
+ EQUB 0                 \ Object 2 = the tower
+
+\ ******************************************************************************
+\
+\       Name: titleObjectYaw
+\       Type: Variable
+\   Category: Title screen
+\    Summary: The yaw angle of an object on the title screen
+\
+\ ******************************************************************************
+
+.titleObjectYaw
+
+ EQUB 128               \ Object 0 = the game over object
+
+ EQUB -114              \ Object 1 = the object on the tower
+
+ EQUB -50               \ Object 2 = the tower
+
+\ ******************************************************************************
+\
+\       Name: titleViewerYaw
+\       Type: Variable
+\   Category: Title screen
+\    Summary: The yaw angle of the viewer for objects on the title screen
+\
+\ ******************************************************************************
+
+.titleViewerYaw
+
+ EQUB 0                 \ Object 0 = when viewing the game over object
+
+ EQUB -8                \ Object 1 = when viewing the object on the tower
+
+ EQUB -8                \ Object 2 = when viewing the tower
+
+\ ******************************************************************************
+\
+\       Name: DrawTitleObjects
 \       Type: Subroutine
-\   Category: ???
+\   Category: Title screen
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The type of object to draw on top of a tower on the
+\                       right side of the screen:
+\
+\                         * 0 to draw a robot for the secret code screen
+\
+\                         * 5 to draw the Sentinel for the main title screen
+\                       
 \ ******************************************************************************
 
-.sub_C5FE5
+.DrawTitleObjects
 
- LDY #&01
- JSR sub_C5FEE
- LDY #&02
- LDA #&06
+                        \ We start by drawing a robot or the Sentinel, according
+                        \ to the object type in A
+
+ LDY #1                 \ Set Y = 1 so the call to DrawTitleObject chooses the
+                        \ configuration for the object standing on the tower in
+                        \ the main title screen or secret code screen
+
+ JSR DrawTitleObject    \ Draw an object of type A, so that's either a robot or
+                        \ the Sentinel
+
+                        \ We now draw the tower on which the robot or Sentinel
+                        \ standing
+
+ LDY #2                 \ Set Y = 2 so the call to DrawTitleObject chooses the
+                        \ configuration for the tower on which the robot or
+                        \ Sentinel is standing
+
+ LDA #6                 \ Set A to 6, the object type for the Sentinel's tower,
+                        \ so DrawTitleObject draws the tower
+
+                        \ Fall through into DrawTitleObject to draw the tower
+                        \ beneath the robot or the Sentinel
 
 \ ******************************************************************************
 \
-\       Name: sub_C5FEE
+\       Name: DrawTitleObject
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: Draw an object on the title screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The type of object to draw
+\
+\   Y                   The configuration to use when drawing the object:
+\
+\                         * 1 = the Sentinel on the main title screen or the
+\                               robot on the secret code screen
+\
+\                         * 2 = the tower on which the Sentinel or robot stands
 \
 \ ******************************************************************************
 
-.sub_C5FEE
+.DrawTitleObject
 
- JSR sub_C5F80
- LDY #&01
- JMP DrawObject
+ JSR SpawnTitleObject   \ Call SpawnTitleObject to spawn an object of type A in
+                        \ object #1, using the configuration specified in Y
+
+ LDY #1                 \ Call DrawObject with Y = 1 to draw object #1 and return
+ JMP DrawObject         \ from the subroutine using a tail call
 
 \ ******************************************************************************
 \

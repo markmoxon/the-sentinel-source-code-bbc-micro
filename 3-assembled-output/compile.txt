@@ -3720,7 +3720,7 @@
      1398   0B
      1399   0F
      139A   8D
-.DrawTitleObject
+.DrawTitleView
      139B   8D 1C 0C   STA &0C1C
      139E   8E 4C 0C   STX &0C4C
      13A1   8A         TXA
@@ -3729,7 +3729,7 @@
      13A6   8D 97 57   STA &5797
      13A9   F0 01      BEQ &13AC
      13AB   E8         INX
-.C13AC
+.tvew1
      13AC   8E A2 57   STX &57A2
      13AF   8C 0F 14   STY &140F
      13B2   B9 03 14   LDA &1403,Y
@@ -3748,7 +3748,7 @@
      13D7   AD 1C 0C   LDA &0C1C
      13DA   30 03      BMI &13DF
      13DC   20 E5 5F   JSR &5FE5
-.C13DF
+.tvew2
      13DF   68         PLA
      13E0   8D 78 0C   STA &0C78
      13E3   A2 10      LDX #&10
@@ -3758,31 +3758,31 @@
      13ED   D0 0B      BNE &13FA
      13EF   A2 7F      LDX #&7F
      13F1   8E 0F 14   STX &140F
-.P13F4
+.tvew3
      13F4   9D 80 3E   STA &3E80,X
      13F7   CA         DEX
      13F8   10 FA      BPL &13F4
-.C13FA
+.tvew4
      13FA   A9 00      LDA #&00
      13FC   8D 78 0C   STA &0C78
      13FF   8D 4C 0C   STA &0C4C
      1402   60         RTS
-.L1403
+.yTextViewer
      1403   21
      1404   4B
-.L1405
+.textViewerPitch
      1405   EA
      1406   D9
-.L1407
+.xTextViewer
      1407   0F
      1408   00
-.L1409
+.titleOffset
      1409   00
      140A   EF
-.L140B
+.zTextViewer
      140B   C2
      140C   BF
-.L140D
+.textViewerYaw
      140D   00
      140E   12
 .viewType
@@ -8092,7 +8092,7 @@
      31C6   2C 60 0C   BIT &0C60
      31C9   30 03      BMI &31CE
      31CB   4C 44 57   JMP &5744
-.DrawLetter3D
+.SpawnCharacter3D
      31CE   48         PHA
      31CF   8D 10 0C   STA &0C10
      31D2   29 C0      AND #&C0
@@ -8349,7 +8349,7 @@
      337F   60         RTS
 .lowNibbleBCD
      3380   00
-.DrawSecretCode
+.SpawnSecretCode3D
      3381   A9 80      LDA #&80
      3383   8D 60 0C   STA &0C60
      3386   20 CE 31   JSR &31CE
@@ -18619,7 +18619,7 @@
 .JumpToPreview
      5F7D   4C
      5F7E   30 3F      BMI &5FBF
-.sub_C5F80
+.SpawnTitleObject
      5F80   8D 41 0A   STA &0A41
      5F83   B9 BC 5F   LDA &5FBC,Y
      5F86   18         CLC
@@ -18643,7 +18643,7 @@
      5FB7   A2 02      LDX #&02
      5FB9   86 6E      STX &6E
      5FBB   60         RTS
-.L5FBC
+.zTitleObject
      5FBC   05
      5FBD   07
      5FBE   07
@@ -18658,28 +18658,28 @@
      5FD0   20 AB 33   JSR &33AB
      5FD3   20 40 14   JSR &1440
      5FD6   4C 74 10   JMP &1074
-.L5FD9
+.titleViewerPitch
      5FD9   F4
      5FDA   FB
      5FDB   FB
-.L5FDC
+.yTitleObject
      5FDC   00
      5FDD   01
      5FDE   00
-.L5FDF
+.titleObjectYaw
      5FDF   80
      5FE0   8E
      5FE1   CE
-.L5FE2
+.titleViewerYaw
      5FE2   00
      5FE3   F8
      5FE4   F8
-.sub_C5FE5
+.DrawTitleObjects
      5FE5   A0 01      LDY #&01
      5FE7   20 EE 5F   JSR &5FEE
      5FEA   A0 02      LDY #&02
      5FEC   A9 06      LDA #&06
-.sub_C5FEE
+.DrawTitleObject
      5FEE   20 80 5F   JSR &5F80
      5FF1   A0 01      LDY #&01
      5FF3   4C 33 5D   JMP &5D33
