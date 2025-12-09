@@ -17750,7 +17750,7 @@ L23E3 = C23E2+1
                         \ so we draw the polygon in the correct colour
 
  LDA #%00000000         \ Clear bits 6 and 7 of polygonType so the following
- STA polygonType        \ call to DrawPolygon draws a quadrilateral
+ STA polygonType        \ call to DrawPolygon draws a quadrilateral tile face
 
  JMP DrawPolygon        \ Jump to DrawPolygon to draw the quadrilateral and
                         \ return from the subroutine using a tail call
@@ -17909,6 +17909,7 @@ L23E3 = C23E2+1
 
  LDA #%10000000         \ Set bit 7 and clear bit 6 of polygonType so the call
  STA polygonType        \ to DrawPolygon draws the first triangle in the tile
+                        \ face
 
  LDA tileShapeColour,X  \ Set polygonColours to the entry for this shape from
  STA polygonColours     \ the tileShapeColour or tileShapeColour+16 table, so ww
@@ -17924,7 +17925,7 @@ L23E3 = C23E2+1
 
  LDA polygonType        \ Set bit 6 of polygonType so both bits 6 and 7 are set,
  ORA #%01000000         \ so the call to DrawPolygon draws the second triangle
- STA polygonType        \ in the tile
+ STA polygonType        \ in the tile face
 
                         \ Fall into DrawPolygon to draw the second trianglar
                         \ face
@@ -17963,6 +17964,13 @@ L23E3 = C23E2+1
 \                               for the last 64 bytes of the 320-byte row
 \
 \                         * 2 = column buffer (for left/right pan)
+\
+\   drawViewAngles(1 0) The point data:
+\
+\                         * When drawing tile faces, this points to L0C40 ???
+\
+\                         * When drawing object polygons, this points to a list
+\                           of object-relative numbers of polygon points
 \
 \ ******************************************************************************
 
@@ -27203,20 +27211,29 @@ L314A = C3148+2
 \   Category: Drawing objects
 \    Summary: The phase configuration for each object
 \
+\ ------------------------------------------------------------------------------
+\
+\ Most objects are drawn in one phase, but some are drawn in two phases. This
+\ can depend on the relative altitude of the object compared to the viewer (for
+\ the robot, the sentry or the Sentinel), or it can depend on the object's gaze
+\ direction as given in the object's yaw angle (for the meanie).
+\
+\ See the DrawObject routine for details.
+\
 \ ******************************************************************************
 
 .objPolygonPhases
 
- EQUB %11               \ Object type 0: Robot           Phases: 1 or 2 (height)
- EQUB %11               \ Object type 1: Sentry          Phases: 1 or 2 (height)
- EQUB %00               \ Object type 2: Tree                          Phases: 1
- EQUB %00               \ Object type 3: Boulder                       Phases: 1
- EQUB %10               \ Object type 4: Meanie            Phases: 1 or 2 (gaze)
- EQUB %11               \ Object type 5: The Sentinel    Phases: 1 or 2 (height)
- EQUB %00               \ Object type 6: Sentinel's tower              Phases: 1
- EQUB %00               \ Object type 7: 3D text block 1               Phases: 1
- EQUB %00               \ Object type 8: 3D text block 2               Phases: 1
- EQUB %00               \ Object type 9: 3D text block 3               Phases: 1
+ EQUB %11               \ Object type 0: Robot               Depends on altitude
+ EQUB %11               \ Object type 1: Sentry              Depends on altitude
+ EQUB %00               \ Object type 2: Tree                          One phase
+ EQUB %00               \ Object type 3: Boulder                       One phase
+ EQUB %10               \ Object type 4: Meanie                   Depends on yaw
+ EQUB %11               \ Object type 5: The Sentinel        Depends on altitude
+ EQUB %00               \ Object type 6: Sentinel's tower              One phase
+ EQUB %00               \ Object type 7: 3D text block 1               One phase
+ EQUB %00               \ Object type 8: 3D text block 2               One phase
+ EQUB %00               \ Object type 9: 3D text block 3               One phase
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -33731,20 +33748,21 @@ L314A = C3148+2
                         \ the same screen projection that is used in Revs
 
  LDA #%01000000         \ Clear bit 7 and set bit 6 of polygonType so the call
- STA polygonType        \ to DrawPolygon below draws the polygon as part of an
-                        \ object
+ STA polygonType        \ to DrawPolygon below draws the correct type of polygon
+                        \ for being part of an object
 
  LDA #0                 \ Set drawingPhaseCount = 0, so the default is to draw
- STA drawingPhaseCount  \ the object in one phase
+ STA drawingPhaseCount  \ the object in one phase (we may change this later if
+                        \ the object needs to be drawn in two phases)
 
  STA drawingPhase       \ Clear bit 7 of drawingPhase so for objects that need
-                        \ two draing phases, we start by drawing the first phase
-                        \ (as the current phase is determined by bit 7)
+                        \ two drawing phases, we start by drawing the first
+                        \ phase (as the current phase is determined by bit 7)
 
  LDX objTypeToAnalyse   \ Set X to the number of the object we are drawing
 
  LDA objPolygonPhases,X \ Set A to the phase data for the object we are drawing,
-                        \ which determines the number of drawing phases
+                        \ which helps determine the number of drawing phases
 
  BEQ drob4              \ If A = 0 then this object only has one drawing phase,
                         \ so jump to drob4 to move on to drawing the object
@@ -33752,33 +33770,36 @@ L314A = C3148+2
                         \ tower and the 3D text blocks)
 
                         \ If we get here then bit 1 of A must be set, as the
-                        \ only values used in the objPolygonPhases are %00, %10
-                        \ and %11
+                        \ only values used in the objPolygonPhases table are
+                        \ %00, %10 and and %11
 
  LSR A                  \ If bit 0 of A is set then this object might need two
  BCS drob1              \ drawing phases, so jump to drob1 to work out how many
-                        \ phases are required (this applies to the robot, the
-                        \ sentry and the Sentinel)
+                        \ phases are required by checking the relative altitude
+                        \ of the object (this applies to the robot, the sentry
+                        \ and the Sentinel)
 
-                        \ If we get here then bit 0 of A is clear (and bit 1 is
-                        \ set), so we need to apply an additional rotation (this
-                        \ applies to the meanie only)
+                        \ If we get here then bit 0 of A is clear and bit 1 is
+                        \ set, so we need to work out how many phases are
+                        \ required by checking whether or not the object is
+                        \ facing the viewer as given in the object's yaw angle
+                        \ (this applies to the meanie only)
 
- LDA objectGazeYawHi    \ Set A to object's gaze yaw angle + 192, to turn it
+ LDA objectGazeYawHi    \ Set A to the object's gaze yaw angle + 192, to turn it
  ADC #192               \ anticlockwise (left) through 90 degrees for the phase
                         \ calculation (the addition works because the C flag is
                         \ clear, as we just passed through a BCS)
 
  JMP drob3              \ Jump to drob3 to set drawingPhaseCount to 0 or 2,
-                        \ depending on the direction on which the meanie is now
+                        \ depending on the direction in which the meanie is now
                         \ facing:
                         \
-                        \   * One phase if the meanie's gaze yaw angle is
+                        \   * 0 = one phase if the meanie's gaze yaw angle is
                         \     positive after the rotation, which means it must
                         \     be facing towards the viewer (so we leave
                         \     drawingPhaseCount = 0)
                         \
-                        \   * Two phases if the meanie's gaze yaw angle is
+                        \   * 2 = two phases if the meanie's gaze yaw angle is
                         \     negative after the rotation, which means it must
                         \     be facing away from the viewer (so we set the
                         \     drawingPhaseCount = 2)
@@ -33913,10 +33934,10 @@ L314A = C3148+2
                         \ And store the result in polygonPointCount
 
  LDA objPolygonAddrLo,Y \ Set drawViewAngles(1 0) to the address of the list of
- STA drawViewAngles     \ point numbers for this polygon so the DrawPolygon
- LDA objPolygonAddrHi,Y \ routine can use the yaw and pitch angles that we
- STA drawViewAngles+1   \ calculated for the points in the GetObjPointAngles
-                        \ routine ???
+ STA drawViewAngles     \ object-relative point numbers for this polygon so the
+ LDA objPolygonAddrHi,Y \ DrawPolygon routine can use the yaw and pitch angles
+ STA drawViewAngles+1   \ that we calculated for the object points in the
+                        \ GetObjPointAngles routine
 
  JSR DrawPolygon        \ Draw the polygon
 
@@ -33942,22 +33963,24 @@ L314A = C3148+2
                         \ finished drawing the second phase, so jump to drob8 to
                         \ finish up
 
-                        \ If we get here then this is a two-phase object and we
-                        \ have drawn the first phase, so now we draw the second
-                        \ phase
+                        \ If we get here then drawingPhaseCount was 2 before
+                        \ being decremented, so this is a two-phase object and
+                        \ we have only drawn the first phase, so now we draw the
+                        \ second phase
 
  LDA #%10000000         \ Set bit 7 of drawingPhase so we now draw the second
  STA drawingPhase       \ phase
 
- BMI drob4              \ Jump back to drob4 to draw the second phase for
-                        \ two-phase objects
+ BMI drob4              \ Jump back to drob4 to draw the second phase for the
+                        \ two-phase object
 
 .drob8
 
  LDA #LO(L0C40)         \ Set drawViewAngles(1 0) = L0C40 ???
- STA drawViewAngles
- LDA #HI(L0C40)
- STA drawViewAngles+1
+ STA drawViewAngles     \
+ LDA #HI(L0C40)         \ This resets drawViewAngles(1 0) so DrawPolygon will
+ STA drawViewAngles+1   \ return to the default setting of drawing using point
+                        \ data for tile faces rather than object polygons
 
  LSR blendPolygonEdges  \ Clear bit 7 of blendPolygonEdges so we return to the
                         \ default setting of allowing drawing polygon edges to
