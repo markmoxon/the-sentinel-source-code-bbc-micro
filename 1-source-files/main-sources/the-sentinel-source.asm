@@ -6281,7 +6281,7 @@
 \
 \                         * 0 = landscape preview
 \
-\                         * 1 = title screen or secret code screen
+\                         * 1 = main title screen or secret code screen
 \
 \ ******************************************************************************
 
@@ -6360,7 +6360,10 @@
  LDA titleOffset,Y      \ Store the title offset on the stack so we can retrieve
  PHA                    \ it below
 
- JSR ClearScreen        \ Clear the screen
+ JSR ClearScreen        \ Clear the screen to the screen background specified in
+                        \ screenBackground (so that's blue for the main title
+                        \ screen or black with stars for the secret code screen
+                        \ or landscape preview)
 
  LDA titleObjectToDraw  \ If bit 7 of titleObjectToDraw is set then we are
  BMI tvew2              \ drawing the landscape preview, so skip the following
@@ -6381,23 +6384,36 @@
  LDX #16                \ Set the viewing object to object #16
  STX viewingObject
 
- JSR DrawLandscapeView  \ Draw the landscape view to display the text
+ JSR DrawLandscapeView  \ Draw the landscape view to display the large 3D text
+                        \ (for the title screens) or draw the landscape preview
 
- LDA viewType
- BNE tvew4
- LDX #&7F
- STX viewType
+ LDA viewType           \ If viewType is non-zero then this is the main title
+ BNE tvew4              \ screen or secret code screen, so jump to tvew4 to skip
+                        \ the following
+
+ LDX #127               \ We just drew the landscape preview, so we now reset
+                        \ the tile visibilities so we're ready to play the game,
+                        \ so set a byte counter in X to work through the 128
+                        \ bytes in the tileVisibility table
+
+ STX viewType           \ Set viewType to a non-zero value (it doesn't matter
+                        \ what) so the GetObjectAngles routine will process
+                        \ angles for the game's landscape from now on
 
 .tvew3
 
- STA tileVisibility,X
- DEX
- BPL tvew3
+ STA tileVisibility,X   \ Zero the X-th byte in the tileVisibility table
+
+ DEX                    \ Decrement the byte counter
+
+ BPL tvew3              \ Loop back until we have zeroed the whole
+                        \ tileVisibility table
 
 .tvew4
 
- LDA #0
- STA xTitleOffset
+ LDA #0                 \ Set xTitleOffset = 0 to remove the x-coordinate offset
+ STA xTitleOffset       \ that we used for the text, as is it not needed during
+                        \ gameplay
 
  STA screenBackground   \ Set screenBackground = 0 so if we start the game after
                         \ showing this title screen, the FillScreen routine will
@@ -33123,6 +33139,14 @@ L314A = C3148+2
 \ Arguments:
 \
 \   Y                   The number of the object to be analysed
+\
+\   viewType            Landscape preview flag:
+\
+\                         * Zero = this is the landscape preview, so rotate all
+\                                  the in the preview objects to face the viewer
+\
+\                         * Non-zero = this is not the landscape preview, so
+\                                      leave the objects alone
 \
 \ ******************************************************************************
 
