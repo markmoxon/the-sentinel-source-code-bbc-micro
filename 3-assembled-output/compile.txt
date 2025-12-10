@@ -3411,7 +3411,7 @@
      116D   E8         INX
      116E   E0 F0      CPX #&F0
      1170   90 DD      BCC &114F
-.ResetVariables2
+.ResetTilesObjects
      1172   A2 3F      LDX #&3F
 .resv1
      1174   A9 FF      LDA #&FF

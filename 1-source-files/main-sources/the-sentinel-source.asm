@@ -4820,8 +4820,9 @@
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
 
- JSR UseColumnBuffer    \ Call ConfigureBuffer with A = 2 to set up loads of
-                        \ variables ???
+ JSR UseColumnBuffer    \ Configure the column buffer for use so we draw the
+                        \ updated part of the landscape view into the correct
+                        \ buffer type for a left or right pan
 
  JSR DrawLandscapeView  \ Draw the landscape view into the screen buffer
                         \
@@ -4922,8 +4923,9 @@
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
 
- JSR UseRowBuffer       \ Call ConfigureBuffer with A = 0 to set up loads of
-                        \ variables ???
+ JSR UseRowBuffer       \ Configure the row buffer for use so we draw the
+                        \ updated part of the landscape view into the correct
+                        \ buffer type for an up or down pan
 
  JSR DrawLandscapeView  \ Draw the landscape view into the screen buffer
                         \
@@ -5099,18 +5101,19 @@
  CPX #&F0               \ Loop back until we have processed X from &E4 to &EF
  BCC rese1              \ to set &0CE4 to &0CEF to &80
 
-                        \ Fall through into ResetVariables2 to ???
+                        \ Fall through into ResetTilesObjects to reset the tile
+                        \ visibility table and deallocate all object numbers
 
 \ ******************************************************************************
 \
-\       Name: ResetVariables2
+\       Name: ResetTilesObjects
 \       Type: Subroutine
 \   Category: Main title Loop
-\    Summary: Reset the tileVisibility and objectFlags tables
+\    Summary: Reset the tile visibility table and deallocate all object numbers
 \
 \ ******************************************************************************
 
-.ResetVariables2
+.ResetTilesObjects
 
                         \ We now set the following variable block to %11111111
                         \ to indicate that all tiles are visible:
@@ -5752,7 +5755,16 @@
                         \ action that has been initiated (be it a pan of the
                         \ landscape view or an action like absorb or transfer)
 
- SEC                    \ Set the C flag to indicate that ???
+ SEC                    \ Set the C flag to indicate that one of the following
+                        \ is true:
+                        \
+                        \   * The Sentinel has won
+                        \
+                        \   * The player has moved to a new tile
+                        \
+                        \   * The player has pressed the quit game key
+                        \
+                        \ so the main game loop can process this action
 
  RTS                    \ Return from the subroutine
 
@@ -5766,12 +5778,12 @@
  BCS play3              \ If the C flag is set then bit 7 of playerHasMovedTile
                         \ was set before we cleared it, which indicates that the
                         \ player has moved to a new tile, so jump to play3 to
-                        \ return from the subroutine with the C flag set ???
+                        \ return from the subroutine with the C flag set
 
  BIT quitGame           \ If bit 7 of quitGame is set then the player has
  BMI play3              \ pressed function key f1 to quit the game, so jump to
-                        \ play3 to finish up and return from the subroutine with
-                        \ the C flag set ???
+                        \ play3 to return from the subroutine with the C flag
+                        \ set
 
  JSR sub_C191A          \ Something to do with player and enemy objects ???
 
@@ -5791,7 +5803,9 @@
  LDA panKeyBeingPressed \ If no pan key is currently being pressed, jump to
  BMI play6              \ play6 to process any action key presses
 
- CLC                    \ Clear the C flag to indicate that ???
+ CLC                    \ Clear the C flag to indicate that we just finished a
+                        \ landscape pan and the player is still holding down a
+                        \ pan key, so the main game loop can process a new pan
 
  RTS                    \ Return from the subroutine
 
@@ -5802,7 +5816,8 @@
                         \ create tree, create boulder, hyperspace, U-turn)
 
  BMI play9              \ If there is no key press in the key logger entry, jump
-                        \ back to the start of the routine via play9 to ???
+                        \ back to the start of the routine via play9 to keep
+                        \ checking for key presses
 
                         \ If we get here then the player is pressing "A", "Q",
                         \ "R", "T", "B", "H" or "U" (absorb, transfer, create
@@ -5824,8 +5839,9 @@
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
  BPL play9              \ are not being shown, so jump back to the start of the
-                        \ routine via play9 to ???, as we can only create,
-                        \ absorb and transfer when the sights are visible
+                        \ routine via play9 to keep checking for key presses, as
+                        \ we can only create, absorb and transfer when the
+                        \ sights are visible
 
                         \ If we get here then the sights are being shown, so we
                         \ can process the key press
@@ -5853,7 +5869,8 @@
                         \ jump to play8 to skip the following
 
                         \ If we get here then the call to ProcessActionKeys
-                        \ added or removed an object, so we now need to ???
+                        \ added or removed an object, so we now need to make the
+                        \ appropriate sound and ???
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
@@ -5889,7 +5906,7 @@
                         \ If we get here then bit 7 of playerHasMovedTile was
                         \ set before we cleared it, which indicates that the
                         \ player has moved to a new tile, so return from the
-                        \ subroutine with the C flag set ???
+                        \ subroutine with the C flag set
 
  RTS                    \ Return from the subroutine
 
@@ -9297,8 +9314,11 @@
 
  JSR PerformHyperspace  \ Hyperspace the player to a brand new tile
 
- LDA #0                 \ Set titleObjectToDraw to the object type for a robot
- STA titleObjectToDraw  \ ???
+ LDA #0                 \ Set titleObjectToDraw to the object type for a robot,
+ STA titleObjectToDraw  \ so if the hyperspace fails because the player doesn't
+                        \ have enough energy, then the game over screen will
+                        \ show a robot to indicate that the player was
+                        \ responsible for their own demise
 
 .pkey1
 
@@ -9788,7 +9808,8 @@
 \       Name: GetSightsVector
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate the vector from the player's eyes to the sights
+\    Summary: Calculate the angles of the vector from the player's eyes to the
+\             sights
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9796,7 +9817,15 @@
 \
 \   vectorYawAngle = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
 \
-\   vectorPitchAngle = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
+\   vectorPitchAngle = (ySights - 5) * 16 + (objectPitchAngle,X 0) + (3 32)
+\
+\ The (10 0) element in the yaw angle calculation represents half a screen
+\ width, as the screen is 20 yaw angles wide, so subtracting (10 0) from the
+\ object's yaw angle makes it to the left edge of the screen, and then we add
+\ the x-coordinate of the sights on-screen to get the vector's yaw angle.
+\
+\ The -5 in the pitch angle calculation caters for the energy icon and scanner
+\ row at the top of the screen, and the (3 32) element represents ???
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17836,8 +17865,8 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   X                   The reference shape to use for the tile's colour from
-\                       the tileShapeColour table ???
+\   X                   The reference shape to use when picking the tile's
+\                       colour from the tileShapeColour table
 \
 \ ******************************************************************************
 
@@ -23367,6 +23396,12 @@ L314A = C3148+2
  LDA #4                 \ Set all four logical colours to physical colour 4
  JSR SetColourPalette   \ (blue), so this blanks the entire screen to blue
 
+                        \ In order to display the secret code for the next
+                        \ landscape we need to generate it, so we now reset the
+                        \ landscape seed generator, the tile visibility table
+                        \ and the object flags, to get ready for the generation
+                        \ process in the FinishLandscape routine
+
  LDX #3                 \ We now zero bits 8 to 40 of the five-byte linear
                         \ feedback shift landscape register, so set a byte
                         \ counter in X to count four bytes
@@ -23384,7 +23419,8 @@ L314A = C3148+2
 
  BPL game8              \ Loop back until we have reset all four bytes
 
- JSR ResetVariables2    \ ???
+ JSR ResetTilesObjects  \ Reset the tile visibility table and deallocate all
+                        \ object numbers
 
  JSR FinishLandscape    \ Add the player's energy to the landscape number to get
                         \ the number of the next landscape and display that
