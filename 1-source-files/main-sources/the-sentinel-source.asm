@@ -1661,11 +1661,11 @@
                         \
                         \   * Bit 7 set = no drop shadow
 
-.L0C10
+.characterDef
 
- EQUB 0, 0, 0, 0        \ ???
- EQUB 0, 0, 0, 0
- EQUB 0
+ EQUB 0, 0, 0, 0        \ An OSWORD block for reading a character definition
+ EQUB 0, 0, 0, 0        \ from the operating system, for use when drawing text
+ EQUB 0                 \ in large 3D blocks
 
 .xTileSentinel
 
@@ -1776,13 +1776,17 @@
                         \ DrawLandscapeView routine as the edges in neighbouring
                         \ rows will be close together
 
-.L0C49
+.xTileCharacter
 
- EQUB 32                \ ???
+ EQUB 32                \ The tile x-coordinate of the character being spawned
+                        \ in large 3D blocks on the landscape for the title
+                        \ screen
 
-.L0C4A
+.zTileCharacter
 
- EQUB 7                 \ ???
+ EQUB 7                 \ The tile z-coordinate of the character being spawned
+                        \ in large 3D blocks on the landscape for the title
+                        \ screen
 
 .drawingTitleScreen
 
@@ -17630,14 +17634,29 @@ L23E3 = C23E2+1
                         \ If we get here then we need to draw a block in the
                         \ title screen's 3D text
                         \
-                        \ We use object #63 for this purpose
+                        \ We use object #63 for this purpose, and we set it to
+                        \ the object number for the 3D text block pair that the
+                        \ SpawnCharacter3D put into bits 0 to 3 of the tile data
 
  LDA tileViewData,X     \ Set the object type for object #63 to the bottom
- AND #%00001111         \ nibble of the tile data ???
- STA objectTypes+63
+ AND #%00001111         \ nibble of the tile data, which contains the object
+ STA objectTypes+63     \ number for the 3D text block pair for this part of the
+                        \ text:
+                        \
+                        \   * 0 for no blocks in the pair
+                        \
+                        \   * 7 for no block (left), block (right)
+                        \
+                        \   * 8 for block (left), no block (right)
+                        \
+                        \   * 9 for block (left), no block (right)
 
  BEQ CRE17              \ If the object type is zero then jump to CRE17 to
                         \ return from the subroutine without drawing anything
+
+                        \ Otherwise we have set the type of object #63 to the
+                        \ correct 3D text block object, so now we set the tile
+                        \ coordinate and draw the object
 
  LDA xTileToDraw        \ Set the x-coordinate for the block in object #63 to
  STA xObject+63         \ the tile column in xTileToDraw
@@ -20967,43 +20986,110 @@ L314A = C3148+2
 \       Name: SpawnCharacter3D (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: ???
+\    Summary: Spawn a character on the landscape in large 3D blocks for drawing
+\             on the main title screen or secret code screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The character to be spawned or the tile coordinates of
+\                       the character on the landscape:
+\
+\                         * %00xxxxxx = bits 0-5 contain the ASCII code of the
+\                                       character to spawn
+\
+\                         * %10xxxxxx = bits 0-4 contain the tile x-coordinate
+\                                       of the character on the landscape
+\
+\                         * %11xxxxxx = bits 0-4 contain the tile z-coordinate
+\                                       of the character on the landscape
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   X                   X is preserved
+\
+\   Y                   Y is preserved
 \
 \ ******************************************************************************
 
 .SpawnCharacter3D
 
- PHA
- STA L0C10
- AND #&C0
- BPL C31E5
- ASL A
- ASL A
- PLA
- AND #&1F
- BCS C31E1
- STA L0C49
- RTS
+ PHA                    \ Store the character on the stack so we can retrieve it
+                        \ below
 
-.C31E1
+ STA characterDef       \ Store the character in the first byte of the OSWORD
+                        \ block at characterDef, so we can extract the operating
+                        \ system's character definition (if this is a printable
+                        \ character)
 
- STA L0C4A
- RTS
+ AND #%11000000         \ Clear all bits of the character except for bits 6 and 7
 
-.C31E5
+ BPL spac2              \ If bit 7 is clear then this is a printable character,
+                        \ so jump to spac2 to spawn the character in 3D text
+                        \ blocks
 
- TXA
+ ASL A                  \ Bit 7 is set so this is a tile coordinate, so extract
+ ASL A                  \ bit 6 of the character number into the C flag
+
+ PLA                    \ Retrieve the character number from the stack and
+ AND #%00011111         \ extract bits 0-4 to get the coordinate value
+
+ BCS spac1              \ If bit 6 of the original character number is set then
+                        \ this is a tile z-coordinate, so jump to spac1 to set
+                        \ zTileCharacter
+
+ STA xTileCharacter     \ Bit 6 of the original character number is clear, so
+                        \ store bits 0-4 in xTileCharacter, so we can spawn the
+                        \ next printable character that's passed to the routine
+                        \ in the right place
+
+ RTS                    \ Return from the subroutine
+
+.spac1
+
+ STA zTileCharacter     \ Bit 6 of the original character number is set, so
+                        \ store bits 0-4 in zTileCharacter, so we can spawn the
+                        \ next printable character that's passed to the routine
+                        \ in the right place
+
+ RTS                    \ Return from the subroutine
+
+.spac2
+
+                        \ If we get here then we have a printable character in A
+
+ TXA                    \ Store X and Y on the stack to we can preserve them
  PHA
  TYA
  PHA
- LDY #HI(L0C10)
- LDX #LO(L0C10)
- LDA #10                \ osword_read_char
- JSR OSWORD
- LDA L0C4A
- STA zTile
 
- LDX #7
+ LDY #HI(characterDef)  \ Call OSWORD with A = 10 to extract the operating
+ LDX #LO(characterDef)  \ system's character definition into the block at
+ LDA #10                \ characterDef
+ JSR OSWORD             \
+                        \ The first byte of the block contains the ASCII code
+                        \ of the character (which we stored above), and the call
+                        \ returns the character definition from the second byte
+                        \ onwards
+
+ LDA zTileCharacter     \ Set zTile to the z-coordinate where we want to spawn
+ STA zTile              \ the character
+
+ LDX #7                 \ We now loop through the top seven rows of the
+                        \ character definition, so set a row counter in X
+                        \
+                        \ We actually loop through the character definition
+                        \ from the bottom to top, ignoring the very bottom row
+                        \ of the definition as this is always blank for the
+                        \ capital letters and digits that we are displaying
+                        \ (the bottom row is only used for descenders, and
+                        \ "THE SENTINEL" and landscape digits don't have them)
+                        \
+                        \ Instead we insert a blank pixel row at the top of the
+                        \ definition, on the iteration when X is zero
 
                         \ We now have a short interlude to check some of the
                         \ anti-cracker code, so we can corrupt the secret code
@@ -21026,9 +21112,9 @@ L314A = C3148+2
                         \ the AlterCrackerSeed routine
 
  CMP CrackerSeed+1-7,X  \ If A >= the contents of CrackerSeed+1 then the code
- BCS C3204              \ in AlterCrackerSeed was correctly run (which only
+ BCS spac3              \ in AlterCrackerSeed was correctly run (which only
                         \ happens if the gameplay routines are run, i.e. when
-                        \ the landscape has been played), so jump to C3204 to
+                        \ the landscape has been played), so jump to spac3 to
                         \ skip the following
 
                         \ If we get here then the AlterCrackerSeed routine has
@@ -21045,35 +21131,92 @@ L314A = C3148+2
                         \ of seed numbers
 
                         \ Fall through into part 2 of SpawnCharacter3D to
-                        \ continue with the letter-drawing process
+                        \ continue with the character-spawning process
 
 \ ******************************************************************************
 \
 \       Name: SpawnCharacter3D (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: ???
+\    Summary: Spawn large 3D blocks for the extracted character definition
 \
 \ ******************************************************************************
 
-.C3204
+                        \ We now loop through the top seven rows in the
+                        \ character definition, using X as the row counter
+                        \
+                        \ We draw the character from the bottom up on the
+                        \ landscape, so that's drawing the character rows on
+                        \ the landscape from front the back as we work through
+                        \ the character definition from bottom to top
+                        \
+                        \ The row counter in X therefore iterates from 7 down
+                        \ to 0, with row 7 spawning the blocks for the
+                        \ penultimate row in the character definition, and row 0
+                        \ spawning a blank row (as this moves the blank row in
+                        \ the character definition from the bottom to the top,
+                        \ as discussed in part 1)
 
- ASL L0C10,X
- LDA L0C49
- STA xTile
- LDA #&04
- STA loopCounter
+.spac3
 
-.P3210
+ ASL characterDef,X     \ The leftmost column of each character definition is
+                        \ blank, so that characters are spaced out, so this
+                        \ shifts the character definition row to the left to
+                        \ move this blank column to the right side of the
+                        \ character definition, so the character's 3D blocks
+                        \ start at the correct tile coordinate
 
- ASL L0C10,X
+ LDA xTileCharacter     \ Set xTile to the x-coordinate where we want to spawn
+ STA xTile              \ the character
+
+                        \ Each row in the character definition consists of eight
+                        \ bits (where each bit will be represented by a block on
+                        \ the landscape)
+                        \
+                        \ In order to get tall characters on-screen, rather than
+                        \ the rather square characters in the operating system's
+                        \ font, we actually draw each character so that it's
+                        \ four tiles wide and eight tiles tall, so each tile
+                        \ contains a pair of blocks that represents a pair of
+                        \ bits in the character definition
+
+ LDA #4                 \ Set a loop counter in loopCounter to work through the
+ STA loopCounter        \ four pairs in the eight-block row
+
+.spac4
+
+ ASL characterDef,X     \ Shift the character definition row to the left by two
+ ROL A                  \ places and extract the top two bits into bits 0 and 1
+ ASL characterDef,X     \ of A, so this is the leftmost block pair from this row
  ROL A
- ASL L0C10,X
- ROL A
- AND #&03
- TAY
- LDA L3248,Y
- PHA
+
+ AND #%00000011         \ Clear bits 2 to 7 of A and store the result in Y, so
+ TAY                    \ Y contains the bit pattern for the two leftmost bits
+                        \ in the character row
+                        \
+                        \ We can now use this as an index into the table that
+                        \ maps bit patterns to object numbers in objBlockNumber
+
+ LDA objBlockNumber,Y   \ Fetch the object number of the 3D text block object
+                        \ that matches the bit pair that we just extracted
+                        \
+                        \ This actually fetches the object number + 32, though
+                        \ the 32 part is removed when the block is drawn in the
+                        \ DrawTileAndObjects, so this doesn't seem to have any
+                        \ effect
+
+ PHA                    \ Store the object number on the stack, as follows:
+                        \
+                        \   * 32 + 0 for no blocks in the pair
+                        \
+                        \   * 32 + 7 for no block (left), block (right)
+                        \
+                        \   * 32 + 8 for block (left), no block (right)
+                        \
+                        \   * 32 + 9 for block (left), no block (right)
+                        \
+                        \ This maps the pair to one of the three 3D text block
+                        \ objects
 
  JSR GetTileData        \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile), which we ignore, but this also sets
@@ -21081,44 +21224,94 @@ L314A = C3148+2
                         \ tileDataPage+Y now points to the tile data entry in
                         \ the tileData table
 
- PLA
- STA (tileDataPage),Y
- INC xTile
- DEC loopCounter
- BNE P3210
- INC zTile
- DEX
- BMI C3239
- BNE C3204
- LDA #0
- STA L0C10
- BEQ C3204
+ PLA                    \ Retrieve the object number for the 3D text block pair
+ STA (tileDataPage),Y   \ and store it in the tile data for the tile where we
+                        \ want to spawn this part of the character definition
+                        \
+                        \ Note that the DrawTileAndObjects routine has separate
+                        \ logic when drawing 3D text, so this doesn't follow the
+                        \ normal tile data rules, and instead we just need the
+                        \ object number in the low nibble, which we fetched from
+                        \ the objBlockNumber above
 
-.C3239
+ INC xTile              \ Increment the x-coordinate to move on to the next tile
+                        \ to the right, for the next bit pair
 
- LDA L0C49
- CLC
- ADC #&04
- STA L0C49
- PLA
- TAY
+ DEC loopCounter        \ Decrement the loop counter to move onto the next bit
+                        \ pair in the character definition
+
+ BNE spac4              \ Loop back to spawn the next bit pair's objects until
+                        \ we have done all four pairs in the character row
+
+ INC zTile              \ Increment the z-coordinate to move backwards to the
+                        \ tile row behind in the landscape
+
+ DEX                    \ Decrement the character row counter in X
+
+ BMI spac5              \ If we just spawned row 0 then X will noe be negative,
+                        \ so jump to spac5 to finish off as we have spawned all
+                        \ eight character rows
+
+ BNE spac3              \ Otherwise loop back until we have spawned rows 7 to 1
+
+                        \ If we get here then we just spawned row 1, so now we
+                        \ need to spawn a blank for for row 0
+
+ LDA #0                 \ Zero the character definition row that we will use
+ STA characterDef       \ when X is 0, so we don't spawn any blocks for the top
+                        \ row of the 3D text block character
+
+ BEQ spac3              \ Jump to spac3 to spawn row 0 (this BEQ is effectively
+                        \ a JMP as A is always zero)
+
+.spac5
+
+ LDA xTileCharacter     \ We just spawned a character in the landscape, so add 4
+ CLC                    \ to xTileCharacter so the next character gets spawned
+ ADC #4                 \ to the right of the one we just spawned
+ STA xTileCharacter
+
+ PLA                    \ Pull A from the stack to reverse the push that we did
+                        \ at the start of the routine
+
+ TAY                    \ Retrieve X and Y from the stack so they are preserved
  PLA
  TAX
  PLA
- RTS
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L3248
+\       Name: objBlockNumber
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Title screen
+\    Summary: A lookup table to convert bit pairs into object numbers for
+\             spawning 3D text blocks on the landscape
 \
 \ ******************************************************************************
 
-.L3248
+.objBlockNumber
 
- EQUB &20, &27, &28, &29
+ EQUB 32 + 0            \ %00 = no block (left), no block (right)
+                        \
+                        \ No 3D text blocks are required, so set the object
+                        \ number to 0 to indicate no object
+
+ EQUB 32 + 7            \ %01 = no block (left), block (right)
+                        \
+                        \ This is the shape of 3D text block 1, which is object
+                        \ type 7
+
+ EQUB 32 + 8           \ %10 = block (left), no block (right)
+                        \
+                        \ This is the shape of 3D text block 2, which is object
+                        \ type 8
+
+ EQUB 32 + 9            \ %11 = block (left), no block (right)
+                        \
+                        \ This is the shape of 3D text block 3, which is object
+                        \ type 9
 
 \ ******************************************************************************
 \
@@ -21166,9 +21359,15 @@ L314A = C3148+2
  LDA #&E0               \ For object #63, set the following:
  STA yObjectLo+63       \
  LDA #&02               \   (yObjectHi yObjectLo) = &2E0
- STA yObjectHi+63       \                         = 736
+ STA yObjectHi+63       \
+                        \ So this sets the altitude of object #63 to just under
+                        \ three full block heights (2.875, to be precise)
                         \
-                        \ so this sets ???
+                        \ We use object #63 for drawing the 3D text blocks in
+                        \ the game title in the main title screen, or the code
+                        \ in the secret code screen, so this ensures that the
+                        \ text blocks are drawn at the correct height to get the
+                        \ title effect
 
  SEC                    \ Set bit 7 of drawingTitleScreen to indicate that we
  ROR drawingTitleScreen \ are drawing a title screen
@@ -21257,10 +21456,15 @@ L314A = C3148+2
 
 .titleText
 
- EQUB &84, &D5
- EQUS "THE"
- EQUB &80, &C7
- EQUS "SENTINEL"
+ EQUB %10000000 + 4     \ Move to tile coordinate (4, 21), towards the back of
+ EQUB %11000000 + 21    \ the landscape
+
+ EQUS "THE"             \ Draw "THE" in 3D text blocks
+
+ EQUB %10000000 + 0     \ Move to tile coordinate (0, 7), which is further
+ EQUB %11000000 + 7     \ forward and a bit to the left
+
+ EQUS "SENTINEL"        \ Draw "SENTINEL" in 3D text blocks
 
 \ ******************************************************************************
 \
@@ -21764,15 +21968,22 @@ L314A = C3148+2
 
 .SpawnSecretCode3D
 
- LDA #%10000000         \ Set bit 7 of printTextIn3D so we print the landscape's
+ LDA #%10000000 + 0     \ Set bit 7 of printTextIn3D so we print the landscape's
  STA printTextIn3D      \ secret code in 3D text when we call Print2DigitBCD
                         \ below
 
- JSR SpawnCharacter3D   \ Spawn the 3D text blocks for drawing the character in
-                        \ A in large 3D text ???
+ JSR SpawnCharacter3D   \ Call SpawnCharacter3D with A = #%10000000 + 0 to set
+                        \ the tile x-coordinate of the large 3D secret code text
+                        \ to zero
 
- LDA #&C7               \ Spawn the 3D text blocks for drawing ??? in large 3D
- JSR SpawnCharacter3D   \ text ???
+ LDA #%11000000 + 7     \ Call SpawnCharacter3D with A = #%11000000 + 7 to set
+ JSR SpawnCharacter3D   \ the tile z-coordinate of the large 3D secret code text
+                        \ to 7
+                        \
+                        \ So we draw the secret code in large 3D text blocks at
+                        \ tile coordinate (0, 7) on the landscape, so that's
+                        \ starting at the left edge of the landscape and seven
+                        \ tile rows from the front
 
  LSR playerIsOnTower    \ If we got here legally (i.e. without crackers getting
                         \ involved, then the ProcessActionKeys will have set
@@ -29563,19 +29774,19 @@ L314A = C3148+2
  EQUB LO(objPolygon147)
 
  EQUB LO(objPolygon148) \ Object type 7: 3D text block 1 (polygons 148 to 151)
- EQUB LO(objPolygon149)
- EQUB LO(objPolygon150)
- EQUB LO(objPolygon151)
+ EQUB LO(objPolygon149) \
+ EQUB LO(objPolygon150) \ Polygons 148 to 151 use the point list in objTextBlock
+ EQUB LO(objPolygon151) \ with a point range of 136 to 143
 
  EQUB LO(objPolygon148) \ Object type 8: 3D text block 2 (polygons 152 to 155)
  EQUB LO(objPolygon149) \
- EQUB LO(objPolygon150) \ Polygons 152 to 155 reuse the points from 148 to 151
- EQUB LO(objPolygon151)
+ EQUB LO(objPolygon150) \ Polygons 152 to 155 use the point list in objTextBlock
+ EQUB LO(objPolygon151) \ with a point range of 144 to 151
 
  EQUB LO(objPolygon148) \ Object type 9: 3D text block 3 (polygons 156 to 159)
  EQUB LO(objPolygon149) \
- EQUB LO(objPolygon150) \ Polygons 156 to 159 reuse the points from 148 to 151
- EQUB LO(objPolygon151)
+ EQUB LO(objPolygon150) \ Polygons 156 to 159 use the point list in objTextBlock
+ EQUB LO(objPolygon151) \ with a point range of 152 to 159
 
 \ ******************************************************************************
 \
@@ -30413,6 +30624,25 @@ L314A = C3148+2
 \    Summary: The list of polygons and points for the 3D text block object
 \             (polygons 148 to 151, using points 136 to 143)
 \
+\ ------------------------------------------------------------------------------
+\
+\ The three 3D text block objects share the same point lists below, as they have
+\ the same basic block shape, but they have different point ranges and so have
+\ different dimensions (one for each of the three block pairs we need to draw
+\ large 3D text on the title screens).
+\
+\   * Object 7, 3D text block 1, draws no-block (left), block (right).
+\     It is made up of polygons 148 to 151, using points 136 to 143.
+\
+\   * Object 8, 3D text block 2, draws block (left), no-block (right).
+\     It is made up of polygons 152 to 155, using points 144 to 151.
+\
+\   * Object 9, 3D text block 3, draws block (left), block (right).
+\     It is made up of polygons 156 to 159, using points 152 to 159.
+\
+\ See the SpawnCharacter3D routine for more about the block pairs that are used
+\ to draw large 3D text.
+\
 \ ******************************************************************************
 
 .objTextBlock
@@ -30420,32 +30650,32 @@ L314A = C3148+2
 .objPolygon148
 
  EQUB 64 + 0            \ Polygon 148 points: 136, 140, 143, 139, 136
- EQUB 64 + 4
- EQUB 64 + 7
+ EQUB 64 + 4            \ Polygon 152 points: 144, 148, 151, 147, 144
+ EQUB 64 + 7            \ Polygon 156 points: 152, 156, 159, 155, 152
  EQUB 64 + 3
  EQUB 64 + 0
 
 .objPolygon149
 
  EQUB 64 + 2            \ Polygon 149 points: 138, 142, 141, 137, 138
- EQUB 64 + 6
- EQUB 64 + 5
+ EQUB 64 + 6            \ Polygon 153 points: 146, 150, 149, 145, 146
+ EQUB 64 + 5            \ Polygon 157 points: 154, 158, 157, 153, 154
  EQUB 64 + 1
  EQUB 64 + 2
 
 .objPolygon150
 
  EQUB 64 + 1            \ Polygon 150 points: 137, 141, 140, 136, 137
- EQUB 64 + 5
- EQUB 64 + 4
+ EQUB 64 + 5            \ Polygon 154 points: 145, 149, 148, 144, 145
+ EQUB 64 + 4            \ Polygon 158 points: 153, 157, 156, 152, 153
  EQUB 64 + 0
  EQUB 64 + 1
 
 .objPolygon151
 
  EQUB 64 + 5            \ Polygon 151 points: 141, 142, 143, 140, 141
- EQUB 64 + 6
- EQUB 64 + 7
+ EQUB 64 + 6            \ Polygon 155 points: 149, 150, 151, 148, 149
+ EQUB 64 + 7            \ Polygon 159 points: 157, 158, 159, 156, 157
  EQUB 64 + 4
  EQUB 64 + 5
 
@@ -32016,7 +32246,7 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ The VDU commands below are printed by working backwards through the table, so
-\ the letter to be printed is actually the first entry in the table.
+\ the character to be printed is actually the first entry in the table.
 \
 \ A drop shadow is printed by first printing the VDU commands in vduShadowRear,
 \ to print the rear character in yellow, and then in vduShadowFront, to print
@@ -32062,7 +32292,7 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ The VDU commands below are printed by working backwards through the table, so
-\ the letter to be printed is actually the first entry in the table.
+\ the character to be printed is actually the first entry in the table.
 \
 \ A drop shadow is printed by first printing the VDU commands in vduShadowRear,
 \ to print the rear character in yellow, and then in vduShadowFront, to print

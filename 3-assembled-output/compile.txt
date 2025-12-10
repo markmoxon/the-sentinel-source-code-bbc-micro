@@ -2438,7 +2438,7 @@
      0C0E   00
 .textDropShadow
      0C0F   00
-.L0C10
+.characterDef
      0C10   00
      0C11   00
      0C12   00
@@ -2513,9 +2513,9 @@
      0C47   00
 .xTileLeftPrevious
      0C48   02
-.L0C49
+.xTileCharacter
      0C49   20
-.L0C4A
+.zTileCharacter
      0C4A   07
 .drawingTitleScreen
      0C4B   80
@@ -8104,10 +8104,10 @@
      31DB   B0 04      BCS &31E1
      31DD   8D 49 0C   STA &0C49
      31E0   60         RTS
-.C31E1
+.spac1
      31E1   8D 4A 0C   STA &0C4A
      31E4   60         RTS
-.C31E5
+.spac2
      31E5   8A         TXA
      31E6   48         PHA
      31E7   98         TYA
@@ -8124,13 +8124,13 @@
      31FC   DD 36 0F   CMP &0F36,X
      31FF   B0 03      BCS &3204
      3201   20 6C 31   JSR &316C
-.C3204
+.spac3
      3204   1E 10 0C   ASL &0C10,X
      3207   AD 49 0C   LDA &0C49
      320A   85 24      STA &24
      320C   A9 04      LDA #&04
      320E   85 15      STA &15
-.P3210
+.spac4
      3210   1E 10 0C   ASL &0C10,X
      3213   2A         ROL A
      3214   1E 10 0C   ASL &0C10,X
@@ -8152,7 +8152,7 @@
      3232   A9 00      LDA #&00
      3234   8D 10 0C   STA &0C10
      3237   F0 CB      BEQ &3204
-.C3239
+.spac5
      3239   AD 49 0C   LDA &0C49
      323C   18         CLC
      323D   69 04      ADC #&04
@@ -8163,7 +8163,7 @@
      3245   AA         TAX
      3246   68         PLA
      3247   60         RTS
-.L3248
+.objBlockNumber
      3248   20
      3249   27
      324A   28
