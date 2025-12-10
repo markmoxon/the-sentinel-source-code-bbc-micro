@@ -5513,7 +5513,7 @@
      208C   58         CLI
 .C208D
      208D   4C 78 1F   JMP &1F78
-.viewBufferAddr
+.screenBufferAddr
      2090   00 00
 .L2092
      2092   00 00
@@ -9005,7 +9005,7 @@
      382E   E9 20      SBC #&20
 .scro3
      3830   85 65      STA &65
-.DisplayViewBuffer
+.ShowScreenBuffer
      3832   AD 90 20   LDA &2090
      3835   18         CLC
      3836   79 E4 38   ADC &38E4,Y
@@ -9017,7 +9017,7 @@
      3847   85 63      STA &63
      3849   C0 02      CPY #&02
      384B   B0 3C      BCS &3889
-.DisplayBufferColumn
+.ShowBufferColumn
      384D   A2 18      LDX #&18
 .dcol1
      384F   20 B2 38   JSR &38B2
@@ -9051,7 +9051,7 @@
      3883   CA         DEX
      3884   D0 C9      BNE &384F
      3886   4C B1 38   JMP &38B1
-.DisplayBufferRow
+.ShowBufferRow
      3889   A2 28      LDX #&28
 .drow1
      388B   20 B2 38   JSR &38B2
@@ -9077,7 +9077,7 @@
      38AF   D0 DA      BNE &388B
 .drow3
      38B1   60         RTS
-.DisplayBufferBlock
+.ShowBufferBlock
      38B2   A0 00      LDY #&00
      38B4   B1 62      LDA (&62),Y
      38B6   91 64      STA (&64),Y
@@ -9123,12 +9123,12 @@
      38E9   FF
      38EA   FE
      38EB   01
-.viewBufferAddrHi
+.screenBufferHi
      38EC   3E
      38ED   3F
      38EE   49
      38EF   3D
-.viewBufferAddrLo
+.screenBufferLo
      38F0   F8
      38F1   80
      38F2   00
@@ -9140,7 +9140,7 @@
      38F7   F4
 .StartScrollingView
      38F8   8D D1 0C   STA &0CD1
-.SetViewBufferAddr
+.SetBufferAddress
      38FB   B9 F0 38   LDA &38F0,Y
      38FE   8D 90 20   STA &2090
      3901   B9 EC 38   LDA &38EC,Y
@@ -9438,7 +9438,7 @@
 .gicn1
      3AE7   8D CB 0C   STA &0CCB
      3AEA   60         RTS
-.DisplayIconBuffer
+.ShowIconBuffer
      3AEB   A9 5A      LDA #&5A
      3AED   85 63      STA &63
      3AEF   A9 00      LDA #&00
@@ -10485,7 +10485,7 @@
      3EFD   FF
      3EFE   FF
      3EFF   FF
-.viewBufferRow0
+.screenBufferRow0
      3F00   00
      3F01   00
      3F02   00
@@ -10646,7 +10646,7 @@
      3F9D   00
      3F9E   00
      3F9F   00
-.viewBufferRow16
+.screenBufferRow16
      3FA0   00
      3FA1   00
      3FA2   00
@@ -11119,7 +11119,7 @@
      403D   05
      403E   20
      403F   0D
-.viewBufferRow1
+.screenBufferRow1
      4040   12
      4041   F2
      4042   05
@@ -11280,7 +11280,7 @@
      40DD   3A
      40DE   53
      40DF   54
-.viewBufferRow17
+.screenBufferRow17
      40E0   41
      40E1   20
      40E2   43
@@ -11441,7 +11441,7 @@
      417D   00
      417E   00
      417F   00
-.viewBufferRow2
+.screenBufferRow2
      4180   00
      4181   00
      4182   00
@@ -11602,7 +11602,7 @@
      421D   00
      421E   00
      421F   00
-.viewBufferRow18
+.screenBufferRow18
      4220   00
      4221   00
      4222   00
@@ -11763,7 +11763,7 @@
      42BD   00
      42BE   00
      42BF   00
-.viewBufferRow3
+.screenBufferRow3
      42C0   00
      42C1   00
      42C2   00
@@ -11924,7 +11924,7 @@
      435D   00
      435E   00
      435F   00
-.viewBufferRow19
+.screenBufferRow19
      4360   00
      4361   00
      4362   00
@@ -12085,7 +12085,7 @@
      43FD   00
      43FE   00
      43FF   00
-.viewBufferRow4
+.screenBufferRow4
      4400   00
      4401   00
      4402   00
@@ -12246,7 +12246,7 @@
      449D   00
      449E   00
      449F   00
-.viewBufferRow20
+.screenBufferRow20
      44A0   00
      44A1   00
      44A2   00
@@ -12407,7 +12407,7 @@
      453D   00
      453E   00
      453F   00
-.viewBufferRow5
+.screenBufferRow5
      4540   00
      4541   00
      4542   00
@@ -12568,7 +12568,7 @@
      45DD   00
      45DE   00
      45DF   00
-.viewBufferRow21
+.screenBufferRow21
      45E0   00
      45E1   00
      45E2   00
@@ -12729,7 +12729,7 @@
      467D   00
      467E   00
      467F   00
-.viewBufferRow6
+.screenBufferRow6
      4680   00
      4681   00
      4682   00
@@ -12890,7 +12890,7 @@
      471D   00
      471E   00
      471F   00
-.viewBufferRow22
+.screenBufferRow22
      4720   00
      4721   00
      4722   00
@@ -13051,7 +13051,7 @@
      47BD   00
      47BE   00
      47BF   00
-.viewBufferRow7
+.screenBufferRow7
      47C0   00
      47C1   00
      47C2   00
@@ -13212,7 +13212,7 @@
      485D   00
      485E   00
      485F   00
-.viewBufferRow23
+.screenBufferRow23
      4860   00
      4861   00
      4862   00
@@ -13373,7 +13373,7 @@
      48FD   00
      48FE   00
      48FF   00
-.viewBufferRow8
+.screenBufferRow8
      4900   FE
      4901   FE
      4902   FF
@@ -13725,7 +13725,7 @@
      4A3D   00
      4A3E   00
      4A3F   00
-.viewBufferRow9
+.screenBufferRow9
      4A40   FF
      4A41   FF
      4A42   FF
@@ -14047,7 +14047,7 @@
      4B7D   20
      4B7E   60
      4B7F   A0
-.viewBufferRow10
+.screenBufferRow10
      4B80   FE
      4B81   FE
      4B82   FF
@@ -14369,7 +14369,7 @@
      4CBD   70
      4CBE   70
      4CBF   70
-.viewBufferRow11
+.screenBufferRow11
      4CC0   FF
      4CC1   FF
      4CC2   FF
@@ -14691,7 +14691,7 @@
      4DFD   C0
      4DFE   C0
      4DFF   C0
-.viewBufferRow12
+.screenBufferRow12
      4E00   FF
      4E01   FF
      4E02   FF
@@ -15013,7 +15013,7 @@
      4F3D   15
      4F3E   29
      4F3F   3D
-.viewBufferRow13
+.screenBufferRow13
      4F40   FF
      4F41   FF
      4F42   FF
@@ -15335,7 +15335,7 @@
      507D   A5
      507E   AA
      507F   AF
-.viewBufferRow14
+.screenBufferRow14
      5080   FE
      5081   FE
      5082   FF
@@ -15657,7 +15657,7 @@
      51BD   53
      51BE   53
      51BF   53
-.viewBufferRow15
+.screenBufferRow15
      51C0   FF
      51C1   FF
      51C2   FF
@@ -18575,7 +18575,7 @@
      5F20   4C 7E 5E   JMP &5E7E
 .CRE41
      5F23   60         RTS
-.DisplayGameOver
+.ShowGameOverScreen
      5F24   48         PHA
      5F25   20 48 35   JSR &3548
      5F28   20 99 36   JSR &3699

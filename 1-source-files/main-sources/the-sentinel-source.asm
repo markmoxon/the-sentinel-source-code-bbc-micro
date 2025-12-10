@@ -2117,7 +2117,7 @@
  EQUB 0                 \ A timer for the game over sound
                         \
                         \ Sound is made in ProcessSound when the timer is 80 or
-                        \ higher, and it starts at 250 in DisplayGameOver and
+                        \ higher, and it starts at 250 in ShowGameOverScreen and
                         \ decrements in ProcessSound until it dips below 80, at
                         \ which point the sound stops
 
@@ -5746,7 +5746,7 @@
                         \ play4 to progress the game
 
  LDA #30                \ The Sentinel has won, so display the game over screen
- JSR DisplayGameOver    \ with A = 30, so we decay the screen to black with a
+ JSR ShowGameOverScreen \ with A = 30, so we decay the screen to black with a
                         \ mass of 30 * 2400 = 72,000 randomly placed black dots
 
 .play3
@@ -6966,13 +6966,13 @@
                         \
                         \   SBC inputBuffer-129,X
                         \
-                        \ BeebAsm can't parse this instruction, however, so we
-                        \ have to set up a variable instead to get around this
+                        \ Note that for BeebAsm to parse this properly, we need
+                        \ to wrap the inputBuffer-129 part in brackets, and we
+                        \ have to use square brackets so it doesn't look like an
+                        \ indirect address instruction
 
- byteToCheck = inputBuffer - 129
-
- SEC                    \ Subtract the byte from memory that we are checking
- SBC byteToCheck,X      \ from the generated number
+ SEC                        \ Subtract the byte from memory that we are checking
+ SBC [inputBuffer-129],X    \ from the generated number
 
  BEQ srct2              \ If A = 0 then we have a match between the number in
                         \ memory and the generated number, so jump to srct2 to
@@ -12450,9 +12450,8 @@
 
 .C1FD5
 
- LDY #0                 \ Set viewBufferAddr(1 0) to the address of the left
- JSR SetViewBufferAddr  \ column of the screen buffer, less one column
-                        \ scrolling step
+ LDY #0                 \ Set screenBufferAddr(1 0) to the address of the left
+ JSR SetBufferAddress   \ column of the screen buffer
 
  LDX viewingObject
  LDA #0
@@ -12542,9 +12541,9 @@
                         \
                         \   * 3 = pan down
 
- JSR DisplayViewBuffer  \ Update the player's scrolling landscape view by
-                        \ copying the relevant parts of the view screen buffer
-                        \ into screen memory
+ JSR ShowScreenBuffer   \ Update the player's scrolling landscape view by
+                        \ copying the relevant parts of the screen buffer into
+                        \ screen memory
 
  DEC loopCounter
  BNE C203D
@@ -12579,15 +12578,15 @@
 
 \ ******************************************************************************
 \
-\       Name: viewBufferAddr
+\       Name: screenBufferAddr
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Storage for the address for the current drawing operation in the
-\             view screen buffer
+\             screen buffer
 \
 \ ******************************************************************************
 
-.viewBufferAddr
+.screenBufferAddr
 
  EQUW &0000
 
@@ -23108,8 +23107,8 @@ L314A = C3148+2
                         \ first part of the game over sound
 
  LDY gameOverSoundPitch \ Set Y to the pitch for the second part of the game
-                        \ over sound, which starts at 250 in the DisplayGameOver
-                        \ routine and counts down towards 80
+                        \ over sound, which starts in the ShowGameOverScreen
+                        \ routine at 250 and counts down towards 80
 
  CPY #80                \ If Y < 80 then the game over sound has finished, so
  BCC psou1              \ jump to psou1 to return from the subroutine without
@@ -23363,7 +23362,7 @@ L314A = C3148+2
  STA soundEffect        \ game over sound
 
  LDA #5                 \ The Sentinel has won, so display the game over screen
- JSR DisplayGameOver    \ with A = 5, so we decay the screen to black with a
+ JSR ShowGameOverScreen \ with A = 5, so we decay the screen to black with a
                         \ mass of 5 * 2400 = 12,000 randomly placed black dots
 
 .game6
@@ -23563,7 +23562,7 @@ L314A = C3148+2
  CMP #40                \ cleared column 39, at which point we have cleared the
  BCC enec1              \ entire row
 
- JMP DisplayIconBuffer  \ Display the contents of the icon screen buffer by
+ JMP ShowIconBuffer     \ Display the contents of the icon screen buffer by
                         \ copying it into screen memory, which will clear the
                         \ row on-screen, and return from the subroutine using a
                         \ tail call
@@ -23780,7 +23779,7 @@ L314A = C3148+2
  JSR DrawIcon           \ the icon screen buffer at iconBuffer) and move along
                         \ to the right
 
- JMP DisplayIconBuffer  \ Display the contents of the icon screen buffer by
+ JMP ShowIconBuffer     \ Display the contents of the icon screen buffer by
                         \ copying it into screen memory, returning from the
                         \ subroutine using a tail call
 
@@ -23924,7 +23923,7 @@ L314A = C3148+2
 \     paused, then:
 \
 \     * If scrollCounter is non-zero then call ScrollPlayerView (which
-\       decrements scrollCounter) and DisplayIconBuffer
+\       decrements scrollCounter) and ShowIconBuffer
 \
 \     * If the Sentinel has been activated, call sub_C12EE and UpdateScanner
 \
@@ -24007,7 +24006,7 @@ L314A = C3148+2
                         \ buffer into screen memory to implement the player's
                         \ scrolling landscape view
 
- JSR DisplayIconBuffer  \ Display the contents of the icon screen buffer by
+ JSR ShowIconBuffer     \ Display the contents of the icon screen buffer by
                         \ copying it into screen memory, as the scrolling
                         \ process will have scrolled this part of the screen, so
                         \ we need to redraw it to prevent the energy icons and
@@ -24090,8 +24089,8 @@ L314A = C3148+2
 \       Name: ScrollPlayerView
 \       Type: Subroutine
 \   Category: Graphics
-\    Summary: Scroll the screen and copy data from the view screen buffer into
-\             screen memory to implement the player's scrolling landscape view
+\    Summary: Scroll the screen and copy data from the screen buffer into screen
+\             memory to implement the player's scrolling landscape view
 \
 \ ******************************************************************************
 
@@ -24328,18 +24327,18 @@ L314A = C3148+2
                         \  * Set toAddr(1 0) to the address of the area in
                         \    screen memory that we now need to update
                         \
-                        \ We can now fall through into DisplayViewBuffer to
-                        \ copy the contents of the view screen buffer into the
-                        \ area we need to update, so that the scroll reveals the
-                        \ correct part of the view
+                        \ We can now fall through into ShowScreenBuffer to copy
+                        \ the contents of the screen buffer into the area we
+                        \ need to update, so that the scroll reveals the correct
+                        \ part of the view
 
 \ ******************************************************************************
 \
-\       Name: DisplayViewBuffer
+\       Name: ShowScreenBuffer
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying the
-\             relevant parts of the view screen buffer into screen memory
+\             relevant parts of the screen buffer into screen memory
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24356,59 +24355,59 @@ L314A = C3148+2
 \                         * 3 = pan down
 \
 \   toAddr(1 0)         The address of the area in screen memory that we need to
-\                       update with the contents of the view screen buffer
+\                       update with the contents of the screen buffer
 \
 \ ******************************************************************************
 
-.DisplayViewBuffer
+.ShowScreenBuffer
 
-                        \ We start by setting both viewBufferAddr(1 0) and
-                        \ fromAddr(1 0) to the address in the view screen
-                        \ buffer of the content that we need to copy into the
-                        \ screen area following the hardware scroll
+                        \ We start by setting both screenBufferAddr(1 0) and
+                        \ fromAddr(1 0) to the address in the screen buffer of
+                        \ the content that we need to copy into the screen area
+                        \ following the hardware scroll
                         \
                         \ We do this by taking the current value of the address
-                        \ in viewBufferAddr(1 0) and applying the change in
+                        \ in screenBufferAddr(1 0) and applying the change in
                         \ (scrollScreenHi scrollScreenLo) for the current pan
                         \ direction in Y, just as we did when we updated the
                         \ screen address in viewScreenAddr(1 0) in the
                         \ ScrollPlayerView routine
 
- LDA viewBufferAddr     \ Add (scrollScreenHi scrollScreenLo) for this pan
- CLC                    \ direction to the address in viewBufferAddr(1 0),
+ LDA screenBufferAddr   \ Add (scrollScreenHi scrollScreenLo) for this pan
+ CLC                    \ direction to the address in screenBufferAddr(1 0),
  ADC scrollScreenLo,Y   \ starting with the low bytes
- STA viewBufferAddr
+ STA screenBufferAddr
 
  STA fromAddr           \ Store the low byte of the result in fromAddr(1 0)
 
- LDA viewBufferAddr+1   \ And then add the high bytes
+ LDA screenBufferAddr+1 \ And then add the high bytes
  ADC scrollScreenHi,Y
- STA viewBufferAddr+1
+ STA screenBufferAddr+1
 
  STA fromAddr+1         \ Store the high byte of the result in fromAddr(1 0), so
-                        \ fromAddr(1 0) = viewBufferAddr(1 0) and we copy the
+                        \ fromAddr(1 0) = screenBufferAddr(1 0) and we copy the
                         \ new screen content from the correct address in the
                         \ screen buffer
 
  CPY #2                 \ If Y >= 2 then we are panning up or down, and we are
- BCS DisplayBufferRow   \ scrolling down or up, so jump to DisplayBufferRow to
+ BCS ShowBufferRow      \ scrolling down or up, so jump to ShowBufferRow to
                         \ update the player's scrolling landscape view by
                         \ copying an eight-pixel high character row from the
-                        \ view screen buffer into screen memory
+                        \ screen buffer into screen memory
 
                         \ Otherwise we are panning left or right, and we are
                         \ scrolling right or left or up, so fall througn into
-                        \ DisplayBufferColumn update the player's scrolling
+                        \ ShowBufferColumn to update the player's scrolling
                         \ landscape view by copying a two-pixel wide column from
-                        \ the view screen buffer into screen memory
+                        \ the screen buffer into screen memory
 
 \ ******************************************************************************
 \
-\       Name: DisplayBufferColumn
+\       Name: ShowBufferColumn
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying a 2-pixel
-\             wide column from the view screen buffer into screen memory
+\             wide column from the screen buffer into screen memory
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24422,20 +24421,20 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.DisplayBufferColumn
+.ShowBufferColumn
 
  LDX #24                \ The custom screen mode 5 used by the game contains 25
                         \ character rows, each of which is eight pixels high, so
                         \ set a row counter in X to count the character rows in
-                        \ the view screen buffer, which is one row less than the
+                        \ the screen buffer, which is one row less than the
                         \ screen height, as the top row is the energy icon and
                         \ scanner row 
 
 .dcol1
 
- JSR DisplayBufferBlock \ Copy an eight-byte 8x2-pixel character block from the
-                        \ view screen buffer at fromAddr(1 0) into screen memory
-                        \ at toAddr(1 0)
+ JSR ShowBufferBlock    \ Copy an eight-byte 8x2-pixel character block from the
+                        \ screen buffer at fromAddr(1 0) into screen memory at
+                        \ toAddr(1 0)
 
  LDA fromAddr           \ Set (A fromAddr) = fromAddr(1 0) + &140
  CLC                    \                  = fromAddr(1 0) + 320
@@ -24443,11 +24442,11 @@ L314A = C3148+2
  STA fromAddr           \ Each character row in screen mode 5 takes up 320 bytes
  LDA fromAddr+1         \ (40 character blocks of eight bytes each), so this
  ADC #&01               \ sets fromAddr(1 0) to the address of the next row down
-                        \ in the view screen buffer
+                        \ in the screen buffer
 
  CMP #&53               \ If the result of the addition is less than &5300, then
- BNE dcol2              \ we have not reached the end of the view screen buffer,
-                        \ so jump to dcol2 to skip the following
+ BNE dcol2              \ we have not reached the end of the screen buffer, so
+                        \ jump to dcol2 to skip the following
 
                         \ At this point the screen buffer wraps around so the
                         \ buffer entries restart at a lower address
@@ -24464,19 +24463,19 @@ L314A = C3148+2
                         \ address of the screen buffer, which is &3F00, so we
                         \ can calculate the new address like this:
                         \
-                        \   (A fromAddr) = viewBufferAddr(1 0) + &A0
+                        \   (A fromAddr) = screenBufferAddr(1 0) + &A0
                         \
                         \ So this wraps the address around so we can keep
                         \ drawing content into the screen buffer
                         \
                         \ See bufferRowAddrLo for more information on the
-                        \ structure of the view screen buffer
+                        \ structure of the screen buffer
 
- LDA viewBufferAddr     \ Calculate the following:
+ LDA screenBufferAddr   \ Calculate the following:
  CLC                    \
- ADC #&A0               \   (A fromAddr) = viewBufferAddr(1 0) + &A0
+ ADC #&A0               \   (A fromAddr) = screenBufferAddr(1 0) + &A0
  STA fromAddr
- LDA viewBufferAddr+1    
+ LDA screenBufferAddr+1    
  ADC #&00
 
 .dcol2
@@ -24518,11 +24517,11 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DisplayBufferRow
+\       Name: ShowBufferRow
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying an 8-pixel
-\             high character row from the view screen buffer into screen memory
+\             high character row from the screen buffer into screen memory
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24541,7 +24540,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.DisplayBufferRow
+.ShowBufferRow
 
  LDX #40                \ Each character row in screen mode 5 contains 40
                         \ character blocks of eight bytes, so set a block
@@ -24549,9 +24548,9 @@ L314A = C3148+2
 
 .drow1
 
- JSR DisplayBufferBlock \ Copy an eight-byte 8x2-pixel character block from the
-                        \ view screen buffer at fromAddr(1 0) into screen memory
-                        \ at toAddr(1 0)
+ JSR ShowBufferBlock    \ Copy an eight-byte 8x2-pixel character block from the
+                        \ screen buffer at fromAddr(1 0) into screen memory at
+                        \ toAddr(1 0)
 
  LDA fromAddr           \ Set fromAddr(1 0) = fromAddr(1 0) + 8
  CLC                    \
@@ -24593,11 +24592,11 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DisplayBufferBlock
+\       Name: ShowBufferBlock
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying an 8-byte
-\             character block from the view screen buffer into screen memory
+\             character block from the screen buffer into screen memory
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24611,7 +24610,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.DisplayBufferBlock
+.ShowBufferBlock
 
  LDY #0                 \ Copy byte #0 of fromAddr(1 0) to toAddr(1 0)
  LDA (fromAddr),Y
@@ -24717,7 +24716,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferAddrHi
+\       Name: screenBufferHi
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The value to add to scrollScreenHi for each direction to get the
@@ -24757,7 +24756,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.viewBufferAddrHi
+.screenBufferHi
 
  EQUB HI(&3F00 + 0 * 8 - 8)     \ Direction 0 (pan right, scroll left)
                                 \
@@ -24801,7 +24800,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferAddrLo
+\       Name: screenBufferLo
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The value to add to scrollScreenLo for each direction to get the
@@ -24809,11 +24808,11 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
-\ See viewBufferAddrHi for an explanation of this table.
+\ See screenBufferHi for an explanation of this table.
 \
 \ ******************************************************************************
 
-.viewBufferAddrLo
+.screenBufferLo
 
  EQUB LO(&3F00 + 0 * 8 - 8)     \ Direction 0 (pan right, scroll left)
                                 \
@@ -24939,17 +24938,17 @@ L314A = C3148+2
                         \ will scroll the screen by this many steps in the
                         \ background
 
-                        \ Fall through into SetViewBufferAddr to set the address
-                        \ where the interrupt routine should start fetching new
-                        \ content to scroll onto the screen
+                        \ Fall through into SetBufferAddress to set the address
+                        \ from which the interrupt routine should start fetching
+                        \ new content to scroll onto the screen
 
 \ ******************************************************************************
 \
-\       Name: SetViewBufferAddr
+\       Name: SetBufferAddress
 \       Type: Subroutine
 \   Category: Screen buffer
-\    Summary: Set viewBufferAddr(1 0) to the address where the interrupt routine
-\             should start fetching new content to scroll onto the screen
+\    Summary: Set screenBufferAddr(1 0) to the address from which the interrupt
+\             routine should fetch new content to scroll onto the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24967,14 +24966,14 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.SetViewBufferAddr
+.SetBufferAddress
 
- LDA viewBufferAddrLo,Y \ Set viewBufferAddr(1 0) to the Y-th entry from the
- STA viewBufferAddr     \ viewBufferAddrHi and viewBufferAddrLo lookup tables
- LDA viewBufferAddrHi,Y \
- STA viewBufferAddr+1   \ This sets viewBufferAddr(1 0) to the address from
+ LDA screenBufferLo,Y   \ Set screenBufferAddr(1 0) to the Y-th entry from the
+ STA screenBufferAddr   \ screenBufferHi and screenBufferLo lookup tables
+ LDA screenBufferHi,Y   \
+ STA screenBufferAddr+1 \ This sets screenBufferAddr(1 0) to the address from
                         \ which the interrupt routine should start pulling
-                        \ screen content to scroll onto the screen, so that's:
+                        \ screen content to scroll onto the screen, so:
                         \
                         \   * When panning right: The left column of the
                         \     column-shaped screen buffer appears first as the
@@ -24992,11 +24991,11 @@ L314A = C3148+2
                         \     screen buffer appears first as the new content
                         \     scrolls in from below
                         \
-                        \ So this sets viewBufferAddr(1 0) to the address where
-                        \ the interrupt routine should start fetching new
+                        \ So this sets screenBufferAddr(1 0) to the address
+                        \ where the interrupt routine should start fetching new
                         \ content to scroll onto the screen
                         \
-                        \ See the documentation for viewBufferAddrHi for a
+                        \ See the documentation for screenBufferHi for a
                         \ deeper look into the exact values that are set
 
  RTS                    \ Return from the subroutine
@@ -26113,7 +26112,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DisplayIconBuffer
+\       Name: ShowIconBuffer
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Display the redrawn icon and scanner row by copying the contents
@@ -26121,22 +26120,22 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.DisplayIconBuffer
+.ShowIconBuffer
 
  LDA #HI(iconBuffer)    \ Set fromAddr(1 0) = iconBuffer(1 0)
  STA fromAddr+1         \
- LDA #LO(iconBuffer)    \ So the call to DisplayBufferRow copies from the icon
+ LDA #LO(iconBuffer)    \ So the call to ShowBufferRow copies from the icon
  STA fromAddr           \ screen buffer, which contains the redrawn icon and
                         \ scanner row
 
  LDA iconRowAddr+1      \ Set toAddr(1 0) = iconRowAddr(1 0)
  STA toAddr+1           \
- LDA iconRowAddr        \ So the call to DisplayBufferRow copies from the icon
+ LDA iconRowAddr        \ So the call to ShowBufferRow copies from the icon
  STA toAddr             \ screen buffer into the screen memory for the icon and
                         \ scanner row at the top of the screen
 
- JMP DisplayBufferRow   \ Jump to DisplayBufferRow to copy the contents of the
-                        \ icon screen buffer into screen memory ???
+ JMP ShowBufferRow      \ Jump to ShowBufferRow to copy the contents of the
+                        \ icon screen buffer into screen memory
 
 \ ******************************************************************************
 \
@@ -26255,33 +26254,33 @@ L314A = C3148+2
 \ the program space without overlapping with screen memory or game code. The
 \ addresses are as follows:
 \
-\   &3F00 (viewBufferRow0)
-\   &4040 (viewBufferRow1)
-\   &4180 (viewBufferRow2)
-\   &42C0 (viewBufferRow3)
-\   &4400 (viewBufferRow4)
-\   &4540 (viewBufferRow5)
-\   &4680 (viewBufferRow6)
-\   &47C0 (viewBufferRow7)
-\   &4900 (viewBufferRow8)
-\   &4A40 (viewBufferRow9)
-\   &4B80 (viewBufferRow10)
-\   &4CC0 (viewBufferRow11)
-\   &4E00 (viewBufferRow12)
-\   &4F40 (viewBufferRow13)
-\   &5080 (viewBufferRow14)
-\   &51C0 (viewBufferRow15)
+\   &3F00 (screenBufferRow0)
+\   &4040 (screenBufferRow1)
+\   &4180 (screenBufferRow2)
+\   &42C0 (screenBufferRow3)
+\   &4400 (screenBufferRow4)
+\   &4540 (screenBufferRow5)
+\   &4680 (screenBufferRow6)
+\   &47C0 (screenBufferRow7)
+\   &4900 (screenBufferRow8)
+\   &4A40 (screenBufferRow9)
+\   &4B80 (screenBufferRow10)
+\   &4CC0 (screenBufferRow11)
+\   &4E00 (screenBufferRow12)
+\   &4F40 (screenBufferRow13)
+\   &5080 (screenBufferRow14)
+\   &51C0 (screenBufferRow15)
 \
 \ and then they wrap around to the following locations for rows 16 to 25:
 \
-\   &3FA0 (viewBufferRow16)
-\   &40E0 (viewBufferRow17)
-\   &4220 (viewBufferRow18)
-\   &4360 (viewBufferRow19)
-\   &44A0 (viewBufferRow20)
-\   &45E0 (viewBufferRow21)
-\   &4720 (viewBufferRow22)
-\   &4860 (viewBufferRow23)
+\   &3FA0 (screenBufferRow16)
+\   &40E0 (screenBufferRow17)
+\   &4220 (screenBufferRow18)
+\   &4360 (screenBufferRow19)
+\   &44A0 (screenBufferRow20)
+\   &45E0 (screenBufferRow21)
+\   &4720 (screenBufferRow22)
+\   &4860 (screenBufferRow23)
 \   &49A0 (unused)
 \
 \ The first batch of locations need to be able to store an entire screen row of
@@ -26518,14 +26517,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow0
+\       Name: screenBufferRow0
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 0
+\    Summary: The screen buffer for character row 0
 \
 \ ******************************************************************************
 
-.viewBufferRow0
+.screenBufferRow0
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -26550,15 +26549,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow16
+\       Name: screenBufferRow16
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 16 (as part of a column
+\    Summary: The screen buffer for character row 16 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow16
+.screenBufferRow16
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -26596,7 +26595,7 @@ L314A = C3148+2
                         \ a column buffer)
                         \
                         \ These lines rewind BeebAsm's assembly back to
-                        \ viewBufferRow0 (which is at address &3F00), and
+                        \ screenBufferRow0 (which is at address &3F00), and
                         \ clear the block from that point to the end of the
                         \ buffer (which is at address &4040), so we can assemble
                         \ the secret code stash
@@ -27021,14 +27020,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow1
+\       Name: screenBufferRow1
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 1
+\    Summary: The screen buffer for character row 1
 \
 \ ******************************************************************************
 
-.viewBufferRow1
+.screenBufferRow1
 
  EQUB &12, &F2, &05, &20, &0D, &12, &FC, &05    \ The initial content is just
  EQUB &20, &0D, &13, &06, &05, &20, &0D, &13    \ workspace noise and is ignored
@@ -27053,15 +27052,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow17
+\       Name: screenBufferRow17
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 17 (as part of a column
+\    Summary: The screen buffer for character row 17 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow17
+.screenBufferRow17
 
  EQUB &41, &20, &43, &4F, &56, &45, &52, &0D    \ The initial content is just
  EQUB &13, &60, &1B, &20, &20, &20, &20, &20    \ workspace noise and is ignored
@@ -27086,14 +27085,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow2
+\       Name: screenBufferRow2
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 2
+\    Summary: The screen buffer for character row 2
 \
 \ ******************************************************************************
 
-.viewBufferRow2
+.screenBufferRow2
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27118,15 +27117,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow18
+\       Name: screenBufferRow18
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 18 (as part of a column
+\    Summary: The screen buffer for character row 18 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow18
+.screenBufferRow18
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27151,14 +27150,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow3
+\       Name: screenBufferRow3
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 3
+\    Summary: The screen buffer for character row 3
 \
 \ ******************************************************************************
 
-.viewBufferRow3
+.screenBufferRow3
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27183,15 +27182,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow19
+\       Name: screenBufferRow19
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 19 (as part of a column
+\    Summary: The screen buffer for character row 19 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow19
+.screenBufferRow19
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27216,14 +27215,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow4
+\       Name: screenBufferRow4
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 4
+\    Summary: The screen buffer for character row 4
 \
 \ ******************************************************************************
 
-.viewBufferRow4
+.screenBufferRow4
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27248,15 +27247,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow20
+\       Name: screenBufferRow20
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 20 (as part of a column
+\    Summary: The screen buffer for character row 20 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow20
+.screenBufferRow20
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27281,14 +27280,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow5
+\       Name: screenBufferRow5
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 5
+\    Summary: The screen buffer for character row 5
 \
 \ ******************************************************************************
 
-.viewBufferRow5
+.screenBufferRow5
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27313,15 +27312,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow21
+\       Name: screenBufferRow21
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 21 (as part of a column
+\    Summary: The screen buffer for character row 21 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow21
+.screenBufferRow21
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27346,14 +27345,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow6
+\       Name: screenBufferRow6
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 6
+\    Summary: The screen buffer for character row 6
 \
 \ ******************************************************************************
 
-.viewBufferRow6
+.screenBufferRow6
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27378,15 +27377,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow22
+\       Name: screenBufferRow22
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 22 (as part of a column
+\    Summary: The screen buffer for character row 22 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow22
+.screenBufferRow22
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27411,14 +27410,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow7
+\       Name: screenBufferRow7
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 7
+\    Summary: The screen buffer for character row 7
 \
 \ ******************************************************************************
 
-.viewBufferRow7
+.screenBufferRow7
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27443,15 +27442,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow23
+\       Name: screenBufferRow23
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 23 (as part of a column
+\    Summary: The screen buffer for character row 23 (as part of a column
 \             buffer)
 \
 \ ******************************************************************************
 
-.viewBufferRow23
+.screenBufferRow23
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -27476,14 +27475,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow8
+\       Name: screenBufferRow8
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 8
+\    Summary: The screen buffer for character row 8
 \
 \ ******************************************************************************
 
-.viewBufferRow8
+.screenBufferRow8
 
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -27810,14 +27809,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow9
+\       Name: screenBufferRow9
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 9
+\    Summary: The screen buffer for character row 9
 \
 \ ******************************************************************************
 
-.viewBufferRow9
+.screenBufferRow9
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -28014,14 +28013,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow10
+\       Name: screenBufferRow10
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 10
+\    Summary: The screen buffer for character row 10
 \
 \ ******************************************************************************
 
-.viewBufferRow10
+.screenBufferRow10
 
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -28227,14 +28226,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow11
+\       Name: screenBufferRow11
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 11
+\    Summary: The screen buffer for character row 11
 \
 \ ******************************************************************************
 
-.viewBufferRow11
+.screenBufferRow11
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -28431,14 +28430,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow12
+\       Name: screenBufferRow12
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 12
+\    Summary: The screen buffer for character row 12
 \
 \ ******************************************************************************
 
-.viewBufferRow12
+.screenBufferRow12
 
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -29612,14 +29611,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow13
+\       Name: screenBufferRow13
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 13
+\    Summary: The screen buffer for character row 13
 \
 \ ******************************************************************************
 
-.viewBufferRow13
+.screenBufferRow13
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -29826,14 +29825,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow14
+\       Name: screenBufferRow14
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 14
+\    Summary: The screen buffer for character row 14
 \
 \ ******************************************************************************
 
-.viewBufferRow14
+.screenBufferRow14
 
  EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -30040,14 +30039,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: viewBufferRow15
+\       Name: screenBufferRow15
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: The view screen buffer for character row 15
+\    Summary: The screen buffer for character row 15
 \
 \ ******************************************************************************
 
-.viewBufferRow15
+.screenBufferRow15
 
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
@@ -34939,7 +34938,7 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: DisplayGameOver
+\       Name: ShowGameOverScreen
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: Display the game over screen
@@ -34964,7 +34963,7 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-.DisplayGameOver
+.ShowGameOverScreen
 
  PHA                    \ Store the argument in A on the stack, so we can fetch
                         \ it later
