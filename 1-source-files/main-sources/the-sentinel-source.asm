@@ -17877,9 +17877,9 @@ L23E3 = C23E2+1
 
 .DrawOneFaceTile
 
- LDA tileShapeColour,X  \ Set polygonColours to the entry for the reference shape
- STA polygonColours     \ from the tileShapeColour or tileShapeColour+16 table,
-                        \ so we draw the polygon in the correct colour
+ LDA tileShapeColour,X  \ Set polygonColours to the entry for the reference
+ STA polygonColours     \ shape from the tileShapeColour or tileShapeColour+16
+                        \ table, so we draw the polygon in the correct colour
 
  LDA #%00000000         \ Clear bits 6 and 7 of polygonType so the following
  STA polygonType        \ call to DrawPolygon draws a quadrilateral tile face
@@ -21059,7 +21059,8 @@ L314A = C3148+2
                         \ system's character definition (if this is a printable
                         \ character)
 
- AND #%11000000         \ Clear all bits of the character except for bits 6 and 7
+ AND #%11000000         \ Clear all bits of the character number except for bits
+                        \ 6 and 7
 
  BPL spac2              \ If bit 7 is clear then this is a printable character,
                         \ so jump to spac2 to spawn the character in 3D text
@@ -21410,8 +21411,8 @@ L314A = C3148+2
  JSR ProcessTileData    \ for the whole landscape
 
  BIT screenType         \ If bit 7 of the screen type is clear, jump to titl1 to
- BPL titl1              \ draw "THE SENTINEL" in large 3D text for the main title
-                        \ screen
+ BPL titl1              \ draw "THE SENTINEL" in large 3D text for the main
+                        \ title screen
 
                         \ If we get here then bit 7 of the argument is set, so
                         \ we now draw the secret code
@@ -34709,9 +34710,9 @@ L314A = C3148+2
                         \
                         \   * Object #1 (the object to draw) is set to a yaw
                         \     of 128 for the game over screen (so the enemy
-                        \     stares directly out of the screen), or -114 for the
-                        \     object on the tower (so it looks towards the left
-                        \     of the viewer) or -50 for the tower (so it is
+                        \     stares directly out of the screen), or -114 for
+                        \     the object on the tower (so it looks towards the
+                        \     left of the viewer) or -50 for the tower (so it is
                         \     rotated slightly to the left)
                         \
                         \   * Object #1 (the object to draw) is set to a yaw
@@ -34992,8 +34993,8 @@ L314A = C3148+2
  JSR SpawnTitleObject   \ Call SpawnTitleObject to spawn an object of type A in
                         \ object #1, using the configuration specified in Y
 
- LDY #1                 \ Call DrawObject with Y = 1 to draw object #1 and return
- JMP DrawObject         \ from the subroutine using a tail call
+ LDY #1                 \ Call DrawObject with Y = 1 to draw object #1 and
+ JMP DrawObject         \ return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
