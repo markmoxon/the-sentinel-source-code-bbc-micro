@@ -8278,7 +8278,7 @@
                         \ is clear, so the enemy has been removed from the
                         \ landscape at some point
 
- JSR sub_C1A54          \ ???
+ JSR DrainEnemyEnergy   \ ???
 
  BCS MoveOnToNextEnemy  \ If the C flag is set, jump to MoveOnToNextEnemy to
                         \ move on to the next enemy for the next iteration of
@@ -8419,13 +8419,15 @@
 .C176A
 
  STX viewingObject
- JSR sub_C1A54
+ JSR DrainEnemyEnergy
  BCS C1774
  JMP sub_C1871
 
 .C1774
 
- LDX enemyObject
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
+
  LDA enemyData8,X
  BPL C178C
  JSR sub_C1AA7
@@ -8532,7 +8534,9 @@
  LDA #0                 \ Make sound #0 (???) with the pitch in X and Y
  JSR MakeSound-6
 
- LDX enemyObject
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
+
  JMP C1876
 
 .C1820
@@ -8900,7 +8904,9 @@
 
 .C1986
 
- LDX enemyObject
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
+
  LDY enemyData1,X
  BNE C1998
  INC enemyData4,X
@@ -8948,7 +8954,10 @@
  JSR sub_C1882
  LDA L0014
  BPL C1986
- LDX enemyObject
+
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
+
  TYA
  JSR sub_C1AF3
  BCC C19F1
@@ -9126,53 +9135,84 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1A54
+\       Name: DrainEnemyEnergy
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Drain one unit of energy from an enemy and spawn a tree
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   enemyObject         The object number of the enemy to drain
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Status flag:
+\
+\                         * Clear if ???
+\
+\                         * Set if:
+\
+\                           * The enemy had no energy to drain
+\
+\                           * We could not spawn a tree to take on the drained
+\                             energy
+\
+\   currentObject       ???
 \
 \ ******************************************************************************
 
-.sub_C1A54
+.DrainEnemyEnergy
 
- LDX enemyObject
+ LDX enemyObject        \ Set X to the object number of the enemy we are
+                        \ draining (so this is now object #X)
 
- SEC
+ SEC                    \ If the enemy has zero energy, jump to dren1 to return
+ LDA enemyEnergy,X      \ from the subroutine with the C flag set
+ BEQ dren1
 
- LDA enemyEnergy,X
- BEQ CRE09
+                        \ If we get here then the enemy has got some energy
+                        \ left, so we spawn a tree and decrease the enemy's
+                        \ energy level by one (as a tree is worth one energy
+                        \ unit)
 
  LDA #2                 \ Spawn a tree (an object of type 2), returning the
  JSR SpawnObject        \ object number of the new object in X and currentObject
 
- LDA minEnemyAltitude
+ LDA minEnemyAltitude   \ Set A to altitude of the lowest enemy on the landscape
 
- JSR PlaceObjectBelow   \ Attempt to place the object on a tile that is
-                        \ below the maximum altitude specified in A (though we
-                        \ may end up placing the object higher than this)
+ JSR PlaceObjectBelow   \ Attempt to place the tree on a tile that is below the
+                        \ maximum altitude specified in A (though we may end up
+                        \ placing the tree higher than this)
 
- BCS CRE09              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been successfully placed, so jump
-                        \ to CRE09 to return from the subroutine with the C flag
+ BCS dren1              \ If the call to PlaceObjectBelow sets the C flag then
+                        \ the tree has not been successfully placed, so jump to
+                        \ dren1 to return from the subroutine with the C flag
                         \ set
 
- TXA
- JSR sub_C1AF3
+ TXA                    \ Set A to the object number of the enemy we are
+                        \ draining
 
- BCC C1A78
+ JSR sub_C1AF3          \ ???
 
- LDX enemyObject
- DEC enemyEnergy,X
+ BCC dren2              \ If the C flag is clear, jump to dren2 to delete the
+                        \ enemy object and stop applying tactics to it ???
 
- LDX currentObject
+ LDX enemyObject        \ Decrement enemyEnergy for the enemy object we are
+ DEC enemyEnergy,X      \ draining
 
- CLC
+ LDX currentObject      \ Set X to currentObject ???
 
-.CRE09
+ CLC                    \ Clear the C flag to indicate success
 
- RTS
+.dren1
 
-.C1A78
+ RTS                    \ Return from the subroutine
+
+.dren2
 
  JSR DeleteObject       \ Delete object #X and remove it from the landscape
 
@@ -9340,42 +9380,67 @@
 \
 \       Name: sub_C1AF3
 \       Type: Subroutine
-\   Category: ???
+\   Category: gameplay
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The object number ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Can the object be deleted?
+\
+\                         * Clear = object can not be deleted as a new pan needs
+\                                   to be performed
+\
+\                         * Set = object can be deleted
+\
+\   X                   X is preserved
+\
+\   Y                   Y is preserved
+\
+\   currentObject       Set to the argument A if the object cannot be deleted
 \
 \ ******************************************************************************
 
 .sub_C1AF3
 
- SEC
-
- BIT samePanKeyPress    \ If bit 6 of samePanKeyPress is clear then the player
- BPL CRE10              \ if not holding down the same pan key following the
-                        \ completion of a landscape pan, so jump to CRE10 to
-                        \ return from the subroutine
+ SEC                    \ If bit 6 of samePanKeyPress is clear then the player
+ BIT samePanKeyPress    \ if not holding down the same pan key following the
+ BPL CRE10              \ completion of a landscape pan, so jump to CRE10 to
+                        \ return from the subroutine with the C flag set
 
                         \ If we get here then we have just completed a pan of
                         \ the landscape view and the player is still holding
                         \ down the same pan key
 
- STA currentObject
+ STA currentObject      \ Set currentObject to the object in A to pass to the
+                        \ GetObjVisibility routine ???
 
- LDA playerObject       \ Set viewingObject to the object number of the player
- STA viewingObject
+ LDA playerObject       \ Set viewingObject to the object number of the player,
+ STA viewingObject      \ so any future view calculations are done from the
+                        \ aspect of the player rather than the enemy object
 
- TXA
- PHA
+ TXA                    \ Store X and Y on the stack so they can be preserved
+ PHA                    \ across the call to GetObjVisibility
  TYA
  PHA
- JSR sub_C2096
- PLA
- TAY
+
+ JSR GetObjVisibility   \ ???
+
+ PLA                    \ Retrieve X and Y from the stack so they can be
+ TAY                    \ preserved
  PLA
  TAX
 
 .CRE10
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12507,7 +12572,7 @@
 
 .sub_C1F84
 
- JSR sub_C2096
+ JSR GetObjVisibility
  BCS C1F78
  LDA #&19
  STA L2094
@@ -12746,32 +12811,96 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C2096
+\       Name: GetObjVisibility
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   currentObject       The number of the object number to check
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              ???
+\
+\                         * Clear = ???
+\
+\                         * Set = object is the player object so no action taken
 \
 \ ******************************************************************************
 
-.sub_C2096
+.GetObjVisibility
 
- LDY currentObject
- CPY playerObject
- BEQ C2105
- JSR GetObjectAngles
- LDY currentObject
+ LDY currentObject      \ Set Y to the number of the object to check (so we are
+                        \ checking object #Y)
+
+ CPY playerObject       \ If this is the player object, jump to C2105 to return
+ BEQ C2105              \ from the subroutine with the C flag set ???
+
+ JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
+                        \ the viewer to object #Y and put them into the
+                        \ following variables:
+                        \
+                        \   * Set objectViewYaw(Hi Lo) to the yaw angle of the
+                        \     viewer's gaze towards the object, relative to the
+                        \     screen
+                        \
+                        \   * Set objectGazeYaw(Hi Lo) to the difference in yaw
+                        \     angles between the viewer's gaze towards the
+                        \     object and the object's gaze to wherever it is
+                        \     looking (so that's the object's gaze relative to
+                        \     the viewer's gaze)
+                        \
+                        \   * Set objectAdjacent(Hi Lo) to the length of the
+                        \     adjacent side in the right-angled triangle with
+                        \     the vector from the viewer to the object as the
+                        \     hypotenuse
+                        \
+                        \   * Set objectOpposite(Hi Lo) to the length of the
+                        \     opposite side in the right-angled triangle with
+                        \     the vector from the viewer to the object as the
+                        \     hypotenuse
+                        \
+                        \ This also sets hypotenuse(Hi Lo) to the same value as
+                        \ objectAdjacent(Hi Lo), and it sets objectToAnalyse to
+                        \ the number of the object that we are checking
+
+ LDY currentObject      \ Set X to the type of the object that we are checking
  LDX objectTypes,Y
- LDA L2107,X
- CMP L0CD4
- BCS C20AF
- LDA L0CD4
+
+ LDA L2107,X            \ Set A to the L2107 value for this object type ???
+
+ CMP L0CD4              \ If A < L0CD4 then set A = L0CD4, so:
+ BCS C20AF              \
+ LDA L0CD4              \   A = max(L0CD4, L2107)
 
 .C20AF
 
- STA xDeltaLo
- LDA #0
+ STA xDeltaLo           \ Set (A xDeltaLo) = (0 A)
+ LDA #0                 \                  = max(L0CD4, L2107)
+
  STA L0CD4
- JSR GetPitchAngleDelta
+
+ JSR GetPitchAngleDelta \ Call GetPitchAngleDelta to set angle(Hi Lo) to the
+                        \ angle of the right-angled triangle with adjacent
+                        \ side hypotenuse(Hi Lo) and opposite side (A xDeltaLo),
+                        \ like this:
+                        \
+                        \                                  _.-+           ^
+                        \                              _.-´   |           |
+                        \                 vector   _.-´       |         y-axis
+                        \                      _.-´           |
+                        \                  _.-´               |  (A xDeltaLo)
+                        \              _.-´                   |
+                        \           .-´ angle(Hi Lo)          |
+                        \   viewer +--------------------------+
+                        \                hypotenuse(Hi Lo)
+
  LDA objectViewYawLo
  SEC
  SBC angleLo
@@ -12832,14 +12961,20 @@
 \
 \       Name: L2107
 \       Type: Variable
-\   Category: ???
+\   Category: Gameplay
 \    Summary: ???
 \
 \ ******************************************************************************
 
 .L2107
 
- EQUB &3E, &46, &72, &7A, &4A, &4E, &C1
+ EQUB 62                \ Object type 0: Robot                                62
+ EQUB 70                \ Object type 1: Sentry                               70
+ EQUB 114               \ Object type 2: Tree                                114
+ EQUB 122               \ Object type 3: Boulder                             122
+ EQUB 74                \ Object type 4: Meanie                               74
+ EQUB 78                \ Object type 5: The Sentinel                         78
+ EQUB 193               \ Object type 6: Sentinel's tower                    193
 
 \ ******************************************************************************
 \
@@ -13059,19 +13194,13 @@
 
 .objectTypeEnergy
 
- EQUB 3                 \ Robot = 3 energy
-
- EQUB 3                 \ Sentry = 3 energy
-
- EQUB 1                 \ Tree = 1 energy
-
- EQUB 2                 \ Boulder = 2 energy
-
- EQUB 1                 \ Meanie = 1 energy
-
- EQUB 4                 \ The Sentinel = 4 energy
-
- EQUB 0                 \ The Sentinel's tower = 0 energy
+ EQUB 3                 \ Object type 0: Robot                    3 energy units
+ EQUB 3                 \ Object type 1: Sentry                   3 energy units
+ EQUB 1                 \ Object type 2: Tree                      1 energy unit
+ EQUB 2                 \ Object type 3: Boulder                  2 energy units
+ EQUB 1                 \ Object type 4: Meanie                    1 energy unit
+ EQUB 4                 \ Object type 5: The Sentinel             4 energy units
+ EQUB 0                 \ Object type 6: Sentinel's tower         0 energy units
 
 \ ******************************************************************************
 \
@@ -13127,7 +13256,7 @@
                         \ player's energy
                         \
                         \ Object #X is the robot we just spawned, so this will
-                        \ subtract three energy points from the player
+                        \ subtract three energy units from the player
 
  BCC hypr1              \ If the player still has positive energy then the call
                         \ to UpdatePlayerEnergy will clear the C flag, so jump
@@ -23772,12 +23901,12 @@ L314A = C3148+2
 
  LDA loopCounter        \ If loopCounter < 15 then we can't represent it with a
  CMP #15                \ high-energy robot (as that represents 15 energy
- BCC ener2              \ points), so jump to ener2 to skip to the next level
+ BCC ener2              \ units), so jump to ener2 to skip to the next level
                         \ down
 
  SBC #15                \ Subtract 15 from the loop counter as we are about to
  STA loopCounter        \ draw a high-energy robot that represents 15 energy
-                        \ points (this subtraction works because we just passed
+                        \ units (this subtraction works because we just passed
                         \ through a BCC, so the C flag must be set)
 
  LDA #6                 \ Draw a high-energy robot into the top part of the
@@ -23795,12 +23924,12 @@ L314A = C3148+2
 .ener2
 
  LDA loopCounter        \ If loopCounter < 3 then we can't represent it with a
- CMP #3                 \ blue robot (as that represents three energy points),
+ CMP #3                 \ blue robot (as that represents three energy units),
  BCC ener3              \ so jump to ener3 to skip to the next level down
 
  SBC #3                 \ Subtract 3 from the loop counter as we are about to
  STA loopCounter        \ draw a high-energy robot that represents three energy
-                        \ points (this subtraction works because we just passed
+                        \ units (this subtraction works because we just passed
                         \ through a BCC, so the C flag must be set)
 
  LDA #1                 \ Draw a blue robot into the top part of the screen (via
@@ -23821,7 +23950,7 @@ L314A = C3148+2
                         \ robots
 
  CMP #1                 \ If A < 1 then A must be zero, so jump to ener4 to move
- BCC ener4              \ on to the scanner as we have no more energy points to
+ BCC ener4              \ on to the scanner as we have no more energy units to
                         \ draw
 
  ASL A                  \ If we get here then A is 1 or 2, so double it to get
@@ -31229,9 +31358,12 @@ L314A = C3148+2
 \                hypotenuse(Hi Lo)
 \
 \ This triangle is typically a viewing vector from the player's eyes to a
-\ coordinate in the 3D world. The hypotenuse is the projection of the vector
-\ down onto the ground (i.e. y = 0), and it has already been calculated by this
-\ point from the x- and z-axis elements of the vector.
+\ coordinate in the 3D world. The length in hypotenuse(Hi Lo) is the projection
+\ of the vector down onto the ground (i.e. y = 0), and it has already been
+\ calculated by this point from the x- and z-axis elements of the vector. In
+\ this calculation this hypotenuse length is actually the adjacent side for the
+\ pitch angle above, but I've kept the same variable name from the first part of
+\ the calculation to make it easier to follow through.
 \
 \ So this routine takes the hypotenuse length and the y-axis element of the
 \ vector in (A xDeltaLo) and calculates the vector's pitch angle in
@@ -31249,7 +31381,7 @@ L314A = C3148+2
 \
 \   (A xDeltaLo)        A vertical delta (i.e. a y-axis element)
 \
-\   hypotenuse(Hi Lo)   The length of the hypotenuse
+\   hypotenuse(Hi Lo)   The length of the hypotenuse (i.e. adjacent side)
 \
 \   X                   The object number
 \
@@ -31258,6 +31390,9 @@ L314A = C3148+2
 \ Returns:
 \
 \   pitchDelta(Hi Lo)   The pitch angle delta
+\
+\   angle(Hi Lo)        The angle of the right-angled triangle with adjacent
+\                       side hypotenuse(Hi Lo) and opposite side (A xDeltaLo)
 \
 \ ******************************************************************************
 
@@ -33745,7 +33880,8 @@ L314A = C3148+2
 .DrawObject
 
  JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
-                        \ the viewer to the object into the following variables:
+                        \ the viewer to object #Y and put them into the
+                        \ following variables:
                         \
                         \   * Set objectViewYaw(Hi Lo) to the yaw angle of the
                         \     viewer's gaze towards the object, relative to the

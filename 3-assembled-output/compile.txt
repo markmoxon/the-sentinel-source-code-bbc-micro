@@ -4643,7 +4643,7 @@
      1A4F   99 88 0C   STA &0C88,Y
      1A52   28         PLP
      1A53   60         RTS
-.sub_C1A54
+.DrainEnemyEnergy
      1A54   A6 00      LDX &00
      1A56   38         SEC
      1A57   BD 88 0C   LDA &0C88,X
@@ -4660,9 +4660,9 @@
      1A71   DE 88 0C   DEC &0C88,X
      1A74   A6 01      LDX &01
      1A76   18         CLC
-.CRE09
+.dren1
      1A77   60         RTS
-.C1A78
+.dren2
      1A78   20 D8 1E   JSR &1ED8
      1A7B   4C EC 1A   JMP &1AEC
 .FinishLandscape
@@ -5521,7 +5521,7 @@
      2094   00
 .L2095
      2095   00
-.sub_C2096
+.GetObjVisibility
      2096   A4 01      LDY &01
      2098   C4 0B      CPY &0B
      209A   F0 69      BEQ &2105
