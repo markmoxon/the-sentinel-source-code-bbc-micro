@@ -13,7 +13,7 @@ import acorn
 # convoluted code, so I've gone for the manual slicing approach for more
 # control
 #
-# load(0x1900, "../../4-reference-binaries/pias/TheSentinel.bin")
+# load(0x1900, "../../4-reference-binaries/sam6/TheSentinel.bin")
 # move(0x0400, 0x1900, 0x6D00 - 0x1900)
 # move(0x5800, 0x4100, 0x4A00 - 0x4100)
 

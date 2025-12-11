@@ -1,26 +1,26 @@
 BEEBASM?=beebasm
 PYTHON?=python
 
-# A make command with no arguments will build the Play It Again Sam
+# A make command with no arguments will build the Play It Again Sam 6
 # variant with crc32 verification of the game binaries
 #
 # Optional arguments for the make command are:
 #
 #   variant=<release>   Build the specified variant:
 #
-#                         pias (default)
+#                         sam6 (default)
 #
 #   verify=no           Disable crc32 verification of the game binaries
 #
 # So, for example:
 #
-#   make variant=pias verify=no
+#   make variant=sam6 verify=no
 #
-# will build the Play It Again Sam variant with no crc32 verification
+# will build the Play It Again Sam 6 variant with no crc32 verification
 
 variant-number=1
-folder=pias
-suffix=-pias
+folder=sam6
+suffix=-sam6
 
 .PHONY:all
 all:

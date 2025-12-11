@@ -24,7 +24,7 @@
 \
 \ This source file produces the following SSD disc image:
 \
-\   * sentinel-pias.dsd
+\   * sentinel-sam6.dsd
 \
 \ This can be loaded into an emulator or a real BBC Micro.
 \

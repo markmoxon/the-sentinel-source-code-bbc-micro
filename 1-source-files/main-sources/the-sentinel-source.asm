@@ -31,7 +31,7 @@
 
  INCLUDE "1-source-files/main-sources/the-sentinel-build-options.asm"
 
- _PIAS                  = (_VARIANT = 1)
+ _SAM6                  = (_VARIANT = 1)
 
 \ ******************************************************************************
 \
