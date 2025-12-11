@@ -78,7 +78,9 @@
 
 .enemyObject
 
- SKIP 1                 \ An enemy object number, 0-7 ???
+ SKIP 1                 \ The object number of the enemy to which we are
+                        \ applying tactics in this iteration around the main
+                        \ loop (0-7)
 
 .currentObject
 
@@ -1660,10 +1662,9 @@
 .gameplayStack
 
  EQUB 0                 \ Storage for the stack pointer at the start of the
-                        \ sub_C16A8 routine, just after it is called from
-                        \ ProcessGameplay, so the return address at this point
-                        \ on the stack will take us back to ProcessGameplay
-                        \ when we next execute an RTS instruction
+                        \ ApplyEnemyTactics routine, so we can return back to
+                        \ the ProcessGameplay routine from deep within the
+                        \ tactics routines if required
 
 .L0C0E
 
@@ -5768,7 +5769,23 @@
 
 .play2
 
- JSR sub_C16A8          \ Something to do with enemies ???
+ JSR ApplyEnemyTactics  \ Apply tactics to the enemy object in enemyObject
+                        \
+                        \ This call also moves enemyObject on to the next enemy
+                        \ object (in the range 0 to 7), so the next time we
+                        \ reach this point in the gameplay loop, this call will
+                        \ apply tactics to the next enemy number
+                        \
+                        \ If there is no enemy object allocated to the object
+                        \ number (which may be the case if the landscape has
+                        \ fewer than eight enemies, or if an enemy has been
+                        \ absorbed), then no tactics are applied and the object
+                        \ number in enemyObject moves on by one, ready for the
+                        \ next time we reach this point in the gameplay loop
+                        \
+                        \ So we process each enemy once every eight iterations
+                        \ of the gameplay loop, irrespective of the number of
+                        \ enemies in the landscape
 
  LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is clear then the player
  BEQ play4              \ has not been absorbed by the Sentinel, so jump to
@@ -8195,71 +8212,130 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C16A8
+\       Name: ApplyEnemyTactics
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Apply tactics to an enemy object, setting things up so the next
+\             call applies tactics to the next enemy object
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   enemyObject         The object number of the enemy to which we apply tactics
+\                       (0 to 7)
 \
 \ ******************************************************************************
 
-.sub_C16A8
+.ApplyEnemyTactics
 
- TSX                    \ Store the stack pointer in gameplayStack so we can
- STX gameplayStack      \ restore the stack to this point in time (i.e. just
-                        \ after we call sub_C16A8 from the ProcessGameplay
-                        \ routine, so the return address at this point on the
-                        \ stack will take us back to ProcessGameplay when we
-                        \ next execute an RTS instruction)
+ TSX                    \ Store the stack pointer in gameplayStack, so we can
+ STX gameplayStack      \ return back to the ProcessGameplay routine from deep
+                        \ within the tactics routines if required
 
- LDX enemyObject
- LDA objectTypes,X
- CMP #&01
- BEQ C16B9
- CMP #&05
- BNE sub_C16C9
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are thinking of applying tactics in this iteration of
+                        \ the gameplay loop (so object #X is the object that we
+                        \ are considering)
 
-.C16B9
+ LDA objectTypes,X      \ Set A to the type of object #X
 
- STA titleObjectToDraw
+ CMP #1                 \ If we are considering applying tactics to a sentry (an
+ BEQ tact1              \ object of type 1) then jump to tact1 to apply tactics
 
- LDA objectFlags,X      \ Set A to the object flags for object #X
+ CMP #5                 \ If we are not applying tactics to the Sentinel (an
+ BNE MoveOnToNextEnemy  \ object of type 5), then enemyObject is neither a
+                        \ sentry nor the Sentinel
+                        \
+                        \ We only apply tactics to the Sentinel and sentries,
+                        \ so we don't need to apply tactics to this object
+                        \
+                        \ So jump to MoveOnToNextEnemy to skip all the tactics
+                        \ routines and move on to the next enemy so we can
+                        \ apply tactics to it in the next iteration of the
+                        \ gameplay loop (and this also returns from the
+                        \ subroutine using a tail call)
 
- BPL C16D9
- JSR sub_C1A54
- BCS sub_C16C9
- JMP C1871
+.tact1
+
+ STA titleObjectToDraw  \ If we get here then we are applying tactics to the
+                        \ Sentinel or a sentry, so set titleObjectToDraw to the
+                        \ corresponding object type so if the enemy causes the
+                        \ player to lose, then the game over screen will show
+                        \ that enemy type to indicate that it was responsible
+                        \ for the player's demise
+
+ LDA objectFlags,X      \ Set A to the object flags for object #X (which is the
+                        \ object that we are applying tactics to)
+
+ BPL ApplyTactics       \ If bit 7 of the object flags is clear then this object
+                        \ number is allocated to a valid sentry or Sentinel
+                        \ object, so jump to ApplyTactics to apply tactics to
+                        \ the object and return from the subroutine using a tail
+                        \ call
+
+                        \ If we get here then bit 7 of the enemy object's flags
+                        \ is clear, so the enemy has been removed from the
+                        \ landscape at some point
+
+ JSR sub_C1A54          \ ???
+
+ BCS MoveOnToNextEnemy  \ If the C flag is set, jump to MoveOnToNextEnemy to
+                        \ move on to the next enemy for the next iteration of
+                        \ the gameplay loop, returning from the subroutine using
+                        \ a tail call
+
+ JMP sub_C1871          \ ???
 
 \ ******************************************************************************
 \
-\       Name: sub_C16C9
+\       Name: MoveOnToNextEnemy
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Update enemyObject so the next time we consider applying enemy
+\             tactics, we apply them to the next enemy, looping from 7 to 0
 \
 \ ******************************************************************************
 
-.sub_C16C9
+.MoveOnToNextEnemy
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
 
- DEC enemyObject        \ ??? This is the only place enemyObject is updated, it
- BPL C16D4              \ seems to contain an enemy object number, 0 to 7
- LDA #&07
- STA enemyObject
+ DEC enemyObject        \ Decrement the number of the enemy object that we are
+                        \ considering for tactics, so the next iteration of the
+                        \ gameplay loop will apply tactics to the next enemy
 
-.C16D4
+ BPL next1              \ If enemyObject is positive then it is still in the
+                        \ range 0 to 7, so jump to next1 to skip the following
 
- LDA playerObject       \ Set viewingObject to the object number of the player
- STA viewingObject
+ LDA #7                 \ Set enemyObject = 7 to wrap the enemy number back up
+ STA enemyObject        \ to 7, so it iterates from 7 down to 0 and then back
+                        \ to 7 again
 
- RTS
+.next1
 
-.C16D9
+ LDA playerObject       \ Set viewingObject to the object number of the player,
+ STA viewingObject      \ so any future view calculations are done from the
+                        \ aspect of the player rather than the enemy object
+                        \ (until we return to apply tactics to the next enemy)
+
+ RTS                    \ Return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Apply tactics to the Sentinel or a sentry
+\
+\ ******************************************************************************
+
+.ApplyTactics
 
  LDA objRotationTimer,X
  CMP #&02
- BCS sub_C16C9
+ BCS MoveOnToNextEnemy
  LDA #&04
  STA objRotationTimer,X
  LDA #&14
@@ -8289,7 +8365,7 @@
  LDA #4
  STA titleObjectToDraw
 
- JMP sub_C16C9
+ JMP MoveOnToNextEnemy
 
 .C171B
 
@@ -8338,14 +8414,14 @@
  STA enemyData5,Y
  LDA #&02
  STA objectTypes,X
- JMP C1871
+ JMP sub_C1871
 
 .C176A
 
  STX viewingObject
  JSR sub_C1A54
  BCS C1774
- JMP C1871
+ JMP sub_C1871
 
 .C1774
 
@@ -8426,7 +8502,7 @@
  LDY enemyObject
  LDA #&1E
  STA objRotationTimer,Y
- JMP C1871
+ JMP sub_C1871
 
 .C17F0
 
@@ -8437,7 +8513,7 @@
 
 .C17F9
 
- JMP sub_C16C9
+ JMP MoveOnToNextEnemy
 
 .C17FC
 
@@ -8473,7 +8549,7 @@
 
 .P1835
 
- JMP sub_C16C9
+ JMP MoveOnToNextEnemy
 
 .C1838
 
@@ -8485,7 +8561,7 @@
  LDA #&1E
  STA objRotationTimer,Y
  BCS C187F
- JMP C1871
+ JMP sub_C1871
 
 .C184D
 
@@ -8511,7 +8587,16 @@
  STA objRotationTimer,Y
  LDX enemyData5,Y
 
-.C1871
+\ ******************************************************************************
+\
+\       Name: sub_C1871
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C1871
 
  LDA #&40
  STA L0C6D
@@ -8527,7 +8612,7 @@
 
 .C187F
 
- JMP sub_C16C9
+ JMP MoveOnToNextEnemy
 
 \ ******************************************************************************
 \
@@ -8880,7 +8965,9 @@
 
  INC enemyData1,X
 
- JMP sub_C1AEC          \ Jump to sub_C16C9 via sub_C1AEC to ???
+ JMP FinishEnemyTactics \ Jump to FinishEnemyTactics to stop applying tactics to
+                        \ the current enemy and return to the ProcessGameplay
+                        \ routine to continue with the gameplay loop
 
 \ ******************************************************************************
 \
@@ -8926,7 +9013,9 @@
  LDA #%10000000         \ Set bit 7 of sentinelHasWon to indicate that the
  STA sentinelHasWon     \ player has run out of energy and the Sentinel has won
 
- JMP sub_C1AEC          \ Jump to sub_C16C9 via sub_C1AEC to ???
+ JMP FinishEnemyTactics \ Jump to FinishEnemyTactics to stop applying tactics to
+                        \ the current enemy and return to the ProcessGameplay
+                        \ routine to continue with the gameplay loop
 
 .DrainObjectEnergy
 
@@ -9087,7 +9176,9 @@
 
  JSR DeleteObject       \ Delete object #X and remove it from the landscape
 
- JMP sub_C1AEC          \ Jump to sub_C16C9 via sub_C1AEC to ???
+ JMP FinishEnemyTactics \ Jump to FinishEnemyTactics to stop applying tactics to
+                        \ the current enemy and return to the ProcessGameplay
+                        \ routine to continue with the gameplay loop
 
 \ ******************************************************************************
 \
@@ -9222,22 +9313,28 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1AEC
+\       Name: FinishEnemyTactics
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Stop applying tactics to the current enemy and return to the
+\             ProcessGameplayroutine to continue with the gameplay loop
 \
 \ ******************************************************************************
 
-.sub_C1AEC
+.FinishEnemyTactics
 
  LDX gameplayStack      \ Restore the stack pointer to the position it was in
- TXS                    \ when we called sub_C16A8 from ProcessGameplay, so the
-                        \ return address at this point on the stack will take
-                        \ us back to ProcessGameplay when we next execute an RTS
-                        \ instruction
+ TXS                    \ when we called ApplyEnemyTactics from ProcessGameplay,
+                        \ so that executing an RTS instruction will now take us
+                        \ back to the ProcessGameplay routine, just after the
+                        \ JSR ApplyEnemyTactics instruction at play2
 
- JMP sub_C16C9          \ Jump to sub_C16C9 to ???
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to update enemyObject so the
+                        \ next time we consider applying enemy tactics in the
+                        \ gameplay loop, we apply them to the next enemy in the
+                        \ list, looping through object numbers 7 to 0 repeatedly
+                        \ and processing one enemy for each iteration of the
+                        \ gameplay loop
 
 \ ******************************************************************************
 \
@@ -9794,11 +9891,12 @@
 
  LDA objectTypes,Y      \ Set A to the object type for object #Y
 
- CMP #1                 \ If object #Y is a sentry (object type 1), jump to
- BEQ pkey13             \ pkey13
+ CMP #1                 \ If object #Y is a sentry (an object of type 1) then
+ BEQ pkey13             \ jump to pkey13
 
- CMP #5                 \ If object #Y is not the Sentinel, jump to pkey14 to
- BNE pkey14             \ move on to the next enemy object
+ CMP #5                 \ If object #Y is not the Sentinel (an object of type
+ BNE pkey14             \ 5), then jump to pkey14 to move on to the next enemy
+                        \ object
 
 
 .pkey13

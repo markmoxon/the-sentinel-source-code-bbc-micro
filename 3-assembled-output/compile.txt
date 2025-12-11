@@ -4166,7 +4166,7 @@
      16A5   FF
      16A6   FF
      16A7   FF
-.sub_C16A8
+.ApplyEnemyTactics
      16A8   BA         TSX
      16A9   8E 0D 0C   STX &0C0D
      16AC   A6 00      LDX &00
@@ -4175,24 +4175,24 @@
      16B3   F0 04      BEQ &16B9
      16B5   C9 05      CMP #&05
      16B7   D0 10      BNE &16C9
-.C16B9
+.tact1
      16B9   8D 1C 0C   STA &0C1C
      16BC   BD 00 01   LDA &0100,X
      16BF   10 18      BPL &16D9
      16C1   20 54 1A   JSR &1A54
      16C4   B0 03      BCS &16C9
      16C6   4C 71 18   JMP &1871
-.sub_C16C9
+.MoveOnToNextEnemy
      16C9   20 94 31   JSR &3194
      16CC   C6 00      DEC &00
      16CE   10 04      BPL &16D4
      16D0   A9 07      LDA #&07
      16D2   85 00      STA &00
-.C16D4
+.next1
      16D4   A5 0B      LDA &0B
      16D6   85 6E      STA &6E
      16D8   60         RTS
-.C16D9
+.ApplyTactics
      16D9   BD 30 0C   LDA &0C30,X
      16DC   C9 02      CMP #&02
      16DE   B0 E9      BCS &16C9
@@ -4391,7 +4391,7 @@
      1869   A9 32      LDA #&32
      186B   99 30 0C   STA &0C30,Y
      186E   BE A0 0C   LDX &0CA0,Y
-.C1871
+.sub_C1871
      1871   A9 40      LDA #&40
      1873   8D 6D 0C   STA &0C6D
 .C1876
@@ -4723,7 +4723,7 @@
 .sub_C1AE7
      1AE7   20 F3 1A   JSR &1AF3
      1AEA   B0 1E      BCS &1B0A
-.sub_C1AEC
+.FinishEnemyTactics
      1AEC   AE 0D 0C   LDX &0C0D
      1AEF   9A         TXS
      1AF0   4C C9 16   JMP &16C9
