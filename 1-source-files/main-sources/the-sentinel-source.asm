@@ -96,7 +96,10 @@
 
 .xTileViewer
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The tile x-coordinate of the viewer, but with the axes
+                        \ rotated to match the orientation of the viewer, so we
+                        \ can draw the landscape along the line of sight,
+                        \ towards the viewer's tile
 
 .L0004
 
@@ -285,7 +288,8 @@
 
 .viewingArcRightYaw
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The yaw angle of the right edge of the viewing arc,
+                        \ where the arc is 90 degrees wide
 
 .processAction
 
@@ -302,7 +306,10 @@
 
 .zTileViewer
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The tile z-coordinate of the viewer, but with the axes
+                        \ rotated to match the orientation of the viewer, so we
+                        \ can draw the landscape along the line of sight,
+                        \ towards the viewer's tile
 
 .moreColumnsToFill
 
@@ -335,7 +342,10 @@
 
 .screenLeftYawHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The high byte of the yaw angle of the left edge of
+                        \ the screen, reduced into the range of a single
+                        \ 90-degree quadrant (so it's relative to the 90-degree
+                        \ viewing arc)
 
 .drawingTableIndex
 
@@ -480,7 +490,8 @@
 
 .xTileViewLeft
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The tile number at the left edge of the tile row we
+                        \ are currently processing when drawing the landscape
 
 .cosVectorPitchLo
 
@@ -489,7 +500,8 @@
 
 .xTileViewRight
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The tile number at the right edge of the tile row we
+                        \ are currently processing when drawing the landscape
 
 .cosVectorPitchHi
 
@@ -534,7 +546,9 @@
 
 .xTileViewLeftEdge
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The tile number at the left edge of the visible
+                        \ portion of the row we are currently processing when
+                        \ drawing the landscape
 
 .yCoordLo
 
@@ -544,7 +558,9 @@
 
 .xTileViewRightEdge
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The tile number at the right edge of the visible
+                        \ portion of the row we are currently processing when
+                        \ drawing the landscape
 
 .zCoordLo
 
@@ -675,7 +691,7 @@
 
 .pitchDeltaLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The delta between two pitch angles (low byte)
 
 .maxPitchAngle
 
@@ -893,7 +909,8 @@
 
 .tileIsOnScreen
 
- SKIP 0                 \ ???
+ SKIP 0                 \ Information on whether a tile is fully on-screen,
+                        \ partially on-screen or fully off-screen
 
 .L007F
 
@@ -968,7 +985,7 @@
 
 .pitchDeltaHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The delta between two pitch angles (high byte)
 
 .sinA
 
@@ -1929,19 +1946,31 @@
 
 .objectOppositeLo
 
- EQUB &E0               \ ???
+ EQUB &E0               \ The height of an object relative to the viewer,
+                        \ expressed as the length of the opposite side in a
+                        \ triangle with the vector from the viewer to the object
+                        \ as the hypotenuse (low byte)
 
 .objectOppositeHi
 
- EQUB &B7               \ ???
+ EQUB &B7               \ The height of an object relative to the viewer,
+                        \ expressed as the length of the opposite side in a
+                        \ triangle with the vector from the viewer to the object
+                        \ as the hypotenuse (high byte)
 
 .objectAdjacentLo
 
- EQUB &E4               \ ???
+ EQUB &E4               \ The distance of an object from the viewer, expressed
+                        \ as the length of the adjacent side in a triangle with
+                        \ the vector from the viewer to the object as the
+                        \ hypotenuse (low byte)
 
 .objectAdjacentHi
 
- EQUB &52               \ ???
+ EQUB &52               \ The distance of an object from the viewer, expressed
+                        \ as the length of the adjacent side in a triangle with
+                        \ the vector from the viewer to the object as the
+                        \ hypotenuse (high byte)
 
 .sightsAreVisible
 
@@ -23326,8 +23355,8 @@ L314A = C3148+2
  STA screenOrBuffer     \ routines to draw into the screen buffer (as opposed
                         \ to drawing directly onto the screen)
 
- LDA #2                 \ Call ConfigureBuffer with A = 2 ???
- JSR ConfigureBuffer
+ LDA #2                 \ Call ConfigureBuffer with A = 2 to set up the screen
+ JSR ConfigureBuffer    \ buffer for use as a column buffer
 
 .game5
 
@@ -23491,8 +23520,9 @@ L314A = C3148+2
  STA lastPanKeyPressed  \ key being pressed, so we can check later on whether it
                         \ is still being held down
 
- LDA #0                 \ Set numberOfScrolls = 0 ???
- STA numberOfScrolls
+ LDA #0                 \ Set numberOfScrolls = 0 to reset the scroll counter
+ STA numberOfScrolls    \ so the interrupt handler will not scroll the screen
+                        \ while we set up the new pan
 
  STA L0C1E              \ Clear bit 7 of L0C1E ???
 
