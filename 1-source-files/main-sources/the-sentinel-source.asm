@@ -5505,7 +5505,7 @@
 
  EQUB 0
 
- EQUB 0                 \ This byte appears to be unused
+ EQUB &00               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -26517,6 +26517,21 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
+\       Name: secretCodeStash
+\       Type: Subroutine
+\   Category: Landscape
+\    Summary: A stash for calculated values for each iteration in the
+\             CheckSecretCode routine
+\
+\ ******************************************************************************
+
+.secretCodeStash
+
+ SKIP 0                 \ The secret code stash shares memory with the first
+                        \ part of the screen buffer at screenBufferRow0
+
+\ ******************************************************************************
+\
 \       Name: screenBufferRow0
 \       Type: Subroutine
 \   Category: Landscape
@@ -26580,37 +26595,16 @@ L314A = C3148+2
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
- CLEAR &3F00, &4040     \ Memory from &3F00 to &4040 has three separate uses
- ORG &3F00              \
-                        \ During startup it is used to store the startup
-                        \ routines ConfigureMachine and ClearMemory, which
-                        \ aren't needed again once the game has started
-                        \
-                        \ While the landscape is being generated it is used to
-                        \ store the secret code stash
-                        \
-                        \ While the game is running it is used to store the
-                        \ screen buffer for character row 0 (when part of a row
-                        \ buffer), or for character rows 0 and 16 (when part of
-                        \ a column buffer)
-                        \
-                        \ These lines rewind BeebAsm's assembly back to
-                        \ screenBufferRow0 (which is at address &3F00), and
-                        \ clear the block from that point to the end of the
-                        \ buffer (which is at address &4040), so we can assemble
-                        \ the secret code stash
-
 \ ******************************************************************************
 \
-\       Name: secretCodeStash
+\       Name: screenBufferRow1
 \       Type: Subroutine
 \   Category: Landscape
-\    Summary: A stash for calculated values for each iteration in the
-\             CheckSecretCode routine
+\    Summary: The screen buffer for character row 1
 \
 \ ******************************************************************************
 
-.secretCodeStash
+.screenBufferRow1
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
@@ -26628,427 +26622,10 @@ L314A = C3148+2
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
-
- CLEAR &3F00, &3F80     \ Memory from &3F00 to &3F80 has three separate uses
- ORG &3F00              \
-                        \ During startup it is used to store the startup
-                        \ routines ConfigureMachine and ClearMemory, which
-                        \ aren't needed again once the game has started
-                        \
-                        \ While the landscape is being generated it is used to
-                        \ store the secret code stash
-                        \
-                        \ While the game is running it is used to store the
-                        \ screen buffer for character row 0 (when part of a row
-                        \ buffer), or for character rows 0 and 16 (when part of
-                        \ a column buffer)
-                        \
-                        \ These lines rewind BeebAsm's assembly back to
-                        \ secretCodeStash (which is at address &3F00), and
-                        \ clear the block from that point to the end of the
-                        \ stash (which is at address &3F80), so we can assemble
-                        \ the startup routines
-
-\ ******************************************************************************
-\
-\       Name: ConfigureMachine
-\       Type: Subroutine
-\   Category: Setup
-\    Summary: Configure the custom screen mode, set the break handler to clear
-\             memory, move code, reset timers and set the interrupt handler
-\
-\ ------------------------------------------------------------------------------
-\
-\ The custom screen mode is based on screen mode 5, but with only 25 character
-\ rows rather than 32. This gives the game screen a letterbox appearance.
-\
-\ The custom mode has a vertical resolution of 25 * 8 = 200 pixels, compared to
-\ the 256 pixels of standard mode 5. The horizontal resolution is the same at
-\ 160 pixels.
-\
-\ Screen memory for the custom mode runs from &6000 to &7F3F, with four pixels
-\ per byte and four colours per pixel.
-\
-\ ******************************************************************************
-
- SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
- ROR gameInProgress     \ not currently in progress and that we are in the title
-                        \ and preview screens (so the interrupt handler doesn't
-                        \ progress the game)
-                        \
-                        \ This code is never actually run in this location
-                        \ (identical code can be found at the start of the
-                        \ ResetVariables routine)
-
-.ConfigureMachine
-
- LDA #4                 \ Call OSBYTE with A = 4, X = 1 and Y = 0 to disable
- LDY #0                 \ cursor editing
- LDX #1
- JSR OSBYTE
-
- LDA #144               \ Call OSBYTE with A = 144, X = 0 and Y = 0 to switch
- LDX #0                 \ interlace on
- LDY #0
- JSR OSBYTE
-
- LDA #22                \ Switch to screen mode 5 with the following VDU
- JSR OSWRCH             \ command:
- LDA #5                 \
- JSR OSWRCH             \   VDU 22, 5
-
- SEI                    \ Disable interrupts so we can update the 6845 registers
-
- LDA #6                 \ Set 6845 register R6 = 25
- STA SHEILA+&00         \
- LDA #25                \ This is the "vertical displayed" register, which sets
- STA SHEILA+&01         \ the number of displayed character rows to 25. For
-                        \ comparison, this value is 32 for standard mode 5, but
-                        \ we claw back seven rows to create the game's letterbox
-                        \ screen mode
-
- LDA #7                 \ Set 6845 register R7 = 32
- STA SHEILA+&00         \
- LDA #32                \ This is the "vertical sync position" register, which
- STA SHEILA+&01         \ determines the vertical sync position with respect to
-                        \ the reference, programmed in character row times. For
-                        \ comparison this is 34 for mode 5, but it needs to be
-                        \ adjusted for our custom screen's vertical sync
-
- LDA #10                \ Set 6845 register R10 = %00100000
- STA SHEILA+&00         \
- LDA #%00100000         \ This is the "cursor start" register, and bits 5 and 6
- STA SHEILA+&01         \ define the "cursor display mode", as follows:
-                        \
-                        \   * %00 = steady, non-blinking cursor
-                        \
-                        \   * %01 = do not display a cursor
-                        \
-                        \   * %10 = fast blinking cursor (blink at 1/16 of the
-                        \           field rate)
-                        \
-                        \   * %11 = slow blinking cursor (blink at 1/32 of the
-                        \           field rate)
-                        \
-                        \ We can therefore turn off the cursor completely by
-                        \ setting cursor display mode %01, with bit 6 of R10
-                        \ clear and bit 5 of R10 set
-
- CLI                    \ Re-enable interrupts
-
- LDA #151               \ Call OSBYTE with A = 151, X = &42 and Y = %11111111 to
- LDX #&42               \ write the value %11111111 to SHEILA+&42
- LDY #%11111111         \
- JSR OSBYTE             \ This sets the direction of all eight ports of the 6522
-                        \ System VIA to output by setting the corresponding bits
-                        \ in the Data Direction Register B (SHEILA &42)
-
- LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = %00000101 to
- LDX #&40               \ write the value %00000101 to SHEILA+&40
- LDY #%00000101         \
- JSR OSBYTE             \ Writing a value of %vaaa to SHEILA+&40 writes to the
-                        \ System VIA's addressable latch, setting latch address
-                        \ %aaa to value v
-                        \
-                        \ This therefore sets address %101 to 1, which is
-                        \ address B5 in the System VIA
-                        \
-                        \ We now we set B4 as well
-
- LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = %00001100 to
- LDX #&40               \ write the value %00001100 to SHEILA+&40
- LDY #%00001100         \
- JSR OSBYTE             \ Writing a value of %vaaa to SHEILA+&40 writes to the
-                        \ System VIA's addressable latch, setting latch address
-                        \ %aaa to value v
-                        \
-                        \ This therefore sets address %100 to 0, which is
-                        \ address B4 in the System VIA
-                        \
-                        \ B4 and B5 in the System VIA control the address of the
-                        \ start of screen memory and the screen size, so this
-                        \ sets screen memory to &6000 and screen size to 8K (see
-                        \ page 429 of the "Advanced User Guide for the BBC
-                        \ Micro" by Bray, Dickens and Holmes for details)
-
- LDA #0                 \ Call OSBYTE with A = 0 and X = 255 to fetch the
- LDX #255               \ operating system version into X
- JSR OSBYTE
-
- CPX #0                 \ If X = 0 then this is either a BBC Micro running an
- BEQ setp1              \ operating system version of 1.00 or earlier, or it's
-                        \ an Electron, so in either case jump to setp1 to skip
-                        \ the following
-
-                        \ If we get here then this is not an Electron or an
-                        \ early operating system, so it must be a BBC Micro with
-                        \ MOS 1.20 or later, or a BBC Master
-
- LDA #200               \ Call OSBYTE with A = 200, X = 2 and Y = 0 to set the
- LDX #2                 \ normal action for the ESCAPE key and clear memory if
- LDY #0                 \ the BREAK key is pressed
- JSR OSBYTE
-
- JMP setp3              \ Jump to setp3 to skip the setup for the Electron
-
-.setp1
-
-                        \ If we get here then this is either a BBC Micro running
-                        \ MOS 1.00 or earlier, or it's an Electron
-                        \
-                        \ In MOS 0.10, OSBYTE 200 does not let you set the BREAK
-                        \ key to clear memory, so we need to set this up by hand
-                        \ (otherwise crackers could load the game on MOS 0.10
-                        \ and simply press BREAK to access the loaded game code)
-                        \
-                        \ The Electron and MOS 1.00 do not need this code, as
-                        \ OSBYTE 200 is supported in these versions of the
-                        \ operating system, but OSBYTE 0 doesn't distinguish
-                        \ between the Electron and MOS 1.00 and earlier (they
-                        \ all return X = 0)
-                        \
-                        \ There's no harm in manually clearing memory on those
-                        \ systems, though, so the following code is run on
-                        \ BREAK on MOS 1.00 and earlier and on the Electron
-                        \
-                        \ To set this up, we copy the break handler routine from
-                        \ ClearMemory to address BRKI (this points to the
-                        \ cassette filing system workspace, which is unused
-                        \ now that the game is loaded, so it's a suitable
-                        \ location for our handler)
-
- LDX #&1C               \ Set a counter in X for the size of the ClearMemory
-                        \ routine
-
-.setp2
-
- LDA ClearMemory,X      \ Copy the X-th byte of the ClearMemory routine into the
- STA BRKI,X             \ X-th byte of BRKI
-
- DEX                    \ Decrement the byte counter
-
- BPL setp2              \ Loop back until we have copied the whole ClearMemory
-                        \ routine to BRKI
-
- LDA #&4C               \ Set the Break Intercept code to the following, so that
- STA BRKIV              \ BRKI gets called when the BREAK key is pressed:
- LDA #LO(BRKI)          \
- STA BRKIV+1            \    4C 80 03   JMP BRKI
- LDA #HI(BRKI)          \
- STA BRKIV+2            \ &4C is the opcode for the JMP instruction, and BRKI is
-                        \ at address &0380 (part of the cassette filing system
-                        \ workspace)
-
-.setp3
-
-                        \ Next we copy a block of game code in memory as
-                        \ follows:
-                        \
-                        \   * &4100-&49FF is copied to &5800-&60FF
-                        \
-                        \ The game binary could easily have been structured to
-                        \ avoid this copy, so presumably it's just done to make
-                        \ the game code harder to crack
-
- LDA #&00               \ Set (Q P) = &4100
- STA P                  \
- STA R                  \ We use this as the source address for the copy
- LDA #&41
- STA Q
-
- LDA #&58               \ Set (S R) = &5800
- STA S                  \
-                        \ We use this as the destination address for the copy
-
-.setp4
-
- LDY #0                 \ Set up a byte counter in Y
-
-.setp5
-
- LDA (P),Y              \ Copy the Y-th byte of (Q P) to the Y-th byte of (S R)
- STA (R),Y
-
- DEY                    \ Decrement the byte counter
-
- BNE setp5              \ Loop back until we have copied a whole page of bytes
-
- INC Q                  \ Increment the high byte of (Q P) to point to the next
-                        \ page in memory
-
- INC S                  \ Increment the high byte of (S R) to point to the next
-                        \ page in memory
-
- LDA Q                  \ Loop back until (Q P) reaches &4A00, at which point we
- CMP #&4A               \ have copied the whole block of memory
- BCC setp4
-
- SEI                    \ Disable interrupts so we can update the interrupt
-                        \ vector and VIA
-
- LDA IRQ1V              \ Store the current address from the IRQ1V vector in
- STA irq1Address        \ irq1Address, so the IRQ handler can jump to it after
- LDA IRQ1V+1            \ implementing the custom interrupt handler
- STA irq1Address+1
-
-                        \ We now wait for the vertical sync, which we can check
-                        \ by reading bit 1 of the 6522 System VIA status byte
-                        \ (SHEILA &4D), which is set if vertical sync has
-                        \ occurred on the video system
-
- LDA #%00000010         \ Set a bit mask in A that we can use to read bit 1 of
-                        \ the 6522 System VIA status byte
-
-.setp6
-
- BIT SHEILA+&4D         \ Loop around until bit 1 of the 6522 System VIA status
- BEQ setp6              \ byte is set, so we wait until the vertical sync
-
-                        \ We now set timer 1 in the 6522 User VIA to count down
-                        \ regularly, triggering the interrupt handler routine at
-                        \ IRQHandler every time it counts down
-                        \
-                        \ The timer is initially set to count down from 14,592
-                        \ to zero, and then a value of 19,998 is latched into
-                        \ the timer so that it triggers the interrupt every time
-                        \ it counts down from 20,000 to zero (the latching
-                        \ process takes two ticks, which gives us a total count
-                        \ of 20,000)
-                        \
-                        \ The timer counts down at 1 MHz. or one million times a
-                        \ second, so this means the interrupt is triggered every
-                        \ 0.02 seconds, or exactly 50 times a second
-                        \
-                        \ This regular interrupt is used to progress the game
-                        \ counters and manage the screen panning effect (see the
-                        \ IRQHandler routine for details)
-
- LDA #%01000000         \ Set 6522 User VIA auxiliary control register ACR
- STA SHEILA+&6B         \ (SHEILA &6B) bits 7 and 6 to disable PB7 (which is one
-                        \ of the pins on the user port) and set continuous
-                        \ interrupts for timer 1
-
- LDA #%11000000         \ Set 6522 User VIA interrupt enable register IER
- STA SHEILA+&6E         \ (SHEILA &4E) bits 6 and 7 (i.e. enable the Timer1
-                        \ interrupt from the User VIA)
-
- LDA #&00               \ Set 6522 User VIA T1C-L timer 1 low-order counter
- STA SHEILA+&64         \ (SHEILA &64) to &00 (so this sets the low-order
-                        \ counter but does not start counting until the
-                        \ high-order counter is set)
-
- LDA #&39               \ Set 6522 User VIA T1C-H timer 1 high-order counter
- STA SHEILA+&65         \ (SHEILA &45) to &39 to start the T1 counter
-                        \ counting down from &3900 (14592) at a rate of 1 MHz
-
- LDA #&1E               \ Set 6522 User VIA T1L-L timer 1 low-order latches
- STA SHEILA+&66         \ to &1E (so this sets the low-order counter but does
-                        \ not start counting until the high-order counter is
-                        \ set)
-
- LDA #&4E               \ Set 6522 User VIA T1L-H timer 1 high-order latches
- STA SHEILA+&67         \ to &4E (so this sets the timer to &4E1E (19998) but
-                        \ does not start counting until the current timer has
-                        \ run down)
-
- LDA #HI(IRQHandler)    \ Set the IRQ1V vector to IRQHandler, so the IRQHandler
- STA IRQ1V+1            \ routine is now the interrupt handler
- LDA #LO(IRQHandler)
- STA IRQ1V
-
- CLI                    \ Re-enable interrupts
-
- JMP MainTitleLoop      \ Jump to MainTitleLoop to start the main title loop,
-                        \  wherewe display the title screen, fetch the landscape
-                        \ number and code, preview the landscape and then jump
-                        \ to the main game loop
-
-\ ******************************************************************************
-\
-\       Name: ClearMemory
-\       Type: Subroutine
-\   Category: Setup
-\    Summary: Clear game memory, so that the BREAK key can remove all trace of
-\             the game code in early versions of the operating system
-\
-\ ******************************************************************************
-
-.ClearMemory
-
- LDA #&04               \ Set (Q P) = &0400
- STA Q                  \
- LDA #&00               \ We use this as the start address for clearing memory,
- STA P                  \ which is where the game code starts
-                        \
-                        \ This also sets A = 0, which we can use to zero memory
-
-.cmem1
-
- LDY #&FF               \ Set Y = &FF to use as a byte counter
-
-.cmem2
-
- STA (P),Y              \ Zero the Y-th byte at (Q P)
-
- DEY                    \ Decrement the byte counter
-
- BNE cmem2              \ Loop back until we have zeroed a whole page of memory
-
- INC Q                  \ Increment the high byte of (Q P) to point to the next
-                        \ page in memory
-
- LDX Q                  \ Loop back until (Q P) reaches &7C00, at which point we
- CPX #&7C               \ have zeroed all the game code (including any code
- BCC cmem1              \ still left at the higher memory address where it's
-                        \ first loaded)
-
- LDA #&00               \ Set the Break Intercept code to a BRK instruction to
- STA BRKIV              \ reinstate the default break handler
-
- RTS                    \ Return from the subroutine
-
- EQUB &20, &65, &74, &73, &36, &0D, &12, &CA    \ These bytes are unused until
- EQUB &19, &20, &20, &20, &20, &20, &20, &4C    \ the game is in progress, at
- EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
- EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
- EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
- EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial content is just
- EQUB &0D, &12, &E8, &05, &20, &0D              \ workspace noise and is ignored
-                                                \
-                                                \ It actually contains snippets
-                                                \ of the original source code
-
-\ ******************************************************************************
-\
-\       Name: screenBufferRow1
-\       Type: Subroutine
-\   Category: Landscape
-\    Summary: The screen buffer for character row 1
-\
-\ ******************************************************************************
-
-.screenBufferRow1
-
- EQUB &12, &F2, &05, &20, &0D, &12, &FC, &05    \ The initial content is just
- EQUB &20, &0D, &13, &06, &05, &20, &0D, &13    \ workspace noise and is ignored
- EQUB &10, &05, &20, &0D, &13, &1A, &05, &20    \
- EQUB &0D, &13, &24, &05, &20, &0D, &13, &2E    \ It actually contains snippets
- EQUB &2A, &2E, &4D, &49, &4E, &49, &20, &4C    \ of the original source code
- EQUB &44, &41, &23, &31, &32, &38, &3A, &53
- EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
- EQUB &2C, &58, &3A, &53, &54, &41, &20, &4D
- EQUB &45, &4D, &4F, &52, &59, &2C, &58, &0D
- EQUB &13, &38, &1F, &20, &20, &20, &20, &20
- EQUB &20, &4C, &44, &41, &23, &30, &3A, &53
- EQUB &54, &41, &20, &4D, &45, &41, &4E, &59
- EQUB &53, &43, &41, &4E, &2C, &58, &0D, &13
- EQUB &42, &22, &20, &20, &20, &20, &20, &20
- EQUB &4C, &44, &41, &23, &36, &34, &3A, &53
- EQUB &54, &41, &20, &4D, &54, &52, &59, &43
- EQUB &4E, &54, &2C, &58, &3A, &72, &74, &73
- EQUB &0D, &13, &4C, &05, &20, &0D, &13, &56
- EQUB &1A, &2E, &4D, &45, &41, &4E, &20, &4C
- EQUB &44, &41, &23, &34, &30, &3A, &53, &54
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
 \ ******************************************************************************
 \
@@ -27062,11 +26639,11 @@ L314A = C3148+2
 
 .screenBufferRow17
 
- EQUB &41, &20, &43, &4F, &56, &45, &52, &0D    \ The initial content is just
- EQUB &13, &60, &1B, &20, &20, &20, &20, &20    \ workspace noise and is ignored
- EQUB &20, &4C, &44, &58, &20, &45, &54, &45    \
- EQUB &4D, &3A, &53, &54, &58, &20, &58, &54    \ It actually contains snippets
- EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ of the original source code
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27582,7 +27159,7 @@ L314A = C3148+2
  EQUB %00               \ Object type 8: 3D text block 2               One phase
  EQUB %00               \ Object type 9: 3D text block 3               One phase
 
- EQUB 0                 \ This byte appears to be unused
+ EQUB &00               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -33152,13 +32729,12 @@ L314A = C3148+2
                         \ During gameplay it is used to store the L5A00 and
                         \ L5B00 variables
                         \
-                        \ These lines rewind BeebAsm's assembly back to L5A00
-                        \ (which is at address &5A00), and clear the block
-                        \ from that point to stripData (which is at address
-                        \ &5C00), so we can assemble the landscape generation
-                        \ variables
+                        \ These lines rewind BeebAsm's assembly back to &5A00
+                        \ and clear the block from that point to the end of the
+                        \ L5A00 and L5B00 variables at &5C00, so we can assemble
+                        \ the landscape variables
                         \
-                        \ The initial contents of the game binary in this
+                        \ The initial contents of the game binary at this
                         \ address actually contains snippets of the original
                         \ source code, left over from the BBC Micro assembly
                         \ process, so we include this workspace noise to ensure
@@ -35468,6 +35044,421 @@ L314A = C3148+2
  RTS                    \ Return from the subroutine
 
  EQUB &23               \ This byte appears to be unused
+
+\ ******************************************************************************
+\
+\       Name: ConfigureMachine
+\       Type: Subroutine
+\   Category: Setup
+\    Summary: Configure the custom screen mode, set the break handler to clear
+\             memory, move code, reset timers and set the interrupt handler
+\
+\ ------------------------------------------------------------------------------
+\
+\ The custom screen mode is based on screen mode 5, but with only 25 character
+\ rows rather than 32. This gives the game screen a letterbox appearance.
+\
+\ The custom mode has a vertical resolution of 25 * 8 = 200 pixels, compared to
+\ the 256 pixels of standard mode 5. The horizontal resolution is the same at
+\ 160 pixels.
+\
+\ Screen memory for the custom mode runs from &6000 to &7F3F, with four pixels
+\ per byte and four colours per pixel.
+\
+\ ******************************************************************************
+
+ CLEAR &3F00, &4100     \ Memory from &3F00 to &4100 has three separate uses
+ ORG &3F00              \
+                        \ During startup it is used to store the startup
+                        \ routines ConfigureMachine and ClearMemory, which
+                        \ aren't needed again once the game has started
+                        \
+                        \ While the landscape is being generated it is used to
+                        \ store the secret code stash at secretCodeStash
+                        \
+                        \ While the game is running it is used to store the
+                        \ first few rows of the screen buffer, starting from
+                        \ screenBufferRow0
+                        \
+                        \ These lines rewind BeebAsm's assembly back to &3F00
+                        \ and clear the block from that point to the end of the
+                        \ startup code at &4100, so we can assemble the startup
+                        \ routines
+                        \
+                        \ At the end of the ClearMemory routine, the initial
+                        \ contents of the game binary actually contains snippets
+                        \ of the original source code, left over from the BBC
+                        \ Micro assembly process, so we include this workspace
+                        \ noise to ensure that we generate an exact match for
+                        \ the game binary
+
+ SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
+ ROR gameInProgress     \ not currently in progress and that we are in the title
+                        \ and preview screens (so the interrupt handler doesn't
+                        \ progress the game)
+                        \
+                        \ This code is never actually run in this location
+                        \ (identical code can be found at the start of the
+                        \ ResetVariables routine)
+
+.ConfigureMachine
+
+ LDA #4                 \ Call OSBYTE with A = 4, X = 1 and Y = 0 to disable
+ LDY #0                 \ cursor editing
+ LDX #1
+ JSR OSBYTE
+
+ LDA #144               \ Call OSBYTE with A = 144, X = 0 and Y = 0 to switch
+ LDX #0                 \ interlace on
+ LDY #0
+ JSR OSBYTE
+
+ LDA #22                \ Switch to screen mode 5 with the following VDU
+ JSR OSWRCH             \ command:
+ LDA #5                 \
+ JSR OSWRCH             \   VDU 22, 5
+
+ SEI                    \ Disable interrupts so we can update the 6845 registers
+
+ LDA #6                 \ Set 6845 register R6 = 25
+ STA SHEILA+&00         \
+ LDA #25                \ This is the "vertical displayed" register, which sets
+ STA SHEILA+&01         \ the number of displayed character rows to 25. For
+                        \ comparison, this value is 32 for standard mode 5, but
+                        \ we claw back seven rows to create the game's letterbox
+                        \ screen mode
+
+ LDA #7                 \ Set 6845 register R7 = 32
+ STA SHEILA+&00         \
+ LDA #32                \ This is the "vertical sync position" register, which
+ STA SHEILA+&01         \ determines the vertical sync position with respect to
+                        \ the reference, programmed in character row times. For
+                        \ comparison this is 34 for mode 5, but it needs to be
+                        \ adjusted for our custom screen's vertical sync
+
+ LDA #10                \ Set 6845 register R10 = %00100000
+ STA SHEILA+&00         \
+ LDA #%00100000         \ This is the "cursor start" register, and bits 5 and 6
+ STA SHEILA+&01         \ define the "cursor display mode", as follows:
+                        \
+                        \   * %00 = steady, non-blinking cursor
+                        \
+                        \   * %01 = do not display a cursor
+                        \
+                        \   * %10 = fast blinking cursor (blink at 1/16 of the
+                        \           field rate)
+                        \
+                        \   * %11 = slow blinking cursor (blink at 1/32 of the
+                        \           field rate)
+                        \
+                        \ We can therefore turn off the cursor completely by
+                        \ setting cursor display mode %01, with bit 6 of R10
+                        \ clear and bit 5 of R10 set
+
+ CLI                    \ Re-enable interrupts
+
+ LDA #151               \ Call OSBYTE with A = 151, X = &42 and Y = %11111111 to
+ LDX #&42               \ write the value %11111111 to SHEILA+&42
+ LDY #%11111111         \
+ JSR OSBYTE             \ This sets the direction of all eight ports of the 6522
+                        \ System VIA to output by setting the corresponding bits
+                        \ in the Data Direction Register B (SHEILA &42)
+
+ LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = %00000101 to
+ LDX #&40               \ write the value %00000101 to SHEILA+&40
+ LDY #%00000101         \
+ JSR OSBYTE             \ Writing a value of %vaaa to SHEILA+&40 writes to the
+                        \ System VIA's addressable latch, setting latch address
+                        \ %aaa to value v
+                        \
+                        \ This therefore sets address %101 to 1, which is
+                        \ address B5 in the System VIA
+                        \
+                        \ We now we set B4 as well
+
+ LDA #151               \ Call OSBYTE with A = 151, X = &40 and Y = %00001100 to
+ LDX #&40               \ write the value %00001100 to SHEILA+&40
+ LDY #%00001100         \
+ JSR OSBYTE             \ Writing a value of %vaaa to SHEILA+&40 writes to the
+                        \ System VIA's addressable latch, setting latch address
+                        \ %aaa to value v
+                        \
+                        \ This therefore sets address %100 to 0, which is
+                        \ address B4 in the System VIA
+                        \
+                        \ B4 and B5 in the System VIA control the address of the
+                        \ start of screen memory and the screen size, so this
+                        \ sets screen memory to &6000 and screen size to 8K (see
+                        \ page 429 of the "Advanced User Guide for the BBC
+                        \ Micro" by Bray, Dickens and Holmes for details)
+
+ LDA #0                 \ Call OSBYTE with A = 0 and X = 255 to fetch the
+ LDX #255               \ operating system version into X
+ JSR OSBYTE
+
+ CPX #0                 \ If X = 0 then this is either a BBC Micro running an
+ BEQ setp1              \ operating system version of 1.00 or earlier, or it's
+                        \ an Electron, so in either case jump to setp1 to skip
+                        \ the following
+
+                        \ If we get here then this is not an Electron or an
+                        \ early operating system, so it must be a BBC Micro with
+                        \ MOS 1.20 or later, or a BBC Master
+
+ LDA #200               \ Call OSBYTE with A = 200, X = 2 and Y = 0 to set the
+ LDX #2                 \ normal action for the ESCAPE key and clear memory if
+ LDY #0                 \ the BREAK key is pressed
+ JSR OSBYTE
+
+ JMP setp3              \ Jump to setp3 to skip the setup for the Electron
+
+.setp1
+
+                        \ If we get here then this is either a BBC Micro running
+                        \ MOS 1.00 or earlier, or it's an Electron
+                        \
+                        \ In MOS 0.10, OSBYTE 200 does not let you set the BREAK
+                        \ key to clear memory, so we need to set this up by hand
+                        \ (otherwise crackers could load the game on MOS 0.10
+                        \ and simply press BREAK to access the loaded game code)
+                        \
+                        \ The Electron and MOS 1.00 do not need this code, as
+                        \ OSBYTE 200 is supported in these versions of the
+                        \ operating system, but OSBYTE 0 doesn't distinguish
+                        \ between the Electron and MOS 1.00 and earlier (they
+                        \ all return X = 0)
+                        \
+                        \ There's no harm in manually clearing memory on those
+                        \ systems, though, so the following code is run on
+                        \ BREAK on MOS 1.00 and earlier and on the Electron
+                        \
+                        \ To set this up, we copy the break handler routine from
+                        \ ClearMemory to address BRKI (this points to the
+                        \ cassette filing system workspace, which is unused
+                        \ now that the game is loaded, so it's a suitable
+                        \ location for our handler)
+
+ LDX #&1C               \ Set a counter in X for the size of the ClearMemory
+                        \ routine
+
+.setp2
+
+ LDA ClearMemory,X      \ Copy the X-th byte of the ClearMemory routine into the
+ STA BRKI,X             \ X-th byte of BRKI
+
+ DEX                    \ Decrement the byte counter
+
+ BPL setp2              \ Loop back until we have copied the whole ClearMemory
+                        \ routine to BRKI
+
+ LDA #&4C               \ Set the Break Intercept code to the following, so that
+ STA BRKIV              \ BRKI gets called when the BREAK key is pressed:
+ LDA #LO(BRKI)          \
+ STA BRKIV+1            \    4C 80 03   JMP BRKI
+ LDA #HI(BRKI)          \
+ STA BRKIV+2            \ &4C is the opcode for the JMP instruction, and BRKI is
+                        \ at address &0380 (part of the cassette filing system
+                        \ workspace)
+
+.setp3
+
+                        \ Next we copy a block of game code in memory as
+                        \ follows:
+                        \
+                        \   * &4100-&49FF is copied to &5800-&60FF
+                        \
+                        \ The game binary could easily have been structured to
+                        \ avoid this copy, so presumably it's just done to make
+                        \ the game code harder to crack
+
+ LDA #&00               \ Set (Q P) = &4100
+ STA P                  \
+ STA R                  \ We use this as the source address for the copy
+ LDA #&41
+ STA Q
+
+ LDA #&58               \ Set (S R) = &5800
+ STA S                  \
+                        \ We use this as the destination address for the copy
+
+.setp4
+
+ LDY #0                 \ Set up a byte counter in Y
+
+.setp5
+
+ LDA (P),Y              \ Copy the Y-th byte of (Q P) to the Y-th byte of (S R)
+ STA (R),Y
+
+ DEY                    \ Decrement the byte counter
+
+ BNE setp5              \ Loop back until we have copied a whole page of bytes
+
+ INC Q                  \ Increment the high byte of (Q P) to point to the next
+                        \ page in memory
+
+ INC S                  \ Increment the high byte of (S R) to point to the next
+                        \ page in memory
+
+ LDA Q                  \ Loop back until (Q P) reaches &4A00, at which point we
+ CMP #&4A               \ have copied the whole block of memory
+ BCC setp4
+
+ SEI                    \ Disable interrupts so we can update the interrupt
+                        \ vector and VIA
+
+ LDA IRQ1V              \ Store the current address from the IRQ1V vector in
+ STA irq1Address        \ irq1Address, so the IRQ handler can jump to it after
+ LDA IRQ1V+1            \ implementing the custom interrupt handler
+ STA irq1Address+1
+
+                        \ We now wait for the vertical sync, which we can check
+                        \ by reading bit 1 of the 6522 System VIA status byte
+                        \ (SHEILA &4D), which is set if vertical sync has
+                        \ occurred on the video system
+
+ LDA #%00000010         \ Set a bit mask in A that we can use to read bit 1 of
+                        \ the 6522 System VIA status byte
+
+.setp6
+
+ BIT SHEILA+&4D         \ Loop around until bit 1 of the 6522 System VIA status
+ BEQ setp6              \ byte is set, so we wait until the vertical sync
+
+                        \ We now set timer 1 in the 6522 User VIA to count down
+                        \ regularly, triggering the interrupt handler routine at
+                        \ IRQHandler every time it counts down
+                        \
+                        \ The timer is initially set to count down from 14,592
+                        \ to zero, and then a value of 19,998 is latched into
+                        \ the timer so that it triggers the interrupt every time
+                        \ it counts down from 20,000 to zero (the latching
+                        \ process takes two ticks, which gives us a total count
+                        \ of 20,000)
+                        \
+                        \ The timer counts down at 1 MHz. or one million times a
+                        \ second, so this means the interrupt is triggered every
+                        \ 0.02 seconds, or exactly 50 times a second
+                        \
+                        \ This regular interrupt is used to progress the game
+                        \ counters and manage the screen panning effect (see the
+                        \ IRQHandler routine for details)
+
+ LDA #%01000000         \ Set 6522 User VIA auxiliary control register ACR
+ STA SHEILA+&6B         \ (SHEILA &6B) bits 7 and 6 to disable PB7 (which is one
+                        \ of the pins on the user port) and set continuous
+                        \ interrupts for timer 1
+
+ LDA #%11000000         \ Set 6522 User VIA interrupt enable register IER
+ STA SHEILA+&6E         \ (SHEILA &4E) bits 6 and 7 (i.e. enable the Timer1
+                        \ interrupt from the User VIA)
+
+ LDA #&00               \ Set 6522 User VIA T1C-L timer 1 low-order counter
+ STA SHEILA+&64         \ (SHEILA &64) to &00 (so this sets the low-order
+                        \ counter but does not start counting until the
+                        \ high-order counter is set)
+
+ LDA #&39               \ Set 6522 User VIA T1C-H timer 1 high-order counter
+ STA SHEILA+&65         \ (SHEILA &45) to &39 to start the T1 counter
+                        \ counting down from &3900 (14592) at a rate of 1 MHz
+
+ LDA #&1E               \ Set 6522 User VIA T1L-L timer 1 low-order latches
+ STA SHEILA+&66         \ to &1E (so this sets the low-order counter but does
+                        \ not start counting until the high-order counter is
+                        \ set)
+
+ LDA #&4E               \ Set 6522 User VIA T1L-H timer 1 high-order latches
+ STA SHEILA+&67         \ to &4E (so this sets the timer to &4E1E (19998) but
+                        \ does not start counting until the current timer has
+                        \ run down)
+
+ LDA #HI(IRQHandler)    \ Set the IRQ1V vector to IRQHandler, so the IRQHandler
+ STA IRQ1V+1            \ routine is now the interrupt handler
+ LDA #LO(IRQHandler)
+ STA IRQ1V
+
+ CLI                    \ Re-enable interrupts
+
+ JMP MainTitleLoop      \ Jump to MainTitleLoop to start the main title loop,
+                        \  wherewe display the title screen, fetch the landscape
+                        \ number and code, preview the landscape and then jump
+                        \ to the main game loop
+
+\ ******************************************************************************
+\
+\       Name: ClearMemory
+\       Type: Subroutine
+\   Category: Setup
+\    Summary: Clear game memory, so that the BREAK key can remove all trace of
+\             the game code in early versions of the operating system
+\
+\ ******************************************************************************
+
+.ClearMemory
+
+ LDA #&04               \ Set (Q P) = &0400
+ STA Q                  \
+ LDA #&00               \ We use this as the start address for clearing memory,
+ STA P                  \ which is where the game code starts
+                        \
+                        \ This also sets A = 0, which we can use to zero memory
+
+.cmem1
+
+ LDY #&FF               \ Set Y = &FF to use as a byte counter
+
+.cmem2
+
+ STA (P),Y              \ Zero the Y-th byte at (Q P)
+
+ DEY                    \ Decrement the byte counter
+
+ BNE cmem2              \ Loop back until we have zeroed a whole page of memory
+
+ INC Q                  \ Increment the high byte of (Q P) to point to the next
+                        \ page in memory
+
+ LDX Q                  \ Loop back until (Q P) reaches &7C00, at which point we
+ CPX #&7C               \ have zeroed all the game code (including any code
+ BCC cmem1              \ still left at the higher memory address where it's
+                        \ first loaded)
+
+ LDA #&00               \ Set the Break Intercept code to a BRK instruction to
+ STA BRKIV              \ reinstate the default break handler
+
+ RTS                    \ Return from the subroutine
+
+ EQUB &20, &65, &74, &73, &36, &0D, &12, &CA    \ These bytes are unused until
+ EQUB &19, &20, &20, &20, &20, &20, &20, &4C    \ the game is in progress, at
+ EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
+ EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
+ EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
+ EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial content is just
+ EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored
+ EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
+ EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
+ EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
+ EQUB &24, &05, &20, &0D, &13, &2E, &2A, &2E
+ EQUB &4D, &49, &4E, &49, &20, &4C, &44, &41
+ EQUB &23, &31, &32, &38, &3A, &53, &54, &41
+ EQUB &20, &4D, &45, &41, &4E, &59, &2C, &58
+ EQUB &3A, &53, &54, &41, &20, &4D, &45, &4D
+ EQUB &4F, &52, &59, &2C, &58, &0D, &13, &38
+ EQUB &1F, &20, &20, &20, &20, &20, &20, &4C
+ EQUB &44, &41, &23, &30, &3A, &53, &54, &41
+ EQUB &20, &4D, &45, &41, &4E, &59, &53, &43
+ EQUB &41, &4E, &2C, &58, &0D, &13, &42, &22
+ EQUB &20, &20, &20, &20, &20, &20, &4C, &44
+ EQUB &41, &23, &36, &34, &3A, &53, &54, &41
+ EQUB &20, &4D, &54, &52, &59, &43, &4E, &54
+ EQUB &2C, &58, &3A, &72, &74, &73, &0D, &13
+ EQUB &4C, &05, &20, &0D, &13, &56, &1A, &2E
+ EQUB &4D, &45, &41, &4E, &20, &4C, &44, &41
+ EQUB &23, &34, &30, &3A, &53, &54, &41, &20
+ EQUB &43, &4F, &56, &45, &52, &0D, &13, &60
+ EQUB &1B, &20, &20, &20, &20, &20, &20, &4C
+ EQUB &44, &58, &20, &45, &54, &45, &4D, &3A
+ EQUB &53, &54, &58, &20, &58, &54
 
 \ ******************************************************************************
 \
