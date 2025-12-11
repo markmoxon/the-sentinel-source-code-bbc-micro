@@ -512,7 +512,7 @@
 
  SKIP 0                 \ The x-coordinate of an object or point (bottom byte)
                         \
-                        \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
+                        \ Stored as a 24-bit value xCoord(Hi Lo Bot)
 
 .L0034
 
@@ -522,7 +522,7 @@
 
  SKIP 0                 \ The y-coordinate of an object or point (bottom byte)
                         \
-                        \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
+                        \ Stored as a 24-bit value yCoord(Hi Lo Bot)
 
 .L0035
 
@@ -532,7 +532,7 @@
 
  SKIP 0                 \ The z-coordinate of an object or point (bottom byte)
                         \
-                        \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
+                        \ Stored as a 24-bit value zCoord(Hi Lo Bot)
 
 .L0036
 
@@ -542,7 +542,7 @@
 
  SKIP 0                 \ The x-coordinate of an object or point (low byte)
                         \
-                        \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
+                        \ Stored as a 24-bit value xCoord(Hi Lo Bot)
 
 .xTileViewLeftEdge
 
@@ -554,7 +554,7 @@
 
  SKIP 0                 \ The y-coordinate of an object or point (low byte)
                         \
-                        \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
+                        \ Stored as a 24-bit value yCoord(Hi Lo Bot)
 
 .xTileViewRightEdge
 
@@ -566,7 +566,7 @@
 
  SKIP 0                 \ The z-coordinate of an object or point (low byte)
                         \
-                        \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
+                        \ Stored as a 24-bit value zCoord(Hi Lo Bot)
 
 .L0039
 
@@ -576,13 +576,13 @@
 
  SKIP 1                 \ The x-coordinate of an object or point (high byte)
                         \
-                        \ Stored as a 24-bit value (xCoordHi xCoordLo xCoordBot)
+                        \ Stored as a 24-bit value xCoord(Hi Lo Bot)
 
 .yCoordHi
 
  SKIP 0                 \ The y-coordinate of an object or point (high byte)
                         \
-                        \ Stored as a 24-bit value (yCoordHi yCoordLo yCoordBot)
+                        \ Stored as a 24-bit value yCoord(Hi Lo Bot)
 
 .polygonType
 
@@ -602,7 +602,7 @@
 
  SKIP 0                 \ The z-coordinate of an object or point (high byte)
                         \
-                        \ Stored as a 24-bit value (zCoordHi zCoordLo zCoordBot)
+                        \ Stored as a 24-bit value zCoord(Hi Lo Bot)
 
 .drawViewAngles
 
@@ -1324,13 +1324,13 @@
 \ ------------------------------------------------------------------------------
 \
 \ The y-coordinate (i.e. the altitude) of each object is stored as a 16-bit
-\ number of the form (yObjectHi yObjectLo). The low byte is effectively a
-\ fractional part, as a y-coordinate of (1 0) is the same magnitude as an
-\ x-coordinate or z-coordinate of 1.
+\ number of the form yObject(Hi Lo). The low byte is effectively a fractional
+\ part, as a y-coordinate of (1 0) is the same magnitude as an x-coordinate or
+\ z-coordinate of 1.
 \
 \ A full coordinate in the 3D space is therefore in the form:
 \
-\   (xObject, (yObjectHi yObjectLo), zObject)
+\   (xObject, yObject(Hi Lo), zObject)
 \
 \ ******************************************************************************
 
@@ -1396,13 +1396,13 @@
 \ ------------------------------------------------------------------------------
 \
 \ The y-coordinate (i.e. the altitude) of each object is stored as a 16-bit
-\ number of the form (yObjectHi yObjectLo). The low byte is effectively a
-\ fractional part, as a y-coordinate of (1 0) is the same magnitude as an
-\ x-coordinate or z-coordinate of 1.
+\ number of the form yObject(Hi Lo). The low byte is effectively a fractional
+\ part, as a y-coordinate of (1 0) is the same magnitude as an x-coordinate or
+\ z-coordinate of 1.
 \
 \ A full coordinate in the 3D space is therefore in the form:
 \
-\   (xObject, (yObjectHi yObjectLo), zObject)
+\   (xObject, yObject(Hi Lo), zObject)
 \
 \ ******************************************************************************
 
@@ -2646,7 +2646,7 @@
 \
 \ The calculation is as follows:
 \
-\   (angleHi angleLo) = arctan( (A T) / (V W) )
+\   angle(Hi Lo) = arctan( (A T) / (V W) )
 \
 \ where (A T) < (V W).
 \
@@ -2662,7 +2662,7 @@
 \
 \ Returns:
 \
-\   (angleHi angleLo)   The pitch or yaw angle from the origin to the coordinate
+\   angle(Hi Lo)        The pitch or yaw angle from the origin to the coordinate
 \
 \   angleTangent        Contains 256 * (A T) / (V W), which is the tangent of
 \                       the pitch or yaw angle
@@ -2953,7 +2953,7 @@
  STA angleTangent       \ get to the tangent of 45 degrees, which should really
                         \ be represented by (1 0) in our scale
 
- LDA #&00               \ Set (angleHi angleLo) = (&20 0)
+ LDA #&00               \ Set angle(Hi Lo) = (&20 0)
  STA angleLo            \
  LDA #&20               \ This represents an angle of 45 degrees, as a full
  STA angleHi            \ circle of 360 degrees is represented by (1 0 0), and:
@@ -3012,7 +3012,7 @@
                         \ So we return the tangent from the routine in
                         \ angleTangent
 
- LDA arctanLo,Y         \ Set (angleHi angleLo) = arctan(Y)
+ LDA arctanLo,Y         \ Set angle(Hi Lo) = arctan(Y)
  STA angleLo
  LDA arctanHi,Y
  STA angleHi
@@ -3031,8 +3031,8 @@
 
  JMP gang16             \ Otherwise both bit 7 and bit 6 of G must be clear, so
                         \ jump to gang16 to return from the subroutine, as the
-                        \ result in (angleHi angleLo) is already accurate and
-                        \ doesn't need interpolating
+                        \ result in angle(Hi Lo) is already accurate and doesn't
+                        \ need interpolating
 
 .gang12
 
@@ -3040,7 +3040,7 @@
                         \ result as well as interpolating the result between
                         \ arctan(Y) and arctan(Y + 1)
 
- LDA angleLo            \ Set (A T) = (angleHi angleLo) - arctan(Y + 1)
+ LDA angleLo            \ Set (A T) = angle(Hi Lo) - arctan(Y + 1)
  SEC                    \           = arctan(Y) - arctan(Y + 1)
  SBC arctanLo+1,Y       \
  STA T                  \ So (A T) contains the amount of rounding we need to
@@ -3076,13 +3076,13 @@
                         \ If we get here then we need to interpolate the result
                         \ between arctan(Y) and arctan(Y + 1)
 
- LDA angleLo            \ Set (angleHi angleLo) = (angleHi angleLo)
- CLC                    \                                        + arctan(Y + 1)
- ADC arctanLo+1,Y       \                       = arctan(Y) and arctan(Y + 1)
- STA angleLo            \
- LDA angleHi            \ We will divide this value by two to get the average
- ADC arctanHi+1,Y       \ of arctan(Y) and arctan(Y + 1), but first we need to
- STA angleHi            \ add the rounding in (U T), if applicable
+ LDA angleLo            \ Set angle(Hi Lo) = angle(Hi Lo) + arctan(Y + 1)
+ CLC                    \                  = arctan(Y) + arctan(Y + 1)
+ ADC arctanLo+1,Y       \
+ STA angleLo            \ We will divide this value by two to get the average
+ LDA angleHi            \ of arctan(Y) and arctan(Y + 1), but first we need to
+ ADC arctanHi+1,Y       \ add the rounding in (U T), if applicable
+ STA angleHi
 
  BIT G                  \ If bit 7 of G is clear, jump to gang15 to skip the
  BPL gang15             \ following, as the rounding in (U T) is only applied
@@ -3091,7 +3091,7 @@
                         \ If we get here then bit 7 of G is set and we need to
                         \ add on the rounding in (U T)
 
- LDA angleLo            \ Set (angleHi angleLo) = (angleHi angleLo) + (U T)
+ LDA angleLo            \ Set angle(Hi Lo) = angle(Hi Lo) + (U T)
  CLC
  ADC T
  STA angleLo
@@ -3101,7 +3101,7 @@
 
 .gang15
 
- LSR angleHi            \ Set (angleHi angleLo) = (angleHi angleLo) / 2
+ LSR angleHi            \ Set angle(Hi Lo) = angle(Hi Lo) / 2
  ROR angleLo            \
                         \ So we now have the average value of arctan(Y) and
                         \ arctan(Y + 1), including rounding if applicable, so
@@ -3358,7 +3358,7 @@
                         \
                         \   (A T) = sin(yawRadians)
 
- STA sinAngleHi,X       \ Set (sinAngleHi sinAngleLo) = (A T)
+ STA sinAngleHi,X       \ Set sinAngle(Hi Lo) = (A T)
  LDA T                  \
  AND #%11111110         \ with the sign bit cleared in bit 0 of sinAngleLo to
  STA sinAngleLo,X       \ denote a positive result
@@ -9107,7 +9107,7 @@
 
  JSR GetPlayerEnergyBCD \ Set A to the player's energy in BCD
 
- CLC                    \ Set (Y X) = (landscapeNumberHi landscapeNumberLo) + A
+ CLC                    \ Set (Y X) = landscapeNumber(Hi Lo) + A
  ADC landscapeNumberLo  \
  TAX                    \ This addition is done in BCD so the result is a new
  LDA landscapeNumberHi  \ landscape number that's also in BCD (which we need to
@@ -9413,15 +9413,15 @@
  JSR GetSightsVector    \ Calculate the vector from the player's eyes to the
                         \ sights, returning it in both angle format:
                         \
-                        \   (vectorYawAngleHi vectorYawAngleLo)
+                        \   vectorYawAngle(Hi Lo)
                         \
-                        \   (vectorPitchAngleHi vectorPitchAngleLo)
+                        \   vectorPitchAngle(Hi Lo)
                         \
                         \ and as a cartesian vector:
                         \
-                        \   [ (xVectorLo xVectorBot) ]
-                        \   [ (yVectorLo yVectorBot) ]
-                        \   [ (zVectorLo zVectorBot) ]
+                        \   [ xVector(Lo Bot) ]
+                        \   [ yVector(Lo Bot) ]
+                        \   [ zVector(Lo Bot) ]
                         \
                         \ This vector is the vector from the player's eyes to
                         \ the sights, divided by 16 by the GetVectorForAngles
@@ -9882,7 +9882,7 @@
                         \
                         \   (U A) + (objectYawAngle,X 0) - (10 0)
                         \
-                        \ and store it in (vectorYawAngleHi vectorYawAngleLo)
+                        \ and store it in vectorYawAngle(Hi Lo)
 
  CLC                    \ Clear the C flag for the following
 
@@ -9896,8 +9896,8 @@
  STA vectorYawAngleHi   \
                         \ and store it in vectorYawAngleHi
 
-                        \ So (vectorYawAngleHi vectorYawAngleLo) is now equal to
-                        \ the following:
+                        \ So vectorYawAngle(Hi Lo) is now equal to the
+                        \ following:
                         \
                         \   (xSights * 32) + (objectYawAngle,X 0) - (10 0)
 
@@ -9921,7 +9921,7 @@
                         \   (U A) + (objectPitchAngle,X 0) + (3 32)
                         \
                         \ and store it in both (A T) and in
-                        \ (vectorPitchAngleHi vectorPitchAngleLo)
+                        \ vectorPitchAngle(Hi Lo)
 
  CLC                    \ Calculate the low byte and store it in both T and
  ADC #32                \ vectorPitchAngleLo
@@ -9936,18 +9936,18 @@
 
                         \ So by this point we have the following:
                         \
-                        \   (vectorYawAngleHi vectorYawAngleLo)
+                        \   vectorYawAngle(Hi Lo)
                         \   = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
                         \
-                        \   (vectorPitchAngleHi vectorPitchAngleLo)
+                        \   vectorPitchAngle(Hi Lo)
                         \   = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
                         \
                         \ We now fall through into GetVectorForAngles to convert
                         \ these two angles into a cartesian vector:
                         \
-                        \   [ (xVectorLo xVectorBot) ]
-                        \   [ (yVectorLo yVectorBot) ]
-                        \   [ (zVectorLo zVectorBot) ]
+                        \   [ xVector(Lo Bot) ]
+                        \   [ yVector(Lo Bot) ]
+                        \   [ zVector(Lo Bot) ]
 
 \ ******************************************************************************
 \
@@ -9964,16 +9964,16 @@
 \
 \ The pitch and yaw angles are 16-bit numbers as follows:
 \
-\   (vectorPitchAngleHi vectorPitchAngleLo)
+\   vectorPitchAngle(Hi Lo)
 \
-\   (vectorYawAngleHi vectorYawAngleLo)
+\   vectorYawAngle(Hi Lo)
 \
 \ The same vector, but expressed as a cartesian vector, is calculated as
 \ follows:
 \
-\   [ (xVectorLo xVectorBot) ]
-\   [ (yVectorLo yVectorBot) ]
-\   [ (zVectorLo zVectorBot) ]
+\   [ xVector(Lo Bot) ]
+\   [ yVector(Lo Bot) ]
+\   [ zVector(Lo Bot) ]
 \
 \ The calculation is this:
 \
@@ -9999,7 +9999,7 @@
                         \ the y-axis is the up-down axis
                         \
                         \ We store the resulting y-coordinate in the 16-bit
-                        \ variable (yVectorLo yVectorBot)
+                        \ variable yVector(Lo Bot)
                         \
                         \ We calculate yVector by considering a triangle with
                         \ the sights vector as the hypotenuse, and we drop the
@@ -10070,13 +10070,13 @@
  LDY #1                 \ Set (A X) = cosVectorPitchAngle / 16
  JSR DivideBy16
 
- STA cosVectorPitchHi   \ Set (cosVectorPitchHi cosVectorPitchLo)
- STX cosVectorPitchLo   \                             = cosVectorPitchAngle / 16
+ STA cosVectorPitchHi   \ Set cosVectorPitch(Hi Lo) = cosVectorPitchAngle / 16
+ STX cosVectorPitchLo
 
  LDY #0                 \ Set (A X) = sinVectorPitchAngle / 16
  JSR DivideBy16
 
- STA yVectorLo          \ Set (yVectorLo yVectorBot) = sinVectorPitchAngle / 16
+ STA yVectorLo          \ Set yVector(Lo Bot) = sinVectorPitchAngle / 16
  STX yVectorBot         \                           
                         \ So we now have the y-coordinate of the sights vector
                         \ as follows:
@@ -10159,7 +10159,7 @@
                         \
                         \ which is what we calculate now
 
- LDA vectorYawAngleLo   \ Set (A T) = (vectorYawAngleHi vectorYawAngleLo)
+ LDA vectorYawAngleLo   \ Set (A T) = vectorYawAngle(Hi Lo)
  STA T
  LDA vectorYawAngleHi
 
@@ -10177,13 +10177,13 @@
  LDY #1                 \ Call MultiplyCoords with Y = 1 and X = 2 to calculate
  LDX #2                 \ the following:
  JSR MultiplyCoords     \
-                        \   (zVectorLo zVectorBot)
+                        \   zVector(Lo Bot)
                         \       = cosVectorPitchAngle * cosVectorYawAngle / 16
 
  LDY #0                 \ Zero X and Y and fall through into MultiplyCoords to
  LDX #0                 \ calculate the following:
                         \
-                        \   (xVectorLo xVectorBot)
+                        \   xVector(Lo Bot)
                         \        = cosVectorPitchAngle * sinVectorYawAngle / 16
                         \
                         \ and return from the subroutine using a tail call
@@ -10202,19 +10202,19 @@
 \
 \ When Y = 0, it calculates:
 \
-\   (cosVectorPitchHi cosVectorPitchLo) * (sinAngleHi sinAngleLo)
+\   cosVectorPitch(Hi Lo) * sinAngle(Hi Lo)
 \
 \ i.e. cosVectorPitch * sinAngle
 \
 \ When Y = 1, it calculates:
 \
-\   (cosVectorPitchHi cosVectorPitchLo) * (cosAngleHi cosAngleLo)
+\   cosVectorPitch(Hi Lo) * cosAngle(Hi Lo)
 \
 \ i.e. cosVectorPitch * cosAngle
 \
-\ When X = 0, store the result in (xVectorLo xVectorBot).
+\ When X = 0, store the result in xVector(Lo Bot).
 \
-\ When X = 2, store the result in (zVectorLo zVectorBot).
+\ When X = 2, store the result in zVector(Lo Bot).
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10232,9 +10232,9 @@
 \
 \   X                   Offset of the variable to store the result in:
 \
-\                         * 0 = (xVectorLo xVectorBot)
+\                         * 0 = xVector(Lo Bot)
 \
-\                         * 2 = (zVectorLo zVectorBot)
+\                         * 2 = zVector(Lo Bot)
 \
 \ ******************************************************************************
 
@@ -10244,7 +10244,7 @@
  STA H                  \ (in bit 7), so setting H  0 ensures that that the
                         \ result is positive
 
- LDA cosVectorPitchLo   \ Set (QQ PP) = (cosVectorPitchHi cosVectorPitchLo)
+ LDA cosVectorPitchLo   \ Set (QQ PP) = cosVectorPitch(Hi Lo)
  STA PP                 \
  LDA cosVectorPitchHi   \ where (QQ PP) is a 16-bit signed number
  STA QQ
@@ -10261,9 +10261,9 @@
 
  STA xVectorLo,X        \ Store the result in:
  LDA T                  \
- STA xVectorBot,X       \   * (xVectorLo xVectorBot) when X = 0
+ STA xVectorBot,X       \   * xVector(Lo Bot) when X = 0
                         \
-                        \   * (zVectorLo zVectorBot) when X = 2
+                        \   * zVector(Lo Bot) when X = 2
 
  RTS                    \ Return from the subroutine
 
@@ -10348,15 +10348,15 @@
 \
 \ where the coordinate consists of 24-bit signed numbers:
 \
-\   [ xCoord ]   [ (xCoordHi xCoordLo xCoordBot) ]
-\   [ yCoord ] = [ (yCoordHi yCoordLo yCoordBot) ]
-\   [ zCoord ]   [ (zCoordHi zCoordLo zCoordBot) ]
+\   [ xCoord ]   [ xCoord(Hi Lo Bot) ]
+\   [ yCoord ] = [ yCoord(Hi Lo Bot) ]
+\   [ zCoord ]   [ zCoord(Hi Lo Bot) ]
 \
 \ and the vector consists of 16-bit signed numbers:
 \
-\   [ xVector ]   [ (xVectorLo xVectorBot) ]
-\   [ yVector ] = [ (yVectorLo yVectorBot) ]
-\   [ zVector ]   [ (zVectorLo zVectorBot) ]
+\   [ xVector ]   [ xVector(Lo Bot) ]
+\   [ yVector ] = [ yVector(Lo Bot) ]
+\   [ zVector ]   [ zVector(Lo Bot) ]
 \
 \ ******************************************************************************
 
@@ -10378,9 +10378,9 @@
                         \
                         \ where:
                         \
-                        \   * xCoord is (xCoordHi xCoordLo xCoordBot)
+                        \   * xCoord is xCoord(Hi Lo Bot)
                         \
-                        \   * xVector is (xVectorLo xVectorBot)
+                        \   * xVector is xVector(Lo Bot)
                         \
                         \ We do this for each axis in turn, but let's talk about
                         \ the x-axis
@@ -10443,9 +10443,9 @@
 \
 \ The gaze is defined by the following vector:
 \
-\   [ xVector ]   [ (xVectorLo xVectorBot) ]
-\   [ yVector ] = [ (yVectorLo yVectorBot) ]
-\   [ zVector ]   [ (zVectorLo zVectorBot) ]
+\   [ xVector ]   [ xVector(Lo Bot) ]
+\   [ yVector ] = [ yVector(Lo Bot) ]
+\   [ zVector ]   [ zVector(Lo Bot) ]
 \
 \ This contains the gaze vector, scaled down to be very small, so we can trace
 \ the line of the gaze by repeatedly adding this vector to the coordinates of
@@ -10459,23 +10459,11 @@
 \
 \   viewingObject       The number of the object that is performing the gaze
 \
-\   xVectorLo           The x-coordinate of the scaled-down gaze vector (low
-\                       byte)
+\   xVector(Lo Bot)     The x-coordinate of the scaled-down gaze vector
 \
-\   xVectorBot          The x-coordinate of the scaled-down gaze vector (bottom
-\                       byte)
+\   yVector(Lo Bot)     The y-coordinate of the scaled-down gaze vector
 \
-\   yVectorLo           The y-coordinate of the scaled-down gaze vector (low
-\                       byte)
-\
-\   yVectorBot          The y-coordinate of the scaled-down gaze vector (bottom
-\                       byte)
-\
-\   zVectorLo           The z-coordinate of the scaled-down gaze vector (low
-\                       byte)
-\
-\   zVectorBot          The z-coordinate of the scaled-down gaze vector (bottom
-\                       byte)
+\   zVector(Lo Bot)     The z-coordinate of the scaled-down gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10526,11 +10514,11 @@
  JSR GetObjectCoords    \ Fetch the cartesian coordinates of the viewing object
                         \ as three 24-bit numbers, as follows:
                         \
-                        \   (xCoordHi xCoordLo xCoordBot)
+                        \   xCoord(Hi Lo Bot)
                         \
-                        \   (yCoordHi yCoordLo yCoordBot)
+                        \   yCoord(Hi Lo Bot)
                         \
-                        \   (zCoordHi zCoordLo zCoordBot)
+                        \   zCoord(Hi Lo Bot)
                         \
                         \ We now repeatedly add the scaled-down gaze vector to
                         \ this coordinate to step along the gaze from the
@@ -10546,15 +10534,15 @@
                         \
                         \ where:
                         \
-                        \   [ xCoord ]   [ (xCoordHi xCoordLo xCoordBot) ]
-                        \   [ yCoord ] = [ (yCoordHi yCoordLo yCoordBot) ]
-                        \   [ zCoord ]   [ (zCoordHi zCoordLo zCoordBot) ]
+                        \   [ xCoord ]   [ xCoord(Hi Lo Bot) ]
+                        \   [ yCoord ] = [ yCoord(Hi Lo Bot) ]
+                        \   [ zCoord ]   [ zCoord(Hi Lo Bot) ]
                         \
                         \ and:
                         \
-                        \   [ xVector ]   [ (xVectorLo xVectorBot) ]
-                        \   [ yVector ] = [ (yVectorLo yVectorBot) ]
-                        \   [ zVector ]   [ (zVectorLo zVectorBot) ]
+                        \   [ xVector ]   [ xVector(Lo Bot) ]
+                        \   [ yVector ] = [ yVector(Lo Bot) ]
+                        \   [ zVector ]   [ zVector(Lo Bot) ]
                         \
                         \ This adds the scaled-down gaze vector to the
                         \ coordinate to perform a step along the object's gaze
@@ -10625,7 +10613,7 @@
 
  SEC                    \ Set the following:
  SBC yCoordLo           \
- STA platformAltitudeLo \   (A platformAltitudeLo) = (X A) - (yCoordHi yCoordLo)
+ STA platformAltitudeLo \   (A platformAltitudeLo) = (X A) - yCoord(Hi Lo)
  TXA                    \
  SBC yCoordHi           \ So this contains the relative altitude of the tile or
                         \ platform compared to our current position along the
@@ -11396,7 +11384,7 @@
                         \ edge that corresponds to the current position of the
                         \ gaze vector
 
- LDA yCoordLo           \ Set (A *) = (yCoordHi yCoordLo) - (U T)
+ LDA yCoordLo           \ Set (A *) = yCoord(Hi Lo) - (U T)
  SEC                    \
  SBC T                  \ So A contains the high byte of the difference in
  LDA yCoordHi           \ altitude between the current position of the gaze
@@ -11638,7 +11626,7 @@
 
  LDA yObjectLo,Y        \ Set the following:
  CLC                    \
- ADC #&20               \   (A platformAltitudeLo) = (yObjectHi yObjectLo) + 32
+ ADC #&20               \   (A platformAltitudeLo) = yObject(Hi Lo) + 32
  STA platformAltitudeLo \
  LDA yObjectHi,Y        \ where yObject is the altitude of the Sentinel's tower
  ADC #&00               \
@@ -11710,7 +11698,7 @@
 
  LDA yObjectLo,Y        \ Set the following:
  SEC                    \
- SBC #&60               \   (A platformAltitudeLo) = (yObjectHi yObjectLo) - 96
+ SBC #&60               \   (A platformAltitudeLo) = yObject(Hi Lo) - 96
  STA platformAltitudeLo \
  LDA yObjectHi,Y        \ where yObject is the altitude of the boulder
  SBC #&00
@@ -11734,7 +11722,7 @@
 
  LDA yObjectLo,Y        \ Set the following:
  SEC                    \
- SBC yCoordLo           \   (A U) =  (yObjectHi yObjectLo) - (yCoordHi yCoordLo)
+ SBC yCoordLo           \   (A U) =  yObject(Hi Lo) - yCoord(Hi Lo)
  STA U                  \
  LDA yObjectHi,Y        \ where yObject is the altitude of the tree
  SBC yCoordHi           \
@@ -11905,11 +11893,11 @@
 \ This routine fetches the cartesian coordinates of object #X as three 24-bit
 \ numbers, as follows:
 \
-\   (xCoordHi xCoordLo xCoordBot)
+\   xCoord(Hi Lo Bot)
 \
-\   (yCoordHi yCoordLo yCoordBot)
+\   yCoord(Hi Lo Bot)
 \
-\   (zCoordHi zCoordLo zCoordBot)
+\   zCoord(Hi Lo Bot)
 \
 \ The high byte can be thought of as the integer with low and bottom bytes as
 \ the fractional part.
@@ -12032,7 +12020,7 @@
                         \     corner in the front-left corner of the tile
                         \
                         \ The altitude of object #X is a 16-bit value in
-                        \ (yObjectHi yObjectLo), where the yObjectLo part is
+                        \ yObject(Hi Lo), where the yObjectLo part is
                         \ effectively a fractional part of the altitude that
                         \ describes how far the object is above the tile itself
                         \
@@ -12075,7 +12063,7 @@
 \ This routine sets the following (if successful):
 \
 \   * X-th entry in (xObject, yObject, zObject) is set to the 3D coordinate of
-\     the newly added object, where the y-coordinate is (yObjectHi yObjectLo)
+\     the newly added object, where the y-coordinate is yObject(Hi Lo)
 \
 \   * X-th entry in objectFlags, bit 7 is clear to indicate that object #X has
 \     been allocated to an object
@@ -12195,11 +12183,11 @@
                         \ (where a tile-sized cube is one coordinate across)
                         \
                         \ Object y-coordinates are stored as 16-bit numbers in
-                        \ the form (yObjectHi yObjectLo), with the low byte
-                        \ effectively acting like a fractional part, so to work
-                        \ out the y-coordinate for the object we are placing on
-                        \ top of the boulder, we need to add (1 0) to the
-                        \ tower's current y-coordinate, like this:
+                        \ the form yObject(Hi Lo), with the low byte effectively
+                        \ acting like a fractional part, so to work out the
+                        \ y-coordinate for the object we are placing on top of
+                        \ the boulder, we need to add (1 0) to the tower's
+                        \ current y-coordinate, like this:
                         \
                         \   yObject,X = yObject,Y + (1 0)
                         \
@@ -12243,11 +12231,11 @@
                         \ (where a tile-sized cube is one coordinate across)
                         \
                         \ Object y-coordinates are stored as 16-bit numbers in
-                        \ the form (yObjectHi yObjectLo), with the low byte
-                        \ effectively acting like a fractional part, so to work
-                        \ out the y-coordinate for the object we are placing on
-                        \ top of the boulder, we need to add (0 128) to the
-                        \ boulder's current y-coordinate, like this:
+                        \ the form yObject(Hi Lo), with the low byte effectively
+                        \ acting like a fractional part, so to work out the
+                        \ y-coordinate for the object we are placing on top of
+                        \ the boulder, we need to add (0 128) to the boulder's
+                        \ current y-coordinate, like this:
                         \
                         \   yObject,X = yObject,Y + (0 128)
                         \
@@ -12320,7 +12308,7 @@
                         \ 
                         \ We now have a full 3D coordinate for the object in
                         \ (xObject, yObject, zObject), where yObject is stored
-                        \ as a 16-bit number in (yObjectHi yObjectLo)
+                        \ as a 16-bit number in yObject(Hi Lo)
 
  TXA                    \ Set the tile data for this tile to object number X,
  ORA #%11000000         \ with bits 6 and 7 set to indicate that the tile now
@@ -14495,11 +14483,11 @@ L23E3 = C23E2+1
  LDX playerObject       \ Fetch the cartesian coordinates of the player object
  JSR GetObjectCoords    \ as three 24-bit numbers, as follows:
                         \
-                        \   (xCoordHi xCoordLo xCoordBot)
+                        \   xCoord(Hi Lo Bot)
                         \
-                        \   (yCoordHi yCoordLo yCoordBot)
+                        \   yCoord(Hi Lo Bot)
                         \
-                        \   (zCoordHi zCoordLo zCoordBot)
+                        \   zCoord(Hi Lo Bot)
 
  LDX #2                 \ We now work through all three axes in turn, so set an
                         \ axis counter in X to iterate through 2, 1 and 0 (for
@@ -14514,11 +14502,11 @@ L23E3 = C23E2+1
  STA xVectorHi,X        \ we will use to store the vector from the player to the
                         \ tile corner
 
- SEC                    \ Set (xVectorLo xVectorBot) = 
- SBC xCoordLo,X         \             ((xTileRow 0) - (xCoordHi xCoordLo)) / 256
+ SEC                    \ Set xVector(Lo Bot) = 
+ SBC xCoordLo,X         \             ((xTileRow 0) - xCoord(Hi Lo)) / 256
  STA xVectorBot,X       \
- LDA xTileRow,X         \ So (xVectorLo xVectorBot) contains the distance in the
- SBC xCoordHi,X         \ x-axis from the player to the tile corner that we are
+ LDA xTileRow,X         \ So xVector(Lo Bot) contains the distance in the x-axis
+ SBC xCoordHi,X         \ from the player to the tile corner that we are
  STA xVectorLo,X        \ analysing, divided by 256
                         \
                         \ The "divided by 256" part is subtle and important
@@ -14531,25 +14519,24 @@ L23E3 = C23E2+1
                         \ the tile corner is obstructed by landscape)
                         \
                         \ The above calculation subtracts two high byte/low byte
-                        \ 16-bit numbers in (xTileRow 0) and (xCoordHi xCoordLo)
-                        \ and puts the result into a low byte/bottom byte 16-bit
-                        \ number in (xVectorLo xVectorBot)
+                        \ 16-bit numbers in (xTileRow 0) and xCoord(Hi Lo) and
+                        \ puts the result into a low byte/bottom byte 16-bit
+                        \ number in xVector(Lo Bot)
                         \
                         \ This is the same as dividing the result of the
                         \ subtraction by 256, which we can see if we consider
                         \ that this would be the normal high/low calculation:
                         \
-                        \   (xVectorHi xVectorLo) =   (xTileRow 0)
-                        \                           - (xCoordHi xCoordLo)
+                        \   xVector(Hi Lo) =  (xTileRow 0) - xCoord(Hi Lo)
                         \
                         \ and we also have:
                         \
-                        \   (xVectorLo xVectorBot) = (xVectorHi xVectorLo) / 256
+                        \   xVector(Lo Bot) = xVector(Hi Lo) / 256
                         \
                         \ so we get:
                         \
-                        \   (xVectorLo xVectorBot)
-                        \           = ((xTileRow 0) - (xCoordHi xCoordLo)) / 256
+                        \   xVector(Lo Bot)
+                        \           = ((xTileRow 0) - xCoord(Hi Lo)) / 256
                         \
                         \ Also, its worth noting that this is the vector from
                         \ the player to the tile corner, because if you add this
@@ -14561,13 +14548,13 @@ L23E3 = C23E2+1
 
  DEC xVectorHi,X        \ The result is negative, so set xVectorHi to %11111111
                         \ so it can be used as the high byte for the negative
-                        \ 24-bit number in (xVectorHi xVectorLo xVectorBot)
+                        \ 24-bit number in xVector(Hi Lo Bot)
 
  LDA #0                 \ Negate the result as follows (note that we ignore the
  SEC                    \ bottom byte, as we are only interested in the low byte
  SBC xVectorBot,X       \ of the result):
  LDA #0                 \
- SBC xVectorLo,X        \   (A *) = -(xVectorLo xVectorBot)
+ SBC xVectorLo,X        \   (A *) = -xVector(Lo Bot)
                         \
                         \ So this makes (A *) positive, to give this:
                         \
@@ -14582,7 +14569,7 @@ L23E3 = C23E2+1
                         \   * A = |xVectorLo|
                         \
                         \   * xVectorHi is either 0 or %11111111, depending on
-                        \     the sign of (xVectorLo xVectorBot)
+                        \     the sign of xVector(Lo Bot)
 
  CMP T                  \ If A >= T then set T = A, so T keeps a record of the
  BCC rvis4              \ largest value of |xVectorLo| across all three axes
@@ -14647,11 +14634,11 @@ L23E3 = C23E2+1
                         \ At the same time we double the size of the vector by
                         \ doubling the following:
                         \
-                        \   (xVectorHi xVectorLo xVectorBot)
+                        \   xVector(Hi Lo Bot)
                         \
-                        \   (yVectorHi yVectorLo yVectorBot)
+                        \   yVector(Hi Lo Bot)
                         \
-                        \   (zVectorHi zVectorLo zVectorBot)
+                        \   zVector(Hi Lo Bot)
                         \
                         \ though we don't actually need to shift the high bytes
                         \ as we won't be shifting data out of the low bytes and
@@ -14667,8 +14654,8 @@ L23E3 = C23E2+1
 
 .rvis5
 
- ASL xVectorBot         \ Double (xVectorLo xVectorBot) to double the size of
- ROL xVectorLo          \ the vector
+ ASL xVectorBot         \ Double xVector(Lo Bot) to double the size of the
+ ROL xVectorLo          \ vector
  ASL yVectorBot
  ROL yVectorLo
  ASL zVectorBot
@@ -14683,21 +14670,20 @@ L23E3 = C23E2+1
  BCC rvis5              \ Loop back to repeat the above scalings until we have
                         \ scaled up the vector as much as we can
 
-                        \ So (xVectorHi xVectorLo xVectorBot) now contains the
-                        \ vector from the player to the tile corner, divided by
-                        \ 256 and scaled up as far as possible while still
-                        \ keeping the vector within the dimensions of a tile,
-                        \ and traceStepCounter contains the number of times this
-                        \ vector fits into the original vector from the player
-                        \ to the tile corner
+                        \ So xVector(Hi Lo Bot) now contains the vector from the
+                        \ player to the tile corner, divided by 256 and scaled
+                        \ up as far as possible while still keeping the vector
+                        \ within the dimensions of a tile, and traceStepCounter
+                        \ contains the number of times this vector fits into the
+                        \ original vector from the player to the tile corner
                         \
                         \ We can therefore trace the vector from the player to
                         \ the tile corner by taking the player's coordinates and
-                        \ adding the (xVectorHi xVectorLo xVectorBot) vector
-                        \ traceStepCounter times, knowing that togther, these
-                        \ steps will stop over every tile between the player and
-                        \ the tile corner in the process (we may stop over some
-                        \ tiles more than once, but that's OK)
+                        \ adding the xVector(Hi Lo Bot) vector traceStepCounter
+                        \ times, knowing that togther, these steps will stop
+                        \ over every tile between the player and the tile corner
+                        \ in the process (we may stop over some tiles more than
+                        \ once, but that's OK)
 
  LDA zCoordHi           \ Set zCoordHi = zCoordHi + &60
  CLC                    \
@@ -14875,18 +14861,18 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-                        \ In part 1 we set up (xVectorHi xVectorLo xVectorBot)
-                        \ with the vector from the player to the tile corner,
-                        \ split up into traceStepCounter steps, each of which is
-                        \ smaller than the size of a tile
+                        \ In part 1 we set up xVector(Hi Lo Bot) with the vector
+                        \ from the player to the tile corner, split up into
+                        \ traceStepCounter steps, each of which is smaller than
+                        \ the size of a tile
                         \
                         \ We can therefore trace the vector from the player to
                         \ the tile corner by taking the player's coordinates and
                         \ adding the vector:
                         \
-                        \   [ (xVectorHi xVectorLo xVectorBot) ]
-                        \   [ (yVectorHi yVectorLo yVectorBot) ]
-                        \   [ (zVectorHi zVectorLo zVectorBot) ]
+                        \   [ xVector(Hi Lo Bot) ]
+                        \   [ yVector(Hi Lo Bot) ]
+                        \   [ zVector(Hi Lo Bot) ]
                         \
                         \ traceStepCounter times, knowing that togther, these
                         \ steps will stop over every tile between the player and
@@ -14923,8 +14909,7 @@ L23E3 = C23E2+1
  LDA xCoordBot,X        \ For the y-axis calculation, we include the bottom byte
  ADC xVectorBot,X       \ for more accuracy, so we calculate the following:
  STA xCoordBot,X        \
-                        \   (xCoordHi xCoordLo xCoordBot) +=
-                        \                       (xVectorHi xVectorLo xVectorBot)
+                        \   xCoord(Hi Lo Bot) += xVector(Hi Lo Bot)
 
 .rvis8
 
@@ -14932,7 +14917,7 @@ L23E3 = C23E2+1
                         \ the vector containing the current position along the
                         \ player's gaze towards the tile corner we're analysing
 
- LDA xCoordLo,X         \ Set (xCoordHi xCoordLo) += (xVectorHi xVectorLo)
+ LDA xCoordLo,X         \ Set xCoord(Hi Lo) += xVector(Hi Lo)
  ADC xVectorLo,X 
  STA xCoordLo,X
  LDA xCoordHi,X
@@ -14945,9 +14930,7 @@ L23E3 = C23E2+1
                         \
                         \ So this calculation effectively follows the player's
                         \ gaze towards the tile corner, adding one of the steps
-                        \ to the vector x-coordinate in:
-                        \
-                        \   (xVectorHi xVectorLo)
+                        \ to the vector x-coordinate in xVector(Hi Lo)
                         \
                         \ We repeat this for all three axes, calculating the
                         \ x- and z-axes with 16-bit accuracy, and the y-axis
@@ -15717,9 +15700,9 @@ L23E3 = C23E2+1
  EOR #32                \ to GetTileViewEdges and GetTileViewAngles alternates
  STA drawingTableOffset \ between storing the tile view data in:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -15818,9 +15801,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -15873,9 +15856,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -15930,9 +15913,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -15985,9 +15968,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16124,9 +16107,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16139,9 +16122,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16174,9 +16157,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16324,11 +16307,8 @@ L23E3 = C23E2+1
 \   tileViewData        Tile data for all the tile corners analysed while
 \                       looking for the edges
 \
-\   drawViewYawHi       High byte of the yaw angles for all the tile corners
-\                       analysed while looking for the edges
-\
-\   drawViewYawLo       Low byte of the yaw angles for all the tile corners
-\                       analysed while looking for the edges
+\   drawViewYaw(Hi Lo)  The yaw angles for all the tile corners analysed while
+\                       looking for the edges
 \
 \   drawViewPitchHi     High byte of the pitch angles for all the tile corners
 \                       analysed while looking for the edges
@@ -16352,9 +16332,9 @@ L23E3 = C23E2+1
                         \ store them in the following tables in the relevant
                         \ entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16400,9 +16380,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16441,9 +16421,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16502,9 +16482,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16544,9 +16524,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16590,9 +16570,9 @@ L23E3 = C23E2+1
                         \ the viewer, and store them in the following tables in
                         \ the relevant entry for this tile corner:
                         \
-                        \   * (drawViewYawHi drawViewYawLo)
+                        \   * drawViewYaw(Hi Lo)
                         \
-                        \   * (drawViewPitchHi drawViewPitchLo)
+                        \   * drawViewPitch(Hi Lo)
                         \
                         \   * tileViewData
                         \
@@ -16724,11 +16704,8 @@ L23E3 = C23E2+1
 \   tileViewData        Tile data for this tile corner, stored in the relevant
 \                       entry for this tile corner
 \
-\   drawViewYawHi       High byte of the yaw angle, stored in the relevant entry
-\                       for this tile corner
-\
-\   drawViewYawLo       Low byte of the yaw angle, stored in the relevant entry
-\                       for this tile corner
+\   drawViewYaw(Hi Lo)  The yaw angle, stored in the relevant entry for this
+\                       tile corner
 \
 \   drawViewPitchHi     High byte of the pitch angle, stored in the relevant
 \                       entry for this tile corner
@@ -16785,10 +16762,10 @@ L23E3 = C23E2+1
                         \ the x-axis between the viewer and the tile we are
                         \ analysing
 
- LDA #128               \ Set the low byte of (xDeltaHi xDeltaLo) to 128
+ LDA #128               \ Set the low byte of xDelta(Hi Lo) to 128
  STA xDeltaLo
 
- CLC                    \ Set the high byte of (xDeltaHi xDeltaLo) to the
+ CLC                    \ Set the high byte of xDelta(Hi Lo) to the
  LDA xTile              \ following:
  SBC xTileViewer        \
  SEC                    \   xTile - xTileViewer - 1 - xTitleOffset
@@ -16801,7 +16778,7 @@ L23E3 = C23E2+1
                         \ Setting the low byte to 128 effectively adds 0.5 to
                         \ the result, so we get this:
                         \
-                        \   (xDeltaHi xDeltaLo) = xTile - xTileViewer - 0.5
+                        \   xDelta(Hi Lo) = xTile - xTileViewer - 0.5
                         \
                         \ So this is the delta along the x-axis between the
                         \ viewer and the tile that we are analysing
@@ -16832,10 +16809,10 @@ L23E3 = C23E2+1
                         \ z-axis between the viewer and the tile we are
                         \ analysing
 
- LDA #128               \ Set the low byte of (zDeltaHi zDeltaLo) to 128
+ LDA #128               \ Set the low byte of zDelta(Hi Lo) to 128
  STA zDeltaLo
 
- CLC                    \ Set the high byte of (zDeltaHi zDeltaLo) to the
+ CLC                    \ Set the high byte of zDelta(Hi Lo) to the
  LDA zTile              \ following:
  SBC zTileViewer        \
  STA zDeltaHi           \   zTile - zTileViewer - 1
@@ -16843,7 +16820,7 @@ L23E3 = C23E2+1
                         \ Setting the low byte to 128 effectively adds 0.5 to
                         \ the result, so we get this:
                         \
-                        \   (zDeltaHi zDeltaLo) = zTile - zTileViewer - 0.5
+                        \   zDelta(Hi Lo) = zTile - zTileViewer - 0.5
                         \
                         \ So this is the delta along the z-axis between the
                         \ viewer and the tile that we are analysing
@@ -16874,25 +16851,25 @@ L23E3 = C23E2+1
                         \ these axes, which is the projection of the 3D vector
                         \ from the viewer to the tile down onto the ground plane
                         \ (so imagine a light shining down from above, casting
-                        \ the vector's shadow onto the y = 0 plane - that's the
-                        \ hypotenuse)
+                        \ the vector's shadow onto the y = 0 plane, and that's
+                        \ the hypotenuse)
 
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaHi xDeltaLo)
+                        \   * xDelta(Hi Lo)
                         \
-                        \   * (zDeltaHi zDeltaLo)
+                        \   * zDelta(Hi Lo)
                         \
-                        \ and return the angle in (angleHi angleLo), the tangent
-                        \ in angleTangent, the length of the longer side in
-                        \ (aHi aLo) and the length of the shorter side in
-                        \ (bHi bLo)
+                        \ and return the angle in angle(Hi Lo), the tangent in
+                        \ angleTangent, the length of the longer side in
+                        \ a(Hi Lo) and the length of the shorter side in
+                        \ b(Hi Lo)
 
                         \ The angle of the hypotenuse is the yaw angle of the
                         \ 3D vector from the viewer to the tile corner we are
-                        \ analysing, so store it in the table at (drawViewYawHi
-                        \ drawViewYawLo)
+                        \ analysing, so store it in the table at
+                        \ drawViewYaw(Hi Lo)
                         \
                         \ We also subtract the following:
                         \
@@ -16905,9 +16882,9 @@ L23E3 = C23E2+1
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
- LDA angleLo            \ Set (drawViewYawHi drawViewYawLo) for this tile to:
+ LDA angleLo            \ Set drawViewYaw(Hi Lo) for this tile to:
  SEC                    \
- SBC yawAdjustmentLo    \   (angleHi angleLo) - (screenLeftYawHi 0)
+ SBC yawAdjustmentLo    \   angle(Hi Lo) - (screenLeftYawHi 0)
  STA drawViewYawLo,Y    \                     - (0 yawAdjustmentLo)
                         \
                         \ starting with the low bytes
@@ -16917,15 +16894,15 @@ L23E3 = C23E2+1
  STA drawViewYawHi,Y
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
-                        \ with side lengths of (aHi aLo) and (bHi bLo) and angle
+                        \ with side lengths of a(Hi Lo) and b(Hi Lo) and angle
                         \ angleTangent, which are still set from the call to
                         \ GetHypotenuseAngle above to the values for the 3D
                         \ vector from the viewer to the tile corner we are
                         \ analysing
                         \
-                        \ The hypotenuse length is returned in (hypotenuseHi
-                        \ hypotenuseLo), so we can use it to calculate the pitch
-                        \ angle of the viewer-to-tile vector in part 3
+                        \ The hypotenuse length is returned in hypotenuse(Hi Lo)
+                        \ so we can use it to calculate the pitch angle of the
+                        \ viewer-to-tile vector in part 3
 
                         \ Fall through into part 2 to start the pitch angle
                         \ calculations
@@ -17284,18 +17261,18 @@ L23E3 = C23E2+1
  LDA U                  \ distance between the viewer and the tile we are
  SBC yObjectHi,X        \ analysing, ready to pass to GetPitchAngleDelta
 
- JSR GetPitchAngleDelta \ Set (pitchDeltaHi pitchDeltaLo) to the pitch angle of
-                        \ the vector relative to the viewer's pitch angle
+ JSR GetPitchAngleDelta \ Set pitchDelta(Hi Lo) to the pitch angle of the vector
+                        \ relative to the viewer's pitch angle
                         \
                         \ The vector in question has x- and z-axis elements from
                         \ part 1:
                         \
-                        \   * (xDeltaHi xDeltaLo)
+                        \   * xDelta(Hi Lo)
                         \
-                        \   * (zDeltaHi zDeltaLo)
+                        \   * zDelta(Hi Lo)
                         \
-                        \ and we calculated the (hypotenuseHi hypotenuseLo) for
-                        \ this in part 1
+                        \ and we calculated the hypotenuse(Hi Lo) for this in
+                        \ part 1
                         \
                         \ The vector also has y-axis element of (A xDeltaLo),
                         \ which we just calculated
@@ -17303,7 +17280,7 @@ L23E3 = C23E2+1
                         \ So this call calculates the relative pitch angle for
                         \ the vector between the viewer and the tile that we are
                         \ analysing, so store it in the correct entry in the
-                        \ table at (drawViewPitchHi drawViewPitchLo)
+                        \ table at drawViewPitch(Hi Lo)
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
@@ -17339,8 +17316,8 @@ L23E3 = C23E2+1
                         \
                         \   * Set bit 0 when drawViewYawHi >= maxYawAngleHi
                         \
-                        \ where tileViewYaw is (drawViewYawHi drawViewYawLo)
-                        \ and minYawAngle is (minYawAngleHi minYawAngleLo)
+                        \ where tileViewYaw is drawViewYaw(Hi Lo) and
+                        \ minYawAngle is minYawAngle(Hi Lo)
                         \
                         \ So bit 7 is set when the tile corner is inside the
                         \ minimum yaw limit, and bit 0 is set when the tile
@@ -17520,8 +17497,8 @@ L23E3 = C23E2+1
  TAY                    \ Copy the buffer type into Y so we can use it as an
                         \ index into the various buffer configuration tables
 
- LDA minBufferYaw,Y     \ Set the high byte of (minYawAngleHi minYawAngleLo) to
- STA minYawAngleHi      \ 20 or 8 ???
+ LDA minBufferYaw,Y     \ Set the high byte of minYawAngle(Hi Lo) to 20 or 8 ???
+ STA minYawAngleHi
 
  LSR A                  \ Set maxYawAngleHi = 138 or 132
  EOR #%10000000         \                   = -118 or -124
@@ -17542,7 +17519,7 @@ L23E3 = C23E2+1
                         \      64 + 112
                         \      96 + 64 ???
 
- LDA #0                 \ Zero the low byte of (minYawAngleHi minYawAngleLo)
+ LDA #0                 \ Zero the low byte of minYawAngle(Hi Lo)
  STA minYawAngleLo
 
  STA L0029              \ Set L0029 = 0 ???
@@ -21415,7 +21392,7 @@ L314A = C3148+2
 
  LDA #&E0               \ For object #63, set the following:
  STA yObjectLo+63       \
- LDA #&02               \   (yObjectHi yObjectLo) = &2E0
+ LDA #&02               \   yObject(Hi Lo) = &2E0
  STA yObjectHi+63       \
                         \ So this sets the altitude of object #63 to just under
                         \ three full block heights (2.875, to be precise)
@@ -22162,7 +22139,7 @@ L314A = C3148+2
                         \ This fact is exploited by the anti-cracker code in the
                         \ SetCrackerSeed routine
 
- STY landscapeNumberHi  \ Set (landscapeNumberHi landscapeNumberLo) = (Y X)
+ STY landscapeNumberHi  \ Set landscapeNumber(Hi Lo) = (Y X)
  STX landscapeNumberLo
 
  STY landscapeZero      \ If the high byte of the landscape number is non-zero,
@@ -22594,9 +22571,9 @@ L314A = C3148+2
 \
 \   A                   The action:
 \
-\                         * A = 7 to make a sound
+\                         * 7 = make a sound
 \
-\                         * A = 8 to define a sound envelope
+\                         * 8 = define a sound envelope
 \
 \   X                   The low byte of the address of the OSWORD block
 \
@@ -23403,7 +23380,7 @@ L314A = C3148+2
 
  JSR ResetVariables     \ Reset all the game's main variables
 
- LDY landscapeNumberHi  \ Set (Y X) = (landscapeNumberHi landscapeNumberLo)
+ LDY landscapeNumberHi  \ Set (Y X) = landscapeNumber(Hi Lo)
  LDX landscapeNumberLo
 
  JSR InitialiseSeeds    \ Initialise the seed number generator to generate the
@@ -24193,10 +24170,10 @@ L314A = C3148+2
                         \ This would scroll the screen to down by eight pixels
                         \ as each character row is eight pixels wide
 
- LDA viewScreenAddr     \ Apply the change in (scrollScreenHi scrollScreenLo)
- CLC                    \ for the current pan direction in Y to the screen
- ADC scrollScreenLo,Y   \ address of the player's scrolling landscape, which is
- STA viewScreenAddr     \ stored in viewScreenAddr(1 0)
+ LDA viewScreenAddr     \ Apply the change in scrollScreen(Hi Lo) for the
+ CLC                    \ current pan direction in Y to the screen address of
+ ADC scrollScreenLo,Y   \ the player's scrolling landscape, which is stored in
+ STA viewScreenAddr     \ viewScreenAddr(1 0)
  LDA viewScreenAddr+1   \
  ADC scrollScreenHi,Y   \ We start by calculating this:
                         \
@@ -24322,7 +24299,7 @@ L314A = C3148+2
 
  LDA viewScreenAddr     \ Set toAddr(1 0) to the screen address of the player's
  CLC                    \ scrolling landscape, plus the offset for the current
- ADC updateOffsetLo,Y   \ pan direction from (updateOffsetHi updateOffsetLo)
+ ADC updateOffsetLo,Y   \ pan direction from updateOffset(Hi Lo)
  STA toAddr             \
  LDA viewScreenAddr+1   \ We start by calculating this:
  ADC updateOffsetHi,Y   \
@@ -24398,14 +24375,13 @@ L314A = C3148+2
                         \
                         \ We do this by taking the current value of the address
                         \ in screenBufferAddr(1 0) and applying the change in
-                        \ (scrollScreenHi scrollScreenLo) for the current pan
-                        \ direction in Y, just as we did when we updated the
-                        \ screen address in viewScreenAddr(1 0) in the
-                        \ ScrollPlayerView routine
+                        \ scrollScreen(Hi Lo) for the current pan direction in
+                        \ Y, just as we did when we updated the screen address
+                        \ in viewScreenAddr(1 0) in the ScrollPlayerView routine
 
- LDA screenBufferAddr   \ Add (scrollScreenHi scrollScreenLo) for this pan
- CLC                    \ direction to the address in screenBufferAddr(1 0),
- ADC scrollScreenLo,Y   \ starting with the low bytes
+ LDA screenBufferAddr   \ Add scrollScreen(Hi Lo) for this pan direction to the
+ CLC                    \ address in screenBufferAddr(1 0), starting with the
+ ADC scrollScreenLo,Y   \ low bytes
  STA screenBufferAddr
 
  STA fromAddr           \ Store the low byte of the result in fromAddr(1 0)
@@ -24773,12 +24749,12 @@ L314A = C3148+2
 \
 \ This table contains the address of the new content for each panning direction,
 \ but with a slight complication. The first step in scrolling content onto the
-\ screen is to add the scrolling direction in (scrollScreenHi scrollScreenLo),
-\ so to make sure the first scroll moves the correct content onto the screen,
-\ the values in this table already have the corresponding value of
-\ (scrollScreenHi scrollScreenLo) subtracted from them, so when this is added
-\ at the start of the scroll, the address correctly points to the address of the
-\ new content in the screen buffer.
+\ screen is to add the scrolling direction in scrollScreen(Hi Lo), so to make
+\ sure the first scroll moves the correct content onto the screen, the values
+\ in this table already have the corresponding value of scrollScreen(Hi Lo)
+\ subtracted from them, so when this is added at the start of the scroll, the
+\ address correctly points to the address of the new content in the screen
+\ buffer.
 \
 \ The screen buffer is at address &3F00, each character column takes up eight
 \ bytes of buffer space, and each character row takes up 320 bytes of buffer
@@ -24795,7 +24771,7 @@ L314A = C3148+2
                                 \ 0 * 8 = the left column (column 0) of the
                                 \         16-column screen buffer
                                 \
-                                \ -8 = - (scrollScreenHi scrollScreenLo)
+                                \ -8 = - scrollScreen(Hi Lo)
                                 \    = - +8
 
  EQUB HI(&3F00 + 15 * 8 + 8)    \ Direction 1 (pan left, scroll right)
@@ -24805,7 +24781,7 @@ L314A = C3148+2
                                 \ 15 * 8 = the right column (column 15) of the
                                 \          16-column screen buffer
                                 \
-                                \ 8 = - (scrollScreenHi scrollScreenLo)
+                                \ 8 = - scrollScreen(Hi Lo)
                                 \   = - -8
 
  EQUB HI(&3F00 + 7 * 320 + 320) \ Direction 2 (pan up, scroll down)
@@ -24815,7 +24791,7 @@ L314A = C3148+2
                                 \ 8 * 320 = the bottom row (row 7) of the
                                 \           8-row screen buffer
                                 \
-                                \ 320 = - (scrollScreenHi scrollScreenLo)
+                                \ 320 = - scrollScreen(Hi Lo)
                                 \     = - -320
 
  EQUB HI(&3F00 + 0 * 320 - 320) \ Direction 3 (pan down, scroll up)
@@ -24825,7 +24801,7 @@ L314A = C3148+2
                                 \ 8 * 320 = the top row (row 0) of the
                                 \           8-row screen buffer
                                 \
-                                \ -320 = - (scrollScreenHi scrollScreenLo)
+                                \ -320 = - scrollScreen(Hi Lo)
                                 \      = - +320
 
 \ ******************************************************************************
@@ -24851,7 +24827,7 @@ L314A = C3148+2
                                 \ 0 * 8 = the left column (column 0) of the
                                 \         16-column screen buffer
                                 \
-                                \ -8 = - (scrollScreenHi scrollScreenLo)
+                                \ -8 = - scrollScreen(Hi Lo)
                                 \    = - +8
 
  EQUB LO(&3F00 + 15 * 8 + 8)    \ Direction 1 (pan left, scroll right)
@@ -24861,7 +24837,7 @@ L314A = C3148+2
                                 \ 15 * 8 = the right column (column 15) of the
                                 \          16-column screen buffer
                                 \
-                                \ 8 = - (scrollScreenHi scrollScreenLo)
+                                \ 8 = - scrollScreen(Hi Lo)
                                 \   = - -8
 
  EQUB LO(&3F00 + 7 * 320 + 320) \ Direction 2 (pan up, scroll down)
@@ -24871,7 +24847,7 @@ L314A = C3148+2
                                 \ 8 * 320 = the bottom row (row 7) of the
                                 \           8-row screen buffer
                                 \
-                                \ 320 = - (scrollScreenHi scrollScreenLo)
+                                \ 320 = - scrollScreen(Hi Lo)
                                 \     = - -320
 
  EQUB LO(&3F00 + 0 * 320 - 320) \ Direction 3 (pan down, scroll up)
@@ -24881,7 +24857,7 @@ L314A = C3148+2
                                 \ 8 * 320 = the top row (row 0) of the
                                 \           8-row screen buffer
                                 \
-                                \ -320 = - (scrollScreenHi scrollScreenLo)
+                                \ -320 = - scrollScreen(Hi Lo)
                                 \      = - +320
 
 \ ******************************************************************************
@@ -25433,7 +25409,7 @@ L314A = C3148+2
                         \ We calculate the new screen address for the sights
                         \ after the movement type described in X, by adding the
                         \ relevant address change from entry X in the tables at
-                        \ (sightsMoveAddrHi sightsMoveAddrLo)
+                        \ sightsMoveAddr(Hi Lo)
 
  LDA sightsScreenAddr   \ Add the address change for the movement type in X to
  CLC                    \ the sights screen address in sightsScreenAddr(1 0)
@@ -25776,14 +25752,15 @@ L314A = C3148+2
                         \ terms of step pixels) is in xSightsBrush
 
                         \ First, we need to save the current contents of the
-                        \ screen in the sights pixel byte stash by adding the
-                        \ screen address to the X-th entry of (sightsByteAddrHi
-                        \ sightsByteAddrLo) and the existing contents of that
-                        \ address to the X-th entry of sightsByte
+                        \ screen in the sights pixel byte stash by storing the
+                        \ screen address of the pixel in the X-th entry of
+                        \ sightsByteAddr(Hi Lo), and then storing the existing
+                        \ contents of that address to the X-th entry of
+                        \ sightsByte
 
  TYA                    \ Set the X-th entry in the sights pixel byte stash
- ORA sightsByteAddr     \ address list at (sightsByteAddrHi sightsByteAddrLo)
- STA sightsByteAddrLo,X \ to sightsByteAddr(1 0) + Y, which is the address of
+ ORA sightsByteAddr     \ address list at sightsByteAddr(Hi Lo) to
+ STA sightsByteAddrLo,X \ sightsByteAddr(1 0) + Y, which is the address of
  LDA sightsByteAddr+1   \ the pixel byte we are about to change
  STA sightsByteAddrHi,X
 
@@ -26022,7 +25999,7 @@ L314A = C3148+2
 
  LDA sightsByteAddrLo,X \ Set sightsByteAddr(1 0) to the address for the X-th
  STA sightsByteAddr     \ entry in the sights pixel byte stash, which we get
- LDA sightsByteAddrHi,X \ from the (sightsByteAddrHi sightsByteAddrLo) tables
+ LDA sightsByteAddrHi,X \ from the sightsByteAddr(Hi Lo) tables
  STA sightsByteAddr+1
 
  LDA sightsByte,X       \ Copy the X-th pixel byte from the sights pixel byte
@@ -30821,15 +30798,11 @@ L314A = C3148+2
 \
 \   xDeltaAbsoluteHi    High byte of the absolute x-axis length
 \
-\   xDeltaLo            Low byte of the absolute x-axis length
-\
-\   xDeltaHi            High byte of the signed x-axis length
+\   xDelta(Hi Lo)       The signed x-axis length
 \
 \   zDeltaAbsoluteHi    High byte of the absolute z-axis length
 \
-\   zDeltaLo            Low byte of the absolute z-axis length
-\
-\   zDeltaHi            High byte of the signed z-axis length
+\   zDelta(Hi Lo)       The signed z-axis length
 \
 \ ------------------------------------------------------------------------------
 \
@@ -30837,11 +30810,11 @@ L314A = C3148+2
 \
 \   angleTangent        The tangent of the angle of the hypotenuse
 \
-\   (angleHi angleLo)   The angle of the hypotenuse
+\   angle(Hi Lo)        The angle of the hypotenuse
 \
-\   (aHi aLo)           The length of the longer side in the triangle
+\   a(Hi Lo)            The length of the longer side in the triangle
 \
-\   (bHi bLo)           The length of the shorter side in the triangle
+\   b(Hi Lo)            The length of the shorter side in the triangle
 \
 \ ******************************************************************************
 
@@ -30851,7 +30824,7 @@ L314A = C3148+2
 
  STA angleTangent       \ Set angleTangent = 0
 
- STA angleLo            \ Set (angleHi angleLo) = 0
+ STA angleLo            \ Set angle(Hi Lo) = 0
  STA angleHi
 
  RTS                    \ Return from the subroutine
@@ -30890,14 +30863,14 @@ L314A = C3148+2
                         \   (zDeltaAbsoluteHi zDeltaLo) <
                         \                            (xDeltaAbsoluteHi xDeltaLo)
 
- LDA zDeltaAbsoluteHi   \ Set (bHi bLo) = (zDeltaAbsoluteHi zDeltaLo)
+ LDA zDeltaAbsoluteHi   \ Set b(Hi Lo) = (zDeltaAbsoluteHi zDeltaLo)
  STA bHi                \
- LDA zDeltaLo           \ So (bHi bLo) is the shorter side
+ LDA zDeltaLo           \ So b(Hi Lo) is the shorter side
  STA bLo
 
- LDA xDeltaLo           \ Set (aHi aLo) = (xDeltaAbsoluteHi xDeltaLo)
+ LDA xDeltaLo           \ Set a(Hi Lo) = (xDeltaAbsoluteHi xDeltaLo)
  STA aLo                \
- LDA xDeltaAbsoluteHi   \ So (aHi aLo) is the longer side
+ LDA xDeltaAbsoluteHi   \ So a(Hi Lo) is the longer side
  STA aHi
 
  JMP ghyp5              \ Jump to ghyp5 to keep going
@@ -30909,23 +30882,23 @@ L314A = C3148+2
                         \   (zDeltaAbsoluteHi zDeltaLo) >=
                         \                            (xDeltaAbsoluteHi xDeltaLo)
 
- LDA xDeltaAbsoluteHi   \ Set (bHi bLo) = (xDeltaAbsoluteHi xDeltaLo)
+ LDA xDeltaAbsoluteHi   \ Set b(Hi Lo) = (xDeltaAbsoluteHi xDeltaLo)
  STA bHi                \
- LDA xDeltaLo           \ So (bHi bLo) is the shorter side
+ LDA xDeltaLo           \ So b(Hi Lo) is the shorter side
  STA bLo
 
- LDA zDeltaLo           \ Set (aHi aLo) = (zDeltaAbsoluteHi zDeltaLo)
+ LDA zDeltaLo           \ Set a(Hi Lo) = (zDeltaAbsoluteHi zDeltaLo)
  STA aLo                \
- LDA zDeltaAbsoluteHi   \ So (aHi aLo) is the longer side
+ LDA zDeltaAbsoluteHi   \ So a(Hi Lo) is the longer side
  STA aHi
 
  ORA zDeltaLo           \ If both zDeltaAbsoluteHi and zDeltaLo are zero then
- BEQ ghyp1              \ (aHi aLo) = 0, so jump to ghyp1 to return from the
+ BEQ ghyp1              \ a(Hi Lo) = 0, so jump to ghyp1 to return from the
                         \ subroutine with the following:
                         \
                         \   * angleTangent = 0
                         \
-                        \   * (angleHi angleLo) = 0
+                        \   * angle(Hi Lo) = 0
 
  LDA zDeltaAbsoluteHi   \ Set A to zDeltaAbsoluteHi once again
 
@@ -30943,9 +30916,9 @@ L314A = C3148+2
                         \   * (zDeltaAbsoluteHi zDeltaLo) <
                         \                            (xDeltaAbsoluteHi xDeltaLo)
                         \
-                        \   * (aHi aLo) is the longer side
+                        \   * a(Hi Lo) is the longer side
                         \
-                        \   * (bHi bLo) is the shorter side
+                        \   * b(Hi Lo) is the shorter side
                         \
                         \   * A = xDeltaAbsoluteHi
                         \
@@ -30998,8 +30971,8 @@ L314A = C3148+2
 
  JSR GetAngleFromCoords \ Calculate the following angle:
                         \
-                        \   (angleHi angleLo) = arctan( (A T) / (V W) )
-                        \                     = arctan( z-axis / x-axis )
+                        \   angle(Hi Lo) = arctan( (A T) / (V W) )
+                        \                = arctan( z-axis / x-axis )
                         \
                         \ This works because the x-axis length is greater than
                         \ the z-axis length, so the x-axis is the adjacent side
@@ -31010,7 +30983,7 @@ L314A = C3148+2
  BMI ghyp6              \ ghyp6 to skip the following, as the sign of the angle
                         \ is already correct ???
 
- LDA #0                 \ Negate (angleHi angleLo) to give it the correct sign
+ LDA #0                 \ Negate angle(Hi Lo) to give it the correct sign
  SEC
  SBC angleLo
  STA angleLo
@@ -31046,9 +31019,9 @@ L314A = C3148+2
                         \   * (zDeltaAbsoluteHi zDeltaLo) >=
                         \                            (xDeltaAbsoluteHi xDeltaLo)
                         \
-                        \   * (aHi aLo) is the longer side
+                        \   * a(Hi Lo) is the longer side
                         \
-                        \   * (bHi bLo) is the shorter side
+                        \   * b(Hi Lo) is the shorter side
                         \
                         \   * A = zDeltaAbsoluteHi
                         \
@@ -31094,8 +31067,8 @@ L314A = C3148+2
 
  JSR GetAngleFromCoords \ Calculate the following angle:
                         \
-                        \   (angleHi angleLo) = arctan( (A T) / (V W) )
-                        \                     = arctan( z-axis / x-axis )
+                        \   angle(Hi Lo) = arctan( (A T) / (V W) )
+                        \                = arctan( z-axis / x-axis )
                         \
                         \ This works because the z-axis length is greater than
                         \ the x-axis length, so the z-axis is the adjacent side
@@ -31106,7 +31079,7 @@ L314A = C3148+2
  BPL ghyp10             \ ghyp10 to skip the following, as the sign of the angle
                         \ is already correct ???
 
- LDA #0                 \ Negate (angleHi angleLo) to give it the correct sign
+ LDA #0                 \ Negate angle(Hi Lo) to give it the correct sign
  SEC
  SBC angleLo
  STA angleLo
@@ -31142,9 +31115,9 @@ L314A = C3148+2
 \
 \ This routine calculates the following pitch angle delta:
 \
-\   (pitchDeltaHi pitchDeltaLo) = (angleHi angleLo) - (objectPitchAngle 32)
+\   pitchDelta(Hi Lo) = angle(Hi Lo) - (objectPitchAngle 32)
 \
-\ where (angleHi angleLo) is the angle of this triangle:
+\ where angle(Hi Lo) is the angle of this triangle:
 \
 \                                  _.-+             ^
 \                              _.-´   |             |
@@ -31152,9 +31125,9 @@ L314A = C3148+2
 \                      _.-´           |
 \                  _.-´               |  (A xDeltaLo)
 \              _.-´                   |
-\           .-´ (angleHi angleLo)     |
+\           .-´ angle(Hi Lo)          |
 \   viewer +--------------------------+
-\           (hypotenuseHi hypotenuseLo)
+\                hypotenuse(Hi Lo)
 \
 \ This triangle is typically a viewing vector from the player's eyes to a
 \ coordinate in the 3D world. The hypotenuse is the projection of the vector
@@ -31162,8 +31135,8 @@ L314A = C3148+2
 \ point from the x- and z-axis elements of the vector.
 \
 \ So this routine takes the hypotenuse length and the y-axis element of the
-\ vector in (A xDeltaLo) and calculates the vector's pitch angle in (angleHi
-\ angleLo), and then it calculates the difference between the vector's pitch
+\ vector in (A xDeltaLo) and calculates the vector's pitch angle in
+\ angle(Hi Lo), and then it calculates the difference between the vector's pitch
 \ angle and the pitch angle for object #X (i.e. the viewer).
 \
 \ In other words, this calculates the pitch angle of the viewer's gaze towards
@@ -31177,9 +31150,7 @@ L314A = C3148+2
 \
 \   (A xDeltaLo)        A vertical delta (i.e. a y-axis element)
 \
-\   hypotenuseHi        The high byte of the length of the hypotenuse
-\
-\   hypotenuseLo        The low byte of the length of the hypotenuse
+\   hypotenuse(Hi Lo)   The length of the hypotenuse
 \
 \   X                   The object number
 \
@@ -31187,16 +31158,14 @@ L314A = C3148+2
 \
 \ Returns:
 \
-\   pitchDeltaHi        The high byte of the pitch angle delta
-\
-\   pitchDeltaLo        The low byte of the pitch angle delta
+\   pitchDelta(Hi Lo)   The pitch angle delta
 \
 \ ******************************************************************************
 
 .GetPitchAngleDelta
 
- STA xDeltaHi           \ Set (xDeltaHi xDeltaLo) to the vertical delta passed
-                        \ to the routine
+ STA xDeltaHi           \ Set xDelta(Hi Lo) to the vertical delta passed to the
+                        \ routine
 
  TAY                    \ If the high byte is positive, jump to pdel1 to skip
  BPL pdel1              \ the following
@@ -31220,7 +31189,7 @@ L314A = C3148+2
                         \ still in xDeltaHi
 
  LDA hypotenuseLo       \ Set (zDeltaAbsoluteHi zDeltaLo) to the length of the
- STA zDeltaLo           \ hypotenuse (hypotenuseHi hypotenuseLo)
+ STA zDeltaLo           \ hypotenuse hypotenuse(Hi Lo)
  LDA hypotenuseHi
  STA zDeltaAbsoluteHi
 
@@ -31230,22 +31199,22 @@ L314A = C3148+2
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaHi xDeltaLo)
+                        \   * xDelta(Hi Lo)
                         \
-                        \   * (zDeltaHi zDeltaLo)
+                        \   * zDelta(Hi Lo)
                         \
                         \ which are set as follows:
                         \
                         \   * (A xDeltaLo)
                         \
-                        \   * (hypotenuseHi hypotenuseLo)
+                        \   * hypotenuse(Hi Lo)
                         \
-                        \ and return the angle in (angleHi angleLo), the tangent
-                        \ in angleTangent, the length of the longer side in
-                        \ (aHi aLo) and the length of the shorter side in
-                        \ (bHi bLo)
+                        \ and return the angle in angle(Hi Lo), the tangent in
+                        \ angleTangent, the length of the longer side in
+                        \ a(Hi Lo) and the length of the shorter side in
+                        \ b(Hi Lo)
 
- LDA angleLo            \ Set (A pitchDeltaLo) = (angleHi angleLo)
+ LDA angleLo            \ Set (A pitchDeltaLo) = angle(Hi Lo)
  SEC                    \                        - (objectPitchAngle 32)
  SBC #32                \
  STA pitchDeltaLo       \ starting with the low bytes
@@ -31270,7 +31239,7 @@ L314A = C3148+2
 
 .pdel2
 
- STA pitchDeltaHi       \ Store result in (pitchDeltaHi pitchDeltaLo)
+ STA pitchDeltaHi       \ Store result in pitchDelta(Hi Lo)
 
  RTS                    \ Return from the subroutine
 
@@ -31286,7 +31255,7 @@ L314A = C3148+2
 \
 \ This routine calculates:
 \
-\   (hypotenuseHi hypotenuseLo) = (aHi aLo) + tan(theta / 2) * (bHi bLo)
+\   hypotenuse(Hi Lo) = a(Hi Lo) + tan(theta / 2) * b(Hi Lo)
 \
 \ for a triangle with angle theta, adjacent side a and opposite side b.
 \
@@ -31296,9 +31265,9 @@ L314A = C3148+2
 \
 \   angleTangent        The triangle angle theta
 \
-\   (aHi aLo)           The length of a, the adjacent side of the triangle
+\   a(Hi Lo)            The length of a, the adjacent side of the triangle
 \
-\   (bHi bLo)           The length of b, the opposite side of the triangle
+\   b(Hi Lo)            The length of b, the opposite side of the triangle
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31306,9 +31275,7 @@ L314A = C3148+2
 \
 \   Y                   Y is preserved
 \
-\   hypotenuseHi        The high byte of the length of the hypotenuse
-\
-\   hypotenuseLo        The low byte of the length of the hypotenuse
+\   hypotenuse(Hi Lo)   The length of the hypotenuse
 \
 \ ******************************************************************************
 
@@ -31333,24 +31300,24 @@ L314A = C3148+2
  LDA tanHalfAngle,Y     \ Set U = 2 * tan(theta / 2)
  STA U
 
- LDA bLo                \ Set (V T) = (bHi bLo)
+ LDA bLo                \ Set (V T) = b(Hi Lo)
  STA T
  LDA bHi
  STA V
 
  JSR Multiply8x16       \ Set (U T) = U * (V T) / 256
-                        \           = 2 * tan(theta / 2) * (bHi bLo)
+                        \           = 2 * tan(theta / 2) * b(Hi Lo)
 
  LSR U                  \ Set (U T) = (U T) / 2
- ROR T                  \           = tan(theta / 2) * (bHi bLo)
+ ROR T                  \           = tan(theta / 2) * b(Hi Lo)
 
  LDA T                  \ Calculate:
  CLC                    \
- ADC aLo                \  (hypotenuseHi hypotenuseLo)
+ ADC aLo                \  hypotenuse(Hi Lo)
  STA hypotenuseLo       \
- LDA U                  \     = (aHi aLo) + (U T)
+ LDA U                  \     = a(Hi Lo) + (U T)
  ADC aHi                \
- STA hypotenuseHi       \     = (aHi aLo) + tan(theta / 2) * (bHi bLo)
+ STA hypotenuseHi       \     = a(Hi Lo) + tan(theta / 2) * b(Hi Lo)
 
  LDY yStoreHypotenuse   \ Restore the value of Y from yStoreHypotenuse that we
                         \ stored at the start of the routine, so that it's
@@ -32981,26 +32948,26 @@ L314A = C3148+2
 \
 \ This routine calculates the following for an object:
 \
-\ 1. (xDeltaHi xDeltaLo) etc.: Calculate the difference (the delta) in all three
-\ axes between the viewer and the object we are analysing, to give us the 3D
-\ vector from the viewer to the object.
+\ 1. xDelta(Hi Lo) etc.: Calculate the difference (the delta) in all three axes
+\ between the viewer and the object we are analysing, to give us the 3D vector
+\ from the viewer to the object.
 \
-\ 2. (angleHi angleLo): Calculate the angle of the hypotenuse of the triangle
-\ formed by the x- and z-axes axes, which is the projection of the 3D vector
-\ from the viewer to the object down onto the ground plane (so imagine a light
-\ shining down from above, casting the vector's shadow onto the y = 0 plane -
-\ that's the hypotenuse)
+\ 2. angle(Hi Lo): Calculate the angle of the hypotenuse of the triangle formed
+\ by the x- and z-axes axes, which is the projection of the 3D vector from the
+\ viewer to the object down onto the ground plane (so imagine a light shining
+\ down from above, casting the vector's shadow onto the y = 0 plane, and that's
+\ the hypotenuse)
 \
-\ 3. (objectViewYawHi objectViewYawLo): The angle of the hypotenuse is the yaw
-\ angle of the 3D vector from the viewer to the object we are analysing. We
-\ subtract the viewer's yaw angle and the yaw adjustment, and add half a screen
-\ width to get the yaw angle delta from the viewer's gaze to the object,
-\ relative to the viewer's gaze, i.e. the screen). This gives us the yaw angle
-\ relative to the view. You can think of this as the screen x-coordinate of the
-\ object, or how far the object appears from the left edge of the screen.
+\ 3. objectViewYaw(Hi Lo): The angle of the hypotenuse is the yaw angle of the
+\ 3D vector from the viewer to the object we are analysing. We subtract the
+\ viewer's yaw angle and the yaw adjustment, and add half a screen width to get
+\ the yaw angle delta from the viewer's gaze to the object, relative to the
+\ viewer's gaze, i.e. the screen). This gives us the yaw angle relative to the
+\ view. You can think of this as the screen x-coordinate of the object, or how
+\ far the object appears from the left edge of the screen.
 \
-\ 4. (objectGazeYawHi objectGazeYawLo) and (hypotenuseHi hypotenuseLo): Set to
-\ the object's gaze relative to the viewer's gaze.
+\ 4. objectGazeYaw(Hi Lo) and hypotenuse(Hi Lo): Set to the object's gaze
+\ relative to the viewer's gaze.
 \
 \ 5. If this is the landscape preview, rotate the object to face forwards and
 \ scale it so it looks good.
@@ -33040,14 +33007,14 @@ L314A = C3148+2
 
  JSR GetHorizontalDelta \ Calculate the following:
                         \
-                        \   (xDeltaHi xDeltaLo) =   x-coordinate of object #Y
-                        \                         - x-coordinate of object #X
-                        \                         - xTitleOffset
+                        \   xDelta(Hi Lo) =  x-coordinate of object #Y
+                        \                   - x-coordinate of object #X
+                        \                   - xTitleOffset
                         \
                         \   xDeltaAbsoluteHi = |xDeltaAbsoluteHi|
                         \
-                        \   (zDeltaHi zDeltaLo) =   z-coordinate of object #Y
-                        \                         - z-coordinate of object #X
+                        \   zDelta(Hi Lo) =  z-coordinate of object #Y
+                        \                   - z-coordinate of object #X
                         \
                         \   zDeltaAbsoluteHi = |zDeltaHi|
                         \
@@ -33061,8 +33028,8 @@ L314A = C3148+2
 
  JSR GetVerticalDelta   \ Calculate the following:
                         \
-                        \   (yDeltaHi yDeltaLo) =   y-coordinate of object #Y
-                        \                         - y-coordinate of object #X
+                        \   yDelta(Hi Lo) =   y-coordinate of object #Y
+                        \                   - y-coordinate of object #X
                         \
                         \ So this calculates the difference in altitude between
                         \ object #X (the viewer) and object #Y (the object being
@@ -33079,16 +33046,16 @@ L314A = C3148+2
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaHi xDeltaLo)
+                        \   * xDelta(Hi Lo)
                         \
-                        \   * (zDeltaHi zDeltaLo)
+                        \   * zDelta(Hi Lo)
                         \
-                        \ and return the angle in (angleHi angleLo), the tangent
-                        \ in angleTangent, the length of the longer side in
-                        \ (aHi aLo) and the length of the shorter side in
-                        \ (bHi bLo)
+                        \ and return the angle in angle(Hi Lo), the tangent in
+                        \ angleTangent, the length of the longer side in
+                        \ a(Hi Lo) and the length of the shorter side in
+                        \ b(Hi Lo)
                         \
-                        \ This call also sets the (aHi aLo) and (bHi bLo)
+                        \ This call also sets the a(Hi Lo) and b(Hi Lo)
                         \ variables so we can call GetHypotenuse below ???
 
                         \ The angle of the hypotenuse is the yaw angle of the
@@ -33108,10 +33075,10 @@ L314A = C3148+2
                         \   * (10 0) to add half a screen width (as the screen
                         \     is 20 yaw angles wide)
                         \
-                        \ So the result in (objectViewYawHi objectViewYawLo) is
-                        \ the yaw angle delta from the viewer's gaze to the
-                        \ object, plus adjustments and half a screen, to give us
-                        \ the yaw angle relative to the view
+                        \ So the result in objectViewYaw(Hi Lo) is the yaw angle
+                        \ delta from the viewer's gaze to the object, plus
+                        \ adjustments and half a screen, to give us the yaw
+                        \ angle relative to the view
                         \
                         \ You can think of this as the screen x-coordinate of
                         \ the object, or how far the object appears from the
@@ -33119,8 +33086,8 @@ L314A = C3148+2
 
  LDX viewingObject      \ Set X to the object number of the viewer
 
- LDA angleLo            \ Set (objectViewYawHi objectViewYawLo) =
- SEC                    \               (angleHi angleLo) - (0 yawAdjustmentLo)
+ LDA angleLo            \ Set objectViewYaw(Hi Lo) =
+ SEC                    \                    angle(Hi Lo) - (0 yawAdjustmentLo)
  SBC yawAdjustmentLo    \                                 - (objectYawAngle,X 0)
  STA objectViewYawLo    \                                 + (10 0)
  LDA angleHi
@@ -33131,8 +33098,8 @@ L314A = C3148+2
 
  LDY objectToAnalyse    \ Set Y to the number of the object being analysed
 
- LDA #0                 \ Set (objectGazeYawHi objectGazeYawLo) =
- SEC                    \               (objectYawAngle,Y 0) - (angleHi angleLo)
+ LDA #0                 \ Set objectGazeYaw(Hi Lo) =
+ SEC                    \                    (objectYawAngle,Y 0) - angle(Hi Lo)
  SBC angleLo            \
  STA objectGazeYawLo    \ This is the difference in yaw angles between the
  LDA objectYawAngle,Y   \ hypotenuse (i.e. the viewer's gaze) and the direction
@@ -33141,14 +33108,13 @@ L314A = C3148+2
                         \ gaze relative to the viewer's gaze
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
-                        \ with side lengths of (aHi aLo) and (bHi bLo) and angle
+                        \ with side lengths of a(Hi Lo) and b(Hi Lo) and angle
                         \ angleTangent, which are still set from the call to
                         \ GetHypotenuseAngle above to the values for the
                         \ projection of the 3D vector from the viewer to the
                         \ object down onto the ground plane
                         \
-                        \ The hypotenuse length is returned in (hypotenuseHi
-                        \ hypotenuseLo)
+                        \ The hypotenuse length is returned in hypotenuse(Hi Lo)
 
  LDA viewType           \ If viewType is non-zero then this is not the landscape
  BNE oang1              \ preview, so jump to oang1 to skip the following
@@ -33158,7 +33124,7 @@ L314A = C3148+2
                         \ Sentinel and sentries all neatly look out of the
                         \ screen in the preview
 
- LDA #128               \ Set (objectGazeYawHi objectGazeYawLo) = (128 0)
+ LDA #128               \ Set objectGazeYaw(Hi Lo) = (128 0)
  STA objectGazeYawHi    \
  LDA #0                 \ The degree system in the Sentinel looks like this:
  STA objectGazeYawLo    \
@@ -33193,22 +33159,22 @@ L314A = C3148+2
  ROR hypotenuseLo       \ to be half the distance away, so it is drawn at twice
                         \ the size
 
- SEC                    \ Halve the object's altitude in (yDeltaHi yDeltaLo) for
- ROR yDeltaHi           \ the same reason
+ SEC                    \ Halve the object's altitude in yDelta(Hi Lo) for the
+ ROR yDeltaHi           \ same reason
  ROR yDeltaLo           \
                         \ Because this is the landscape view, the viewer is very
                         \ high above the landscape (as well as a long way in
-                        \ front of the front edge), so we know that (yDeltaHi
-                        \ yDeltaLo) will be negative, as it's calculated as the
-                        \ altitude of the object being analysed minus the
+                        \ front of the front edge), so we know that
+                        \ yDelta(Hi Lo) will be negative, as it's calculated as
+                        \ the altitude of the object being analysed minus the
                         \ altitude of the viewer, and the latter is higher than
                         \ any object on the landscape
                         \
-                        \ So we can halve the value of (yDeltaHi yDeltaLo) by
-                        \ shifting a set bit into the top end of yDeltaHi, so we
-                        \ keep the sign correct
+                        \ So we can halve the value of yDelta(Hi Lo) by shifting
+                        \ a set bit into the top end of yDeltaHi, so we keep the
+                        \ sign correct
 
- LDA yDeltaLo           \ Set (yDeltaHi yDeltaLo) += 112
+ LDA yDeltaLo           \ Set yDelta(Hi Lo) = yDelta(Hi Lo) + 112
  CLC                    \
  ADC #112               \ Starting with the low bytes
  STA yDeltaLo
@@ -33222,16 +33188,15 @@ L314A = C3148+2
 
 .oang1
 
- LDA hypotenuseLo       \ Set (objectAdjacentHi objectAdjacentLo) to the length
- STA objectAdjacentLo   \ of the hypotenuse, which is the length of the adjacent
- LDA hypotenuseHi       \ side in the right-angled triangle with the vector from
- STA objectAdjacentHi   \ the viewer to the object as the hypotenuse
+ LDA hypotenuseLo       \ Set objectAdjacent(Hi Lo) to the length of the
+ STA objectAdjacentLo   \ hypotenuse, which is the length of the adjacent side
+ LDA hypotenuseHi       \ in the right-angled triangle with the vector from the
+ STA objectAdjacentHi   \ viewer to the object as the hypotenuse
 
- LDA yDeltaLo           \ Set (objectOppositeHi objectOppositeLo) to the height
- STA objectOppositeLo   \ of the object relative to the viewer, which is the
- LDA yDeltaHi           \ length of the opposite side in the right-angled
- STA objectOppositeHi   \ triangle with the vector from the viewer to the object
-                        \ as the hypotenuse
+ LDA yDeltaLo           \ Set objectOpposite(Hi Lo) to the height of the object
+ STA objectOppositeLo   \ relative to the viewer, which is the length of the
+ LDA yDeltaHi           \ opposite side in the right-angled triangle with the
+ STA objectOppositeHi   \ vector from the viewer to the object as the hypotenuse
 
  RTS                    \ Return from the subroutine
 
@@ -33247,32 +33212,31 @@ L314A = C3148+2
 \
 \ This routine loops through each point in an object definition and calculates
 \ the following, storing the results in the last 32 bytes of the drawing tables
-\ at (drawViewYawHi drawViewYawLo) and (drawViewPitchHi drawViewPitchLo):
+\ at drawViewYaw(Hi Lo) and drawViewPitch(Hi Lo):
 \
 \ 1. A: Calculate the yaw angle of the point, rotated by the rotation of the
 \ object itself (i.e. its gaze), so this is the yaw angle of the object point
 \ within the object, but with the the correct rotation for the direction the
 \ object is facing.
 \
-\ 2. (xDeltaHi xDeltaLo), (zDeltaHi zDeltaLo): Convert this yaw angle and the
-\ polar distance into x- and z-coordinates for the point in the y = 0 plane
-\ (i.e. on the ground) using cos(A) and sin(A) on a triangle with the line along
-\ the polar distance to the point as the hypotenuse. So these are the x- and
-\ z-coordinates of the object point within the object itself (i.e. relative to
-\ the object's origin and rotated to the correct gaze).
+\ 2. xDelta(Hi Lo), zDelta(Hi Lo): Convert this yaw angle and the polar distance
+\ into x- and z-coordinates for the point in the y = 0 plane (i.e. on the
+\ ground) using cos(A) and sin(A) on a triangle with the line along the polar
+\ distance to the point as the hypotenuse. So these are the x- and z-coordinates
+\ of the object point within the object itself (i.e. relative to the object's
+\ origin and rotated to the correct gaze).
 \
-\ 3. (angleHi angleLo): Calculate the angle of the right-angled triangle made
-\ up of the object point's object-relative x- and z-coordinates, to give us the
-\ angle of the vector from the object's origin to the to the point within the
-\ object.
+\ 3. angle(Hi Lo): Calculate the angle of the right-angled triangle made up of
+\ the object point's object-relative x- and z-coordinates, to give us the angle
+\ of the vector from the object's origin to the to the point within the object.
 \
-\ 4. (drawViewYawHi drawViewYawLo): Rotate the yaw angle of the point within
-\ the object definition by the object's view-relative yaw angle to get the
-\ view-relative yaw angle of the point. This is the yaw angle of the vector from
-\ the viewer to the object point.
+\ 4. drawViewYaw(Hi Lo): Rotate the yaw angle of the point within the object
+\ definition by the object's view-relative yaw angle to get the view-relative
+\ yaw angle of the point. This is the yaw angle of the vector from the viewer to
+\ the object point.
 \
-\ 5. (drawViewPitchHi drawViewPitchLo): Construct the vertical triangle that
-\ has the viewer-to-point vector as the hypotenuse, the point altitude as the
+\ 5. drawViewPitch(Hi Lo): Construct the vertical triangle that has the vector
+\ from the viewer to the point as the hypotenuse, the point altitude as the
 \ opposite side and the projection onto the ground of the vector as the adjacent
 \ side, and use this to calculate the pitch angle of the vector from the viewer
 \ to the object point.
@@ -33287,9 +33251,9 @@ L314A = C3148+2
  STA drawingTableIndex  \ the drawing tables for the object we are drawing, so
                         \ we store the results in the following drawing tables:
                         \
-                        \   (drawViewYawHi drawViewYawLo)
+                        \   drawViewYaw(Hi Lo)
                         \
-                        \   (drawViewPitchHi drawViewPitchLo)
+                        \   drawViewPitch(Hi Lo)
                         \
                         \ Note that these drawing tables live just after the
                         \ tile drawing tables in memory, and the index is set
@@ -33340,11 +33304,12 @@ L314A = C3148+2
 
 .obpt1
 
- LDA objectGazeYawLo    \ Set (A T) =   (objectGazeYawHi objectGazeYawLo)
- STA T                  \             + yaw angle for point Y
- LDA objectGazeYawHi    \
- CLC                    \ So this is the yaw angle of point Y in the object,
- ADC objPointYaw,Y      \ rotated by the rotation of the object itself (i.e. its
+ LDA objectGazeYawLo    \ Set the following
+ STA T                  \            
+ LDA objectGazeYawHi    \   (A T) = objectGazeYaw(Hi Lo) + yaw angle for point Y
+ CLC                    \
+ ADC objPointYaw,Y      \ So this is the yaw angle of point Y in the object,
+                        \ rotated by the rotation of the object itself (i.e. its
                         \ gaze), so this is the yaw angle of the object point
                         \ within the object, but with the correct rotation for
                         \ the direction the object is facing
@@ -33387,22 +33352,21 @@ L314A = C3148+2
                         \ So this is the length of the adjacent side in the
                         \ triangle with the polar distance as the hypotenuse
 
- LDA objectAdjacentLo   \ Set (zDeltaHi zDeltaLo) =
- CLC                    \     (objectAdjacentHi objectAdjacentLo) + (U T)
- ADC T                  \
- STA zDeltaLo           \ So this adds the adjacent side of the vector from the
- LDA objectAdjacentHi   \ viewer to the object, to the adjacent side of the
- ADC U                  \ polar coordinate of the object point
- STA zDeltaHi           \
-                        \ This gives the distance along the axis of the object
+ LDA objectAdjacentLo   \ Set zDelta(Hi Lo) = objectAdjacent(Hi Lo) + (U T)
+ CLC                    \    
+ ADC T                  \ So this adds the adjacent side of the vector from the
+ STA zDeltaLo           \ viewer to the object, to the adjacent side of the
+ LDA objectAdjacentHi   \ polar coordinate of the object point
+ ADC U                  \
+ STA zDeltaHi           \ This gives the distance along the axis of the object
                         \ point, i.e. the point's coordinate
 
  BPL obpt3              \ If the high byte of the result is positive, jump to
                         \ obpt3 as the result in A is already correct for the
                         \ absolute value (i.e. A = zDeltaHi = |zDeltaHi|)
 
- LDA #0                 \ Negate (zDeltaHi zDeltaLo) so it contains the absolute
- SEC                    \ value of the coordinate
+ LDA #0                 \ Negate zDelta(Hi Lo) so it contains the absolute value
+ SEC                    \ of the coordinate
  SBC zDeltaLo
  STA zDeltaLo
  LDA #0
@@ -33442,8 +33406,8 @@ L314A = C3148+2
                         \ high byte of (A xDeltaLo), as A is 0
 
  LDA H                  \ Set xDeltaHi to the quadrant of the angle so that
- STA xDeltaHi           \ (xDeltaHi xDeltaLo) is the correctly signed length of
-                        \ the opposite ???
+ STA xDeltaHi           \ xDelta(Hi Lo) is the correctly signed length of the
+                        \ opposite side ???
 
                         \ So we now have the x- and z-coordinates of the object
                         \ point within the object itself (i.e. relative to the
@@ -33455,16 +33419,16 @@ L314A = C3148+2
  JSR GetHypotenuseAngle \ Calculate the angle of the hypotenuse in the triangle
                         \ with the following non-hypotenuse sides:
                         \
-                        \   * (xDeltaHi xDeltaLo)
+                        \   * xDelta(Hi Lo)
                         \
-                        \   * (zDeltaHi zDeltaLo)
+                        \   * zDelta(Hi Lo)
                         \
-                        \ and return the angle in (angleHi angleLo), the tangent
-                        \ in angleTangent, the length of the longer side in
-                        \ (aHi aLo) and the length of the shorter side in
-                        \ (bHi bLo)
+                        \ and return the angle in angle(Hi Lo), the tangent in
+                        \ angleTangent, the length of the longer side in
+                        \ a(Hi Lo) and the length of the shorter side in
+                        \ b(Hi Lo)
                         \
-                        \ So (angleHi angleLo) is the angle of the right-angled
+                        \ So angle(Hi Lo) is the angle of the right-angled
                         \ triangle made up of the object point's object-relative
                         \ x- and z-coordinates, i.e. the yaw angle of the point
                         \ within the object, or the angle of the vector from the
@@ -33474,9 +33438,9 @@ L314A = C3148+2
                         \ in terms of the 3D world, storing the results in the
                         \ following tables:
                         \
-                        \   (drawViewYawHi drawViewYawLo)
+                        \   drawViewYaw(Hi Lo)
                         \
-                        \   (drawViewPitchHi drawViewPitchLo)
+                        \   drawViewPitch(Hi Lo)
                         \
                         \ We do this by constructing two right-angled triangles,
                         \ one flat on the ground (to calculate the yaw angle)
@@ -33487,7 +33451,7 @@ L314A = C3148+2
                         \
                         \ The object has a view-relative yaw angle of:
                         \
-                        \   (objectViewYawHi objectViewYawLo)
+                        \   objectViewYaw(Hi Lo)
                         \
                         \ which was set up by the call to the GetObjectAngles
                         \ routine before we called this routine
@@ -33498,11 +33462,11 @@ L314A = C3148+2
                         \ We just calculated the object-relative yaw angle of
                         \ the object point in:
                         \
-                        \   (angleHi angleLo)
+                        \   angle(Hi Lo)
                         \
                         \ If we add these two yaw angles together to get:
                         \
-                        \  (angleHi angleLo) + (objectViewYawHi objectViewYawLo)
+                        \   angle(Hi Lo) + objectViewYaw(Hi Lo)
                         \
                         \ then this gives us the view-relative yaw angle of the
                         \ object point, which is what we are trying to calculate
@@ -33513,14 +33477,13 @@ L314A = C3148+2
                         \ tile view drawing tables (i.e. in the object point
                         \ drawing tables)
 
- LDA angleLo            \ Set (drawViewYawHi drawViewYawLo) for this point to:
+ LDA angleLo            \ Set drawViewYaw(Hi Lo) for this point to:
  CLC                    \
- ADC objectViewYawLo    \  (angleHi angleLo) + (objectViewYawHi objectViewYawLo)
+ ADC objectViewYawLo    \   angle(Hi Lo) + objectViewYaw(Hi Lo)
  STA drawViewYawLo,Y    \
  LDA angleHi            \ So this is the angle in our first triangle, which is
  ADC objectViewYawHi    \ the view-relative yaw angle of the object point, so
- STA drawViewYawHi,Y    \ store this in the drawing table at (drawViewYawHi
-                        \ drawViewYawLo)
+ STA drawViewYawHi,Y    \ store this in the drawing table at drawViewYaw(Hi Lo)
 
                         \ We now move on to calculating the view-relative pitch
                         \ angle of the object point by looking at the second
@@ -33554,7 +33517,7 @@ L314A = C3148+2
                         \ trying to calculate in this routine
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
-                        \ with side lengths of (aHi aLo) and (bHi bLo) and angle
+                        \ with side lengths of a(Hi Lo) and b(Hi Lo) and angle
                         \ angleTangent, which are still set from the call to
                         \ GetHypotenuseAngle above to the values for the vector
                         \ from the object's origin to the to the point within
@@ -33563,8 +33526,7 @@ L314A = C3148+2
                         \ So this is the adjacent side of our new triangle,
                         \ along the ground
                         \
-                        \ The hypotenuse length is returned in (hypotenuseHi
-                        \ hypotenuseLo)
+                        \ The hypotenuse length is returned in hypotenuse(Hi Lo)
 
  LDY pointNumber        \ Set A to the objPointHeight entry for the object point
  LDA objPointHeight,Y   \
@@ -33608,26 +33570,26 @@ L314A = C3148+2
                         \ object
 
                         \ We already calculated the object's view-relative
-                        \ y-coordinate in (objectOppositeHi objectOppositeLo),
-                        \ so now we add the two together to get the height
-                        \ of the object point, relative to the view
+                        \ y-coordinate in objectOpposite(Hi Lo), so now we add
+                        \ the two together to get the height of the object
+                        \ point, relative to the view
 
- LDA T                  \ Set (A xDeltaLo) = (U T) + 
- CLC                    \                    (objectOppositeHi objectOppositeLo)
- ADC objectOppositeLo   \
- STA xDeltaLo           \ So (A xDeltaLo) now contains the vertical delta, ready
- LDA U                  \ to pass to GetPitchAngleDelta
+ LDA T                  \ Set (A xDeltaLo) = (U T) + objectOpposite(Hi Lo)
+ CLC                    \
+ ADC objectOppositeLo   \ So (A xDeltaLo) now contains the vertical delta, ready
+ STA xDeltaLo           \ to pass to GetPitchAngleDelta
+ LDA U
  ADC objectOppositeHi
 
  LDX viewingObject      \ Set X to the object number of the viewer so the call
                         \ to GetPitchAngleDelta calculates the pitch angle
                         \ relative to the viewing object's gaze
 
- JSR GetPitchAngleDelta \ Set (pitchDeltaHi pitchDeltaLo) to the pitch angle of
-                        \ the vector along the hypotenuse of our new triangle,
-                        \ given the length of the vertical side in (A xDeltaLo)
-                        \ and the length of the adjacent side in (hypotenuseHi
-                        \ hypotenuseLo), relative to the viewing object's gaze
+ JSR GetPitchAngleDelta \ Set pitchDelta(Hi Lo) to the pitch angle of the vector
+                        \ along the hypotenuse of our new triangle, given the
+                        \ length of the vertical side in (A xDeltaLo) and the
+                        \ length of the adjacent side in hypotenuse(Hi Lo),
+                        \ relative to the viewing object's gaze
                         \
                         \ So we now have the view-relative pitch angle of the
                         \ object point, which is what we are trying to calculate
@@ -33638,8 +33600,8 @@ L314A = C3148+2
                         \ tile view drawing tables (i.e. in the object point
                         \ drawing tables)
 
- LDA pitchDeltaHi       \ Store (pitchDeltaHi pitchDeltaLo) in the drawing table
- STA drawViewPitchHi,Y  \ as (drawViewPitchHi drawViewPitchLo)
+ LDA pitchDeltaHi       \ Store pitchDelta(Hi Lo) in the drawing table as
+ STA drawViewPitchHi,Y  \ drawViewPitch(Hi Lo)
  LDA pitchDeltaLo
  STA drawViewPitchLo,Y
 
@@ -33686,30 +33648,29 @@ L314A = C3148+2
  JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
                         \ the viewer to the object into the following variables:
                         \
-                        \   * Set (objectViewYawHi objectViewYawLo) to the yaw
-                        \     angle of the viewer's gaze towards the object,
-                        \     relative to the screen
+                        \   * Set objectViewYaw(Hi Lo) to the yaw angle of the
+                        \     viewer's gaze towards the object, relative to the
+                        \     screen
                         \
-                        \   * Set (objectGazeYawHi objectGazeYawLo) to the
-                        \     difference in yaw angles between the viewer's gaze
-                        \     towards the object and the object's gaze to
-                        \     wherever it is looking (so that's the object's
-                        \     gaze relative to the viewer's gaze)
+                        \   * Set objectGazeYaw(Hi Lo) to the difference in yaw
+                        \     angles between the viewer's gaze towards the
+                        \     object and the object's gaze to wherever it is
+                        \     looking (so that's the object's gaze relative to
+                        \     the viewer's gaze)
                         \
-                        \   * Set (objectAdjacentHi objectAdjacentLo) to the
-                        \     length of the adjacent side in the right-angled
-                        \     triangle with the vector from the viewer to the
-                        \     object as the hypotenuse
+                        \   * Set objectAdjacent(Hi Lo) to the length of the
+                        \     adjacent side in the right-angled triangle with
+                        \     the vector from the viewer to the object as the
+                        \     hypotenuse
                         \
-                        \   * Set (objectOppositeHi objectOppositeLo) to the
-                        \     length of the opposite side in the right-angled
-                        \     triangle with the vector from the viewer to the
-                        \     object as the hypotenuse
+                        \   * Set objectOpposite(Hi Lo) to the length of the
+                        \     opposite side in the right-angled triangle with
+                        \     the vector from the viewer to the object as the
+                        \     hypotenuse
                         \
-                        \ This also sets (hypotenuseHi hypotenuseLo) to the same
-                        \ value as as (objectAdjacentHi objectAdjacentLo), and
-                        \ it sets objectToAnalyse to the number of the object
-                        \ that we are drawing
+                        \ This also sets hypotenuse(Hi Lo) to the same value as
+                        \ objectAdjacent(Hi Lo), and it sets objectToAnalyse to
+                        \ the number of the object that we are drawing
 
  LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectAdjacentHi) is greater or
  CMP #15                \ equal to 15 then the object is a fair distance away
@@ -33725,9 +33686,9 @@ L314A = C3148+2
                         \ all the points in the object and put them into the
                         \ drawing tables at:
                         \
-                        \   (drawViewYawHi drawViewYawLo)
+                        \   drawViewYaw(Hi Lo)
                         \
-                        \   (drawViewPitchHi drawViewPitchLo)
+                        \   drawViewPitch(Hi Lo)
                         \
                         \ We can use these as screen x- and y-coordinates, using
                         \ the same screen projection that is used in Revs
@@ -33795,8 +33756,8 @@ L314A = C3148+2
                         \ or the Sentinel, so we need to work out how many
                         \ drawing phases are required
 
- LDA objectOppositeHi   \ If (objectOppositeHi objectOppositeLo) has a non-zero
- BNE drob2              \ high byte, then jump to drob2 to:
+ LDA objectOppositeHi   \ If objectOpposite(Hi Lo) has a non-zero high byte,
+ BNE drob2              \ then jump to drob2 to:
                         \
                         \   * Draw the object in two phases if objectOppositeHi
                         \     is positive (i.e. the object is reasonably far
@@ -33805,10 +33766,10 @@ L314A = C3148+2
                         \   * Draw the object in one phase if objectOppositeHi
                         \     is negative (i.e. the object is below the viewer)
 
- LDA objectOppositeLo   \ If (objectOppositeHi objectOppositeLo) = 0 then the
- BEQ drob4              \ object is at the same height as the viewer, so jump to
-                        \ drob4 to draw the object in one phase (by leaving
-                        \ drawingPhaseCount = 0)
+ LDA objectOppositeLo   \ If objectOpposite(Hi Lo) = 0 then the object is at the
+ BEQ drob4              \ same height as the viewer, so jump to drob4 to draw
+                        \ the object in one phase (by leaving drawingPhaseCount
+                        \ set to 0)
 
                         \ If we get here then objectOppositeHi is zero but
                         \ objectOppositeLo is non-zero, so the object is only a
@@ -33833,7 +33794,7 @@ L314A = C3148+2
                         \
                         \ If we fell through from drob2, then this jumps to
                         \ drob4 if bit 7 of objectOppositeHi is set, i.e. if
-                        \ (objectOppositeHi objectOppositeLo) is negative
+                        \ objectOpposite(Hi Lo) is negative
 
                         \ If we get here then one of these is true:
                         \
@@ -33843,8 +33804,8 @@ L314A = C3148+2
                         \   * We are drawing a robot, a sentry or the Sentinel
                         \     and one of these is true:
                         \
-                        \     * (objectOppositeHi objectOppositeLo) is positive
-                        \       and objectOppositeHi > 0 (so the object is
+                        \     * objectOpposite(Hi Lo) is positive and
+                        \       objectOppositeHi > 0 (so the object is
                         \       reasonably far above the viewer)
                         \
                         \     * objectOppositeHi is zero and objectOppositeLo is
@@ -33988,12 +33949,12 @@ L314A = C3148+2
 \
 \ This routine calculates the following:
 \
-\   (xDeltaHi xDeltaLo) = x-coordinate of object #Y - x-coordinate of object #X
+\   xDelta(Hi Lo) = x-coordinate of object #Y - x-coordinate of object #X
 \                                                   - xTitleOffset
 \
 \   xDeltaAbsoluteHi = |xDeltaHi|
 \
-\   (zDeltaHi zDeltaLo) = z-coordinate of object #Y - z-coordinate of object #X
+\   zDelta(Hi Lo) = z-coordinate of object #Y - z-coordinate of object #X
 \
 \   zDeltaAbsoluteHi = |zDeltaHi|
 \
@@ -34035,8 +33996,8 @@ L314A = C3148+2
 
  LDA #0                 \ Calculate the following:
  STA xDeltaLo           \
-                        \   (xDeltaHi xDeltaLo) = (xObject+Y 0) - (xObject,X 0)
-                        \                                    - (xTitleOffset 0)
+                        \   xDelta(Hi Lo) = (xObject+Y 0) - (xObject,X 0)
+                        \                                 - (xTitleOffset 0)
                         \
                         \ starting with the low byte (which we know will be
                         \ zero)
@@ -34076,7 +34037,7 @@ L314A = C3148+2
 
  LDA #0                 \ Calculate the following:
  STA zDeltaLo           \
-                        \   (zDeltaHi zDeltaLo) = (zObject+Y 0) - (zObject,X 0)
+                        \   zDelta(Hi Lo) = (zObject+Y 0) - (zObject,X 0)
                         \
                         \ starting with the low byte (which we know will be
                         \ zero)
@@ -34121,10 +34082,10 @@ L314A = C3148+2
 \
 \ This routine calculates the following:
 \
-\   (yDeltaHi yDeltaLo) = y-coordinate of object #Y - y-coordinate of object #X
+\   yDelta(Hi Lo) = y-coordinate of object #Y - y-coordinate of object #X
 \
-\ So (yDeltaHi yDeltaLo) contains the difference (the "delta") in the
-\ y-coordinate between the two objects, which is the difference in altitude.
+\ So yDelta(Hi Lo) contains the difference (the "delta") in the y-coordinate
+\ between the two objects, which is the difference in altitude.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -34138,11 +34099,10 @@ L314A = C3148+2
 
 .GetVerticalDelta
 
- LDA yObjectLo,Y        \ Set (yDeltaHi yDeltaLo) = 
- SEC                    \                    (yObjectHi yObjectLo) for object #Y
- SBC yObjectLo,X        \                  - (yObjectHi yObjectLo) for object #X
- STA yDeltaLo           \
-                        \ starting with the low bytes
+ LDA yObjectLo,Y        \ Set yDelta(Hi Lo) =   yObject(Hi Lo) for object #Y
+ SEC                    \                     - yObject(Hi Lo) for object #X
+ SBC yObjectLo,X        \
+ STA yDeltaLo           \ starting with the low bytes
 
  LDA yObjectHi,Y        \ And then the high bytes 
  SBC yObjectHi,X
