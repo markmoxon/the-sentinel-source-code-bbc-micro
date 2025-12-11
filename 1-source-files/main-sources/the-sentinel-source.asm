@@ -44,7 +44,7 @@
  LOAD% = &1900          \ The load address of the main code binary
 
  IRQ1V = &0204          \ The IRQ1V vector that we intercept to implement the
-                        \ screen mode
+                        \ interrupt handler
 
  BRKIV = &0287          \ The Break Intercept code (which is a JMP instruction
                         \ to the Break Intercept handler)
