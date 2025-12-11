@@ -2564,7 +2564,7 @@
      0C61
 .keyPress
      0C61   00
-.L0C62
+.objYawOffset
      0C62   00
 .playerHasMovedTile
      0C63   00
@@ -2579,7 +2579,7 @@
      0C68   00
 .bufferColumns
      0C69   00
-.L0C6A
+.objYawWidth
      0C6A   00
 .objectStackCounter
      0C6B   00
@@ -2722,7 +2722,7 @@
      0CD2   00
 .L0CD3
      0CD3   00
-.L0CD4
+.minObjWidth
      0CD4   00
      0CD5   00
      0CD6   00
@@ -5532,7 +5532,7 @@
      20A7   CD D4 0C   CMP &0CD4
      20AA   B0 03      BCS &20AF
      20AC   AD D4 0C   LDA &0CD4
-.C20AF
+.objv1
      20AF   85 80      STA &80
      20B1   A9 00      LDA #&00
      20B3   8D D4 0C   STA &0CD4
@@ -5546,12 +5546,12 @@
      20C6   10 04      BPL &20CC
      20C8   A9 00      LDA #&00
      20CA   F0 07      BEQ &20D3
-.C20CC
+.objv2
      20CC   06 74      ASL &74
      20CE   2A         ROL A
      20CF   C9 28      CMP #&28
      20D1   B0 32      BCS &2105
-.C20D3
+.objv3
      20D3   8D 62 0C   STA &0C62
      20D6   AD 59 0C   LDA &0C59
      20D9   18         CLC
@@ -5565,7 +5565,7 @@
      20E8   C9 28      CMP #&28
      20EA   90 02      BCC &20EE
      20EC   A9 27      LDA #&27
-.C20EE
+.objv4
      20EE   18         CLC
      20EF   69 01      ADC #&01
      20F1   38         SEC
@@ -5575,14 +5575,14 @@
      20FA   C9 15      CMP #&15
      20FC   90 02      BCC &2100
      20FE   A9 14      LDA #&14
-.C2100
+.objv5
      2100   8D 69 0C   STA &0C69
      2103   18         CLC
      2104   60         RTS
-.C2105
+.objv6
      2105   38         SEC
      2106   60         RTS
-.L2107
+.objectHalfWidth
      2107   3E
      2108   46
      2109   72

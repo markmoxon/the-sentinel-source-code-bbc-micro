@@ -2011,9 +2011,13 @@
                         \ for a tree) and "Create boulder" puts a 3 in the
                         \ logger (the object type for a boulder)
 
-.L0C62
+.objYawOffset
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The yaw offset of the left edge of the object being
+                        \ analysed in GetObjVisibility, relative to the left
+                        \ edge of the screen
+                        \
+                        \ The value is in yaw angles, but doubled
 
 .playerHasMovedTile
 
@@ -2063,9 +2067,12 @@
  EQUB 0                 \ The number of character columns in the current screen
                         \ buffer
 
-.L0C6A
+.objYawWidth
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The width of the visible portion of the object being
+                        \ analysed in GetObjVisibility
+                        \
+                        \ The value is in yaw angles, but doubled
 
 .objectStackCounter
 
@@ -2328,9 +2335,11 @@
 
  EQUB 0                 \ ???
 
-.L0CD4
+.minObjWidth
 
- EQUB 0                 \ ???
+ EQUB 0                 \ When set to a non-zero width, this width is taken into
+                        \ consideration when calculating whether an object is
+                        \ visible on-screen ???
 
  EQUB 0, 0              \ These bytes appear to be unused
 
@@ -4859,7 +4868,7 @@
                         \ If the player held down the panning key throughout the
                         \ drawing process and the whole landscape was drawn,
                         \ then the C flag will be clear, otherwise the C flag
-                        \ will be set 
+                        \ will be set
 
  LDX viewingObject      \ Set X to the object number of the viewer, which we set
                         \ to the player object in MainGameLoop
@@ -4962,7 +4971,7 @@
                         \ If the player held down the panning key throughout the
                         \ drawing process and the whole landscape was drawn,
                         \ then the C flag will be clear, otherwise the C flag
-                        \ will be set 
+                        \ will be set
 
  LDX playerObject       \ Set X to the object number of the player
                         \
@@ -8108,7 +8117,7 @@
                         \ in the scanner
 
  BEQ scan6              \ If we have drawn all eight columns, jump to scan6 to
-                        \ return 
+                        \ return
 
  LDA scannerBlock       \ If scannerBlock <> 4 then loop back to scan2 to keep
  CMP #4                 \ drawing the scanner
@@ -8963,10 +8972,14 @@
  BCC C19F1
  TYA
  STA enemyData5,X
- LDA #&04
+
+ LDA #4                 \ Set the type of object #Y to 4, for a meanie
  STA objectTypes,Y
- LDA #&68
- STA L0CD4
+
+ LDA #104               \ Set minObjWidth = 104 so we use the width of the wider
+ STA minObjWidth        \ object, the tree, when we calculate the object's
+                        \ visibility when updating the object on-screen ???
+
  CLC
  RTS
 
@@ -9101,10 +9114,11 @@
 .dobj4
 
                         \ If we get here then we must be draining energy from a
-                        \ boulder in object #X
+                        \ boulder in object #X, so now we change it into a tree
 
- LDA #116               \ Set L0CD4 = 116 ???
- STA L0CD4
+ LDA #116               \ Set minObjWidth = 116 so we use the width of the wider
+ STA minObjWidth        \ object, the boulder, when we calculate the object's
+                        \ visibility when updating the object on-screen ???
 
  LDA #2                 \ Set A = 2 so the boulder loses one energy unit and
                         \ changes into a tree (i.e. an object of type 2)
@@ -10240,7 +10254,7 @@
  JSR DivideBy16
 
  STA yVectorLo          \ Set yVector(Lo Bot) = sinVectorPitchAngle / 16
- STX yVectorBot         \                           
+ STX yVectorBot         \
                         \ So we now have the y-coordinate of the sights vector
                         \ as follows:
                         \
@@ -12468,7 +12482,7 @@
  STA yObjectHi,X        \ Set the high byte of the 3D y-coordinate for object #X
                         \ to the value of A by updating the X-th entry in the
                         \ yObjectHi table
-                        \ 
+                        \
                         \ We now have a full 3D coordinate for the object in
                         \ (xObject, yObject, zObject), where yObject is stored
                         \ as a 16-bit number in yObject(Hi Lo)
@@ -12585,7 +12599,7 @@
 .C1F98
 
  LDX viewingObject
- LDA L0C62
+ LDA objYawOffset
  STA L2095
  LDA #0
  LSR L2095
@@ -12642,7 +12656,7 @@
  STA objectYawAngle,X
  LDA #0
  STA U
- LDA L0C62
+ LDA objYawOffset
  ASL A
  ASL A
  ASL A
@@ -12730,15 +12744,15 @@
 
 .C2061
 
- LDA L0C62
+ LDA objYawOffset
  CLC
  ADC bufferColumns
- STA L0C62
- LDA L0C6A
+ STA objYawOffset
+ LDA objYawWidth
  SEC
  SBC bufferColumns
  BEQ C2080
- STA L0C6A
+ STA objYawWidth
  STA bufferColumns
  STA L2094
  JMP C1F98
@@ -12814,7 +12828,7 @@
 \       Name: GetObjVisibility
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Calculate whether an object is visible on-screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12826,11 +12840,15 @@
 \
 \ Returns:
 \
-\   C flag              ???
+\   C flag              The object's visibility:
 \
-\                         * Clear = ???
+\                         * Clear = object is visible on-screen
 \
-\                         * Set = object is the player object so no action taken
+\                         * Set = object is not visible on-screen
+\
+\   bufferColumns       If the object is visible, this is set to the number of
+\                       character columns in the screen buffer that the object
+\                       appears in
 \
 \ ******************************************************************************
 
@@ -12839,8 +12857,10 @@
  LDY currentObject      \ Set Y to the number of the object to check (so we are
                         \ checking object #Y)
 
- CPY playerObject       \ If this is the player object, jump to C2105 to return
- BEQ C2105              \ from the subroutine with the C flag set ???
+ CPY playerObject       \ If this is the player object, jump to objv6 to return
+ BEQ objv6              \ from the subroutine with the C flag set to indicate
+                        \ that the object is not visible on-screen, as the
+                        \ player can never see themselves
 
  JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
                         \ the viewer to object #Y and put them into the
@@ -12850,131 +12870,220 @@
                         \     viewer's gaze towards the object, relative to the
                         \     screen
                         \
-                        \   * Set objectGazeYaw(Hi Lo) to the difference in yaw
-                        \     angles between the viewer's gaze towards the
-                        \     object and the object's gaze to wherever it is
-                        \     looking (so that's the object's gaze relative to
-                        \     the viewer's gaze)
-                        \
-                        \   * Set objectAdjacent(Hi Lo) to the length of the
-                        \     adjacent side in the right-angled triangle with
-                        \     the vector from the viewer to the object as the
-                        \     hypotenuse
-                        \
-                        \   * Set objectOpposite(Hi Lo) to the length of the
-                        \     opposite side in the right-angled triangle with
-                        \     the vector from the viewer to the object as the
-                        \     hypotenuse
-                        \
-                        \ This also sets hypotenuse(Hi Lo) to the same value as
-                        \ objectAdjacent(Hi Lo), and it sets objectToAnalyse to
-                        \ the number of the object that we are checking
+                        \   * Set hypotenuse(Hi Lo) to the length of the 3D
+                        \     vector from the viewer to the object when
+                        \     projected down onto the ground plane
+
+                        \ We now work out the width of the object that we are
+                        \ looking at so we can work out whether any of it is
+                        \ on-screen
 
  LDY currentObject      \ Set X to the type of the object that we are checking
  LDX objectTypes,Y
 
- LDA L2107,X            \ Set A to the L2107 value for this object type ???
+ LDA objectHalfWidth,X  \ Set A to half the object width for this object type,
+                        \ as a fraction of a tile
 
- CMP L0CD4              \ If A < L0CD4 then set A = L0CD4, so:
- BCS C20AF              \
- LDA L0CD4              \   A = max(L0CD4, L2107)
+ CMP minObjWidth        \ If A < minObjWidth then set A = minObjWidth, so:
+ BCS objv1              \
+ LDA minObjWidth        \   A = max(minObjWidth, objectHalfWidth)
+                        \
+                        \ So if minObjWidth is non-zero, we consider the object
+                        \ to be at least as wide as minObjWidth for the purposes
+                        \ of calculating whether it is visible on-screen
 
-.C20AF
+.objv1
 
  STA xDeltaLo           \ Set (A xDeltaLo) = (0 A)
- LDA #0                 \                  = max(L0CD4, L2107)
-
- STA L0CD4
-
- JSR GetPitchAngleDelta \ Call GetPitchAngleDelta to set angle(Hi Lo) to the
-                        \ angle of the right-angled triangle with adjacent
-                        \ side hypotenuse(Hi Lo) and opposite side (A xDeltaLo),
-                        \ like this:
+ LDA #0                 \                  = max(minObjWidth, objectHalfWidth)
                         \
-                        \                                  _.-+           ^
-                        \                              _.-´   |           |
-                        \                 vector   _.-´       |         y-axis
+                        \ So xDeltaLo is the width of the object
+
+ STA minObjWidth        \ Set minObjWidth = 0 as we have used this figure in the
+                        \ visibility calculation for the object, so we need to
+                        \ reset it for the next time we check an object (so the
+                        \ default value for minObjWidth is zero and it is only
+                        \ overridden when a large object is replaced by a
+                        \ smaller object)
+
+ JSR GetPitchAngleDelta \ At this point we construct a right-angled triangle
+                        \ with adjacent side hypotenuse(Hi Lo) and opposite
+                        \ side xDeltaLo, like this:
+                        \
+                        \                                   object
+                        \                                  _.-+
+                        \                              _.-´   |
+                        \                          _.-´       |
                         \                      _.-´           |
-                        \                  _.-´               |  (A xDeltaLo)
+                        \                  _.-´               |  xDeltaLo
                         \              _.-´                   |
                         \           .-´ angle(Hi Lo)          |
-                        \   viewer +--------------------------+
-                        \                hypotenuse(Hi Lo)
+                        \   viewer +--------------------------+ 
+                        \               hypotenuse(Hi Lo)
+                        \
+                        \ This triangle is flat on the ground with the viewer at
+                        \ the corner
+                        \
+                        \ The adjacent side of length hypotenuse(Hi Lo) represents the
+                        \ projection of the vector from the viewer to the object
+                        \ onto the ground, as if there were a light shining down
+                        \ from above, so this is the projection of the gaze vector
+                        \
+                        \ We want to calculate angle(Hi Lo), as that's the yaw
+                        \ angle delta between the projected gaze vector and the
+                        \ edge of the object, as the object has a yaw angle of
+                        \ xDeltaLo from the object centre to the side (as it's
+                        \ the half-width of the object)
+                        \
+                        \ We can then use this yaw angle delta to work out
+                        \ whether the left and right edges of the object are
+                        \ within the left-right viewing arc of the screen, and
+                        \ thereforewhether any part of the object is within the
+                        \ screen bounds
+                        \
+                        \ To do this we call GetPitchAngleDelta, not because we
+                        \ are calculating a pitch angle, but because this
+                        \ routine calculates the angle of the above triangle as
+                        \ part of the process of calculating a pitch angle delta
+                        \ (so we just ignore the pitch angle result here)
 
- LDA objectViewYawLo
- SEC
- SBC angleLo
- STA T
+                        \ We now check whether the object is on screen in terms
+                        \ of yaw angles, so that's checking the object's edges
+                        \ against the left and right edges of the screen
+                        \
+                        \ We start by checking the object against the left edge
+                        \ of the screen
+
+ LDA objectViewYawLo    \ Set (A T) = objectViewYaw(Hi Lo) - angle(Hi Lo)
+ SEC                    \
+ SBC angleLo            \ So (A T) contains the yaw angle of the left edge of
+ STA T                  \ the object, relative to the screen
  LDA objectViewYawHi
  SBC angleHi
- BPL C20CC
- LDA #0
- BEQ C20D3
 
-.C20CC
+ BPL objv2              \ If the result in (A T) is positive then the left edge
+                        \ of the object is to the right of the left screen edge,
+                        \ so jump to objv2 to see how far it is to the right
 
- ASL T
+ LDA #0                 \ (A T) is negative, so the left edge of the object is
+                        \ to the left of the left screen edge, so set A = 0 to
+                        \ use as the yaw offset of the left edge of the object
+                        \ in objYawOffset
+
+ BEQ objv3              \ Jump to objv3 to set objYawOffset to zero and move on
+                        \ to the checks for the right edge of the object
+
+.objv2
+
+ ASL T                  \ Double the yaw angle in (A T)
  ROL A
- CMP #&28
- BCS C2105
 
-.C20D3
+ CMP #40                \ If A >= 40 then the original yaw angle was >= 20, so
+ BCS objv6              \ the yaw angle of the left edge is past the right edge
+                        \ of the screen (as the screen is 20 yaw angles wide),
+                        \ which means the object is not visible
+                        \
+                        \ So jump to objv6 to return from the subroutine with
+                        \ the C flag set to indicate that the object is not
+                        \ visible on-screen
 
- STA L0C62
- LDA objectViewYawLo
- CLC
- ADC angleLo
- STA T
+.objv3
+
+ STA objYawOffset       \ Set objYawOffset to A, so it contains the yaw offset
+                        \ of the left edge of the object from the left edge of
+                        \ the screen
+                        \
+                        \ The value is in yaw angles, but doubled
+
+                        \ We now check the object against the right edge of the
+                        \ screen
+
+ LDA objectViewYawLo    \ Set (A T) = objectViewYaw(Hi Lo) + angle(Hi Lo)
+ CLC                    \
+ ADC angleLo            \ So (A T) contains the yaw angle of the right edge of
+ STA T                  \ the object, relative to the screen
  LDA objectViewYawHi
  ADC angleHi
- BMI C2105
- ASL T
+
+ BMI objv6              \ If the result in (A T) is negative then the right edge
+                        \ of the object is to the left of the left screen edge,
+                        \ so jump to objv6 to return from the subroutine with
+                        \ the C flag set to indicate that the object is not
+                        \ visible on-screen
+
+                        \ If we get here then the right edge of the object is to
+                        \ the right of the left screen edge, and we know from the
+                        \ first test that the left edge of the object is to the
+                        \ left of the right screen edge, so some of the object
+                        \ must be on-screen
+
+ ASL T                  \ Double the yaw angle in (A T)
  ROL A
- CMP #&28
- BCC C20EE
- LDA #&27
 
-.C20EE
+ CMP #40                \ If A >= 40 then set A = 39, so A = max(39, A)
+ BCC objv4              \
+ LDA #39                \ This sets A to the yaw angle offset of the right edge
+                        \ of the object, doubled and clipped to a maximum of 40
+                        \ yaw angles (so that's 20 yaw angles in the original
+                        \ value, which is a screen width)
 
- CLC
- ADC #&01
- SEC
- SBC L0C62
- STA L0C6A
- BEQ C2105
- CMP #&15
- BCC C2100
- LDA #&14
+.objv4
 
-.C2100
+ CLC                    \ Set objYawWidth = A + 1 - objYawOffset
+ ADC #1                 \
+ SEC                    \ This sets objYawWidth to the difference between the
+ SBC objYawOffset       \ yaw offsets for the right and left edges, so that's
+ STA objYawWidth        \ the width of the object as seen on-screen
+                        \
+                        \ We add 1 to ensure we take the fractional part of the
+                        \ yaw offsets into account, as we have ignored the low
+                        \ byte in T for this calculation
 
- STA bufferColumns
- CLC
- RTS
+ BEQ objv6              \ If objYawWidth = 0 then the right edge is the same as
+                        \ the left edge on-screen, so jump to objv6 to return
+                        \ from the subroutine with the C flag set to indicate
+                        \ that the object is not visible on-screen ???
 
-.C2105
+ CMP #21                \ If A >= 21 then set A = 20, so A = max(20, A)
+ BCC objv5              \
+ LDA #20                \ This sets A to the yaw angle width of the on-screen
+                        \ object, clipped to the size of the screen (as there
+                        \ are 20 yaw angles in a screen width) ???
 
- SEC
- RTS
+.objv5
+
+ STA bufferColumns      \ Configure the screen buffer to use A character columns
+
+ CLC                    \ Clear the C flag to indicate that the object is
+                        \ visible on-screen
+
+ RTS                    \ Return from the subroutine
+
+.objv6
+
+ SEC                    \ Set the C flag to indicate that the object is not
+                        \ visible on-screen
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: L2107
+\       Name: objectHalfWidth
 \       Type: Variable
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Each object's width in terms of tile widths, for half the object
 \
 \ ******************************************************************************
 
-.L2107
+.objectHalfWidth
 
- EQUB 62                \ Object type 0: Robot                                62
- EQUB 70                \ Object type 1: Sentry                               70
- EQUB 114               \ Object type 2: Tree                                114
- EQUB 122               \ Object type 3: Boulder                             122
- EQUB 74                \ Object type 4: Meanie                               74
- EQUB 78                \ Object type 5: The Sentinel                         78
- EQUB 193               \ Object type 6: Sentinel's tower                    193
+ EQUB 62                \ Object type 0: Robot                       0.242 tiles
+ EQUB 70                \ Object type 1: Sentry                      0.273 tiles
+ EQUB 114               \ Object type 2: Tree                        0.445 tiles
+ EQUB 122               \ Object type 3: Boulder                     0.477 tiles
+ EQUB 74                \ Object type 4: Meanie                      0.289 tiles
+ EQUB 78                \ Object type 5: The Sentinel                0.305 tiles
+ EQUB 193               \ Object type 6: Sentinel's tower            0.754 tiles
 
 \ ******************************************************************************
 \
@@ -13425,7 +13534,7 @@
 
  LDA yObjectHi,X        \ And then the high bytes
  SBC yObjectHi,Y
- 
+
  BMI stak6              \ If the result is negative then the player (object #X)
                         \ is at a lower altitude than the object we are drawing
                         \ (object #Y), so jump to stak6 to draw the entire
@@ -14729,7 +14838,7 @@ L23E3 = C23E2+1
  STA xVectorHi,X        \ we will use to store the vector from the player to the
                         \ tile corner
 
- SEC                    \ Set xVector(Lo Bot) = 
+ SEC                    \ Set xVector(Lo Bot) =
  SBC xCoordLo,X         \             ((xTileRow 0) - xCoord(Hi Lo)) / 256
  STA xVectorBot,X       \
  LDA xTileRow,X         \ So xVector(Lo Bot) contains the distance in the x-axis
@@ -15145,7 +15254,7 @@ L23E3 = C23E2+1
                         \ player's gaze towards the tile corner we're analysing
 
  LDA xCoordLo,X         \ Set xCoord(Hi Lo) += xVector(Hi Lo)
- ADC xVectorLo,X 
+ ADC xVectorLo,X
  STA xCoordLo,X
  LDA xCoordHi,X
  ADC xVectorHi,X
@@ -15913,7 +16022,7 @@ L23E3 = C23E2+1
                         \ we can use it when drawing the tile rows below
 
  LDA xTileViewLeft      \ Store the column number for the left edge of the
- STA xTileLeftPrevious  \ visible portion of the row in xTileLeftPrevious, so 
+ STA xTileLeftPrevious  \ visible portion of the row in xTileLeftPrevious, so
                         \ we can refer to it above when we move on to the next
                         \ row in front
 
@@ -18188,7 +18297,7 @@ L23E3 = C23E2+1
                         \ We use this value below when calculating the colours
                         \ of the two faces in two-face tiles
 
- AND #%00000011         \ If Y mod 4 = 1 then the tile shape is the first shape 
+ AND #%00000011         \ If Y mod 4 = 1 then the tile shape is the first shape
  CMP #%00000001         \ in one of the groups above, so it's a single sloping
  BEQ DrawOneFaceTile    \ face from one horizontal edge to another, so jump to
                         \ DrawOneFaceTile to draw this one-face tile
@@ -20170,7 +20279,7 @@ L23E3 = C23E2+1
  EQUB 2 << 2            \ Shape 13 = colour 2 (white) and colour 0 (blue)
  EQUB 2 << 2            \ Shape 14 = colour 2 (white) and colour 1 (black)
  EQUB 1 << 2            \ Shape 15 = colour 1 (black) and colour 2 (white)
- 
+
  EQUB 0 << 2            \ Shape  0 = colour 3 (green) and colour 0 (blue)
  EQUB 0 << 2            \ Shape  1 = colour 1 (black) and colour 0 (blue)
  EQUB 2 << 2            \ Shape  2 = colour 1 (black) and colour 2 (white)
@@ -23138,7 +23247,7 @@ L314A = C3148+2
 
  LDX musicCounter       \ Set X to the music counter, which points to the
                         \ current place in the music data
-       
+
  BMI musi4              \ If bit 7 of musicCounter is set then there is no music
                         \ playing, so jump to musi4 to return from the
                         \ subroutine
@@ -23623,7 +23732,7 @@ L314A = C3148+2
 .game7
 
                         \ If we get here then we have successfully completed
-                        \ the landscape, so we display the secret code for the 
+                        \ the landscape, so we display the secret code for the
                         \ next landscape and go back to the title screen
 
  LDA #4                 \ Set all four logical colours to physical colour 4
@@ -24078,7 +24187,7 @@ L314A = C3148+2
                         \ where each column is eight pixels wide, and because
                         \ the screen is split into 8x8-pixel character blocks of
                         \ eight bytes in each, the icon is in screen memory at
-                        \ this address, which we store in (Q P): 
+                        \ this address, which we store in (Q P):
                         \
                         \   (Q P) = iconBuffer + xIconCounter * 8
                         \
@@ -24093,7 +24202,7 @@ L314A = C3148+2
                         \ will fit (and doubling just requires a simple shift)
 
  LDA xIconCounter       \ Set P = xIconCounter * 4 + LO(iconBuffer / 2)
- ASL A                  \      
+ ASL A                  \
  ASL A                  \ so those are the low bytes
  ADC #LO(iconBuffer)/2
  STA P
@@ -24582,11 +24691,11 @@ L314A = C3148+2
 \   Y                   The direction of scrolling that we just applied:
 \
 \                         * 0 = pan right
-\                        
+\
 \                         * 1 = pan left
-\                        
+\
 \                         * 2 = pan up
-\                        
+\
 \                         * 3 = pan down
 \
 \   toAddr(1 0)         The address of the area in screen memory that we need to
@@ -24662,7 +24771,7 @@ L314A = C3148+2
                         \ set a row counter in X to count the character rows in
                         \ the screen buffer, which is one row less than the
                         \ screen height, as the top row is the energy icon and
-                        \ scanner row 
+                        \ scanner row
 
 .dcol1
 
@@ -24709,7 +24818,7 @@ L314A = C3148+2
  CLC                    \
  ADC #&A0               \   (A fromAddr) = screenBufferAddr(1 0) + &A0
  STA fromAddr
- LDA screenBufferAddr+1    
+ LDA screenBufferAddr+1
  ADC #&00
 
 .dcol2
@@ -24723,7 +24832,7 @@ L314A = C3148+2
  LDA toAddr             \ Set (A toAddr) = toAddr(1 0) + &140
  CLC                    \                = toAddr(1 0) + 320
  ADC #&40
- STA toAddr             
+ STA toAddr
  LDA toAddr+1
  ADC #&01
 
@@ -25129,7 +25238,7 @@ L314A = C3148+2
 \ player's yaw angle, leaving them with a net rotation of 8 to the right - then
 \ this approach ensures that the new portion of the screen is drawn into the
 \ screen buffer correctly.
-\ 
+\
 \ The same approach is applied when panning vertically. If we pan up, then we
 \ simply add 4 to the player's yaw angle so they look up higher. This moves the
 \ player's gaze up, so when we draw the new landscape view into the screen
@@ -25148,7 +25257,7 @@ L314A = C3148+2
 
 .panAngleToUpdate
 
- EQUB 20                \ Direction 0 (pan right, scroll left) 
+ EQUB 20                \ Direction 0 (pan right, scroll left)
  EQUB -8                \ Direction 1 (pan left, scroll right)
  EQUB 4                 \ Direction 2 (pan up, scroll down)
  EQUB -12               \ Direction 3 (pan down, scroll up)
@@ -25191,11 +25300,11 @@ L314A = C3148+2
 \   Y                   The direction of scrolling that we are applying:
 \
 \                         * 0 = pan right
-\                        
+\
 \                         * 1 = pan left
-\                        
+\
 \                         * 2 = pan up
-\                        
+\
 \                         * 3 = pan down
 \
 \ ******************************************************************************
@@ -25821,7 +25930,7 @@ L314A = C3148+2
 
  TAY                    \ Set Y to the updated value of A, so Y now contains the
                         \ updated y-coordinate of the brush after applying the
-                        \ next step from ySightsStep 
+                        \ next step from ySightsStep
 
  BCC dras5              \ If A < 8 then the y-coordinate has not moved past the
                         \ bottom of the current character row, so jump to dras5
@@ -26215,7 +26324,7 @@ L314A = C3148+2
 
  LDX sightsByteCount    \ If the sights pixel byte stash is empty then there are
  BEQ rems2              \ no pixel bytes to restore to the screen, so jump to
-                        \ rems2 to return from the subroutine 
+                        \ rems2 to return from the subroutine
 
  DEX                    \ Decrement the size of the sights pixel byte stash to
                         \ give us a loop counter to count throught the bytes
@@ -31347,6 +31456,7 @@ L314A = C3148+2
 \
 \ where angle(Hi Lo) is the angle of this triangle:
 \
+\                                   object
 \                                  _.-+             ^
 \                              _.-´   |             |
 \                 vector   _.-´       |         y-axis (up)
@@ -32632,13 +32742,13 @@ L314A = C3148+2
 
  EQUB 200 + 0           \ Chord 1 = 8, 36, 36 with sound counter 6 * 4 = 24
  EQUB 8
- EQUB 36                
+ EQUB 36
  EQUB 200 + 6
  EQUB 36
 
  EQUB 200 + 0           \ Chord 2 = 20, 48, 48 with sound counter 6 * 4 = 24
  EQUB 20
- EQUB 48    
+ EQUB 48
  EQUB 200 + 6
  EQUB 48
 
@@ -32721,7 +32831,7 @@ L314A = C3148+2
  EQUB 200 + 9
  EQUB 28
 
- EQUB 200 + 1           \ Chord 6 = 8, 36, 36 with sound counter 1 * 4 = 1 and 
+ EQUB 200 + 1           \ Chord 6 = 8, 36, 36 with sound counter 1 * 4 = 1 and
  EQUB 8                 \ the first two notes each introduced with a counter of
  EQUB 36                \ 1 * 4 = 4
  EQUB 36
@@ -33182,9 +33292,9 @@ L314A = C3148+2
 \
 \ This routine calculates the following for an object:
 \
-\ 1. xDelta(Hi Lo) etc.: Calculate the difference (the delta) in all three axes
-\ between the viewer and the object we are analysing, to give us the 3D vector
-\ from the viewer to the object.
+\ 1. xDelta(Hi Lo), yDelta(Hi Lo), zDelta(Hi Lo): Calculate the difference (the
+\ delta) in all three axes between the viewer and the object we are analysing,
+\ to give us the 3D vector from the viewer to the object.
 \
 \ 2. angle(Hi Lo): Calculate the angle of the hypotenuse of the triangle formed
 \ by the x- and z-axes axes, which is the projection of the 3D vector from the
@@ -33192,7 +33302,11 @@ L314A = C3148+2
 \ down from above, casting the vector's shadow onto the y = 0 plane, and that's
 \ the hypotenuse)
 \
-\ 3. objectViewYaw(Hi Lo): The angle of the hypotenuse is the yaw angle of the
+\ 3. Set hypotenuse(Hi Lo) to the length of the hypotenuse in the above
+\ triangle, so that's the length of the 3D vector from the viewer to the object
+\ when projected down onto the ground plane.
+\
+\ 4. objectViewYaw(Hi Lo): The angle of the hypotenuse is the yaw angle of the
 \ 3D vector from the viewer to the object we are analysing. We subtract the
 \ viewer's yaw angle and the yaw adjustment, and add half a screen width to get
 \ the yaw angle delta from the viewer's gaze to the object, relative to the
@@ -33200,11 +33314,20 @@ L314A = C3148+2
 \ view. You can think of this as the screen x-coordinate of the object, or how
 \ far the object appears from the left edge of the screen.
 \
-\ 4. objectGazeYaw(Hi Lo) and hypotenuse(Hi Lo): Set to the object's gaze
-\ relative to the viewer's gaze.
+\ 5. objectGazeYaw(Hi Lo): Set to the object's gaze relative to the viewer's
+\ gaze.
 \
-\ 5. If this is the landscape preview, rotate the object to face forwards and
+\ 6. If this is the landscape preview, rotate the object to face forwards and
 \ scale it so it looks good.
+\
+\ 7. Set objectAdjacent(Hi Lo) to hypotenuse(Hi Lo) so it can be used as the
+\ length of the adjacent side in the vertical right-angled triangle with the
+\ projected vector along the bottom and the vector from the viewer to the
+\ object as the hypotenuse.
+\
+\ 8. Set objectOpposite(Hi Lo) to the length of the opposite side in the
+\ vertical right-angled triangle with the projected vector along the bottom and
+\ the vector from the viewer to the object as the hypotenuse.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -33288,9 +33411,6 @@ L314A = C3148+2
                         \ angleTangent, the length of the longer side in
                         \ a(Hi Lo) and the length of the shorter side in
                         \ b(Hi Lo)
-                        \
-                        \ This call also sets the a(Hi Lo) and b(Hi Lo)
-                        \ variables so we can call GetHypotenuse below ???
 
                         \ The angle of the hypotenuse is the yaw angle of the
                         \ 3D vector from the viewer to the object we are
@@ -33343,10 +33463,9 @@ L314A = C3148+2
 
  JSR GetHypotenuse      \ Calculate the length of the hypotenuse in the triangle
                         \ with side lengths of a(Hi Lo) and b(Hi Lo) and angle
-                        \ angleTangent, which are still set from the call to
-                        \ GetHypotenuseAngle above to the values for the
-                        \ projection of the 3D vector from the viewer to the
-                        \ object down onto the ground plane
+                        \ angleTangent, which the call to GetHypotenuseAngle set
+                        \ to the values for the projection of the 3D vector from
+                        \ the viewer to the object down onto the ground plane
                         \
                         \ The hypotenuse length is returned in hypotenuse(Hi Lo)
 
@@ -33539,7 +33658,7 @@ L314A = C3148+2
 .obpt1
 
  LDA objectGazeYawLo    \ Set the following
- STA T                  \            
+ STA T                  \
  LDA objectGazeYawHi    \   (A T) = objectGazeYaw(Hi Lo) + yaw angle for point Y
  CLC                    \
  ADC objPointYaw,Y      \ So this is the yaw angle of point Y in the object,
@@ -33587,7 +33706,7 @@ L314A = C3148+2
                         \ triangle with the polar distance as the hypotenuse
 
  LDA objectAdjacentLo   \ Set zDelta(Hi Lo) = objectAdjacent(Hi Lo) + (U T)
- CLC                    \    
+ CLC                    \
  ADC T                  \ So this adds the adjacent side of the vector from the
  STA zDeltaLo           \ viewer to the object, to the adjacent side of the
  LDA objectAdjacentHi   \ polar coordinate of the object point
@@ -33893,19 +34012,29 @@ L314A = C3148+2
                         \     looking (so that's the object's gaze relative to
                         \     the viewer's gaze)
                         \
+                        \   * Set hypotenuse(Hi Lo) to the length of the 3D
+                        \     vector from the viewer to the object when
+                        \     projected down onto the ground plane
+                        \
                         \   * Set objectAdjacent(Hi Lo) to the length of the
-                        \     adjacent side in the right-angled triangle with
-                        \     the vector from the viewer to the object as the
-                        \     hypotenuse
+                        \     adjacent side in the vertical right-angled
+                        \     triangle with the projected vector along the
+                        \     bottom and the vector from the viewer to the
+                        \     object as the hypotenuse
                         \
                         \   * Set objectOpposite(Hi Lo) to the length of the
-                        \     opposite side in the right-angled triangle with
-                        \     the vector from the viewer to the object as the
-                        \     hypotenuse
+                        \     opposite side in the vertical right-angled
+                        \     triangle with the projected vector along the
+                        \     bottom and the vector from the viewer to the
+                        \     object as the hypotenuse
                         \
-                        \ This also sets hypotenuse(Hi Lo) to the same value as
-                        \ objectAdjacent(Hi Lo), and it sets objectToAnalyse to
-                        \ the number of the object that we are drawing
+                        \ Note that hypotenuse(Hi Lo) and objectAdjacent(Hi Lo)
+                        \ are the same value, as the hypotenuse of the ground
+                        \ plane triangle is the same as the adjacent side of the
+                        \ vertical triangle
+                        \
+                        \ This also sets objectToAnalyse to the number of the
+                        \ object that we are drawing
 
  LDA hypotenuseHi       \ If hypotenuseHi (i.e. objectAdjacentHi) is greater or
  CMP #15                \ equal to 15 then the object is a fair distance away
@@ -34339,7 +34468,7 @@ L314A = C3148+2
  SBC yObjectLo,X        \
  STA yDeltaLo           \ starting with the low bytes
 
- LDA yObjectHi,Y        \ And then the high bytes 
+ LDA yObjectHi,Y        \ And then the high bytes
  SBC yObjectHi,X
  STA yDeltaHi
 
@@ -34751,10 +34880,10 @@ L314A = C3148+2
 \   A                   The number of 2400-dot plotting cycles to perform when
 \                       decaying the screen from the landscape view to the game
 \                       over screen
-\                       
+\
 \                         * 5 = 12,000 dots for when the player runs out of
 \                               energy when trying to hyperspace
-\                       
+\
 \                         * 30 = 72,000 dots for when the player is absorbed by
 \                                the Sentinel
 \
@@ -35172,7 +35301,7 @@ L314A = C3148+2
 \                         * 0 to draw a robot for the secret code screen
 \
 \                         * 5 to draw the Sentinel for the main title screen
-\                       
+\
 \ ******************************************************************************
 
 .DrawTitleObjects
