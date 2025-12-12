@@ -8288,14 +8288,27 @@
                         \ is clear, so the enemy has been removed from the
                         \ landscape at some point
 
- JSR DrainEnemyEnergy   \ ???
+ JSR DrainEnemyEnergy   \ Drain one unit of energy from the enemy and spawn a
+                        \ tree, if possible
+                        \
+                        \ If we can't spawn a tree because we are about to pan
+                        \ the screen and the tree would spawn in a position that
+                        \ would be visible on-screen, then the routine does not
+                        \ drain energy or spawn a tree, and instead it gives up
+                        \ and aborts applying tactics for this gameplay loop
+                        \
+                        \ If we successfully spawned a tree then the object
+                        \ number of the tree is in X
 
- BCS MoveOnToNextEnemy  \ If the C flag is set, jump to MoveOnToNextEnemy to
-                        \ move on to the next enemy for the next iteration of
-                        \ the gameplay loop, returning from the subroutine using
-                        \ a tail call
+ BCS MoveOnToNextEnemy  \ If the call to DrainEnemyEnergy returned with the C
+                        \ flag set, then either the enemy didn't have any energy
+                        \ to drain or we couldn't spawn a tree, so jump to
+                        \ MoveOnToNextEnemy to move on to the next enemy for the
+                        \ next iteration of the gameplay loop, returning from
+                        \ the subroutine using a tail call
 
- JMP sub_C1871          \ ???
+ JMP sub_C1871          \ Call sub_C1871 with X set to the object number of the
+                        \ tree to ???
 
 \ ******************************************************************************
 \
@@ -8607,6 +8620,13 @@
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The object number of ??? (e.g. tree that was spawned by
+\                       an enemy being drained of energy)
 \
 \ ******************************************************************************
 
@@ -9169,7 +9189,15 @@
 \       Name: DrainEnemyEnergy
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Drain one unit of energy from an enemy and spawn a tree
+\    Summary: Drain one unit of energy from an enemy and spawn a tree, if
+\             possible
+\
+\ ------------------------------------------------------------------------------
+\
+\ If we can't spawn a tree because we are about to pan the screen and the tree
+\ would spawn in a position that would be visible on-screen, then the routine
+\ does not drain energy or spawn a tree, and instead it gives up and aborts
+\ applying tactics for this gameplay loop.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9183,7 +9211,8 @@
 \
 \   C flag              Status flag:
 \
-\                         * Clear if ???
+\                         * Clear if the energy is drained and a tree is spawned
+\                           successfully
 \
 \                         * Set if:
 \
@@ -9192,7 +9221,8 @@
 \                           * We could not spawn a tree to take on the drained
 \                             energy
 \
-\   currentObject       ???
+\   X                   The object number of the spawned tree, if one was
+\                       spawned
 \
 \ ******************************************************************************
 
@@ -9252,9 +9282,9 @@
  LDX enemyObject        \ Decrement enemyEnergy for the enemy object we are
  DEC enemyEnergy,X      \ draining
 
- LDX currentObject      \ Set X to currentObject, which the call to
-                        \ CheckObjVisibility set to the object number of the
-                        \ tree ???
+ LDX currentObject      \ Set X to currentObject to return from the subroutine,
+                        \ which the call to CheckObjVisibility set to the object
+                        \ number of the newly spawned tree
 
  CLC                    \ Clear the C flag to indicate success
 
