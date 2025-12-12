@@ -5765,15 +5765,17 @@
                         \ So let's check to see whether the same pan key is
                         \ still being held down from the pan we just finished
 
- JSR CheckForSamePanKey \ Check to see whether the same pan key is being
-                        \ held down compared to the last time we checked
+ JSR CheckForSamePanKey \ Check to see whether the same pan key is being held
+                        \ down compared to the last time we checked
 
  BNE play2              \ If the same pan key is not being held down, jump to
                         \ play2 to skip the following
 
  SEC                    \ The same pan key is still being held down, so set bit
  ROR samePanKeyPress    \ 7 of samePanKeyPress to record this fact for use in
-                        \ the CheckObjVisibility routine ???
+                        \ the CheckObjVisibility routine, so we can work out
+                        \ whether it is safe to update objects without
+                        \ corrupting any ongoing pans in the landscape view
 
 .play2
 
@@ -9391,8 +9393,14 @@
 \       Name: AbortWhenVisible
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Abort applying the tactics for this gameplay loop if the object
-\             is visible on-screen
+\    Summary: Abort applying the tactics for this gameplay loop if the specified
+\             object is visible on-screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   The number of the object to check
 \
 \ ******************************************************************************
 
@@ -9460,14 +9468,14 @@
 \
 \   C flag              The object's visibility:
 \
-\                         * Clear = we are about to do a pan and at least some
-\                                   of the object is visible on-screen (so the
-\                                   object must not be updated or it could
+\                         * Clear = we are about to repeat a pan and at least
+\                                   some of the object is visible on-screen (so
+\                                   the object must not be updated or it could
 \                                   corrupt the landscape view)
 \
-\                         * Set = we are about to do a pan and the object is not
-\                                 visible on-screen, or we are not about to do
-\                                 a pan (so the object can be updated)
+\                         * Set = we are about to repeat a pan and the object is
+\                                 not visible on-screen, or we are not about to
+\                                 repeat a pan (so the object can be updated)
 \
 \   bufferColumns       If the object is visible, this is set to the number of
 \                       character columns in the screen buffer that the object
@@ -9477,8 +9485,8 @@
 \                       of the left edge of the object from the left edge of the
 \                       screen, in character columns
 \
-\   currentObject       If we are about to do a pan, this is set to the object
-\                       number in A
+\   currentObject       If we are about to repeat a pan, this is set to the
+\                       object number in A
 \
 \   X                   X is preserved
 \
