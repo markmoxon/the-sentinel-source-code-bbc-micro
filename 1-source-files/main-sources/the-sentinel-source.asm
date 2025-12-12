@@ -24924,7 +24924,7 @@ L314A = C3148+2
                         \ So this wraps the address around so we can keep
                         \ drawing content into the screen buffer
                         \
-                        \ See bufferRowAddrLo for more information on the
+                        \ See screenBufferRow0 for more information on the
                         \ structure of the screen buffer
 
  LDA screenBufferAddr   \ Calculate the following:
@@ -26707,115 +26707,36 @@ L314A = C3148+2
 \ address for a 25th character row, but this clashes with the object data and
 \ is unused.
 \
-\ The buffer rows wrap around in memory after the 16th row, so they can fit into
-\ the program space without overlapping with screen memory or game code. The
-\ addresses are as follows:
-\
-\   &3F00 (screenBufferRow0)
-\   &4040 (screenBufferRow1)
-\   &4180 (screenBufferRow2)
-\   &42C0 (screenBufferRow3)
-\   &4400 (screenBufferRow4)
-\   &4540 (screenBufferRow5)
-\   &4680 (screenBufferRow6)
-\   &47C0 (screenBufferRow7)
-\   &4900 (screenBufferRow8)
-\   &4A40 (screenBufferRow9)
-\   &4B80 (screenBufferRow10)
-\   &4CC0 (screenBufferRow11)
-\   &4E00 (screenBufferRow12)
-\   &4F40 (screenBufferRow13)
-\   &5080 (screenBufferRow14)
-\   &51C0 (screenBufferRow15)
-\
-\ and then they wrap around to the following locations for rows 16 to 25:
-\
-\   &3FA0 (screenBufferRow16)
-\   &40E0 (screenBufferRow17)
-\   &4220 (screenBufferRow18)
-\   &4360 (screenBufferRow19)
-\   &44A0 (screenBufferRow20)
-\   &45E0 (screenBufferRow21)
-\   &4720 (screenBufferRow22)
-\   &4860 (screenBufferRow23)
-\   &49A0 (unused)
-\
-\ The first batch of locations need to be able to store an entire screen row of
-\ 320 bytes, so they can be used to store the screen buffer when scrolling in
-\ any direction (and specifically for the up and down scrolling, when we need to
-\ be able to store eight full character rows in the buffer).
-\
-\ We only need to use the second batch of locations when we are drawing the left
-\ or right buffers when scrolling sideways, as we then need to fit 24 character
-\ rows into the buffer. We can fit the first 16 rows into the first batch of
-\ buffer rows, but we need more. Luckily, when scrolling sideways, each row is
-\ only eight character blocks wide, so each buffer row only needs to be 64 bytes
-\ long rather than the 320 bytes needed when scrolling up or down. This means
-\ that we are only using the first 64 bytes of each buffer, so we can stick a
-\ second batch of buffers in the latter part of each of the first batch.
-\
-\ In other words, when the player pans up or down, we need to draw eight
-\ full-width character rows of new screen content into the screen buffers, each
-\ of which is 320 bytes. So we use the screen buffer space as follows:
-\
-\   &3F00 to &403F for character row 0
-\   &4040 to &417F for character row 1
-\   &4180 to &42BF for character row 2
-\   &42C0 to &43FF for character row 3
-\   &4400 to &453F for character row 4
-\   &4540 to &467F for character row 5
-\   &4680 to &47BF for character row 6
-\   &47C0 to &48FF for character row 7
-\
-\ And when the player pans left or right, the new screen content that we need to
-\ draw into the screen buffers is a strip down the side of the screen that's 24
-\ character rows tall and eight character columns wide, so each row is 64 bytes
-\ long. So we use the screen buffer space as follows:
-\
-\   &3F00 to &3F3F for character row 0
-\   &4040 to &407F for character row 1
-\   &4180 to &41BF for character row 2
-\   &42C0 to &42FF for character row 3
-\   &4400 to &443F for character row 4
-\   &4540 to &457F for character row 5
-\   &4680 to &46BF for character row 6
-\   &47C0 to &47FF for character row 7
-\   &4900 to &493F for character row 8
-\   &4A40 to &4A7F for character row 9
-\   &4B80 to &4BBF for character row 10
-\   &4CC0 to &4CFF for character row 11
-\   &4E00 to &4E3F for character row 12
-\   &4F40 to &4F7F for character row 13
-\   &5080 to &50BF for character row 14
-\   &51C0 to &51FF for character row 15
-\   &3FA0 to &3FDF for character row 16
-\   &40E0 to &411F for character row 17
-\   &4220 to &425F for character row 18
-\   &4360 to &439F for character row 19
-\   &44A0 to &43DF for character row 20
-\   &45E0 to &461F for character row 21
-\   &4720 to &475F for character row 22
-\   &4860 to &489F for character row 23
-\   &49A0 to &49DF for character row 24
-\
-\ This structure ensures that the screen buffer always fits into the range &3F00
-\ to &51FF, irrespective of the scrolling direction.
-\
 \ ******************************************************************************
 
 .bufferRowAddrLo
 
- FOR I%, 0, 15
+ EQUB LO(screenBufferRow0)
+ EQUB LO(screenBufferRow1)
+ EQUB LO(screenBufferRow2)
+ EQUB LO(screenBufferRow3)
+ EQUB LO(screenBufferRow4)
+ EQUB LO(screenBufferRow5)
+ EQUB LO(screenBufferRow6)
+ EQUB LO(screenBufferRow7)
+ EQUB LO(screenBufferRow8)
+ EQUB LO(screenBufferRow9)
+ EQUB LO(screenBufferRow10)
+ EQUB LO(screenBufferRow11)
+ EQUB LO(screenBufferRow12)
+ EQUB LO(screenBufferRow13)
+ EQUB LO(screenBufferRow14)
+ EQUB LO(screenBufferRow15)
+ EQUB LO(screenBufferRow16)
+ EQUB LO(screenBufferRow17)
+ EQUB LO(screenBufferRow18)
+ EQUB LO(screenBufferRow19)
+ EQUB LO(screenBufferRow20)
+ EQUB LO(screenBufferRow21)
+ EQUB LO(screenBufferRow22)
+ EQUB LO(screenBufferRow23)
 
-  EQUB LO(&3F00 + (I% * &140))
-
- NEXT
-
- FOR I%, 0, 8
-
-  EQUB LO(&3FA0 + (I% * &140))
-
- NEXT
+ EQUB LO(screenBufferRow23 + 320)   \ This part of the screen buffer is unused
 
 \ ******************************************************************************
 \
@@ -26857,23 +26778,41 @@ L314A = C3148+2
 \
 \ ------------------------------------------------------------------------------
 \
-\ See bufferRowAddrLo for an explanation of this table.
+\ This table contains addresses for each of the 24 character rows in the screen
+\ buffer for the player's scrolling landscape view. There is an additional
+\ address for a 25th character row, but this clashes with the object data and
+\ is unused.
 \
 \ ******************************************************************************
 
 .bufferRowAddrHi
 
- FOR I%, 0, 15
+ EQUB HI(screenBufferRow0)
+ EQUB HI(screenBufferRow1)
+ EQUB HI(screenBufferRow2)
+ EQUB HI(screenBufferRow3)
+ EQUB HI(screenBufferRow4)
+ EQUB HI(screenBufferRow5)
+ EQUB HI(screenBufferRow6)
+ EQUB HI(screenBufferRow7)
+ EQUB HI(screenBufferRow8)
+ EQUB HI(screenBufferRow9)
+ EQUB HI(screenBufferRow10)
+ EQUB HI(screenBufferRow11)
+ EQUB HI(screenBufferRow12)
+ EQUB HI(screenBufferRow13)
+ EQUB HI(screenBufferRow14)
+ EQUB HI(screenBufferRow15)
+ EQUB HI(screenBufferRow16)
+ EQUB HI(screenBufferRow17)
+ EQUB HI(screenBufferRow18)
+ EQUB HI(screenBufferRow19)
+ EQUB HI(screenBufferRow20)
+ EQUB HI(screenBufferRow21)
+ EQUB HI(screenBufferRow22)
+ EQUB HI(screenBufferRow23)
 
-  EQUB HI(&3F00 + (I% * &140))
-
- NEXT
-
- FOR I%, 0, 8
-
-  EQUB HI(&3FA0 + (I% * &140))
-
- NEXT
+ EQUB HI(screenBufferRow23 + 320)   \ This part of the screen buffer is unused
 
 \ ******************************************************************************
 \
@@ -26993,6 +26932,107 @@ L314A = C3148+2
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: The screen buffer for character row 0
+\
+\ ------------------------------------------------------------------------------
+\
+\ The screen buffer is split up into 24 parts, one for each of the character
+\ rows in the player's scrolling landscape view. The lookup tables contain an
+\ additional address for a 25th character row, but this clashes with the object
+\ data and is unused.
+\
+\ The buffer rows wrap around in memory after the 16th row, so they can fit into
+\ the program space without overlapping with screen memory or game code. The
+\ addresses are as follows:
+\
+\   &3F00 (screenBufferRow0)
+\   &4040 (screenBufferRow1)
+\   &4180 (screenBufferRow2)
+\   &42C0 (screenBufferRow3)
+\   &4400 (screenBufferRow4)
+\   &4540 (screenBufferRow5)
+\   &4680 (screenBufferRow6)
+\   &47C0 (screenBufferRow7)
+\   &4900 (screenBufferRow8)
+\   &4A40 (screenBufferRow9)
+\   &4B80 (screenBufferRow10)
+\   &4CC0 (screenBufferRow11)
+\   &4E00 (screenBufferRow12)
+\   &4F40 (screenBufferRow13)
+\   &5080 (screenBufferRow14)
+\   &51C0 (screenBufferRow15)
+\
+\ and then they wrap around to the following locations for rows 16 to 25:
+\
+\   &3FA0 (screenBufferRow16)
+\   &40E0 (screenBufferRow17)
+\   &4220 (screenBufferRow18)
+\   &4360 (screenBufferRow19)
+\   &44A0 (screenBufferRow20)
+\   &45E0 (screenBufferRow21)
+\   &4720 (screenBufferRow22)
+\   &4860 (screenBufferRow23)
+\   &49A0 (unused)
+\
+\ The first batch of locations need to be able to store an entire screen row of
+\ 320 bytes, so they can be used to store the screen buffer when scrolling in
+\ any direction (and specifically for the up and down scrolling, when we need to
+\ be able to store eight full character rows in the buffer).
+\
+\ We only need to use the second batch of locations when we are drawing the left
+\ or right buffers when scrolling sideways, as we then need to fit 24 character
+\ rows into the buffer. We can fit the first 16 rows into the first batch of
+\ buffer rows, but we need more. Luckily, when scrolling sideways, each row is
+\ only eight character blocks wide, so each buffer row only needs to be 64 bytes
+\ long rather than the 320 bytes needed when scrolling up or down. This means
+\ that we are only using the first 64 bytes of each buffer, so we can stick a
+\ second batch of buffers in the latter part of each of the first batch.
+\
+\ In other words, when the player pans up or down, we need to draw eight
+\ full-width character rows of new screen content into the screen buffers, each
+\ of which is 320 bytes. So we use the screen buffer space as follows:
+\
+\   &3F00 to &403F for character row 0
+\   &4040 to &417F for character row 1
+\   &4180 to &42BF for character row 2
+\   &42C0 to &43FF for character row 3
+\   &4400 to &453F for character row 4
+\   &4540 to &467F for character row 5
+\   &4680 to &47BF for character row 6
+\   &47C0 to &48FF for character row 7
+\
+\ And when the player pans left or right, the new screen content that we need to
+\ draw into the screen buffers is a strip down the side of the screen that's 24
+\ character rows tall and eight character columns wide, so each row is 64 bytes
+\ long. So we use the screen buffer space as follows:
+\
+\   &3F00 to &3F3F for character row 0
+\   &4040 to &407F for character row 1
+\   &4180 to &41BF for character row 2
+\   &42C0 to &42FF for character row 3
+\   &4400 to &443F for character row 4
+\   &4540 to &457F for character row 5
+\   &4680 to &46BF for character row 6
+\   &47C0 to &47FF for character row 7
+\   &4900 to &493F for character row 8
+\   &4A40 to &4A7F for character row 9
+\   &4B80 to &4BBF for character row 10
+\   &4CC0 to &4CFF for character row 11
+\   &4E00 to &4E3F for character row 12
+\   &4F40 to &4F7F for character row 13
+\   &5080 to &50BF for character row 14
+\   &51C0 to &51FF for character row 15
+\   &3FA0 to &3FDF for character row 16
+\   &40E0 to &411F for character row 17
+\   &4220 to &425F for character row 18
+\   &4360 to &439F for character row 19
+\   &44A0 to &43DF for character row 20
+\   &45E0 to &461F for character row 21
+\   &4720 to &475F for character row 22
+\   &4860 to &489F for character row 23
+\   &49A0 to &49DF for character row 24
+\
+\ This structure ensures that the screen buffer always fits into the range &3F00
+\ to &51FF, irrespective of the scrolling direction.
 \
 \ ******************************************************************************
 
