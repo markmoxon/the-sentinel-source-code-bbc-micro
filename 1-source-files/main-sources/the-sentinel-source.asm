@@ -608,8 +608,8 @@
 
 .drawViewAngles
 
- SKIP 1                 \ The address in drawViewAngles(1 0) of the pitch and yaw
-                        \ angles of the tile and polygon points that we are
+ SKIP 1                 \ The address in drawViewAngles(1 0) of the pitch and
+                        \ yaw angles of the tile and polygon points that we are
                         \ drawing in the landscape view
 
 .vectorYawAngleLo
@@ -2015,9 +2015,7 @@
 
  EQUB 0                 \ The yaw offset of the left edge of the object being
                         \ analysed in GetObjVisibility, relative to the left
-                        \ edge of the screen
-                        \
-                        \ The value is in yaw angles, but doubled
+                        \ edge of the screen, in on-screen character columns
 
 .playerHasMovedTile
 
@@ -2070,9 +2068,8 @@
 .objYawWidth
 
  EQUB 0                 \ The width of the visible portion of the object being
-                        \ analysed in GetObjVisibility
-                        \
-                        \ The value is in yaw angles, but doubled
+                        \ analysed in GetObjVisibility, in on-screen character
+                        \ columns
 
 .objectStackCounter
 
@@ -5551,8 +5548,8 @@
 \       Name: PlaceObjectBelow
 \       Type: Subroutine
 \   Category: 3D objects
-\    Summary: Attempt to place the player object on a tile that is below the
-\             maximum altitude specified in A
+\    Summary: Attempt to place an object on a tile that is below the maximum
+\             altitude specified in A
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5560,6 +5557,8 @@
 \
 \   A                   The maximum desired altitude of the object (though we
 \                       may end up placing the object higher than this)
+\
+\   X                   The number of the object to add to the tile
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5774,7 +5773,7 @@
 
  SEC                    \ The same pan key is still being held down, so set bit
  ROR samePanKeyPress    \ 7 of samePanKeyPress to record this fact for use in
-                        \ the sub_C1AF3 routine ???
+                        \ the CheckObjVisibility routine ???
 
 .play2
 
@@ -8389,7 +8388,7 @@
  LDY enemyObject
  LDX enemyData5,Y
  TXA
- JSR sub_C1AE7
+ JSR AbortWhenVisible
  LDA objectYawAngle,X
  CLC
  ADC L0C0E
@@ -8418,7 +8417,7 @@
  LDY enemyObject
  LDX enemyData5,Y
  TXA
- JSR sub_C1AE7
+ JSR AbortWhenVisible
  LDA #&80
  STA enemyData5,Y
  LDA #&02
@@ -8529,7 +8528,7 @@
 .C17FC
 
  TXA
- JSR sub_C1AE7
+ JSR AbortWhenVisible
  LDA objectYawAngle,X
  CLC
  ADC objRotationSpeed,X
@@ -8968,8 +8967,24 @@
                         \ are applying tactics (so this is now object #X)
 
  TYA
- JSR sub_C1AF3
- BCC C19F1
+
+ JSR CheckObjVisibility \ Check whether the potential meanie in object A is
+                        \ visible and could therefore be seen on-screen by the
+                        \ player
+
+ BCC C19F1              \ If the C flag is clear then we are about to repeat the
+                        \ same screen pan (as the player is still holding down
+                        \ the same pan key) and the potential meanie would be
+                        \ visible in the landscape view if we drew it again
+                        \
+                        \ This means that when we pan the screen, the new part
+                        \ of the screen that pans into view might show part of
+                        \ the meanie while the rest of the screen won't, and that
+                        \ won't look good
+                        \
+                        \ So jump to C19F1 to move on to the next enemy, thus
+                        \ aborting the whole process
+
  TYA
  STA enemyData5,X
 
@@ -9075,8 +9090,8 @@
                         \ If we get here then we need to drain energy from
                         \ object #X
 
- TXA                    \ Call sub_C1AE7 with the object number in A ???
- JSR sub_C1AE7
+ TXA                    \ Call AbortWhenVisible with the object number in A ???
+ JSR AbortWhenVisible
 
  LDA objectTypes,X      \ Set A to the type of object #X
 
@@ -9207,18 +9222,37 @@
                         \ dren1 to return from the subroutine with the C flag
                         \ set
 
- TXA                    \ Set A to the object number of the enemy we are
-                        \ draining
+ TXA                    \ Set A to the object number of the tree we added to the
+                        \ landscape so we can pass it to CheckObjVisibility
 
- JSR sub_C1AF3          \ ???
+ JSR CheckObjVisibility \ Check whether the tree in object A is visible and
+                        \ could therefore be seen on-screen by the player
 
- BCC dren2              \ If the C flag is clear, jump to dren2 to delete the
-                        \ enemy object and stop applying tactics to it ???
+ BCC dren2              \ If the C flag is clear then we are about to repeat the
+                        \ same screen pan (as the player is still holding down
+                        \ the same pan key) and the tree we just added would be
+                        \ visible in the landscape view if we drew it again
+                        \
+                        \ This means that when we pan the screen, the new part
+                        \ of the screen that pans into view might show part of
+                        \ the tree while the rest of the screen won't, and that
+                        \ won't look good
+                        \
+                        \ So jump to dren2 to delete the tree and stop applying
+                        \ tactics to the enemy, thus aborting the whole process
+
+                        \ If we get here then we are either not repeating the
+                        \ same screen pan, or we are but the object is not
+                        \ visible on-screen, so in either case the tree won't
+                        \ only partially appear on-screen so we can go ahead
+                        \ with the energy drain
 
  LDX enemyObject        \ Decrement enemyEnergy for the enemy object we are
  DEC enemyEnergy,X      \ draining
 
- LDX currentObject      \ Set X to currentObject ???
+ LDX currentObject      \ Set X to currentObject, which the call to
+                        \ CheckObjVisibility set to the object number of the
+                        \ tree ???
 
  CLC                    \ Clear the C flag to indicate success
 
@@ -9228,7 +9262,8 @@
 
 .dren2
 
- JSR DeleteObject       \ Delete object #X and remove it from the landscape
+ JSR DeleteObject       \ Delete the tree in object #X and remove it from the
+                        \ landscape
 
  JMP FinishEnemyTactics \ Jump to FinishEnemyTactics to stop applying tactics to
                         \ the current enemy and return to the ProcessGameplay
@@ -9353,17 +9388,32 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1AE7
+\       Name: AbortWhenVisible
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Abort applying the tactics for this gameplay loop if the object
+\             is visible on-screen
 \
 \ ******************************************************************************
 
-.sub_C1AE7
+.AbortWhenVisible
 
- JSR sub_C1AF3
- BCS CRE10
+ JSR CheckObjVisibility \ Check whether object A is visible and could therefore
+                        \ be seen on-screen by the player
+
+ BCS cvis1              \ If the C flag is set then we are either not repeating
+                        \ the same screen pan, or we are but the object is not
+                        \ visible on-screen, so in either case object A won't
+                        \ only partially appear on-screen so we can jump to
+                        \ cvis1 to return from the subroutine and continue the
+                        \ process of applying tactics
+
+                        \ If the C flag is clear then we are about to repeat the
+                        \ same screen pan (as the player is still holding down
+                        \ the same pan key) and the object we just added would be
+                        \ visible in the landscape view if we drew it again, so
+                        \ fall through into FinishEnemyTactics to stop applying
+                        \ tactics for this gameplay loop
 
 \ ******************************************************************************
 \
@@ -9392,41 +9442,61 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1AF3
+\       Name: CheckObjVisibility
 \       Type: Subroutine
-\   Category: gameplay
-\    Summary: ???
+\   Category: Drawing objects
+\    Summary: Check whether an object is visible on-screen and should therefore
+\             not be changed if a pan operation is about to happen
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   The object number ???
+\   A                   The number of the object to check
 \
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
-\   C flag              Can the object be deleted?
+\   C flag              The object's visibility:
 \
-\                         * Clear = object can not be deleted as a new pan needs
-\                                   to be performed
+\                         * Clear = we are about to do a pan and at least some
+\                                   of the object is visible on-screen (so the
+\                                   object must not be updated or it could
+\                                   corrupt the landscape view)
 \
-\                         * Set = object can be deleted
+\                         * Set = we are about to do a pan and the object is not
+\                                 visible on-screen, or we are not about to do
+\                                 a pan (so the object can be updated)
+\
+\   bufferColumns       If the object is visible, this is set to the number of
+\                       character columns in the screen buffer that the object
+\                       spans
+\
+\   objYawOffset        If the object is visible, this is set to the yaw offset
+\                       of the left edge of the object from the left edge of the
+\                       screen, in character columns
+\
+\   currentObject       If we are about to do a pan, this is set to the object
+\                       number in A
 \
 \   X                   X is preserved
 \
 \   Y                   Y is preserved
 \
-\   currentObject       Set to the argument A if the object cannot be deleted
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   cvis1               Contains an RTS
 \
 \ ******************************************************************************
 
-.sub_C1AF3
+.CheckObjVisibility
 
  SEC                    \ If bit 6 of samePanKeyPress is clear then the player
  BIT samePanKeyPress    \ if not holding down the same pan key following the
- BPL CRE10              \ completion of a landscape pan, so jump to CRE10 to
+ BPL cvis1              \ completion of a landscape pan, so jump to cvis1 to
                         \ return from the subroutine with the C flag set
 
                         \ If we get here then we have just completed a pan of
@@ -9434,7 +9504,7 @@
                         \ down the same pan key
 
  STA currentObject      \ Set currentObject to the object in A to pass to the
-                        \ GetObjVisibility routine ???
+                        \ GetObjVisibility routine so we check whether the
 
  LDA playerObject       \ Set viewingObject to the object number of the player,
  STA viewingObject      \ so any future view calculations are done from the
@@ -9445,14 +9515,29 @@
  TYA
  PHA
 
- JSR GetObjVisibility   \ ???
+ JSR GetObjVisibility   \ Calculate whether any part of an object is visible
+                        \ on-screen and set the C flag as follows:
+                        \
+                        \   * Clear = at least some of the object is visible
+                        \             on-screen
+                        \
+                        \   * Set = the object is not visible on-screen
+                        \
+                        \ If the object is visible, also set the following:
+                        \
+                        \   * bufferColumns = the number of character columns
+                        \     in the screen buffer that the object spans
+                        \
+                        \   * objYawOffset = the yaw offset of the left edge of
+                        \     the object from the left edge of the screen, in
+                        \     character columns
 
  PLA                    \ Retrieve X and Y from the stack so they can be
  TAY                    \ preserved
  PLA
  TAX
 
-.CRE10
+.cvis1
 
  RTS                    \ Return from the subroutine
 
@@ -12828,7 +12913,8 @@
 \       Name: GetObjVisibility
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Calculate whether an object is visible on-screen
+\    Summary: Calculate whether any part of an object is visible on-screen, and
+\             if so, which character columns it spans on the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12842,13 +12928,18 @@
 \
 \   C flag              The object's visibility:
 \
-\                         * Clear = object is visible on-screen
+\                         * Clear = at least some of the object is visible
+\                                   on-screen
 \
-\                         * Set = object is not visible on-screen
+\                         * Set = the object is not visible on-screen
 \
 \   bufferColumns       If the object is visible, this is set to the number of
 \                       character columns in the screen buffer that the object
-\                       appears in
+\                       spans
+\
+\   objYawOffset        If the object is visible, this is set to the yaw offset
+\                       of the left edge of the object from the left edge of the
+\                       screen, in character columns
 \
 \ ******************************************************************************
 
@@ -12924,10 +13015,11 @@
                         \ This triangle is flat on the ground with the viewer at
                         \ the corner
                         \
-                        \ The adjacent side of length hypotenuse(Hi Lo) represents the
-                        \ projection of the vector from the viewer to the object
-                        \ onto the ground, as if there were a light shining down
-                        \ from above, so this is the projection of the gaze vector
+                        \ The adjacent side of length hypotenuse(Hi Lo) along
+                        \ the bottom of the triangle represents the projection
+                        \ onto the ground of the vector from the viewer to the
+                        \ object, as if there were a light shining down from
+                        \ above, so this is the projection of the gaze vector
                         \
                         \ We want to calculate angle(Hi Lo), as that's the yaw
                         \ angle delta between the projected gaze vector and the
@@ -12976,24 +13068,29 @@
 .objv2
 
  ASL T                  \ Double the yaw angle in (A T)
- ROL A
-
- CMP #40                \ If A >= 40 then the original yaw angle was >= 20, so
- BCS objv6              \ the yaw angle of the left edge is past the right edge
-                        \ of the screen (as the screen is 20 yaw angles wide),
-                        \ which means the object is not visible
+ ROL A                  \
+                        \ This converts the yaw angle into character columns in
+                        \ screen memory
                         \
-                        \ So jump to objv6 to return from the subroutine with
-                        \ the C flag set to indicate that the object is not
-                        \ visible on-screen
+                        \ The custom screen mode 5 used by the game is 40
+                        \ character columns wide, and the screen is 20 yaw
+                        \ angles wide in terms of the game's coordinate system
+                        \
+                        \ So we can simply double the yaw angle in (A T) to
+                        \ convert it into on-screen character columns
+
+ CMP #40                \ If A >= 40 then the left edge is past the right edge
+ BCS objv6              \ of the screen (as the screen is 40 columns wide),
+                        \ which means the object is not visible, so jump to
+                        \ objv6 to return from the subroutine with the C flag
+                        \ set to indicate that the object is not visible
+                        \ on-screen
 
 .objv3
 
  STA objYawOffset       \ Set objYawOffset to A, so it contains the yaw offset
                         \ of the left edge of the object from the left edge of
-                        \ the screen
-                        \
-                        \ The value is in yaw angles, but doubled
+                        \ the screen, in character columns
 
                         \ We now check the object against the right edge of the
                         \ screen
@@ -13012,20 +13109,28 @@
                         \ visible on-screen
 
                         \ If we get here then the right edge of the object is to
-                        \ the right of the left screen edge, and we know from the
-                        \ first test that the left edge of the object is to the
-                        \ left of the right screen edge, so some of the object
-                        \ must be on-screen
+                        \ the right of the left screen edge, and we know from
+                        \ the first test that the left edge of the object is to
+                        \ the left of the right screen edge, so some of the
+                        \ object must be on-screen
 
  ASL T                  \ Double the yaw angle in (A T)
- ROL A
+ ROL A                  \
+                        \ This converts the yaw angle into character columns in
+                        \ screen memory
+                        \
+                        \ The custom screen mode 5 used by the game is 40
+                        \ character columns wide, and the screen is 20 yaw
+                        \ angles wide in terms of the game's coordinate system
+                        \
+                        \ So we can simply double the yaw angle in (A T) to
+                        \ convert it into on-screen character columns
 
  CMP #40                \ If A >= 40 then set A = 39, so A = max(39, A)
  BCC objv4              \
  LDA #39                \ This sets A to the yaw angle offset of the right edge
-                        \ of the object, doubled and clipped to a maximum of 40
-                        \ yaw angles (so that's 20 yaw angles in the original
-                        \ value, which is a screen width)
+                        \ of the object, in on-screen character columns, clipped
+                        \ to fit within the screen width of 40 columns
 
 .objv4
 
@@ -13033,26 +13138,34 @@
  ADC #1                 \
  SEC                    \ This sets objYawWidth to the difference between the
  SBC objYawOffset       \ yaw offsets for the right and left edges, so that's
- STA objYawWidth        \ the width of the object as seen on-screen
+ STA objYawWidth        \ the width of the object in on-screen character columns
                         \
                         \ We add 1 to ensure we take the fractional part of the
                         \ yaw offsets into account, as we have ignored the low
                         \ byte in T for this calculation
 
- BEQ objv6              \ If objYawWidth = 0 then the right edge is the same as
-                        \ the left edge on-screen, so jump to objv6 to return
-                        \ from the subroutine with the C flag set to indicate
-                        \ that the object is not visible on-screen ???
+ BEQ objv6              \ If objYawWidth = 0 then the object has no on-screen
+                        \ width, so jump to objv6 to return from the subroutine
+                        \ with the C flag set to indicate that the object is not
+                        \ visible on-screen
 
  CMP #21                \ If A >= 21 then set A = 20, so A = max(20, A)
  BCC objv5              \
- LDA #20                \ This sets A to the yaw angle width of the on-screen
-                        \ object, clipped to the size of the screen (as there
-                        \ are 20 yaw angles in a screen width) ???
+ LDA #20                \ This clips A to the a maximum of 20 character columns
+                        \ as this is the maximum width of the screen buffer when
+                        \ configured as a column buffer
 
 .objv5
 
  STA bufferColumns      \ Configure the screen buffer to use A character columns
+                        \ for drawing the object
+                        \
+                        \ Note that this has a maximum value of 20, which is why
+                        \ close-up objects that take up a large amount of space
+                        \ on-screen are absorbed in two stages, left then right,
+                        \ as the object it too wide to fit into the column
+                        \ buffer's maximum width of 20 character columns, or
+                        \ half a screen
 
  CLC                    \ Clear the C flag to indicate that the object is
                         \ visible on-screen

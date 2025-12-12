@@ -4720,14 +4720,14 @@
      1AE3   10 C4      BPL &1AA9
      1AE5   38         SEC
      1AE6   60         RTS
-.sub_C1AE7
+.AbortWhenVisible
      1AE7   20 F3 1A   JSR &1AF3
      1AEA   B0 1E      BCS &1B0A
 .FinishEnemyTactics
      1AEC   AE 0D 0C   LDX &0C0D
      1AEF   9A         TXS
      1AF0   4C C9 16   JMP &16C9
-.sub_C1AF3
+.CheckObjVisibility
      1AF3   38         SEC
      1AF4   2C 1F 0C   BIT &0C1F
      1AF7   10 11      BPL &1B0A
@@ -4743,7 +4743,7 @@
      1B07   A8         TAY
      1B08   68         PLA
      1B09   AA         TAX
-.CRE10
+.cvis1
      1B0A   60         RTS
 .ProcessActionKeys
      1B0B   AD 61 0C   LDA &0C61
