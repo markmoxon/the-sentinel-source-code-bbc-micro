@@ -2480,7 +2480,7 @@
      0C2D   00
      0C2E   00
      0C2F   00
-.objRotationTimer
+.objTacticsTimer
      0C30   00
      0C31   00
      0C32   00
@@ -2653,7 +2653,7 @@
      0C9D   00
      0C9E   00
      0C9F   00
-.enemyData5
+.spawnedMeanie
      0CA0   00
      0CA1   00
      0CA2   00
@@ -4175,7 +4175,7 @@
      16B3   F0 04      BEQ &16B9
      16B5   C9 05      CMP #&05
      16B7   D0 10      BNE &16C9
-.tact1
+.etac1
      16B9   8D 1C 0C   STA &0C1C
      16BC   BD 00 01   LDA &0100,X
      16BF   10 18      BPL &16D9
@@ -4203,7 +4203,7 @@
      16EA   BD A0 0C   LDA &0CA0,X
      16ED   10 03      BPL &16F2
      16EF   4C 6A 17   JMP &176A
-.C16F2
+.tact1
      16F2   85 6E      STA &6E
      16F4   BC A8 0C   LDY &0CA8,X
      16F7   B9 00 01   LDA &0100,Y
@@ -4221,12 +4221,12 @@
      1713   A9 04      LDA #&04
      1715   8D 1C 0C   STA &0C1C
      1718   4C C9 16   JMP &16C9
-.C171B
+.tact2
      171B   A9 08      LDA #&08
      171D   2C 57 0C   BIT &0C57
      1720   10 02      BPL &1724
      1722   A9 F8      LDA #&F8
-.C1724
+.tact3
      1724   8D 0E 0C   STA &0C0E
      1727   A4 00      LDY &00
      1729   BE A0 0C   LDX &0CA0,Y
@@ -4247,10 +4247,10 @@
      174A   68         PLA
      174B   AA         TAX
      174C   4C 76 18   JMP &1876
-.C174F
+.tact4
      174F   A9 00      LDA #&00
      1751   9D 20 0C   STA &0C20,X
-.C1754
+.tact5
      1754   A4 00      LDY &00
      1756   BE A0 0C   LDX &0CA0,Y
      1759   8A         TXA
@@ -4260,12 +4260,12 @@
      1762   A9 02      LDA #&02
      1764   9D 40 0A   STA &0A40,X
      1767   4C 71 18   JMP &1871
-.C176A
+.tact6
      176A   86 6E      STX &6E
      176C   20 54 1A   JSR &1A54
      176F   B0 03      BCS &1774
      1771   4C 71 18   JMP &1871
-.C1774
+.tact7
      1774   A6 00      LDX &00
      1776   BD B8 0C   LDA &0CB8,X
      1779   10 11      BPL &178C
@@ -4275,9 +4275,9 @@
      1782   A9 40      LDA #&40
      1784   9D 80 0C   STA &0C80,X
      1787   D0 58      BNE &17E1
-.C1789
+.tact8
      1789   5E B8 0C   LSR &0CB8,X
-.C178C
+.tact9
      178C   BD 20 0C   LDA &0C20,X
      178F   F0 12      BEQ &17A3
      1791   BC A8 0C   LDY &0CA8,X
@@ -4286,13 +4286,13 @@
      1799   A5 14      LDA &14
      179B   F0 03      BEQ &17A0
      179D   4C 20 18   JMP &1820
-.C17A0
+.tact10
      17A0   9D 20 0C   STA &0C20,X
-.C17A3
+.tact11
      17A3   A9 80      LDA #&80
      17A5   85 0F      STA &0F
      17A7   A0 3F      LDY #&3F
-.P17A9
+.tact12
      17A9   A9 00      LDA #&00
      17AB   20 82 18   JSR &1882
      17AE   AD 76 0C   LDA &0C76
@@ -4304,7 +4304,7 @@
      17BB   C4 0B      CPY &0B
      17BD   D0 02      BNE &17C1
      17BF   84 0F      STY &0F
-.C17C1
+.tact13
      17C1   88         DEY
      17C2   10 E5      BPL &17A9
      17C4   A4 0F      LDY &0F
@@ -4316,26 +4316,26 @@
      17D1   A9 40      LDA #&40
      17D3   85 14      STA &14
      17D5   D0 49      BNE &1820
-.C17D7
+.tact14
      17D7   A9 00      LDA #&00
      17D9   9D 20 0C   STA &0C20,X
      17DC   20 A7 1A   JSR &1AA7
      17DF   B0 0F      BCS &17F0
-.C17E1
+.tact15
      17E1   20 FF 19   JSR &19FF
      17E4   B0 13      BCS &17F9
      17E6   A4 00      LDY &00
      17E8   A9 1E      LDA #&1E
      17EA   99 30 0C   STA &0C30,Y
      17ED   4C 71 18   JMP &1871
-.C17F0
+.tact16
      17F0   A6 00      LDX &00
      17F2   BD 28 0C   LDA &0C28,X
      17F5   C9 02      CMP #&02
      17F7   90 03      BCC &17FC
-.C17F9
+.tact17
      17F9   4C C9 16   JMP &16C9
-.C17FC
+.tact18
      17FC   8A         TXA
      17FD   20 E7 1A   JSR &1AE7
      1800   BD C0 09   LDA &09C0,X
@@ -4351,7 +4351,7 @@
      1818   20 3A 34   JSR &343A
      181B   A6 00      LDX &00
      181D   4C 76 18   JMP &1876
-.C1820
+.tact19
      1820   98         TYA
      1821   9D A8 0C   STA &0CA8,X
      1824   A5 14      LDA &14
@@ -4361,9 +4361,9 @@
      182E   B0 08      BCS &1838
      1830   A9 78      LDA #&78
      1832   9D 20 0C   STA &0C20,X
-.P1835
+.tact20
      1835   4C C9 16   JMP &16C9
-.C1838
+.tact21
      1838   D0 FB      BNE &1835
      183A   A5 14      LDA &14
      183C   10 0F      BPL &184D
@@ -4373,7 +4373,7 @@
      1845   99 30 0C   STA &0C30,Y
      1848   B0 35      BCS &187F
      184A   4C 71 18   JMP &1871
-.C184D
+.tact22
      184D   20 7D 19   JSR &197D
      1850   A4 00      LDY &00
      1852   90 15      BCC &1869
@@ -4383,11 +4383,11 @@
      185B   A9 80      LDA #&80
      185D   99 B8 0C   STA &0CB8,Y
      1860   D0 1D      BNE &187F
-.C1862
+.tact23
      1862   A9 00      LDA #&00
      1864   99 20 0C   STA &0C20,Y
      1867   F0 16      BEQ &187F
-.C1869
+.tact24
      1869   A9 32      LDA #&32
      186B   99 30 0C   STA &0C30,Y
      186E   BE A0 0C   LDX &0CA0,Y

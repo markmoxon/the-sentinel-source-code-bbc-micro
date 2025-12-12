@@ -1748,11 +1748,13 @@
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.objRotationTimer
+.objTacticsTimer
 
- EQUB 0, 0, 0, 0        \ A timer that counts down on each iteration of the main
- EQUB 0, 0, 0, 0        \ game loop for each object, to control when that object
- EQUB 0, 0, 0, 0        \ rotates
+ EQUB 0, 0, 0, 0        \ A timer for each enemy that counts down on each
+ EQUB 0, 0, 0, 0        \ iteration of the gameplay loop and controls the rate
+                        \ at which we apply tactics to that enemy
+
+ EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
 .L0C40
@@ -2213,10 +2215,10 @@
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.enemyData5
+.spawnedMeanie
 
- EQUB 0, 0, 0, 0        \ ???
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Contains an object number when bit 7 is clear ???
+ EQUB 0, 0, 0, 0        \ Bit 7 can also be set
 
 .enemyData6
 
@@ -7510,9 +7512,10 @@
  AND #63                \ Set A to a number in the range 5 to 63
  ORA #5
 
- STA objRotationTimer,X \ Set the object's entry in objRotationTimer to the
-                        \ number in A, so this determines how often the object
-                        \ rotates in iterations of the main game loop
+ STA objTacticsTimer,X  \ Set the object's tactics timer to the number in A, so
+                        \ this determines how many iterations of the gameplay
+                        \ loop we have to wait before applying tactics to this
+                        \ enemy in the ApplyTactics routine
 
  LDA #20                \ Set A to either 20 or 236, depending on the value that
  BCC aden5              \ we gave to the C flag above
@@ -8251,7 +8254,7 @@
  LDA objectTypes,X      \ Set A to the type of object #X
 
  CMP #1                 \ If we are considering applying tactics to a sentry (an
- BEQ tact1              \ object of type 1) then jump to tact1 to apply tactics
+ BEQ etac1              \ object of type 1) then jump to etac1 to apply tactics
 
  CMP #5                 \ If we are not applying tactics to the Sentinel (an
  BNE MoveOnToNextEnemy  \ object of type 5), then enemyObject is neither a
@@ -8261,12 +8264,12 @@
                         \ so we don't need to apply tactics to this object
                         \
                         \ So jump to MoveOnToNextEnemy to skip all the tactics
-                        \ routines and move on to the next enemy so we can
-                        \ apply tactics to it in the next iteration of the
-                        \ gameplay loop (and this also returns from the
-                        \ subroutine using a tail call)
+                        \ routines and move on to the next enemy so we can apply
+                        \ tactics to it in the next iteration of the gameplay
+                        \ loop (and this also returns from the subroutine using
+                        \ a tail call)
 
-.tact1
+.etac1
 
  STA titleObjectToDraw  \ If we get here then we are applying tactics to the
                         \ Sentinel or a sentry, so set titleObjectToDraw to the
@@ -8279,10 +8282,9 @@
                         \ object that we are applying tactics to)
 
  BPL ApplyTactics       \ If bit 7 of the object flags is clear then this object
-                        \ number is allocated to a valid sentry or Sentinel
-                        \ object, so jump to ApplyTactics to apply tactics to
-                        \ the object and return from the subroutine using a tail
-                        \ call
+                        \ number is allocated to a valid object, so jump to
+                        \ ApplyTactics to apply tactics to the object and return
+                        \ from the subroutine using a tail call
 
                         \ If we get here then bit 7 of the enemy object's flags
                         \ is clear, so the enemy has been removed from the
@@ -8307,8 +8309,9 @@
                         \ next iteration of the gameplay loop, returning from
                         \ the subroutine using a tail call
 
- JMP sub_C1871          \ Call sub_C1871 with X set to the object number of the
-                        \ tree to ???
+ JMP sub_C1871          \ Jump to sub_C1871 with X set to the object number of
+                        \ the tree to ??? and return from the subroutine using a
+                        \ tail call
 
 \ ******************************************************************************
 \
@@ -8347,41 +8350,87 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics
+\       Name: ApplyTactics (Part 1 of ???)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   X                   The object number of the Sentinel or sentry to which we
+\                       apply tactics (0 to 7)
+\
+\   enemyObject         Contains the same as X
 \
 \ ******************************************************************************
 
 .ApplyTactics
 
- LDA objRotationTimer,X
- CMP #&02
- BCS MoveOnToNextEnemy
- LDA #&04
- STA objRotationTimer,X
- LDA #&14
+ LDA objTacticsTimer,X  \ If objTacticsTimer >= 2 for this enemy, then jump to
+ CMP #2                 \ MoveOnToNextEnemy to skip the rest of the the tactics
+ BCS MoveOnToNextEnemy  \ routines and move on to the next enemy so we can apply
+                        \ apply tactics to it in the next iteration of the
+                        \ gameplay loop (and this also returns from the
+                        \ subroutine using a tail call)
+
+                        \ If we get here then objTacticsTimer for this object
+                        \ has counted down to be less than 2, so it's time to
+                        \ apply tactics to the enemy
+
+ LDA #4                 \ Reset the enemy's tactics timer to count down from 4,
+ STA objTacticsTimer,X  \ so this is the default length of the timer (we may
+                        \ change this later)
+
+ LDA #20                \ Set L0C68 = 20 ???
  STA L0C68
- LDA enemyData5,X
- BPL C16F2
- JMP C176A
 
-.C16F2
+ LDA spawnedMeanie,X    \ Set A to spawnedMeanie for the enemy we are processing
+                        \ so it contains details of any meanies that the enemy
+                        \ has spawned
 
- STA viewingObject
- LDY enemyData6,X
- LDA objectFlags,Y
- BMI C174F
+ BPL tact1              \ If bit 7 of spawnedMeanie is clear then the enemy has
+                        \ spawned a meanie, so jump to part 2 to apply tactics
+                        \ to the meanie
+
+ JMP tact6              \ Bit 7 of spawnedMeanie is set so the enemy has not
+                        \ spawned a meanie, so jump to part 3 to skip the meanie
+                        \ tactics routine
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 2 of ???)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Meanie ???
+\
+\ ******************************************************************************
+
+.tact1
+
+ STA viewingObject      \ If we get here then the enemy has spawned a meanie and
+                        \ that meanie's object number is in spawnedMeanie, which
+                        \ as fetched into A above, so this sets the viewing
+                        \ object to the meanie
+
+ LDY enemyData6,X       \ If bit 7 of the enemy's object flags is set then this
+ LDA objectFlags,Y      \ enemy doesn't have an associated object, so jump to
+ BMI tact4              \ tact4 to ???
+
  LDA #0
- JSR sub_C1882
+
+ JSR sub_C1882          \ ???
+
  LDA objectViewYawHi
  CMP #&14
- BCS C171B
+ BCS tact2
+
  CPY playerObject
- BNE C174F
+ BNE tact4
+
  LDA L0014
- BEQ C1754
+ BEQ tact5
 
  JSR PerformHyperspace  \ Hyperspace the player to a brand new tile
 
@@ -8390,18 +8439,18 @@
 
  JMP MoveOnToNextEnemy
 
-.C171B
+.tact2
 
  LDA #&08
  BIT objectViewYawHi
- BPL C1724
+ BPL tact3
  LDA #&F8
 
-.C1724
+.tact3
 
  STA L0C0E
  LDY enemyObject
- LDX enemyData5,Y
+ LDX spawnedMeanie,Y
  TXA
  JSR AbortWhenVisible
  LDA objectYawAngle,X
@@ -8409,7 +8458,7 @@
  ADC L0C0E
  STA objectYawAngle,X
  LDA #&0A
- STA objRotationTimer,Y
+ STA objTacticsTimer,Y
  TXA
  PHA
  LDX #&03
@@ -8422,125 +8471,143 @@
  TAX
  JMP C1876
 
-.C174F
+.tact4
 
- LDA #0
+ LDA #0                 \ Set L0C20 = 0 for this enemy
  STA L0C20,X
 
-.C1754
+.tact5
 
- LDY enemyObject
- LDX enemyData5,Y
+ LDY enemyObject        \ Check to see if the object in spawnedMeanie is visible
+ LDX spawnedMeanie,Y    \ and abort if it is, otherwise keep going ???
  TXA
  JSR AbortWhenVisible
- LDA #&80
- STA enemyData5,Y
- LDA #&02
+
+ LDA #%10000000         \ Set bit 7 of spawnedMeanie to ???
+ STA spawnedMeanie,Y
+
+ LDA #2                 \ Turn the enemy into a tree ???
  STA objectTypes,X
- JMP sub_C1871
 
-.C176A
+ JMP sub_C1871          \ Jump to sub_C1871 with X set to the object number of
+                        \ the tree to ??? and return from the subroutine using a
+                        \ tail call
 
- STX viewingObject
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 3 of ???)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.tact6
+
+ STX viewingObject      \ Set the viewing object to the enemy we are processing,
+                        \ so everything is done from their viewpoint from now on
+
  JSR DrainEnemyEnergy
- BCS C1774
+
+ BCS tact7
  JMP sub_C1871
 
-.C1774
+.tact7
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
  LDA enemyData8,X
- BPL C178C
+ BPL tact9
  JSR sub_C1AA7
  LDX enemyObject
- BCS C1789
+ BCS tact8
  LDA #&40
  STA enemyData1,X
- BNE C17E1
+ BNE tact15
 
-.C1789
+.tact8
 
  LSR enemyData8,X
 
-.C178C
+.tact9
 
  LDA L0C20,X
- BEQ C17A3
+ BEQ tact11
  LDY enemyData6,X
  LDA #0
  JSR sub_C1882
  LDA L0014
- BEQ C17A0
- JMP C1820
+ BEQ tact10
+ JMP tact19
 
-.C17A0
+.tact10
 
  STA L0C20,X
 
-.C17A3
+.tact11
 
  LDA #&80
  STA L000F
  LDY #&3F
 
-.P17A9
+.tact12
 
  LDA #0
  JSR sub_C1882
  LDA L0C76
  AND #&40
- BNE C17C1
+ BNE tact13
  LDA L0014
- BEQ C17C1
- BMI C1820
+ BEQ tact13
+ BMI tact19
  CPY playerObject
- BNE C17C1
+ BNE tact13
  STY L000F
 
-.C17C1
+.tact13
 
  DEY
- BPL P17A9
+ BPL tact12
+
  LDY L000F
- BMI C17D7
+ BMI tact14
  TYA
  CMP enemyData3,X
- BEQ C17D7
+ BEQ tact14
  JSR SetEnemyData
  LDA #&40
  STA L0014
- BNE C1820
+ BNE tact19
 
-.C17D7
+.tact14
 
  LDA #0
  STA L0C20,X
  JSR sub_C1AA7
- BCS C17F0
+ BCS tact16
 
-.C17E1
+.tact15
 
  JSR DrainObjectEnergy
- BCS C17F9
+ BCS tact17
  LDY enemyObject
  LDA #&1E
- STA objRotationTimer,Y
+ STA objTacticsTimer,Y
  JMP sub_C1871
 
-.C17F0
+.tact16
 
  LDX enemyObject
  LDA L0C28,X
  CMP #&02
- BCC C17FC
+ BCC tact18
 
-.C17F9
+.tact17
 
  JMP MoveOnToNextEnemy
 
-.C17FC
+.tact18
 
  TXA
  JSR AbortWhenVisible
@@ -8562,7 +8629,7 @@
 
  JMP C1876
 
-.C1820
+.tact19
 
  TYA
  STA enemyData6,X
@@ -8570,49 +8637,49 @@
  STA enemyData7,X
  LDA L0C20,X
  CMP #&01
- BCS C1838
+ BCS tact21
  LDA #&78
  STA L0C20,X
 
-.P1835
+.tact20
 
  JMP MoveOnToNextEnemy
 
-.C1838
+.tact21
 
- BNE P1835
+ BNE tact20
  LDA L0014
- BPL C184D
+ BPL tact22
  JSR DrainObjectEnergy
  LDY enemyObject
  LDA #&1E
- STA objRotationTimer,Y
+ STA objTacticsTimer,Y
  BCS C187F
  JMP sub_C1871
 
-.C184D
+.tact22
 
  JSR sub_C197D
  LDY enemyObject
- BCC C1869
+ BCC tact24
  LDA enemyData4,Y
  CMP #&02
- BCS C1862
+ BCS tact23
  LDA #&80
  STA enemyData8,Y
  BNE C187F
 
-.C1862
+.tact23
 
  LDA #0
  STA L0C20,Y
  BEQ C187F
 
-.C1869
+.tact24
 
  LDA #&32
- STA objRotationTimer,Y
- LDX enemyData5,Y
+ STA objTacticsTimer,Y
+ LDX spawnedMeanie,Y
 
 \ ******************************************************************************
 \
@@ -8903,8 +8970,8 @@
 
 .SetEnemyData
 
- LDA #%10000000         \ Set bit 7 of enemyData5 for object #X ???
- STA enemyData5,X
+ LDA #%10000000         \ Set bit 7 of spawnedMeanie for object #X ???
+ STA spawnedMeanie,X
 
  STA enemyData3,X       \ Set bit 7 of enemyData3 for object #X ???
 
@@ -9008,7 +9075,7 @@
                         \ aborting the whole process
 
  TYA
- STA enemyData5,X
+ STA spawnedMeanie,X
 
  LDA #4                 \ Set the type of object #Y to 4, for a meanie
  STA objectTypes,Y
@@ -10077,8 +10144,8 @@
 
                         \ We now loop through all the enemy objects, of which
                         \ there are up to eight, looking for the object whose
-                        \ enemyData5 entry is X (i.e. the object number of the
-                        \ meanie) ???
+                        \ spawnedMeanie entry is X (so we are looking for the
+                        \ enemy that spawned the meanie)
 
  LDY #7                 \ The enemies have object numbers 0 (for the Sentinel)
                         \ or 1 to 7 (for any sentries in the landscape), so set
@@ -10109,11 +10176,11 @@
  TXA                    \ Set A to the object number of the meanie that the
                         \ player is trying to absorb
 
- CMP enemyData5,Y       \ If A <> enemyData5 for object #Y, jump to pkey14 to
+ CMP spawnedMeanie,Y    \ If A <> spawnedMeanie for object #Y, jump to pkey14 to
  BNE pkey14             \ move on to the next enemy object ???
 
- LDA #%10000000         \ Set bit 7 of enemyData5 for object #Y (the sentry or
- STA enemyData5,Y       \ Sentinel) ???
+ LDA #%10000000         \ Set bit 7 of spawnedMeanie for object #Y (the sentry
+ STA spawnedMeanie,Y    \ or Sentinel) ???
 
  BNE pkey6              \ Jump to pkey6 to delete the meanie in object #X, add
                         \ the meanie's energy to the player's energy, and return
