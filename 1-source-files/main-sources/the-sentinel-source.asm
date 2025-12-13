@@ -8290,21 +8290,25 @@
                         \ is clear, so the enemy has been removed from the
                         \ landscape at some point
 
- JSR DrainEnemyEnergy   \ Drain one unit of energy from the enemy and spawn a
-                        \ tree, if possible
+ JSR ExpendEnemyEnergy  \ Drain one unit of energy from the enemy and expend it
+                        \ on the landscape by spawning a tree, if possible
+                        \
+                        \ This ensures that if an enemy has absorbed energy from
+                        \ somewhere, it always dissipates back into the
+                        \ landscape it when it gets the chance
                         \
                         \ If we can't spawn a tree because we are about to pan
                         \ the screen and the tree would spawn in a position that
                         \ would be visible on-screen, then the routine does not
-                        \ drain energy or spawn a tree, and instead it gives up
+                        \ expend energy or spawn a tree, and instead it gives up
                         \ and aborts applying tactics for this gameplay loop
                         \
                         \ If we successfully spawned a tree then the object
                         \ number of the tree is in X
 
- BCS MoveOnToNextEnemy  \ If the call to DrainEnemyEnergy returned with the C
+ BCS MoveOnToNextEnemy  \ If the call to ExpendEnemyEnergy returned with the C
                         \ flag set, then either the enemy didn't have any energy
-                        \ to drain or we couldn't spawn a tree, so jump to
+                        \ to expend or we couldn't spawn a tree, so jump to
                         \ MoveOnToNextEnemy to move on to the next enemy for the
                         \ next iteration of the gameplay loop, returning from
                         \ the subroutine using a tail call
@@ -8507,7 +8511,21 @@
  STX viewingObject      \ Set the viewing object to the enemy we are processing,
                         \ so everything is done from their viewpoint from now on
 
- JSR DrainEnemyEnergy
+ JSR ExpendEnemyEnergy  \ Drain one unit of energy from the enemy and expend it
+                        \ on the landscape by spawning a tree, if possible
+                        \
+                        \ This ensures that if an enemy has absorbed energy from
+                        \ somewhere, it always dissipates back into the
+                        \ landscape it when it gets the chance
+                        \
+                        \ If we can't spawn a tree because we are about to pan
+                        \ the screen and the tree would spawn in a position that
+                        \ would be visible on-screen, then the routine does not
+                        \ expend energy or spawn a tree, and instead it gives up
+                        \ and aborts applying tactics for this gameplay loop
+                        \
+                        \ If we successfully spawned a tree then the object
+                        \ number of the tree is in X
 
  BCS tact7
  JMP sub_C1871
@@ -9100,8 +9118,8 @@
 \       Name: DrainObjectEnergy
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Drain energy from an object, transforming it into an object with
-\             an energy level of one unit less (if applicable)
+\    Summary: Drain energy from an object into an enemy, transforming it into an
+\             object with an energy level of one unit less (if applicable)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9253,11 +9271,11 @@
 
 \ ******************************************************************************
 \
-\       Name: DrainEnemyEnergy
+\       Name: ExpendEnemyEnergy
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Drain one unit of energy from an enemy and spawn a tree, if
-\             possible
+\    Summary: Drain one unit of energy from an enemy and expend it on the
+\             landscape by spawning a tree, if possible
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9293,7 +9311,7 @@
 \
 \ ******************************************************************************
 
-.DrainEnemyEnergy
+.ExpendEnemyEnergy
 
  LDX enemyObject        \ Set X to the object number of the enemy we are
                         \ draining (so this is now object #X)

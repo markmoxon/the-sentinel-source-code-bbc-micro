@@ -4643,7 +4643,7 @@
      1A4F   99 88 0C   STA &0C88,Y
      1A52   28         PLP
      1A53   60         RTS
-.DrainEnemyEnergy
+.ExpendEnemyEnergy
      1A54   A6 00      LDX &00
      1A56   38         SEC
      1A57   BD 88 0C   LDA &0C88,X
