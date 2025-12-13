@@ -25028,9 +25028,10 @@ L314A = C3148+2
                         \ jump to dcol2 to skip the following
 
                         \ At this point the screen buffer wraps around so the
-                        \ buffer entries restart at a lower address
+                        \ buffer entries continue at a lower address
                         \
-                        \ Specifically the last buffer address before &5300 is:
+                        \ Specifically the last buffer before &5300 is
+                        \ screenBufferRow15, at address:
                         \
                         \   &51C0 to &51FF for character row 15
                         \
@@ -25038,9 +25039,12 @@ L314A = C3148+2
                         \
                         \   &3FA0 to &3FDF for character row 16
                         \
-                        \ The address of the new row is &A0 more than the
-                        \ address of the screen buffer, which is &3F00, so we
-                        \ can calculate the new address like this:
+                        \ to take us to the buffer at screenBufferRow16
+                        \
+                        \ The address of screenBufferRow16 is &A0 more than the
+                        \ start of the screen buffer at screenBufferRow0, and
+                        \ the address of the latter is in screenBufferAddr(1 0),
+                        \ so we can calculate the new address like this:
                         \
                         \   (A fromAddr) = screenBufferAddr(1 0) + &A0
                         \
@@ -25329,53 +25333,68 @@ L314A = C3148+2
 \ address correctly points to the address of the new content in the screen
 \ buffer.
 \
-\ The screen buffer is at address &3F00, each character column takes up eight
-\ bytes of buffer space, and each character row takes up 320 bytes of buffer
-\ space.
+\ The screen buffer starts at address screenBufferRow0, each character column
+\ takes up eight bytes of buffer space, and each character row takes up 320
+\ bytes of buffer space.
 \
 \ ******************************************************************************
 
 .screenBufferHi
 
- EQUB HI(&3F00 + 0 * 8 - 8)     \ Direction 0 (pan right, scroll left)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 0 * 8 = the left column (column 0) of the
-                                \         16-column screen buffer
-                                \
-                                \ -8 = - scrollScreen(Hi Lo)
-                                \    = - +8
+ EQUB HI(screenBufferRow0 + 0 * 8 - 8)      \ Direction 0
+                                            \
+                                            \ Pan right, scroll left
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 0 * 8 = the left column (column 0)
+                                            \         of the 16-column screen
+                                            \         buffer
+                                            \
+                                            \ -8 = - scrollScreen(Hi Lo)
+                                            \    = - +8
 
- EQUB HI(&3F00 + 15 * 8 + 8)    \ Direction 1 (pan left, scroll right)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 15 * 8 = the right column (column 15) of the
-                                \          16-column screen buffer
-                                \
-                                \ 8 = - scrollScreen(Hi Lo)
-                                \   = - -8
+ EQUB HI(screenBufferRow0 + 15 * 8 + 8)     \ Direction 1
+                                            \
+                                            \ Pan left, scroll right
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 15 * 8 = the right column (column
+                                            \          15) of the 16-column
+                                            \          screen buffer
+                                            \
+                                            \ 8 = - scrollScreen(Hi Lo)
+                                            \   = - -8
 
- EQUB HI(&3F00 + 7 * 320 + 320) \ Direction 2 (pan up, scroll down)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 8 * 320 = the bottom row (row 7) of the
-                                \           8-row screen buffer
-                                \
-                                \ 320 = - scrollScreen(Hi Lo)
-                                \     = - -320
+ EQUB HI(screenBufferRow0 + 7 * 320 + 320)  \ Direction 2
+                                            \
+                                            \ Pan up, scroll down
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 8 * 320 = the bottom row (row 7)
+                                            \           of the 8-row screen
+                                            \           buffer
+                                            \
+                                            \ 320 = - scrollScreen(Hi Lo)
+                                            \     = - -320
 
- EQUB HI(&3F00 + 0 * 320 - 320) \ Direction 3 (pan down, scroll up)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 8 * 320 = the top row (row 0) of the
-                                \           8-row screen buffer
-                                \
-                                \ -320 = - scrollScreen(Hi Lo)
-                                \      = - +320
+ EQUB HI(screenBufferRow0 + 0 * 320 - 320)  \ Direction 3
+                                            \
+                                            \ Pan down, scroll up
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 8 * 320 = the top row (row 0) of
+                                            \           the 8-row screen buffer
+                                            \
+                                            \ -320 = - scrollScreen(Hi Lo)
+                                            \      = - +320
 
 \ ******************************************************************************
 \
@@ -25393,45 +25412,60 @@ L314A = C3148+2
 
 .screenBufferLo
 
- EQUB LO(&3F00 + 0 * 8 - 8)     \ Direction 0 (pan right, scroll left)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 0 * 8 = the left column (column 0) of the
-                                \         16-column screen buffer
-                                \
-                                \ -8 = - scrollScreen(Hi Lo)
-                                \    = - +8
+ EQUB LO(screenBufferRow0 + 0 * 8 - 8)      \ Direction 0
+                                            \
+                                            \ Pan right, scroll left
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 0 * 8 = the left column (column 0)
+                                            \         of the 16-column screen
+                                            \ buffer
+                                            \
+                                            \ -8 = - scrollScreen(Hi Lo)
+                                            \    = - +8
 
- EQUB LO(&3F00 + 15 * 8 + 8)    \ Direction 1 (pan left, scroll right)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 15 * 8 = the right column (column 15) of the
-                                \          16-column screen buffer
-                                \
-                                \ 8 = - scrollScreen(Hi Lo)
-                                \   = - -8
+ EQUB LO(screenBufferRow0 + 15 * 8 + 8)     \ Direction 1
+                                            \
+                                            \ Pan left, scroll right
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 15 * 8 = the right column (column
+                                            \          15) of the 16-column
+                                            \          screen buffer
+                                            \
+                                            \ 8 = - scrollScreen(Hi Lo)
+                                            \   = - -8
 
- EQUB LO(&3F00 + 7 * 320 + 320) \ Direction 2 (pan up, scroll down)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 8 * 320 = the bottom row (row 7) of the
-                                \           8-row screen buffer
-                                \
-                                \ 320 = - scrollScreen(Hi Lo)
-                                \     = - -320
+ EQUB LO(screenBufferRow0 + 7 * 320 + 320)  \ Direction 2
+                                            \
+                                            \ Pan up, scroll down
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 8 * 320 = the bottom row (row 7)
+                                            \           of the 8-row screen
+                                            \           buffer
+                                            \
+                                            \ 320 = - scrollScreen(Hi Lo)
+                                            \     = - -320
 
- EQUB LO(&3F00 + 0 * 320 - 320) \ Direction 3 (pan down, scroll up)
-                                \
-                                \ &3F00 = base address of screen buffer
-                                \
-                                \ 8 * 320 = the top row (row 0) of the
-                                \           8-row screen buffer
-                                \
-                                \ -320 = - scrollScreen(Hi Lo)
-                                \      = - +320
+ EQUB LO(screenBufferRow0 + 0 * 320 - 320) \ Direction 3
+                                            \
+                                            \ Pan down, scroll up
+                                            \
+                                            \ screenBufferRow0 = base address of
+                                            \                    screen buffer
+                                            \
+                                            \ 8 * 320 = the top row (row 0) of
+                                            \           the 8-row screen buffer
+                                            \
+                                            \ -320 = - scrollScreen(Hi Lo)
+                                            \      = - +320
 
 \ ******************************************************************************
 \
@@ -27084,7 +27118,7 @@ L314A = C3148+2
 \   &5080 (screenBufferRow14)
 \   &51C0 (screenBufferRow15)
 \
-\ and then they wrap around to the following locations for rows 16 to 25:
+\ and then they wrap around to the following locations for rows 16 to 24:
 \
 \   &3FA0 (screenBufferRow16)
 \   &40E0 (screenBufferRow17)
@@ -27094,7 +27128,6 @@ L314A = C3148+2
 \   &45E0 (screenBufferRow21)
 \   &4720 (screenBufferRow22)
 \   &4860 (screenBufferRow23)
-\   &49A0 (unused)
 \
 \ The first batch of locations need to be able to store an entire screen row of
 \ 320 bytes, so they can be used to store the screen buffer when scrolling in
@@ -27114,48 +27147,47 @@ L314A = C3148+2
 \ full-width character rows of new screen content into the screen buffers, each
 \ of which is 320 bytes. So we use the screen buffer space as follows:
 \
-\   &3F00 to &403F for character row 0
-\   &4040 to &417F for character row 1
-\   &4180 to &42BF for character row 2
-\   &42C0 to &43FF for character row 3
-\   &4400 to &453F for character row 4
-\   &4540 to &467F for character row 5
-\   &4680 to &47BF for character row 6
-\   &47C0 to &48FF for character row 7
+\   &3F00 to &403F for character row 0 (all 320 bytes of screenBufferRow0)
+\   &4040 to &417F for character row 1 (all 320 bytes of screenBufferRow1)
+\   &4180 to &42BF for character row 2 (all 320 bytes of screenBufferRow2)
+\   &42C0 to &43FF for character row 3 (all 320 bytes of screenBufferRow3)
+\   &4400 to &453F for character row 4 (all 320 bytes of screenBufferRow4)
+\   &4540 to &467F for character row 5 (all 320 bytes of screenBufferRow5)
+\   &4680 to &47BF for character row 6 (all 320 bytes of screenBufferRow6)
+\   &47C0 to &48FF for character row 7 (all 320 bytes of screenBufferRow7)
 \
 \ And when the player pans left or right, the new screen content that we need to
 \ draw into the screen buffers is a strip down the side of the screen that's 24
 \ character rows tall and eight character columns wide, so each row is 64 bytes
 \ long. So we use the screen buffer space as follows:
 \
-\   &3F00 to &3F3F for character row 0
-\   &4040 to &407F for character row 1
-\   &4180 to &41BF for character row 2
-\   &42C0 to &42FF for character row 3
-\   &4400 to &443F for character row 4
-\   &4540 to &457F for character row 5
-\   &4680 to &46BF for character row 6
-\   &47C0 to &47FF for character row 7
-\   &4900 to &493F for character row 8
-\   &4A40 to &4A7F for character row 9
-\   &4B80 to &4BBF for character row 10
-\   &4CC0 to &4CFF for character row 11
-\   &4E00 to &4E3F for character row 12
-\   &4F40 to &4F7F for character row 13
-\   &5080 to &50BF for character row 14
-\   &51C0 to &51FF for character row 15
-\   &3FA0 to &3FDF for character row 16
-\   &40E0 to &411F for character row 17
-\   &4220 to &425F for character row 18
-\   &4360 to &439F for character row 19
-\   &44A0 to &43DF for character row 20
-\   &45E0 to &461F for character row 21
-\   &4720 to &475F for character row 22
-\   &4860 to &489F for character row 23
-\   &49A0 to &49DF for character row 24
+\   &3F00 to &3F3F for character row 0  (first 64 bytes of screenBufferRow0)
+\   &4040 to &407F for character row 1  (first 64 bytes of screenBufferRow1)
+\   &4180 to &41BF for character row 2  (first 64 bytes of screenBufferRow2)
+\   &42C0 to &42FF for character row 3  (first 64 bytes of screenBufferRow3)
+\   &4400 to &443F for character row 4  (first 64 bytes of screenBufferRow4)
+\   &4540 to &457F for character row 5  (first 64 bytes of screenBufferRow5)
+\   &4680 to &46BF for character row 6  (first 64 bytes of screenBufferRow6)
+\   &47C0 to &47FF for character row 7  (first 64 bytes of screenBufferRow7)
+\   &4900 to &493F for character row 8  (first 64 bytes of screenBufferRow8)
+\   &4A40 to &4A7F for character row 9  (first 64 bytes of screenBufferRow9)
+\   &4B80 to &4BBF for character row 10 (first 64 bytes of screenBufferRow10)
+\   &4CC0 to &4CFF for character row 11 (first 64 bytes of screenBufferRow11)
+\   &4E00 to &4E3F for character row 12 (first 64 bytes of screenBufferRow12)
+\   &4F40 to &4F7F for character row 13 (first 64 bytes of screenBufferRow13)
+\   &5080 to &50BF for character row 14 (first 64 bytes of screenBufferRow14)
+\   &51C0 to &51FF for character row 15 (first 64 bytes of screenBufferRow15)
+\   &3FA0 to &3FDF for character row 16 (first 64 bytes of screenBufferRow16)
+\   &40E0 to &411F for character row 17 (first 64 bytes of screenBufferRow17)
+\   &4220 to &425F for character row 18 (first 64 bytes of screenBufferRow18)
+\   &4360 to &439F for character row 19 (first 64 bytes of screenBufferRow19)
+\   &44A0 to &43DF for character row 20 (first 64 bytes of screenBufferRow20)
+\   &45E0 to &461F for character row 21 (first 64 bytes of screenBufferRow21)
+\   &4720 to &475F for character row 22 (first 64 bytes of screenBufferRow22)
+\   &4860 to &489F for character row 23 (first 64 bytes of screenBufferRow23)
 \
-\ This structure ensures that the screen buffer always fits into the range &3F00
-\ to &51FF, irrespective of the scrolling direction.
+\ This structure ensures that the screen buffer always fits into the collection
+\ of screenBufferRow blocks, irrespective of the scrolling direction.
 \
 \ ******************************************************************************
 
