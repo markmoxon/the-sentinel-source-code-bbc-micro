@@ -8291,7 +8291,7 @@
                         \ landscape at some point
 
  JSR ExpendEnemyEnergy  \ Drain one unit of energy from the enemy and expend it
-                        \ on the landscape by spawning a tree, if possible
+                        \ onto the landscape by spawning a tree, if possible
                         \
                         \ This ensures that if an enemy has absorbed energy from
                         \ somewhere, it always dissipates back into the
@@ -8313,9 +8313,9 @@
                         \ next iteration of the gameplay loop, returning from
                         \ the subroutine using a tail call
 
- JMP sub_C1871          \ Jump to sub_C1871 with X set to the object number of
-                        \ the tree to ??? and return from the subroutine using a
-                        \ tail call
+ JMP tact25             \ Otherwise jump to tact25 with X set to the object
+                        \ number of the tree to ??? and return from the
+                        \ subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -8367,6 +8367,12 @@
 \                       apply tactics (0 to 7)
 \
 \   enemyObject         Contains the same as X
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   tact25              ???
 \
 \ ******************************************************************************
 
@@ -8493,7 +8499,7 @@
  LDA #2                 \ Turn the enemy into a tree ???
  STA objectTypes,X
 
- JMP sub_C1871          \ Jump to sub_C1871 with X set to the object number of
+ JMP tact25             \ Jump to tact25 with X set to the object number of
                         \ the tree to ??? and return from the subroutine using a
                         \ tail call
 
@@ -8512,7 +8518,7 @@
                         \ so everything is done from their viewpoint from now on
 
  JSR ExpendEnemyEnergy  \ Drain one unit of energy from the enemy and expend it
-                        \ on the landscape by spawning a tree, if possible
+                        \ onto the landscape by spawning a tree, if possible
                         \
                         \ This ensures that if an enemy has absorbed energy from
                         \ somewhere, it always dissipates back into the
@@ -8527,26 +8533,56 @@
                         \ If we successfully spawned a tree then the object
                         \ number of the tree is in X
 
- BCS tact7
- JMP sub_C1871
+ BCS tact7              \ If the call to ExpendEnemyEnergy returned with the C
+                        \ flag set, then either the enemy didn't have any energy
+                        \ to expend or we couldn't spawn a tree, so jump to tact7
+                        \ to keep applying tactics
+
+ JMP tact25             \ Otherwise jump to tact25 with X set to the object
+                        \ number of the tree to ??? and return from the
+                        \ subroutine using a tail call
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 4 of ???)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .tact7
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
- LDA enemyData8,X
+ LDA enemyData8,X       \ If bit 7 of enemyData8 is clear, jump to tact9
  BPL tact9
- JSR sub_C1AA7
+
+ JSR sub_C1AA7          \ ???
+
  LDX enemyObject
- BCS tact8
+
+ BCS tact8              \ If sub_C1AA7 set the C flag, jump to tact8 ???
+
  LDA #&40
  STA enemyData1,X
- BNE tact15
+
+ BNE tact15             \ Jump to tact15 to ??? (this BNE is effectively a JMP
+                        \ as A is never zero)
 
 .tact8
 
- LSR enemyData8,X
+ LSR enemyData8,X       \ Clear bit 7 of enemyData8 to indicate that ???
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 5 of ???)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: ???
+\
+\ ******************************************************************************
 
 .tact9
 
@@ -8612,7 +8648,7 @@
  LDY enemyObject
  LDA #&1E
  STA objTacticsTimer,Y
- JMP sub_C1871
+ JMP tact25
 
 .tact16
 
@@ -8647,6 +8683,15 @@
 
  JMP C1876
 
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 5 of ???)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: ???
+\
+\ ******************************************************************************
+
 .tact19
 
  TYA
@@ -8673,7 +8718,7 @@
  LDA #&1E
  STA objTacticsTimer,Y
  BCS C187F
- JMP sub_C1871
+ JMP tact25
 
 .tact22
 
@@ -8701,7 +8746,7 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1871
+\       Name: tact25
 \       Type: Subroutine
 \   Category: ???
 \    Summary: ???
@@ -8715,7 +8760,7 @@
 \
 \ ******************************************************************************
 
-.sub_C1871
+.tact25
 
  LDA #&40
  STA L0C6D
@@ -8737,24 +8782,79 @@
 \
 \       Name: sub_C1882 (Part 1 of 2)
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   A                   Object type to match ???
+\
+\   Y                   Number of the target object ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Status flag:
+\
+\                         * Clear if ???
+\
+\                         * Set if ???
+\
+\   X                   X is preserved
+\
+\   Y                   Y is preserved
 \
 \ ******************************************************************************
 
 .sub_C1882
 
- STA T
- STX L1919
- STY targetObject
- LDA #0
+ STA T                  \ Store the object type in T so we can refer to it later
+
+ STX L1919              \ Store X in L1919 so it can be preserved across
+                        \ calls to the routine
+
+ STY targetObject       \ Store the target object in targetObject, so object #Y
+                        \ is the target object
+
+ LDA #0                 \ Set L0014 = 0 ???
  STA L0014
- LDA objectFlags,Y
- BMI C1911
- LDA objectTypes,Y
- CMP T
- BNE C1911
- JSR GetObjectAngles
+
+ LDA objectFlags,Y      \ If bit 7 is set for object #Y then this object number
+ BMI C1911              \ is not allocated to an object, so jump to C1911 to
+                        \ return from the subroutine with the C flag clear ???
+
+ LDA objectTypes,Y      \ If object #Y is not an object of type T (which we set
+ CMP T                  \ to the argument A above), then jump to C1911 to return
+ BNE C1911              \ from the subroutine with the C flag clear ???
+
+ JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
+                        \ the viewer to object #Y and put them into the
+                        \ following variables:
+                        \
+                        \   * Set objTypeToAnalyse to the type of object #Y
+                        \
+                        \   * Set objectViewYaw(Hi Lo) to the yaw angle of the
+                        \     viewer's gaze towards the object, relative to the
+                        \     screen
+                        \
+                        \   * Set angle(Hi Lo) to the angle of the hypotenuse of
+                        \     the triangle formed by the x-axis and z-axis,
+                        \     which is the projection of the 3D vector from the
+                        \     viewer to the object down onto the ground plane
+                        \     (so imagine a light shining down from above,
+                        \     casting the vector's shadow onto the y = 0 plane,
+                        \     and that's the hypotenuse)
+                        \
+                        \   * Set hypotenuse(Hi Lo) to the length of the 3D
+                        \     vector from the viewer to the object when
+                        \     projected down onto the ground plane
+
+                        \ We now work out the width of the object that we are
+                        \ looking at so we can work out whether any of it is
+                        \ on-screen
 
                         \ We now have a very short interlude to set up some of
                         \ the anti-cracker code before continuing in part 2
@@ -8824,87 +8924,144 @@
 \
 \       Name: sub_C1882 (Part 2 of 2)
 \       Type: Subroutine
-\   Category: ???
+\   Category: Gameplay
 \    Summary: ???
 \
 \ ******************************************************************************
 
- LDA L0C68
+ LDA L0C68              \ Set T = L0C68 / 2
  LSR A
  STA T
- LDA objectViewYawHi
+
+ LDA objectViewYawHi    \ Set A = objectViewYawHi - 10 + T
  SEC
- SBC #&0A
+ SBC #10
  CLC
  ADC T
- CMP L0C68
- BCS C1912
- LDA angleLo
+
+ CMP L0C68              \ If A >= L0C68, then jump to C1912 to return from the
+ BCS C1912              \ subroutine with the C flag set
+
+ LDA angleLo            \ Set vectorYawAngle(Hi Lo) = angle(Hi Lo)
  STA vectorYawAngleLo
  LDA angleHi
  STA vectorYawAngleHi
- LDA #&02
+
+ LDA #2                 \ Set L001E = 2
  STA L001E
- LDA objTypeToAnalyse
- BNE C18FF
+
+ LDA objTypeToAnalyse   \ Set A to the type of object #Y
+
+ BNE C18FF              \ If is is not a robot (an object of type 0), jump to
+                        \ C18FF
 
  SEC                    \ Set bit 7 of L0C6E ???
  ROR L0C6E
 
- LDA yDeltaLo
+ LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo)
  STA xDeltaLo
  LDA yDeltaHi
 
+                        \ We do the following loop L001E times (2)
+
 .C18E1
 
- JSR GetPitchAngleDelta
+ JSR GetPitchAngleDelta \ Second vertical triangle ???
+
  LDA angleLo
  STA vectorPitchAngleLo
  STA T
  LDA angleHi
  STA vectorPitchAngleHi
- JSR GetVectorForAngles
- JSR FollowGazeVector
- ROL targetOnTile
- ROR L0014
- ROL gazeCanSeeTree
- ROR L0C76
+
+ JSR GetVectorForAngles \ Convert the pitch and yaw angles:
+                        \
+                        \   vectorPitchAngle(Hi Lo)
+                        \
+                        \   vectorYawAngle(Hi Lo)
+                        \
+                        \ into a cartesian vector:
+                        \
+                        \   [ xVector(Lo Bot) ]
+                        \   [ yVector(Lo Bot) ]
+                        \   [ zVector(Lo Bot) ]
+
+ JSR FollowGazeVector   \ Follow the gaze vector from the viewing object to
+                        \ determine whether the player's sights can see a flat
+                        \ tile or platform (i.e. boulder or tower)
+                        \
+                        \ This sets the C flag as follows:
+                        \
+                        \   * Clear if the viewing object can see a tile along
+                        \     the gaze vector
+                        \
+                        \   * Set if the viewing object can't see a tile along
+                        \     the gaze vector
+                        \
+                        \ It also sets bit 7 of targetOnTile depending on
+                        \ whether the gaze vector can see a tile containing the
+                        \ object whose number is in targetObject:
+                        \
+                        \   * Bit 7 clear = gaze vector cannot see the target
+                        \                   object
+                        \
+                        \   * Bit 7 set = gaze vector can see the target object
+                        \
+                        \ and it sets bit 7 of gazeCanSeeTree depending on
+                        \ whether the gaze vector can see a tree:
+                        \
+                        \   * Bit 7 clear = gaze vector cannot see a tree
+                        \
+                        \   * Bit 7 set = gaze vector can see a tree
+
+ ROL targetOnTile       \ Set bit 7 of L0014 to bit 7 of targetOnTile
+ ROR L0014              \
+
+ ROL gazeCanSeeTree     \ Set bit 7 of L0C76 to bit 7 of gazeCanSeeTree
+ ROR L0C76              \
 
 .C18FF
 
  LSR L0C6E              \ Clear bit 7 of L0C6E ???
 
- LDA yDeltaLo
- SEC
+ LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo) - &E0
+ SEC                    \                  = yDelta(Hi Lo) - 224
  SBC #&E0
  STA xDeltaLo
  LDA yDeltaHi
  SBC #&00
- DEC L001E
- BNE C18E1
+
+ DEC L001E              \ Decrement L001E
+
+ BNE C18E1              \ Loop back until we have done loop x 2
 
 .C1911
 
- CLC
+ CLC                    \ Clear the C flag to return from the subroutine to
+                        \ indicate ???
 
 .C1912
 
- LDX L1919
- LDY targetObject
- RTS
+ LDX L1919              \ Restore the value of X that we stored in L1919
+                        \ at the start of the routine, so that it's preserved
+
+ LDY targetObject       \ Set Y to targetObject so that Y is preserved
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
 \       Name: L1919
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Temporary storage for X so it can be preserved through calls to
+\             sub_C1882
 \
 \ ******************************************************************************
 
 .L1919
 
- EQUB &00
+ EQUB 0
 
 \ ******************************************************************************
 \
@@ -9274,7 +9431,7 @@
 \       Name: ExpendEnemyEnergy
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Drain one unit of energy from an enemy and expend it on the
+\    Summary: Drain one unit of energy from an enemy and expend it onto the
 \             landscape by spawning a tree, if possible
 \
 \ ------------------------------------------------------------------------------
@@ -9817,12 +9974,12 @@
                         \ sequentially, checking on each step whether the
                         \ vector is passing through a flat tile or platform
 
- JSR FollowGazeVector   \ Follow the gaze vector from a viewing object to
-                        \ determine whether the player's sights can see a flat
+ JSR FollowGazeVector   \ Follow the gaze vector from the player's eyes to the
+                        \ sights to determine whether the player can see a flat
                         \ tile or platform (i.e. boulder or tower)
                         \
                         \ If it does hit a tile or platform, it sets xCoordHi
-                        \ and zCoordHi to the tile coorsinates of the tile,
+                        \ and zCoordHi to the tile coordinates of the tile,
                         \ which we use below for creating or removing objects
                         \ on the tile in the sights
 
@@ -33600,21 +33757,23 @@ L314A = C3148+2
 \
 \ This routine calculates the following for an object:
 \
-\ 1. xDelta(Hi Lo), yDelta(Hi Lo), zDelta(Hi Lo): Calculate the difference (the
+\ 1. objTypeToAnalyse: Set to the type of the object we are analysing.
+\
+\ 2. xDelta(Hi Lo), yDelta(Hi Lo), zDelta(Hi Lo): Calculate the difference (the
 \ delta) in all three axes between the viewer and the object we are analysing,
 \ to give us the 3D vector from the viewer to the object.
 \
-\ 2. angle(Hi Lo): Calculate the angle of the hypotenuse of the triangle formed
-\ by the x- and z-axes axes, which is the projection of the 3D vector from the
+\ 3. angle(Hi Lo): Calculate the angle of the hypotenuse of the triangle formed
+\ by the x-axis and z-axis, which is the projection of the 3D vector from the
 \ viewer to the object down onto the ground plane (so imagine a light shining
 \ down from above, casting the vector's shadow onto the y = 0 plane, and that's
-\ the hypotenuse)
+\ the hypotenuse).
 \
-\ 3. Set hypotenuse(Hi Lo) to the length of the hypotenuse in the above
+\ 4. hypotenuse(Hi Lo): Set to the length of the hypotenuse in the above
 \ triangle, so that's the length of the 3D vector from the viewer to the object
 \ when projected down onto the ground plane.
 \
-\ 4. objectViewYaw(Hi Lo): The angle of the hypotenuse is the yaw angle of the
+\ 5. objectViewYaw(Hi Lo): The angle of the hypotenuse is the yaw angle of the
 \ 3D vector from the viewer to the object we are analysing. We subtract the
 \ viewer's yaw angle and the yaw adjustment, and add half a screen width to get
 \ the yaw angle delta from the viewer's gaze to the object, relative to the
@@ -33622,18 +33781,18 @@ L314A = C3148+2
 \ view. You can think of this as the screen x-coordinate of the object, or how
 \ far the object appears from the left edge of the screen.
 \
-\ 5. objectGazeYaw(Hi Lo): Set to the object's gaze relative to the viewer's
+\ 6. objectGazeYaw(Hi Lo): Set to the object's gaze relative to the viewer's
 \ gaze.
 \
-\ 6. If this is the landscape preview, rotate the object to face forwards and
+\ 7. If this is the landscape preview, rotate the object to face forwards and
 \ scale it so it looks good.
 \
-\ 7. Set objectAdjacent(Hi Lo) to hypotenuse(Hi Lo) so it can be used as the
+\ 8. Set objectAdjacent(Hi Lo) to hypotenuse(Hi Lo) so it can be used as the
 \ length of the adjacent side in the vertical right-angled triangle with the
 \ projected vector along the bottom and the vector from the viewer to the
 \ object as the hypotenuse.
 \
-\ 8. Set objectOpposite(Hi Lo) to the length of the opposite side in the
+\ 9. Set objectOpposite(Hi Lo) to the length of the opposite side in the
 \ vertical right-angled triangle with the projected vector along the bottom and
 \ the vector from the viewer to the object as the hypotenuse.
 \
@@ -33702,7 +33861,7 @@ L314A = C3148+2
 
                         \ We now have deltas for all three axes, so we now can
                         \ calculate the angle of the hypotenuse of the triangle
-                        \ formed by the x- and z-axes axes, which is the
+                        \ formed by the x-axis and z-axis, which is the
                         \ projection of the 3D vector from the viewer to the
                         \ object down onto the ground plane (so imagine a light
                         \ shining down from above, casting the vector's shadow
