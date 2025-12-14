@@ -9120,14 +9120,13 @@
                         \
                         \   * Bit 7 set = gaze vector can see the target object
                         \
-                        \ and it sets bit 7 of gazeCanSeeTree depending on
-                        \ whether the gaze vector can see a tree:
+                        \ and if the gaze cannot see the target, then bit 7 of
+                        \ gazeCanSeeTree is set depending on whether the gaze
+                        \ vector can see a tree:
                         \
                         \   * Bit 7 clear = gaze vector cannot see a tree
                         \
                         \   * Bit 7 set = gaze vector can see a tree
-                        \
-                        \ ???
 
  ROL targetOnTile       \ Set bit 7 of targetVisibility to bit 7 of targetOnTile
  ROR targetVisibility   \ ???
@@ -11235,10 +11234,10 @@
                         \ at a tile
 
  LDA #%10000000         \ Set bit 7 and clear bit 6 of considerObjects so the
- STA considerObjects    \ following call GetTileAltitude will include objects in
-                        \ its calculations ???
+ STA considerObjects    \ following call GetTileAltitude will include platform
+                        \ objects in its calculations
 
- STA L000C              \ Set bit 7 of L000C ???
+ STA L000C              \ Set L000C = 128 ???
 
  LDA #0                 \ Set platformAltitudeLo = 0, so if the tile doesn't
  STA platformAltitudeLo \ contain a platform, platformAltitudeLo will be zero
@@ -11322,18 +11321,32 @@
                         \ indicate that the viewer is not looking at a tile ???
 
  LDA enemyCheckingRobot \ If bit 7 is set in either of enemyCheckingRobot and
- ORA boulderOnTile      \ boulderOnTile, skip the following test, as the tile
- BMI gaze2              \ contains either a ??? or a boulder
+ ORA boulderOnTile      \ boulderOnTile, skip the following test, as we do not
+ BMI gaze2              \ care if the gaze is upwards when either of the
+                        \ following is true:
+                        \
+                        \   * This is an enemy is looking for a robot, in which
+                        \     case we are still interested even if the enemy is
+                        \     below the robot and can't see the tile that the
+                        \     robot is on
+                        \
+                        \   * We are looking at a boulder, in which case it can
+                        \     still be above us and a suitable target for an
+                        \     action (as we can create or absorb from a boulder
+                        \     stack by looking at any of the boulders on the
+                        \     stack, even if they are above us)
 
-                        \ If we get here then bit 7 is clear in both
-                        \ enemyCheckingRobot and boulderOnTile, so the tile does
-                        \ not contain a ??? or a boulder
+                        \ If we get here then neither of the above special cases
+                        \ are true, so we now check whether the viewer is
+                        \ looking upwards, as that will mean they can't see down
+                        \ onto the tile
 
  LDA yVectorLo          \ If the low byte (i.e. the fractional part) of the gaze
  BPL gaze4              \ vector's y-coordinate is positive, then the viewer is
-                        \ looking upwards and ???, so jump to gaze4 to return
-                        \ from the subroutine with the C flag set to indicate
-                        \ that the viewer is not looking at a tile
+                        \ looking upwards and therefore can't see down onto the
+                        \ tile, so jump to gaze4 to return from the subroutine
+                        \ with the C flag set to indicate that the viewer is not
+                        \ looking at a tile
 
 .gaze2
 
@@ -12202,9 +12215,9 @@
 \
 \                         * Bit 7 set = tile does contain the target object
 \
-\   gazeCanSeeTree      If bit 7 of considerObjects is set, this records whether
-\                       the tile contains a tree that can be seen by the gaze
-\                       vector:
+\   gazeCanSeeTree      If bit 7 of considerObjects is set and bit 7 of
+\                       targetOnTile is clear, this records whether the tile
+\                       contains a tree that can be seen by the gaze vector:
 \
 \                         * Bit 7 clear = tile does not contain a tree that can
 \                                         be seen by the gaze vector
@@ -12329,9 +12342,11 @@
                         \ return the tile's altitude from the subroutine, as per
                         \ bit 7 of considerObjects
 
- BMI data1              \ Otherwise bit 7 of considerObjects is set, so jump to
-                        \ data1 to calculate the ??? (this BMI is effectively a
-                        \ JMP as we just passed through a BPL)
+ BMI data1              \ Otherwise bit 7 of considerObjects is set and we need
+                        \ to take any objects on the tile into consideration, so
+                        \ jump to data1 to to process the objects on the stack
+                        \ (this BMI is effectively a JMP as we just passed
+                        \ through a BPL)
 
 .data4
 
@@ -12454,7 +12469,9 @@
                         \ detection code more accurate
 
  BIT targetOnTile       \ If bit 7 of targetOnTile is set then the tree is
- BMI data6              \ the targeted object, so skip the following so that ???
+ BMI data6              \ the targeted object, so skip the following so that we
+                        \ only set bit 7 of gazeCanSeeTree if the tree is not
+                        \ the target (i.e. if bit 7 of targetOnTile is clear)
 
  SEC                    \ Set bit 7 of gazeCanSeeTree to indicate that the tree
  ROR gazeCanSeeTree     \ can be seen by the gaze vector
@@ -12739,9 +12756,13 @@
 \     boulder or tower (and the object number of the boulder/tower is in bits
 \     0-5)
 \
-\   * X-th entry in yObjectLo = &E0 ???
+\   * X-th entry in yObjectLo = 224, so objects are spawned at a height of 224
+\     above the tile itself, or 0.875 tile widths (this is used for the gaze
+\     vector calculations, so this is effectively the height of the object's
+\     eyes above the tile)
 \
-\   * X-th entry in objectPitchAngle = &F5 ???
+\   * X-th entry in objectPitchAngle = -11, so objects look slightly downwards
+\     at a pitch angle of 15.5 degrees
 \
 \   * X-th entry in objectYawAngle is set to a multiple of 11.25 degrees, as
 \     determined by the next seed
@@ -12952,9 +12973,12 @@
 
  LDA #224               \ Set the object's entry in yObjectLo to 224
  STA yObjectLo,X        \
-                        \ This appears to place objects well above the tile, at
-                        \ a height of 224/256 = 0.875 coordinates above the tile
-                        \ itself ???
+                        \ This places objects well above the tile, at a height
+                        \ of 224 / 256 = 0.875 coordinates above the tile itself
+                        \
+                        \ This is used for the gaze vector calculations, so this
+                        \ is effectively the height of the object's eyes above
+                        \ the tile
 
  PLA                    \ Set A to the tile data for the tile, which we stored
                         \ on the stack above
@@ -12981,8 +13005,9 @@
  ORA #%11000000         \ with bits 6 and 7 set to indicate that the tile now
  STA (tileDataPage),Y   \ contains an object
 
- LDA #245               \ Set the object's pitch angle to 245, or -11 degrees
- STA objectPitchAngle,X \ ???
+ LDA #245               \ Set the object's pitch angle to 245, or -11 pitch
+ STA objectPitchAngle,X \ angles, so the object looks down slightly at a pitch
+                        \ angle of 360 * 11 / 256 = 15.5 degrees
 
                         \ We now calculate the object's yaw angle, which
                         \ determines the direction in which it is facing
