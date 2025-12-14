@@ -48,7 +48,7 @@
      0012
 .L0013
      0013
-.L0014
+.targetVisibility
      0014
 .loopCounter
      0015
@@ -88,7 +88,7 @@
      001E
 .treeCounter
      001E
-.L001E
+.gazeCheckCounter
      001E
 .yawAdjustmentLo
      001F
@@ -2575,7 +2575,7 @@
      0C66   00
 .boulderOnTile
      0C67   00
-.L0C68
+.enemyViewingArc
      0C68   00
 .bufferColumns
      0C69   00
@@ -2587,7 +2587,7 @@
      0C6C   00
 .L0C6D
      0C6D   00
-.L0C6E
+.enemyCheckingRobot
      0C6E   00
 .numberOfEnemies
      0C6F   00
@@ -2603,7 +2603,7 @@
      0C74   00
 .alteredSeed
      0C75   00
-.L0C76
+.treeVisibility
      0C76   00
      0C77   00
 .xTitleOffset
@@ -4401,7 +4401,7 @@
      187C   20 84 1F   JSR &1F84
 .C187F
      187F   4C C9 16   JMP &16C9
-.sub_C1882
+.CheckEnemyGaze
      1882   85 74      STA &74
      1884   8E 19 19   STX &1919
      1887   8C 58 0C   STY &0C58
@@ -4449,7 +4449,7 @@
      18DB   A5 81      LDA &81
      18DD   85 80      STA &80
      18DF   A5 84      LDA &84
-.C18E1
+.egaz1
      18E1   20 1D 56   JSR &561D
      18E4   A5 8A      LDA &8A
      18E6   85 3F      STA &3F
@@ -4462,7 +4462,7 @@
      18F7   66 14      ROR &14
      18F9   2E DD 0C   ROL &0CDD
      18FC   6E 76 0C   ROR &0C76
-.C18FF
+.egaz2
      18FF   4E 6E 0C   LSR &0C6E
      1902   A5 81      LDA &81
      1904   38         SEC
@@ -4472,13 +4472,13 @@
      190B   E9 00      SBC #&00
      190D   C6 1E      DEC &1E
      190F   D0 D0      BNE &18E1
-.C1911
+.egaz3
      1911   18         CLC
-.C1912
+.egaz4
      1912   AE 19 19   LDX &1919
      1915   AC 58 0C   LDY &0C58
      1918   60         RTS
-.L1919
+.xStoreEnemyGaze
      1919   00
 .sub_C191A
      191A   A0 00      LDY #&00

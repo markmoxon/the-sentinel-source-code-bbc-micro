@@ -215,7 +215,7 @@
 
  SKIP 1                 \ ???
 
-.L0014
+.targetVisibility
 
  SKIP 1                 \ ???
 
@@ -334,7 +334,7 @@
  SKIP 0                 \ A counter for the number of trees that are added to
                         \ the landscape in the SpawnTrees routine
 
-.L001E
+.gazeCheckCounter
 
  SKIP 1                 \ ???
 
@@ -2058,7 +2058,7 @@
                         \
                         \   * Bit 7 set = tile contains a boulder
 
-.L0C68
+.enemyViewingArc
 
  EQUB 0                 \ ???
 
@@ -2086,7 +2086,7 @@
 
  EQUB 0                 \ ???
 
-.L0C6E
+.enemyCheckingRobot
 
  EQUB 0                 \ Another bit 7 flag ???
 
@@ -2163,7 +2163,7 @@
                         \ data that gets created in AlterCrackerSeed and checked
                         \ in CheckCreckerSeed as part of the anti-cracker code
 
-.L0C76
+.treeVisibility
 
  EQUB 0                 \ ???
 
@@ -8434,8 +8434,9 @@
  STA objTacticsTimer,X  \ so this is the default length of the timer (we may
                         \ change this later)
 
- LDA #20                \ Set L0C68 = 20 ???
- STA L0C68
+ LDA #20                \ Set enemyViewingArc = 20, so the enemy's gaze has a
+ STA enemyViewingArc    \ viewing arc that's the same width as the screen (as
+                        \ the screen is 20 yaw angles across)
 
  LDA enemyMeanieTree,X  \ Fetch the value of enemyMeanieTree for the enemy we
                         \ are processing, so A contains tells us whether the
@@ -8471,7 +8472,7 @@
 
  LDA #0
 
- JSR sub_C1882          \ ???
+ JSR CheckEnemyGaze
 
  LDA objectViewYawHi
  CMP #&14
@@ -8480,7 +8481,7 @@
  CPY playerObject
  BNE tact4
 
- LDA L0014
+ LDA targetVisibility
  BEQ tact5
 
  JSR PerformHyperspace  \ Hyperspace the player to a brand new tile
@@ -8631,8 +8632,8 @@
  BEQ tact11
  LDY enemyData6,X
  LDA #0
- JSR sub_C1882
- LDA L0014
+ JSR CheckEnemyGaze
+ LDA targetVisibility
  BEQ tact10
  JMP tact19
 
@@ -8649,11 +8650,11 @@
 .tact12
 
  LDA #0
- JSR sub_C1882
- LDA L0C76
+ JSR CheckEnemyGaze
+ LDA treeVisibility
  AND #&40
  BNE tact13
- LDA L0014
+ LDA targetVisibility
  BEQ tact13
  BMI tact19
  CPY playerObject
@@ -8672,7 +8673,7 @@
  BEQ tact14
  JSR SetEnemyData
  LDA #&40
- STA L0014
+ STA targetVisibility
  BNE tact19
 
 .tact14
@@ -8737,7 +8738,7 @@
 
  TYA
  STA enemyData6,X
- LDA L0014
+ LDA targetVisibility
  STA enemyData7,X
  LDA enemyTimer1,X
  CMP #&01
@@ -8752,7 +8753,7 @@
 .tact21
 
  BNE tact20
- LDA L0014
+ LDA targetVisibility
  BPL tact22
  JSR DrainObjectEnergy
  LDY enemyObject
@@ -8821,28 +8822,50 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1882 (Part 1 of 2)
+\       Name: CheckEnemyGaze (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Check to see whether the current enemy can see a specific target
+\             object of a specific type
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   Object type to match ???
+\   A                   The type of the object to match against the target
 \
-\   Y                   Number of the target object ???
+\   Y                   The number of the target object to analyse
+\
+\   viewingObject       The viewing object (i.e. the enemy doing the scanning)
 \
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
 \
-\   C flag              Status flag:
+\   targetVisibility    The visibility result:
 \
-\                         * Clear if ???
+\                         * Bit 7 set if the enemy can see the target object's
+\                           tile, clear if it can't
 \
-\                         * Set if ???
+\                         * Bit 6 set if the enemy is looking towards a robot
+\                           and the robot object is visible
+\
+\   treeVisibility      The visibility result:
+\
+\                         * Bit 7 set if the enemy can see a tree ???
+\
+\                         * Bit 6 set if the enemy is looking towards a robot and
+\                           a tree is in the way
+\
+\   C flag              Status flag (though note that this is ignored for every
+\                       call to this routine):
+\
+\                         * Clear if the target object does not exist, or is not
+\                           of the specified type, or the object is in the
+\                           viewing arc
+\
+\                         * Set if the target object is not within the viewing
+\                           arc of the enemy
 \
 \   X                   X is preserved
 \
@@ -8850,26 +8873,29 @@
 \
 \ ******************************************************************************
 
-.sub_C1882
+.CheckEnemyGaze
 
  STA T                  \ Store the object type in T so we can refer to it later
 
- STX L1919              \ Store X in L1919 so it can be preserved across
-                        \ calls to the routine
+ STX xStoreEnemyGaze    \ Store X in xStoreEnemyGaze so it can be preserved
+                        \ across calls to the routine
 
  STY targetObject       \ Store the target object in targetObject, so object #Y
                         \ is the target object
 
- LDA #0                 \ Set L0014 = 0 ???
- STA L0014
+ LDA #0                 \ Clear all bits of targetVisibility so we can set them
+ STA targetVisibility   \ later with the results of the analysis
 
  LDA objectFlags,Y      \ If bit 7 is set for object #Y then this object number
- BMI C1911              \ is not allocated to an object, so jump to C1911 to
-                        \ return from the subroutine with the C flag clear ???
+ BMI egaz3              \ is not allocated to an object, so jump to egaz3 to
+                        \ return from the subroutine with the C flag clear to
+                        \ indicate that the target object can't be seen by the
+                        \ enemy
 
  LDA objectTypes,Y      \ If object #Y is not an object of type T (which we set
- CMP T                  \ to the argument A above), then jump to C1911 to return
- BNE C1911              \ from the subroutine with the C flag clear ???
+ CMP T                  \ to the argument A above), then jump to egaz3 to return
+ BNE egaz3              \ from the subroutine with the C flag clear to indicate
+                        \ that the target object is of the wrong type
 
  JSR GetObjectAngles    \ Calculate the angles and distances of the vector from
                         \ the viewer to object #Y and put them into the
@@ -8892,6 +8918,11 @@
                         \   * Set hypotenuse(Hi Lo) to the length of the 3D
                         \     vector from the viewer to the object when
                         \     projected down onto the ground plane
+                        \
+                        \  * Set yDelta(Hi Lo) to the difference (the delta) in
+                        \    the y-axis between the viewer and the object we are
+                        \    analysing, so this gives us the altitude difference
+                        \    between the viewer and the object
 
                         \ We now have a very short interlude to set up some of
                         \ the anti-cracker code before continuing in part 2
@@ -8954,64 +8985,106 @@
                         \ ensure that this part of the anti-cracker code has
                         \ been run correctly
 
-                        \ Fall through into part 2 of sub_C1882 to continue with
-                        \ the ???
+                        \ Fall through into part 2 of CheckEnemyGaze to continue
+                        \ checking the enemy's gaze
 
 \ ******************************************************************************
 \
-\       Name: sub_C1882 (Part 2 of 2)
+\       Name: CheckEnemyGaze (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Calculate whether the current enemy can see the specified object
 \
 \ ******************************************************************************
 
- LDA L0C68              \ Set T = L0C68 / 2
- LSR A
- STA T
+ LDA enemyViewingArc    \ Set T = enemyViewingArc / 2
+ LSR A                  \
+ STA T                  \ So T is the yaw width of half the enemy's viewing arc,
+                        \ which is always 10 as enemyViewingArc is only ever set
+                        \ to 20
 
  LDA objectViewYawHi    \ Set A = objectViewYawHi - 10 + T
- SEC
- SBC #10
- CLC
- ADC T
+ SEC                    \
+ SBC #10                \ This sets A to the yaw angle of the viewer's gaze
+ CLC                    \ towards the object, but relative to the enemy's
+ ADC T                  \ viewing arc rather than the screen
 
- CMP L0C68              \ If A >= L0C68, then jump to C1912 to return from the
- BCS C1912              \ subroutine with the C flag set
+ CMP enemyViewingArc    \ If A >= enemyViewingArc then the enemy's gaze towards
+ BCS egaz4              \ the target object falls outside the viewing arc, so
+                        \ the enemy can't see the target object, so jump to
+                        \ egaz4 to return from the subroutine with the C flag
+                        \ set to indicate that the target object can't be seen
 
  LDA angleLo            \ Set vectorYawAngle(Hi Lo) = angle(Hi Lo)
- STA vectorYawAngleLo
- LDA angleHi
- STA vectorYawAngleHi
+ STA vectorYawAngleLo   \
+ LDA angleHi            \ So vectorYawAngle(Hi Lo) is the yaw angle of the enemy
+ STA vectorYawAngleHi   \ gaze towards the object, as taken from the triangle on
+                        \ the ground
 
- LDA #2                 \ Set L001E = 2
- STA L001E
+ LDA #2                 \ Set gazeCheckCounter = 2 so we perform the gaze check
+ STA gazeCheckCounter   \ twice in the loop below, once for the gaze from the
+                        \ enemy to the target object, and once for the gaze from
+                        \ the enemy to the target object's tile
 
- LDA objTypeToAnalyse   \ Set A to the type of object #Y
+ LDA objTypeToAnalyse   \ Set A to the type of object #Y, i.e. the object being
+                        \ looked at by the enemy, which was set by the call to
+                        \ GetObjectAngles above
 
- BNE C18FF              \ If is is not a robot (an object of type 0), jump to
-                        \ C18FF
+ BNE egaz2              \ If the enemy is not looking at a robot (an object of
+                        \ type 0), then jump to egaz2 to skip the first check
+                        \ against the target object and move on to checking the
+                        \ target object's tile
 
- SEC                    \ Set bit 7 of L0C6E ???
- ROR L0C6E
+                        \ If we get here then the enemy is looking towards a
+                        \ robot, so we now check whether the enemy can actually
+                        \ see the robot object
+                        \
+                        \ The results will end up in bit 6 of targetVisibility
+                        \ and treeVisibility, as the first pass will rotate the
+                        \ results into bit 7 of the result variables, and the
+                        \ second pass will then rotate this first result down
+                        \ into bit 6
+
+ SEC                    \ Set bit 7 of enemyCheckingRobot so the call to the
+ ROR enemyCheckingRobot \ FollowGazeVector routine below will know that the
+                        \ enemy is looking towards a robot ???
 
  LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo)
- STA xDeltaLo
- LDA yDeltaHi
+ STA xDeltaLo           \
+ LDA yDeltaHi           \ The call to GetObjectAngles set yDelta(Hi Lo) to the
+                        \ difference in altitude between the enemy and the
+                        \ object, so we put this into (A xDeltaLo) to pass to
+                        \ GetPitchAngleDelta to calculate the pitch angle of the
+                        \ gaze from the enemy to the object
 
-                        \ We do the following loop L001E times (2)
+                        \ We do the following loop twice, using the counter we
+                        \ set in gazeCheckCounter
+                        \
+                        \ The first time we follow the gaze from the enemy to
+                        \ the target object, and the second time we follow the
+                        \ gaze from the enemy to the target object's tile
 
-.C18E1
+.egaz1
 
- JSR GetPitchAngleDelta \ Second vertical triangle ???
+ JSR GetPitchAngleDelta \ Set angle(Hi Lo) to the pitch angle of the vector
+                        \ along the hypotenuse of the vertical pitch angle
+                        \ triangle, given a vertical opposite side of length
+                        \ (A xDeltaLo) and an adjacent side along the ground of
+                        \ length hypotenuse(Hi Lo)
+                        \
+                        \ So we now have the pitch angle of the vector from the
+                        \ enemy to the object
 
- LDA angleLo
- STA vectorPitchAngleLo
- STA T
- LDA angleHi
- STA vectorPitchAngleHi
+ LDA angleLo            \ Set vectorPitchAngle(Hi Lo) = angle(Hi Lo)
+ STA vectorPitchAngleLo \
+ STA T                  \ So vectorYawAngle(Hi Lo) is the pitch angle of the
+ LDA angleHi            \ enemy towards the object, as taken from the vertical
+ STA vectorPitchAngleHi \ triangle with the gaze vector as the hypotenuse
+                        \
+                        \ This also sets T to the low byte in vectorPitchAngleLo
 
- JSR GetVectorForAngles \ Convert the pitch and yaw angles:
+ JSR GetVectorForAngles \ Convert the pitch and yaw angles of the enemy's gaze
+                        \ vector towards the object::
                         \
                         \   vectorPitchAngle(Hi Lo)
                         \
@@ -9022,10 +9095,13 @@
                         \   [ xVector(Lo Bot) ]
                         \   [ yVector(Lo Bot) ]
                         \   [ zVector(Lo Bot) ]
+                        \
+                        \ So this is the gaze vector from the enemy to the
+                        \ object we are checking
 
  JSR FollowGazeVector   \ Follow the gaze vector from the viewing object to
-                        \ determine whether the player's sights can see a flat
-                        \ tile or platform (i.e. boulder or tower)
+                        \ determine whether the enemy can see a flat tile or
+                        \ platform (i.e. boulder or tower) or the target object
                         \
                         \ This sets the C flag as follows:
                         \
@@ -9050,37 +9126,43 @@
                         \   * Bit 7 clear = gaze vector cannot see a tree
                         \
                         \   * Bit 7 set = gaze vector can see a tree
+                        \
+                        \ ???
 
- ROL targetOnTile       \ Set bit 7 of L0014 to bit 7 of targetOnTile
- ROR L0014              \
+ ROL targetOnTile       \ Set bit 7 of targetVisibility to bit 7 of targetOnTile
+ ROR targetVisibility   \ ???
 
- ROL gazeCanSeeTree     \ Set bit 7 of L0C76 to bit 7 of gazeCanSeeTree
- ROR L0C76              \
+ ROL gazeCanSeeTree     \ Set bit 7 of treeVisibility to bit 7 of gazeCanSeeTree
+ ROR treeVisibility     \ ???
 
-.C18FF
+.egaz2
 
- LSR L0C6E              \ Clear bit 7 of L0C6E ???
+ LSR enemyCheckingRobot \ Clear bit 7 of enemyCheckingRobot to pass to the next
+                        \ call to FollowGazeVector ???
 
  LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo) - &E0
  SEC                    \                  = yDelta(Hi Lo) - 224
- SBC #&E0
- STA xDeltaLo
- LDA yDeltaHi
- SBC #&00
+ SBC #&E0               \
+ STA xDeltaLo           \ The object is spawned at a y-coordinate of 224 above
+ LDA yDeltaHi           \ the tile, so this sets (A xDeltaLo) to the altitude of
+ SBC #&00               \ the target object's tile rather than the target object
+                        \ itself
 
- DEC L001E              \ Decrement L001E
+ DEC gazeCheckCounter   \ Decrement the loop counter in gazeCheckCounter
 
- BNE C18E1              \ Loop back until we have done loop x 2
+ BNE egaz1              \ Loop back to repeat the check, but this time using the
+                        \ gaze vector from the enemy to the target object's tile
 
-.C1911
+.egaz3
 
  CLC                    \ Clear the C flag to return from the subroutine to
-                        \ indicate ???
+                        \ indicate that we have performed the gaze checks
 
-.C1912
+.egaz4
 
- LDX L1919              \ Restore the value of X that we stored in L1919
-                        \ at the start of the routine, so that it's preserved
+ LDX xStoreEnemyGaze    \ Restore the value of X from xStoreEnemyGaze that we
+                        \ stored at the start of the routine, so that it's
+                        \ preserved
 
  LDY targetObject       \ Set Y to targetObject so that Y is preserved
 
@@ -9088,15 +9170,15 @@
 
 \ ******************************************************************************
 \
-\       Name: L1919
+\       Name: xStoreEnemyGaze
 \       Type: Variable
 \   Category: Gameplay
 \    Summary: Temporary storage for X so it can be preserved through calls to
-\             sub_C1882
+\             CheckEnemyGaze
 \
 \ ******************************************************************************
 
-.L1919
+.xStoreEnemyGaze
 
  EQUB 0
 
@@ -9206,8 +9288,10 @@
 
 .sub_C197D
 
- LDA #&28
- STA L0C68
+ LDA #40                \ Set enemyViewingArc = 40, so the enemy's gaze has a
+ STA enemyViewingArc    \ viewing arc that's twice the width of the screen (as
+                        \ the screen is 20 yaw angles across)
+
  LDX enemyObject
  STX viewingObject
 
@@ -9260,8 +9344,8 @@
  CMP #&0A
  BCS C1986
  LDA #&02
- JSR sub_C1882
- LDA L0014
+ JSR CheckEnemyGaze
+ LDA targetVisibility
  BPL C1986
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
@@ -9683,8 +9767,8 @@
 
 .C1AD6
 
- JSR sub_C1882
- LDA L0014
+ JSR CheckEnemyGaze
+ LDA targetVisibility
  BPL C1AE2
  STY targetObject
  CLC
@@ -9986,7 +10070,8 @@
                         \ If we get here then the key press is either create,
                         \ absorb or transfer
 
- LSR L0C6E              \ Clear bit 7 of L0C6E ???
+ LSR enemyCheckingRobot \ Clear bit 7 of enemyCheckingRobot to pass to the call
+                        \ to FollowGazeVector below ???
 
  JSR GetSightsVector    \ Calculate the vector from the player's eyes to the
                         \ sights, returning it in both angle format:
@@ -10013,7 +10098,8 @@
 
  JSR FollowGazeVector   \ Follow the gaze vector from the player's eyes to the
                         \ sights to determine whether the player can see a flat
-                        \ tile or platform (i.e. boulder or tower)
+                        \ tile or platform (i.e. boulder or tower) or the
+                        \ target object
                         \
                         \ If it does hit a tile or platform, it sets xCoordHi
                         \ and zCoordHi to the tile coordinates of the tile,
@@ -11044,6 +11130,8 @@
 \
 \   zVector(Lo Bot)     The z-coordinate of the scaled-down gaze vector
 \
+\   enemyCheckingRobot  If bit 7 is set then the target object is a robot ???
+\
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
@@ -11233,13 +11321,13 @@
  BVS gaze4              \ to return from the subroutine with the C flag set to
                         \ indicate that the viewer is not looking at a tile ???
 
- LDA L0C6E              \ If bit 7 is set in either of L0C6E and boulderOnTile,
- ORA boulderOnTile      \ skip the following test, as the tile contains either a
- BMI gaze2              \ ??? or a boulder
+ LDA enemyCheckingRobot \ If bit 7 is set in either of enemyCheckingRobot and
+ ORA boulderOnTile      \ boulderOnTile, skip the following test, as the tile
+ BMI gaze2              \ contains either a ??? or a boulder
 
-                        \ If we get here then bit 7 is clear in both L0C6E and
-                        \ boulderOnTile, so the tile does not contain a ??? or a
-                        \ boulder
+                        \ If we get here then bit 7 is clear in both
+                        \ enemyCheckingRobot and boulderOnTile, so the tile does
+                        \ not contain a ??? or a boulder
 
  LDA yVectorLo          \ If the low byte (i.e. the fractional part) of the gaze
  BPL gaze4              \ vector's y-coordinate is positive, then the viewer is
@@ -20893,7 +20981,7 @@ L23E3 = C23E2+1
  LDA #0
  STA tileAltitude
  STA zVectorLo
- STA L001E
+ STA gazeCheckCounter
  LDA #&FF
  STA L0004
  STA yVectorLo
@@ -20987,7 +21075,7 @@ L23E3 = C23E2+1
 
 .C2E60
 
- LDA L001E
+ LDA gazeCheckCounter
  CMP polygonPointCount
  BNE C2E88
  LDA drawViewPitchHi,X
@@ -21036,7 +21124,7 @@ L23E3 = C23E2+1
 
 .C2EA5
 
- INC L001E
+ INC gazeCheckCounter
  JMP C2E56
 
 .C2EAA
@@ -33913,6 +34001,8 @@ L314A = C3148+2
 \
 \                         * Non-zero = this is not the landscape preview, so
 \                                      leave the objects alone
+\
+\   viewingObject       The viewing object
 \
 \ ******************************************************************************
 
