@@ -11,10 +11,10 @@
 \ in the documentation are entirely my fault
 \
 \ The terminology and notations used in this commentary are explained at
-\ https://sentinel.bbcelite.com/terminology
+\ https://thesentinel.bbcelite.com/terminology
 \
 \ The deep dive articles referred to in this commentary can be found at
-\ https://sentinel.bbcelite.com/deep_dives
+\ https://thesentinel.bbcelite.com/deep_dives
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1135,8 +1135,8 @@
 
 .tileData
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &27        \ These values are workspace
- EQUB &29, &20, &27, &29, &29, &27, &20, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &27    \ These values are workspace
+ EQUB &29, &20, &27, &29, &29, &27, &20, &00    \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &29
@@ -1307,8 +1307,8 @@
 
 .xObject
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1338,8 +1338,8 @@
 
 .yObjectHi
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &4B, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1358,8 +1358,8 @@
 
 .zObject
 
- EQUB &00, &07, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &07, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &BF, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1379,8 +1379,8 @@
 
 .objectYawAngle
 
- EQUB &00, &CE, &F8, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &CE, &F8, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &12, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1410,8 +1410,8 @@
 
 .yObjectLo
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1448,8 +1448,8 @@
 
 .objectTypes
 
- EQUB &00, &06, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &06, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1474,8 +1474,8 @@
 
 .drawViewPitchLo
 
- EQUB &6F, &70, &71, &73, &74, &75, &76, &78        \ These values are workspace
- EQUB &79, &7B, &7C, &7E, &7F, &81, &82, &84        \ noise and have no meaning
+ EQUB &6F, &70, &71, &73, &74, &75, &76, &78    \ These values are workspace
+ EQUB &79, &7B, &7C, &7E, &7F, &81, &82, &84    \ noise and have no meaning
  EQUB &86, &87, &89, &8B, &8D, &8E, &90, &92
  EQUB &95, &96, &98, &9A, &9C, &9E, &A0, &A2
  EQUB &73, &75, &76, &77, &78, &79, &7A, &7C
@@ -1504,8 +1504,8 @@
 
 .drawViewPitchHi
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -1528,8 +1528,8 @@
 
 .L0B40
 
- EQUB &10, &10, &10, &10, &10, &10, &10, &10        \ These values are workspace
- EQUB &10, &10, &10, &10, &10, &10, &10, &10        \ noise and have no meaning
+ EQUB &10, &10, &10, &10, &10, &10, &10, &10    \ These values are workspace
+ EQUB &10, &10, &10, &10, &10, &10, &10, &10    \ noise and have no meaning
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
  EQUB &10, &10, &10, &10, &10, &10, &10, &10
@@ -1558,8 +1558,8 @@
 
 .drawViewYawLo
 
- EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB        \ These values are workspace
- EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7        \ noise and have no meaning
+ EQUB &3B, &C1, &48, &D6, &5A, &DD, &69, &EB    \ These values are workspace
+ EQUB &6B, &F3, &71, &EE, &73, &ED, &67, &E7    \ noise and have no meaning
  EQUB &5E, &D3, &50, &C3, &35, &AE, &1D, &8A
  EQUB &FF, &6A, &D5, &44, &AC, &12, &77, &E2
  EQUB &1D, &A4, &2B, &B0, &35, &B8, &3B, &BC
@@ -8851,10 +8851,6 @@
                         \   * Set hypotenuse(Hi Lo) to the length of the 3D
                         \     vector from the viewer to the object when
                         \     projected down onto the ground plane
-
-                        \ We now work out the width of the object that we are
-                        \ looking at so we can work out whether any of it is
-                        \ on-screen
 
                         \ We now have a very short interlude to set up some of
                         \ the anti-cracker code before continuing in part 2
@@ -25611,7 +25607,7 @@ L314A = C3148+2
                                             \ 320 = - scrollScreen(Hi Lo)
                                             \     = - -320
 
- EQUB LO(screenBufferRow0 + 0 * 320 - 320) \ Direction 3
+ EQUB LO(screenBufferRow0 + 0 * 320 - 320)  \ Direction 3
                                             \
                                             \ Pan down, scroll up
                                             \
@@ -27140,8 +27136,12 @@ L314A = C3148+2
 
 .sightsByte
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
 
 \ ******************************************************************************
 \
@@ -27155,8 +27155,12 @@ L314A = C3148+2
 
 .sightsByteAddrHi
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
 
  EQUB &08               \ This byte appears to be unused
 
@@ -27208,8 +27212,8 @@ L314A = C3148+2
 
 .tileVisibility
 
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
@@ -27350,8 +27354,8 @@ L314A = C3148+2
 
 .screenBufferRow0
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27383,8 +27387,8 @@ L314A = C3148+2
 
 .screenBufferRow16
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27415,8 +27419,8 @@ L314A = C3148+2
 
 .screenBufferRow1
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27448,8 +27452,8 @@ L314A = C3148+2
 
 .screenBufferRow17
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27480,8 +27484,8 @@ L314A = C3148+2
 
 .screenBufferRow2
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27513,8 +27517,8 @@ L314A = C3148+2
 
 .screenBufferRow18
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27545,8 +27549,8 @@ L314A = C3148+2
 
 .screenBufferRow3
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27578,8 +27582,8 @@ L314A = C3148+2
 
 .screenBufferRow19
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27610,8 +27614,8 @@ L314A = C3148+2
 
 .screenBufferRow4
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27643,8 +27647,8 @@ L314A = C3148+2
 
 .screenBufferRow20
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27675,8 +27679,8 @@ L314A = C3148+2
 
 .screenBufferRow5
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27708,8 +27712,8 @@ L314A = C3148+2
 
 .screenBufferRow21
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27740,8 +27744,8 @@ L314A = C3148+2
 
 .screenBufferRow6
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27773,8 +27777,8 @@ L314A = C3148+2
 
 .screenBufferRow22
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27805,8 +27809,8 @@ L314A = C3148+2
 
 .screenBufferRow7
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27838,8 +27842,8 @@ L314A = C3148+2
 
 .screenBufferRow23
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ These values are workspace
- EQUB &00, &00, &00, &00, &00, &00, &00, &00        \ noise and have no meaning
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27870,8 +27874,8 @@ L314A = C3148+2
 
 .screenBufferRow8
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -27982,8 +27986,12 @@ L314A = C3148+2
 
 .sightsByteAddrLo
 
- EQUB &00, &00, &00, &00, &00, &FF, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF                            \ noise and have no meaning
+ EQUB &00, &00          \ These values are workspace noise and have no meaning
+ EQUB &00, &00
+ EQUB &00, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
+ EQUB &FF, &FF
 
 \ ******************************************************************************
 \
@@ -27999,7 +28007,7 @@ L314A = C3148+2
 
 .objPolygon077
 
- EQUB 64 + 7	\ Polygon 77 points: 83, 88, 87, 82, 83
+ EQUB 64 + 7            \ Polygon 77 points: 83, 88, 87, 82, 83
  EQUB 64 + 12
  EQUB 64 + 11
  EQUB 64 + 6
@@ -28007,35 +28015,35 @@ L314A = C3148+2
 
 .objPolygon078
 
- EQUB 64 + 0	\ Polygon 78 points: 76, 81, 78, 76
+ EQUB 64 + 0            \ Polygon 78 points: 76, 81, 78, 76
  EQUB 64 + 5
  EQUB 64 + 2
  EQUB 64 + 0
 
 .objPolygon079
 
- EQUB 64 + 1	\ Polygon 79 points: 77, 80, 76, 77
+ EQUB 64 + 1            \ Polygon 79 points: 77, 80, 76, 77
  EQUB 64 + 4
  EQUB 64 + 0
  EQUB 64 + 1
 
 .objPolygon080
 
- EQUB 64 + 0	\ Polygon 80 points: 76, 80, 79, 76
+ EQUB 64 + 0            \ Polygon 80 points: 76, 80, 79, 76
  EQUB 64 + 4
  EQUB 64 + 3
  EQUB 64 + 0
 
 .objPolygon081
 
- EQUB 64 + 0	\ Polygon 81 points: 76, 79, 81, 76
+ EQUB 64 + 0            \ Polygon 81 points: 76, 79, 81, 76
  EQUB 64 + 3
  EQUB 64 + 5
  EQUB 64 + 0
 
 .objPolygon082
 
- EQUB 64 + 2	\ Polygon 82 points: 78, 81, 80, 77, 78
+ EQUB 64 + 2            \ Polygon 82 points: 78, 81, 80, 77, 78
  EQUB 64 + 5
  EQUB 64 + 4
  EQUB 64 + 1
@@ -28043,21 +28051,21 @@ L314A = C3148+2
 
 .objPolygon083
 
- EQUB 64 + 5	\ Polygon 83 points: 81, 82, 85, 81
+ EQUB 64 + 5            \ Polygon 83 points: 81, 82, 85, 81
  EQUB 64 + 6
  EQUB 64 + 9
  EQUB 64 + 5
 
 .objPolygon084
 
- EQUB 64 + 4	\ Polygon 84 points: 80, 84, 83, 80
+ EQUB 64 + 4            \ Polygon 84 points: 80, 84, 83, 80
  EQUB 64 + 8
  EQUB 64 + 7
  EQUB 64 + 4
 
 .objPolygon085
 
- EQUB 64 + 5	\ Polygon 85 points: 81, 85, 84, 80, 81
+ EQUB 64 + 5            \ Polygon 85 points: 81, 85, 84, 80, 81
  EQUB 64 + 9
  EQUB 64 + 8
  EQUB 64 + 4
@@ -28065,56 +28073,56 @@ L314A = C3148+2
 
 .objPolygon086
 
- EQUB 64 + 3	\ Polygon 86 points: 79, 82, 81, 79
+ EQUB 64 + 3            \ Polygon 86 points: 79, 82, 81, 79
  EQUB 64 + 6
  EQUB 64 + 5
  EQUB 64 + 3
 
 .objPolygon087
 
- EQUB 64 + 4	\ Polygon 87 points: 80, 83, 79, 80
+ EQUB 64 + 4            \ Polygon 87 points: 80, 83, 79, 80
  EQUB 64 + 7
  EQUB 64 + 3
  EQUB 64 + 4
 
 .objPolygon088
 
- EQUB 64 + 3	\ Polygon 88 points: 79, 83, 82, 79
+ EQUB 64 + 3            \ Polygon 88 points: 79, 83, 82, 79
  EQUB 64 + 7
  EQUB 64 + 6
  EQUB 64 + 3
 
 .objPolygon089
 
- EQUB 64 + 11	\ Polygon 89 points: 87, 86, 82, 87
+ EQUB 64 + 11           \ Polygon 89 points: 87, 86, 82, 87
  EQUB 64 + 10
  EQUB 64 + 6
  EQUB 64 + 11
 
 .objPolygon090
 
- EQUB 64 + 7	\ Polygon 90 points: 83, 89, 88, 83
+ EQUB 64 + 7            \ Polygon 90 points: 83, 89, 88, 83
  EQUB 64 + 13
  EQUB 64 + 12
  EQUB 64 + 7
 
 .objPolygon091
 
- EQUB 64 + 11	\ Polygon 91 points: 87, 90, 86, 87
+ EQUB 64 + 11           \ Polygon 91 points: 87, 90, 86, 87
  EQUB 64 + 14
  EQUB 64 + 10
  EQUB 64 + 11
 
 .objPolygon092
 
- EQUB 64 + 12	\ Polygon 92 points: 88, 89, 91, 88
+ EQUB 64 + 12           \ Polygon 92 points: 88, 89, 91, 88
  EQUB 64 + 13
  EQUB 64 + 15
  EQUB 64 + 12
 
 .objPolygon093
 
- EQUB 64 + 12	\ Polygon 93 points: 88, 91, 90, 87, 88
+ EQUB 64 + 12           \ Polygon 93 points: 88, 91, 90, 87, 88
  EQUB 64 + 15
  EQUB 64 + 14
  EQUB 64 + 11
@@ -28122,49 +28130,49 @@ L314A = C3148+2
 
 .objPolygon094
 
- EQUB 64 + 6	\ Polygon 94 points: 82, 86, 85, 82
+ EQUB 64 + 6            \ Polygon 94 points: 82, 86, 85, 82
  EQUB 64 + 10
  EQUB 64 + 9
  EQUB 64 + 6
 
 .objPolygon095
 
- EQUB 64 + 7	\ Polygon 95 points: 83, 84, 89, 83
+ EQUB 64 + 7            \ Polygon 95 points: 83, 84, 89, 83
  EQUB 64 + 8
  EQUB 64 + 13
  EQUB 64 + 7
 
 .objPolygon096
 
- EQUB 64 + 10	\ Polygon 96 points: 86, 92, 85, 86
+ EQUB 64 + 10           \ Polygon 96 points: 86, 92, 85, 86
  EQUB 64 + 16
  EQUB 64 + 9
  EQUB 64 + 10
 
 .objPolygon097
 
- EQUB 64 + 8	\ Polygon 97 points: 84, 93, 89, 84
+ EQUB 64 + 8            \ Polygon 97 points: 84, 93, 89, 84
  EQUB 64 + 17
  EQUB 64 + 13
  EQUB 64 + 8
 
 .objPolygon098
 
- EQUB 64 + 10	\ Polygon 98 points: 86, 90, 92, 86
+ EQUB 64 + 10           \ Polygon 98 points: 86, 90, 92, 86
  EQUB 64 + 14
  EQUB 64 + 16
  EQUB 64 + 10
 
 .objPolygon099
 
- EQUB 64 + 13	\ Polygon 99 points: 89, 93, 91, 89
+ EQUB 64 + 13           \ Polygon 99 points: 89, 93, 91, 89
  EQUB 64 + 17
  EQUB 64 + 15
  EQUB 64 + 13
 
 .objPolygon100
 
- EQUB 64 + 9	\ Polygon 100 points: 85, 92, 93, 84, 85
+ EQUB 64 + 9            \ Polygon 100 points: 85, 92, 93, 84, 85
  EQUB 64 + 16
  EQUB 64 + 17
  EQUB 64 + 8
@@ -28172,7 +28180,7 @@ L314A = C3148+2
 
 .objPolygon101
 
- EQUB 64 + 15	\ Polygon 101 points: 91, 93, 92, 90, 91
+ EQUB 64 + 15           \ Polygon 101 points: 91, 93, 92, 90, 91
  EQUB 64 + 17
  EQUB 64 + 16
  EQUB 64 + 14
@@ -28190,8 +28198,12 @@ L314A = C3148+2
 
 .objRotationSpeed
 
- EQUB &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+ EQUB &00, &00
+
+ EQUB &00               \ This byte appears to be unused
 
 \ ******************************************************************************
 \
@@ -28204,8 +28216,8 @@ L314A = C3148+2
 
 .screenBufferRow9
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -28408,8 +28420,8 @@ L314A = C3148+2
 
 .screenBufferRow10
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -28621,8 +28633,8 @@ L314A = C3148+2
 
 .screenBufferRow11
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -28825,8 +28837,8 @@ L314A = C3148+2
 
 .screenBufferRow12
 
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -30006,8 +30018,8 @@ L314A = C3148+2
 
 .screenBufferRow13
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -30220,8 +30232,8 @@ L314A = C3148+2
 
 .screenBufferRow14
 
- EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FE, &FE, &FF, &FF, &FF, &FF, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -30434,8 +30446,8 @@ L314A = C3148+2
 
 .screenBufferRow15
 
- EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF        \ These values are workspace
- EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF        \ noise and have no meaning
+ EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF    \ These values are workspace
+ EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF    \ noise and have no meaning
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &FF, &FF, &FF, &FF, &FF, &FF, &FF, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -31527,8 +31539,8 @@ L314A = C3148+2
 
 .L54A0
 
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &FF, &FF, &FF, &FF, &FF, &7F, &FF, &FF
@@ -31557,8 +31569,8 @@ L314A = C3148+2
 
 .drawViewYawHi
 
- EQUB &01, &01, &02, &02, &03, &03, &04, &04
- EQUB &05, &05, &06, &06, &07, &07, &08, &08
+ EQUB &01, &01, &02, &02, &03, &03, &04, &04    \ These values are workspace
+ EQUB &05, &05, &06, &06, &07, &07, &08, &08    \ noise and have no meaning
  EQUB &09, &09, &0A, &0A, &0B, &0B, &0C, &0C
  EQUB &0C, &0D, &0D, &0E, &0E, &0F, &0F, &0F
  EQUB &01, &01, &02, &02, &03, &03, &04, &04
@@ -33428,7 +33440,8 @@ L314A = C3148+2
 
  EQUB 1, 1, 0, 0, 0, 0, 0, 0, 120, -120, -1, -1, 120, 0
 
- EQUB 0, 0, 0, 0        \ These bytes appear to be unused
+ EQUB &00, &00          \ These bytes appear to be unused
+ EQUB &00, &00
 
 \ ******************************************************************************
 \
@@ -33496,7 +33509,38 @@ L314A = C3148+2
 
 .L5A00
 
- SKIP 256
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
 \ ******************************************************************************
 \
@@ -33509,7 +33553,38 @@ L314A = C3148+2
 
 .L5B00
 
- SKIP 256
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
+ EQUB &00, &00, &00, &00, &00, &00, &00, &00
 
 \ ******************************************************************************
 \
@@ -33518,11 +33593,6 @@ L314A = C3148+2
 \   Category: Landscape
 \    Summary: Storage for tile data when smoothing strips of tiles during the
 \             landscape generation process
-\
-\ ------------------------------------------------------------------------------
-\
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
 \
 \ ******************************************************************************
 
@@ -33540,19 +33610,19 @@ L314A = C3148+2
                         \ L5A00 and L5B00 variables at &5C00, so we can assemble
                         \ the landscape variables
                         \
-                        \ The initial contents of the game binary at this
-                        \ address actually contains snippets of the original
-                        \ source code, left over from the BBC Micro assembly
-                        \ process, so we include this workspace noise to ensure
-                        \ that we generate an exact match for the game binary
+                        \ The game binary actually contains snippets of the
+                        \ original source code, left over from the BBC Micro
+                        \ assembly process, so we include this workspace noise
+                        \ to ensure that we generate an exact match for the game
+                        \ binary
 
 .stripData
 
- EQUB &44, &58, &20, &45, &54, &45, &4D, &0D
- EQUB &14, &3C, &05, &20, &0D, &14, &46, &23
- EQUB &20, &20, &20, &20, &20, &20, &54, &59
- EQUB &41, &3A, &4A, &53, &52, &20, &45, &4D
- EQUB &49, &52, &54, &45, &53, &54, &3A, &42
+ EQUB &44, &58, &20, &45, &54, &45, &4D, &0D    \ These values are workspace
+ EQUB &14, &3C, &05, &20, &0D, &14, &46, &23    \ noise and have no meaning
+ EQUB &20, &20, &20, &20, &20, &20, &54, &59    \
+ EQUB &41, &3A, &4A, &53, &52, &20, &45, &4D    \ They actually contain snippets
+ EQUB &49, &52, &54, &45, &53, &54, &3A, &42    \ of the original source code
  EQUB &43, &43, &20, &6D, &65, &61, &32, &0D
  EQUB &14, &50, &05, &20, &0D, &14, &5A, &1A
  EQUB &20, &20, &20, &20, &20, &20, &54, &59
@@ -33571,30 +33641,27 @@ L314A = C3148+2
 \ use when placing enemies on the landscape. It is only used while the landscape
 \ is being generated and the allocated memory is reused during gameplay.
 \
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
 \ ******************************************************************************
 
 .tilesAtAltitude
 
- EQUB &41, &3A, &53, &54, &41, &20, &4D, &45
- EQUB &41, &4E, &59, &2C, &58, &20, &0D, &14
- EQUB &64, &05, &20, &0D, &14, &6E, &1C, &20
- EQUB &20, &20, &20, &20, &20, &4C, &44, &41
- EQUB &23, &34, &3A, &53, &54, &41, &20, &4F
+ EQUB &41, &3A, &53, &54, &41, &20, &4D, &45    \ These values are workspace
+ EQUB &41, &4E, &59, &2C, &58, &20, &0D, &14    \ noise and have no meaning
+ EQUB &64, &05, &20, &0D, &14, &6E, &1C, &20    \
+ EQUB &20, &20, &20, &20, &20, &4C, &44, &41    \ They actually contain snippets
+ EQUB &23, &34, &3A, &53, &54, &41, &20, &4F    \ of the original source code
  EQUB &42, &54, &59, &50, &45, &2C, &59, &0D
  EQUB &14, &78, &23, &20, &20, &20, &20, &20
  EQUB &20, &4C, &44, &41, &23, &31, &30, &34
 
- EQUB &3A, &53, &54, &41, &20, &4F, &42, &48    \ These bytes are unused until
- EQUB &41, &4C, &46, &53, &49, &5A, &45, &4D    \ the game is in progress, at
- EQUB &49, &4E, &0D, &14, &82, &11, &20, &20    \ which point this whole section
- EQUB &20, &20, &20, &20, &43, &4C, &43, &3A    \ of memory is reused
- EQUB &72, &74, &73, &0D, &14, &83, &05, &20
- EQUB &0D, &14, &84, &21, &2E, &6D, &65, &61
- EQUB &32, &20, &49, &4E, &43, &20, &4D, &54
- EQUB &52, &59, &43, &4E, &54, &2C, &58, &3A
+ EQUB &3A, &53, &54, &41, &20, &4F, &42, &48    \ These bytes appear to be
+ EQUB &41, &4C, &46, &53, &49, &5A, &45, &4D    \ unused
+ EQUB &49, &4E, &0D, &14, &82, &11, &20, &20    \
+ EQUB &20, &20, &20, &20, &43, &4C, &43, &3A    \ These values are workspace
+ EQUB &72, &74, &73, &0D, &14, &83, &05, &20    \ noise and have no meaning
+ EQUB &0D, &14, &84, &21, &2E, &6D, &65, &61    \
+ EQUB &32, &20, &49, &4E, &43, &20, &4D, &54    \ They actually contain snippets
+ EQUB &52, &59, &43, &4E, &54, &2C, &58, &3A    \ of the original source code
  EQUB &4A, &4D, &50, &20, &45, &45, &58, &49
  EQUB &54, &0D, &14, &85, &05, &20, &0D, &14
  EQUB &8C, &05, &20, &0D, &14, &96, &26, &2E
@@ -33634,21 +33701,18 @@ L314A = C3148+2
 \ have to worry about the zeroing process leaking into neighbouring variable
 \ when placing enemies near the edges of the landscape.
 \
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
 \ ******************************************************************************
 
- EQUB &AA, &14, &2E, &54, &41, &4B, &45, &20
- EQUB &4C, &44, &58, &20, &50, &45, &52, &53
+ EQUB &AA, &14, &2E, &54, &41, &4B, &45, &20    \ These values are workspace
+ EQUB &4C, &44, &58, &20, &50, &45, &52, &53    \ noise and have no meaning
 
 .maxAltitude
 
- EQUB &4F, &4E, &0D, &14, &B4, &22, &20, &20
- EQUB &20, &20, &20, &20, &43, &50, &58, &20
- EQUB &50, &4C, &41, &59, &45, &52, &49, &4E
- EQUB &44, &45, &58, &3A, &42, &4E, &45, &20
- EQUB &74, &61, &6B, &31, &0D, &14, &BE, &1D
+ EQUB &4F, &4E, &0D, &14, &B4, &22, &20, &20    \ These values are workspace
+ EQUB &20, &20, &20, &20, &43, &50, &58, &20    \ noise and have no meaning
+ EQUB &50, &4C, &41, &59, &45, &52, &49, &4E    \
+ EQUB &44, &45, &58, &3A, &42, &4E, &45, &20    \ They actually contain snippets
+ EQUB &74, &61, &6B, &31, &0D, &14, &BE, &1D    \ of the original source code
  EQUB &20, &20, &20, &20, &20, &20, &4C, &44
  EQUB &41, &20, &45, &4E, &45, &52, &47, &59
  EQUB &3A, &42, &45, &51, &20, &74, &61, &6B
@@ -33682,18 +33746,15 @@ L314A = C3148+2
 \ chess board, where each square on the chess board is made up of a 4x4 block of
 \ landscape tiles (and with smaller squares along the right and rear edges).
 \
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
 \ ******************************************************************************
 
 .xTileMaxAltitude
 
- EQUB &42, &43, &23, &31, &3A, &53, &54, &41
- EQUB &20, &45, &4E, &45, &52, &47, &59, &0D
- EQUB &14, &D2, &12, &20, &20, &20, &20, &20
- EQUB &20, &4A, &53, &52, &20, &45, &44, &49
- EQUB &53, &0D, &14, &DC, &18, &20, &20, &20
+ EQUB &42, &43, &23, &31, &3A, &53, &54, &41    \ These values are workspace
+ EQUB &20, &45, &4E, &45, &52, &47, &59, &0D    \ noise and have no meaning
+ EQUB &14, &D2, &12, &20, &20, &20, &20, &20    \
+ EQUB &20, &4A, &53, &52, &20, &45, &44, &49    \ They actually contain snippets
+ EQUB &53, &0D, &14, &DC, &18, &20, &20, &20    \ of the original source code
  EQUB &20, &20, &20, &4C, &44, &41, &23, &35
  EQUB &3A, &4A, &53, &52, &20, &56, &49, &50
  EQUB &4F, &0D, &14, &E6, &16, &20, &20, &20
@@ -33724,26 +33785,27 @@ L314A = C3148+2
 \ chess board, where each square on the chess board is made up of a 4x4 block of
 \ landscape tiles (and with smaller squares along the right and rear edges).
 \
-\ The initial contents of the variable is just workspace noise and is ignored.
-\ It actually contains snippets of the original source code.
-\
 \ ******************************************************************************
 
 .zTileMaxAltitude
 
- EQUB &20, &20, &20, &53, &45, &43, &3A, &4A
- EQUB &4D, &50, &20, &74, &61, &6B, &33, &0D
- EQUB &14, &F0, &05, &20, &0D, &14, &FA, &05
- EQUB &20, &0D, &15, &04, &18, &2E, &74, &61
- EQUB &6B, &31, &20, &54, &58, &41, &3A, &4A
+ EQUB &20, &20, &20, &53, &45, &43, &3A, &4A    \ These values are workspace
+ EQUB &4D, &50, &20, &74, &61, &6B, &33, &0D    \ noise and have no meaning
+ EQUB &14, &F0, &05, &20, &0D, &14, &FA, &05    \
+ EQUB &20, &0D, &15, &04, &18, &2E, &74, &61    \ They actually contain snippets
+ EQUB &6B, &31, &20, &54, &58, &41, &3A, &4A    \ of the original source code
  EQUB &53, &52, &20, &45, &4D, &49, &52, &50
  EQUB &54, &0D, &15, &0E, &05, &20, &0D, &15
  EQUB &18, &1F, &20, &20, &20, &20, &20, &20
 
- EQUB &4C, &44, &41, &20, &4F, &42, &54, &59    \ These bytes are unused until
- EQUB &50, &45, &2C, &58, &3A, &42, &4E, &45    \ the game is in progress, at
- EQUB &20, &74, &61, &6B, &34, &0D, &15, &22    \ which point this whole section
- EQUB &05, &20, &0D, &15, &2C, &1E, &20, &5C    \ of memory is reused
+ EQUB &4C, &44, &41, &20, &4F, &42, &54, &59    \ These bytes appear to be
+ EQUB &50, &45, &2C, &58, &3A, &42, &4E, &45    \ unused
+ EQUB &20, &74, &61, &6B, &34, &0D, &15, &22    \
+ EQUB &05, &20, &0D, &15, &2C, &1E, &20, &5C    \ These values are workspace
+                                                \ noise and have no meaning
+                                                \
+                                                \ They actually contain snippets
+                                                \ of the original source code
 
 \ ******************************************************************************
 \
@@ -34031,8 +34093,7 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ This routine loops through each point in an object definition and calculates
-\ the following, storing the results in the last 32 bytes of the drawing tables
-\ at drawViewYaw(Hi Lo) and drawViewPitch(Hi Lo):
+\ the following:
 \
 \ 1. A: Calculate the yaw angle of the point, rotated by the rotation of the
 \ object itself (i.e. its gaze), so this is the yaw angle of the object point
@@ -35906,12 +35967,11 @@ L314A = C3148+2
                         \ startup code at &4100, so we can assemble the startup
                         \ routines
                         \
-                        \ At the end of the ClearMemory routine, the initial
-                        \ contents of the game binary actually contains snippets
-                        \ of the original source code, left over from the BBC
-                        \ Micro assembly process, so we include this workspace
-                        \ noise to ensure that we generate an exact match for
-                        \ the game binary
+                        \ At the end of the ClearMemory routine, the game binary
+                        \ actually contains snippets of the original source
+                        \ code, left over from the BBC Micro assembly process,
+                        \ so we include this workspace noise to ensure that we
+                        \ generate an exact match for the game binary
 
  SEC                    \ Set bit 7 of gameInProgress to indicate that a game is
  ROR gameInProgress     \ not currently in progress and that we are in the title
@@ -36254,10 +36314,10 @@ L314A = C3148+2
  EQUB &44, &58, &23, &36, &3A, &4A, &53, &52    \ which point this whole section
  EQUB &20, &43, &46, &4C, &53, &48, &0D, &12    \ of memory is reused
  EQUB &D4, &05, &20, &0D, &12, &DE, &0D, &2E    \
- EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ The initial content is just
- EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ workspace noise and is ignored
+ EQUB &65, &74, &73, &36, &20, &72, &74, &73    \ These values are workspace
+ EQUB &0D, &12, &E8, &05, &20, &0D, &12, &F2    \ noise and have no meaning
  EQUB &05, &20, &0D, &12, &FC, &05, &20, &0D    \
- EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ It actually contains snippets
+ EQUB &13, &06, &05, &20, &0D, &13, &10, &05    \ They actually contain snippets
  EQUB &20, &0D, &13, &1A, &05, &20, &0D, &13    \ of the original source code
  EQUB &24, &05, &20, &0D, &13, &2E, &2A, &2E
  EQUB &4D, &49, &4E, &49, &20, &4C, &44, &41
