@@ -2462,7 +2462,7 @@
      0C1E   00
 .samePanKeyPress
      0C1F   00
-.L0C20
+.enemyTimer1
      0C20   00
      0C21   00
      0C22   00
@@ -2471,7 +2471,7 @@
      0C25   00
      0C26   00
      0C27   00
-.L0C28
+.enemyTimer2
      0C28   00
      0C29   00
      0C2A   00
@@ -2527,7 +2527,7 @@
      0C4E   00
 .playerTileIsHidden
      0C4F   00
-.L0C50
+.updateTimer
      0C50   00
 .uTurnStatus
      0C51   00
@@ -2653,7 +2653,7 @@
      0C9D   00
      0C9E   00
      0C9F   00
-.spawnedMeanie
+.enemyMeanieTree
      0CA0   00
      0CA1   00
      0CA2   00
@@ -3610,22 +3610,22 @@
      12EA   60         RTS
 .play9
      12EB   4C 64 12   JMP &1264
-.sub_C12EE
+.UpdateEnemyTimers
      12EE   AD 50 0C   LDA &0C50
      12F1   D0 15      BNE &1308
      12F3   A2 17      LDX #&17
-.P12F5
+.time1
      12F5   BD 20 0C   LDA &0C20,X
      12F8   C9 02      CMP #&02
      12FA   90 03      BCC &12FF
      12FC   DE 20 0C   DEC &0C20,X
-.C12FF
+.time2
      12FF   CA         DEX
      1300   10 F3      BPL &12F5
      1302   A9 02      LDA #&02
      1304   8D 50 0C   STA &0C50
      1307   60         RTS
-.C1308
+.time3
      1308   CE 50 0C   DEC &0C50
      130B   60         RTS
 .ResetScreenAddress
@@ -13405,7 +13405,7 @@
      4A34   50
      4A35   4E
      4A36   4F
-.objRotationSpeed
+.enemyYawStep
      4A37   00
      4A38   00
      4A39   00

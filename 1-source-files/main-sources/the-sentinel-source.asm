@@ -1738,14 +1738,14 @@
                         \
                         \   * Bit 7 set = same pan key is being held down
 
-.L0C20
+.enemyTimer1
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ Enemy timer ???
  EQUB 0, 0, 0, 0
 
-.L0C28
+.enemyTimer2
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ Enemy timer ???
  EQUB 0, 0, 0, 0
 
 .objTacticsTimer
@@ -1754,7 +1754,7 @@
  EQUB 0, 0, 0, 0        \ iteration of the gameplay loop and controls the rate
                         \ at which we apply tactics to that enemy
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ These bytes appear to be unused
  EQUB 0, 0, 0, 0
 
 .L0C40
@@ -1859,7 +1859,7 @@
                         \
                         \   * Not 64 = player's tile is visible
 
-.L0C50
+.updateTimer
 
  EQUB 0                 \ ???
 
@@ -2215,7 +2215,7 @@
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
-.spawnedMeanie
+.enemyMeanieTree
 
  EQUB 0, 0, 0, 0        \ Contains an object number when bit 7 is clear ???
  EQUB 0, 0, 0, 0        \ Bit 7 can also be set
@@ -5975,38 +5975,78 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C12EE
+\       Name: UpdateEnemyTimers
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Update the timers that control the enemy tactics
 \
 \ ******************************************************************************
 
-.sub_C12EE
+.UpdateEnemyTimers
 
- LDA L0C50
- BNE C1308
- LDX #&17
+ LDA updateTimer        \ If updateTimer is non-zero, jump to time3 to skip
+ BNE time3              \ updating the enemy timers and run down the update
+                        \ timer
 
-.P12F5
+                        \ If we get here then updateTimer is zero, so we
+                        \ update the enemy timers
+                        \
+                        \ The update timer loops through 2, 1, 0, so this means
+                        \ we decrement the timers on one out of every three
+                        \ calls to the UpdateEnemyTimers
+                        \
+                        \ UpdateEnemyTimers is called from the interrupt routine
+                        \ at IRQHandler, but only once the game has started and
+                        \ the Sentinel is active
+                        \
+                        \ IRQHandler performs its actions 50 times a second, so
+                        \ this means the counters tick down at a rate of 16.7
+                        \ times a second, or once every 0.06 seconds
+                        \
+                        \ So setting a timer to n means it will count down in
+                        \ 3 * n / 50 = 3 * 0.06 seconds
 
- LDA L0C20,X
- CMP #&02
- BCC C12FF
- DEC L0C20,X
+ LDX #23                \ There are 24 bytes of enemy timers, split into three
+                        \ timers keeping track of up to eight enemies each:
+                        \
+                        \   * enemyTimer1
+                        \
+                        \   * enemyTacticTimer
+                        \
+                        \   * enemyTimer3
+                        \
+                        \ So set a byte counter in X to update all the timers
+                        \ in one loop
 
-.C12FF
+.time1
 
- DEX
- BPL P12F5
- LDA #&02
- STA L0C50
- RTS
+ LDA enemyTimer1,X      \ If the X-th timer is less than 2 then it has already
+ CMP #2                 \ counted down to 1, so jump to time2 to leave the timer
+ BCC time2              \ alone as it is inactive
 
-.C1308
+                        \ So the timers count down until they reach 1, at which
+                        \ point they stay put, inactive until they are reset
 
- DEC L0C50
- RTS
+ DEC enemyTimer1,X      \ The X-th timer is actively counting down, so decrement
+                        \ the timer
+
+.time2
+
+ DEX                    \ Decrement the byte counter
+
+ BPL time1              \ Loop back until we have decremented all the active
+                        \ enemy timers
+
+ LDA #2                 \ Set updateTimer = 2 so it loops back to the start to
+ STA updateTimer        \ count through 2, 1, 0 again
+
+ RTS                    \ Return from the subroutine
+
+.time3
+
+ DEC updateTimer        \ Decrement the update timer
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -7523,8 +7563,9 @@
 
 .aden5
 
- STA objRotationSpeed,X \ Set the object's entry in objRotationSpeed to the
-                        \ value of A, which is either 20 or 236
+ STA enemyYawStep,X     \ Set enemyYawStep for the enemy to the value of A,
+                        \ so this sets the yaw step (i.e. the rate of rotation)
+                        \ to either 20 or 236
                         \
                         \ The degree system in the Sentinel looks like this:
                         \
@@ -7540,10 +7581,10 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ The rotation speed is the size of the angle through
-                        \ which the object yaws on each rotation, so this means
-                        \ we are setting the rotation speed to +20 degrees (a
-                        \ clockwise turn) or -20 degrees (an anticlockwise turn)
+                        \ The enemyYawStep speed is the angle through which the
+                        \ enemy rotates on each rotation, so this means we are
+                        \ setting the rotation speed to +20 degrees (a clockwise
+                        \ turn) or -20 degrees (an anticlockwise turn)
 
  INX                    \ Increment the enemy loop counter in X
 
@@ -8396,17 +8437,17 @@
  LDA #20                \ Set L0C68 = 20 ???
  STA L0C68
 
- LDA spawnedMeanie,X    \ Set A to spawnedMeanie for the enemy we are processing
-                        \ so it contains details of any meanies that the enemy
-                        \ has spawned
+ LDA enemyMeanieTree,X  \ Fetch the value of enemyMeanieTree for the enemy we
+                        \ are processing, so A contains tells us whether the
+                        \ enemy has turned a tree into a meanie
 
- BPL tact1              \ If bit 7 of spawnedMeanie is clear then the enemy has
-                        \ spawned a meanie, so jump to part 2 to apply tactics
-                        \ to the meanie
+ BPL tact1              \ If bit 7 of enemyMeanieTree is clear then the enemy
+                        \ has turned a tree into a meanie, so jump to part 2 to
+                        \ apply tactics to the meanie
 
- JMP tact6              \ Bit 7 of spawnedMeanie is set so the enemy has not
-                        \ spawned a meanie, so jump to part 3 to skip the meanie
-                        \ tactics routine
+ JMP tact6              \ Bit 7 of enemyMeanieTree is set so the enemy has not
+                        \ turned a tree into a meanie, so jump to part 3 to skip
+                        \ the meanie tactics routine
 
 \ ******************************************************************************
 \
@@ -8419,10 +8460,10 @@
 
 .tact1
 
- STA viewingObject      \ If we get here then the enemy has spawned a meanie and
-                        \ that meanie's object number is in spawnedMeanie, which
-                        \ as fetched into A above, so this sets the viewing
-                        \ object to the meanie
+ STA viewingObject      \ If we get here then the enemy has turned a tree into a
+                        \ meanie and A contains the meanie's object number
+                        \ (which we fetched from enemyMeanieTree in part 1), so
+                        \ this sets the viewing object to the meanie
 
  LDY enemyData6,X       \ If bit 7 of the enemy's object flags is set then this
  LDA objectFlags,Y      \ enemy doesn't have an associated object, so jump to
@@ -8460,7 +8501,7 @@
 
  STA L0C0E
  LDY enemyObject
- LDX spawnedMeanie,Y
+ LDX enemyMeanieTree,Y
  TXA
  JSR AbortWhenVisible
  LDA objectYawAngle,X
@@ -8483,18 +8524,18 @@
 
 .tact4
 
- LDA #0                 \ Set L0C20 = 0 for this enemy
- STA L0C20,X
+ LDA #0                 \ Set enemyTimer1 = 0 for this enemy ???
+ STA enemyTimer1,X
 
 .tact5
 
- LDY enemyObject        \ Check to see if the object in spawnedMeanie is visible
- LDX spawnedMeanie,Y    \ and abort if it is, otherwise keep going ???
+ LDY enemyObject        \ Check to see if the object in enemyMeanieTree is
+ LDX enemyMeanieTree,Y  \ visible and abort if it is, otherwise keep going ???
  TXA
  JSR AbortWhenVisible
 
- LDA #%10000000         \ Set bit 7 of spawnedMeanie to ???
- STA spawnedMeanie,Y
+ LDA #%10000000         \ Set bit 7 of enemyMeanieTree to ???
+ STA enemyMeanieTree,Y
 
  LDA #2                 \ Turn the enemy into a tree ???
  STA objectTypes,X
@@ -8586,7 +8627,7 @@
 
 .tact9
 
- LDA L0C20,X
+ LDA enemyTimer1,X
  BEQ tact11
  LDY enemyData6,X
  LDA #0
@@ -8597,7 +8638,7 @@
 
 .tact10
 
- STA L0C20,X
+ STA enemyTimer1,X
 
 .tact11
 
@@ -8637,7 +8678,7 @@
 .tact14
 
  LDA #0
- STA L0C20,X
+ STA enemyTimer1,X
  JSR sub_C1AA7
  BCS tact16
 
@@ -8653,7 +8694,7 @@
 .tact16
 
  LDX enemyObject
- LDA L0C28,X
+ LDA enemyTimer2,X
  CMP #&02
  BCC tact18
 
@@ -8667,10 +8708,10 @@
  JSR AbortWhenVisible
  LDA objectYawAngle,X
  CLC
- ADC objRotationSpeed,X
+ ADC enemyYawStep,X
  STA objectYawAngle,X
  LDA #&C8
- STA L0C28,X
+ STA enemyTimer2,X
  JSR SetEnemyData
  LDX #&07
  LDY #&78
@@ -8698,11 +8739,11 @@
  STA enemyData6,X
  LDA L0014
  STA enemyData7,X
- LDA L0C20,X
+ LDA enemyTimer1,X
  CMP #&01
  BCS tact21
  LDA #&78
- STA L0C20,X
+ STA enemyTimer1,X
 
 .tact20
 
@@ -8735,14 +8776,14 @@
 .tact23
 
  LDA #0
- STA L0C20,Y
+ STA enemyTimer1,Y
  BEQ C187F
 
 .tact24
 
  LDA #&32
  STA objTacticsTimer,Y
- LDX spawnedMeanie,Y
+ LDX enemyMeanieTree,Y
 
 \ ******************************************************************************
 \
@@ -9092,7 +9133,7 @@
  LDA enemyData6,X
  CMP playerObject
  BNE C1945
- LDA L0C20,X
+ LDA enemyTimer1,X
  BEQ C1945
  LDY #&04
  LDA enemyData7,X
@@ -9141,8 +9182,8 @@
 
 .SetEnemyData
 
- LDA #%10000000         \ Set bit 7 of spawnedMeanie for object #X ???
- STA spawnedMeanie,X
+ LDA #%10000000         \ Set bit 7 of enemyMeanieTree for object #X ???
+ STA enemyMeanieTree,X
 
  STA enemyData3,X       \ Set bit 7 of enemyData3 for object #X ???
 
@@ -9246,7 +9287,7 @@
                         \ aborting the whole process
 
  TYA
- STA spawnedMeanie,X
+ STA enemyMeanieTree,X
 
  LDA #4                 \ Set the type of object #Y to 4, for a meanie
  STA objectTypes,Y
@@ -9361,9 +9402,9 @@
                         \ If we get here then we are draining energy from a
                         \ robot in object #X
 
- LDY enemyObject        \ Set L0C20 for the enemy object to zero ???
+ LDY enemyObject        \ Set enemyTimer1 for the enemy object to zero ???
  LDA #0
- STA L0C20,Y
+ STA enemyTimer1,Y
 
  LDA #3                 \ Set A = 3 so the robot loses one energy unit and
                         \ changes into a boulder (i.e. an object of type 3)
@@ -10315,8 +10356,8 @@
 
                         \ We now loop through all the enemy objects, of which
                         \ there are up to eight, looking for the object whose
-                        \ spawnedMeanie entry is X (so we are looking for the
-                        \ enemy that spawned the meanie)
+                        \ enemyMeanieTree entry is X (so we are looking for the
+                        \ enemy that turned a tree into this meanie)
 
  LDY #7                 \ The enemies have object numbers 0 (for the Sentinel)
                         \ or 1 to 7 (for any sentries in the landscape), so set
@@ -10347,11 +10388,11 @@
  TXA                    \ Set A to the object number of the meanie that the
                         \ player is trying to absorb
 
- CMP spawnedMeanie,Y    \ If A <> spawnedMeanie for object #Y, jump to pkey14 to
- BNE pkey14             \ move on to the next enemy object ???
+ CMP enemyMeanieTree,Y  \ If A <> enemyMeanieTree for object #Y, jump to pkey14
+ BNE pkey14             \ to move on to the next enemy object ???
 
- LDA #%10000000         \ Set bit 7 of spawnedMeanie for object #Y (the sentry
- STA spawnedMeanie,Y    \ or Sentinel) ???
+ LDA #%10000000         \ Set bit 7 of enemyMeanieTree for object #Y (the sentry
+ STA enemyMeanieTree,Y  \ or Sentinel) ???
 
  BNE pkey6              \ Jump to pkey6 to delete the meanie in object #X, add
                         \ the meanie's energy to the player's energy, and return
@@ -24658,7 +24699,8 @@ L314A = C3148+2
 \     * If scrollCounter is non-zero then call ScrollPlayerView (which
 \       decrements scrollCounter) and ShowIconBuffer
 \
-\     * If the Sentinel has been activated, call sub_C12EE and UpdateScanner
+\     * If the Sentinel has been activated, call UpdateEnemyTimers and
+\       UpdateScanner
 \
 \     * If bit 7 of focusOnKeyAction is clear then the game is not currently
 \       focusing effort on implementing a key action such as a landscape pan, so
@@ -24751,7 +24793,7 @@ L314A = C3148+2
  BMI irqh4              \ has not yet been activated at the start of the game,
                         \ so jump to irqh4 to skip the following
 
- JSR sub_C12EE          \ ???
+ JSR UpdateEnemyTimers  \ Update the timers that control the enemy tactics
 
  JSR UpdateScanner      \ Update the scanner, if required
 
@@ -28188,15 +28230,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: objRotationSpeed
+\       Name: enemyYawStep
 \       Type: Variable
 \   Category: 3D objects
-\    Summary: The angle through which each object rotates on each scheduled
+\    Summary: The yaw angle through which each enemy rotates on each scheduled
 \             rotation
 \
 \ ******************************************************************************
 
-.objRotationSpeed
+.enemyYawStep
 
  EQUB &00, &00
  EQUB &00, &00
