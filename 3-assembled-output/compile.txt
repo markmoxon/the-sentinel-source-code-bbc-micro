@@ -2480,7 +2480,7 @@
      0C2D   00
      0C2E   00
      0C2F   00
-.objTacticsTimer
+.enemyTacticTimer
      0C30   00
      0C31   00
      0C32   00
@@ -2662,7 +2662,7 @@
      0CA5   00
      0CA6   00
      0CA7   00
-.enemyData6
+.enemyTarget
      0CA8   00
      0CA9   00
      0CAA   00

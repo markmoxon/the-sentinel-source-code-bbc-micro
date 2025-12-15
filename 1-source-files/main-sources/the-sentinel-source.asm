@@ -1748,7 +1748,7 @@
  EQUB 0, 0, 0, 0        \ Enemy timer ???
  EQUB 0, 0, 0, 0
 
-.objTacticsTimer
+.enemyTacticTimer
 
  EQUB 0, 0, 0, 0        \ A timer for each enemy that counts down on each
  EQUB 0, 0, 0, 0        \ iteration of the gameplay loop and controls the rate
@@ -2220,7 +2220,7 @@
  EQUB 0, 0, 0, 0        \ Contains an object number when bit 7 is clear ???
  EQUB 0, 0, 0, 0        \ Bit 7 can also be set
 
-.enemyData6
+.enemyTarget
 
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
@@ -7552,7 +7552,7 @@
  AND #63                \ Set A to a number in the range 5 to 63
  ORA #5
 
- STA objTacticsTimer,X  \ Set the object's tactics timer to the number in A, so
+ STA enemyTacticTimer,X \ Set the enemy's tactics timer to the number in A, so
                         \ this determines how many iterations of the gameplay
                         \ loop we have to wait before applying tactics to this
                         \ enemy in the ApplyTactics routine
@@ -8419,19 +8419,19 @@
 
 .ApplyTactics
 
- LDA objTacticsTimer,X  \ If objTacticsTimer >= 2 for this enemy, then jump to
+ LDA enemyTacticTimer,X \ If enemyTacticTimer >= 2 for this enemy, then jump to
  CMP #2                 \ MoveOnToNextEnemy to skip the rest of the the tactics
  BCS MoveOnToNextEnemy  \ routines and move on to the next enemy so we can apply
                         \ apply tactics to it in the next iteration of the
                         \ gameplay loop (and this also returns from the
                         \ subroutine using a tail call)
 
-                        \ If we get here then objTacticsTimer for this object
+                        \ If we get here then enemyTacticTimer for this enemy
                         \ has counted down to be less than 2, so it's time to
                         \ apply tactics to the enemy
 
  LDA #4                 \ Reset the enemy's tactics timer to count down from 4,
- STA objTacticsTimer,X  \ so this is the default length of the timer (we may
+ STA enemyTacticTimer,X \ so this is the default length of the timer (we may
                         \ change this later)
 
  LDA #20                \ Set enemyViewingArc = 20, so the enemy's gaze has a
@@ -8455,7 +8455,7 @@
 \       Name: ApplyTactics (Part 2 of ???)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Meanie ???
+\    Summary: Process the tactics for a meanie
 \
 \ ******************************************************************************
 
@@ -8464,43 +8464,82 @@
  STA viewingObject      \ If we get here then the enemy has turned a tree into a
                         \ meanie and A contains the meanie's object number
                         \ (which we fetched from enemyMeanieTree in part 1), so
-                        \ this sets the viewing object to the meanie
+                        \ this sets the viewing object to the meanie so the gaze
+                        \ checks below are performed from the point of view of
+                        \ the meanie
 
- LDY enemyData6,X       \ If bit 7 of the enemy's object flags is set then this
- LDA objectFlags,Y      \ enemy doesn't have an associated object, so jump to
- BMI tact4              \ tact4 to ???
+ LDY enemyTarget,X      \ Set Y to the object number in enemyTarget, so object #Y
+                        \ is the meanie's target object
 
- LDA #0
+ LDA objectFlags,Y      \ If bit 7 of the object flags for object #Y is set then
+ BMI tact4              \ object #Y doesn't have an associated object, so jump
+                        \ to tact4 to ???
 
- JSR CheckEnemyGaze
+ LDA #0                 \ Set A = 0 to pass to CheckEnemyGaze as the object type
+                        \ of the target (object type 0 being a robot), so we
+                        \ only ruin the gaze calculations when object #Y is a
+                        \ robot
 
- LDA objectViewYawHi
- CMP #&14
- BCS tact2
+ JSR CheckEnemyGaze     \ Call CheckEnemyGaze to check the gaze of the meanie
+                        \ towards the robot, returning the following if the
+                        \ the object is a tree (an object of type 0):
+                        \
+                        \   * objectViewYaw(Hi Lo) = the yaw angle of the robot
+                        \     relative to the view (i.e. relative to the
+                        \     meanie's view of the world)
+                        \
+                        \   * targetVisibility = bit 7 set if the robot's tile
+                        \     is visible, bit 6 set if the robot is visible
+                        \
+                        \   * treeVisibility = bit 7 set if there is a tree in
+                        \     the way of the robot's tile, bit 6 set if there is
+                        \     a tree in the way of the robot
 
- CPY playerObject
- BNE tact4
+ LDA objectViewYawHi    \ If objectViewYawHi >= 20 then the robot is outside of
+ CMP #20                \ the meanie's viewing arc of 20 yaw angles, so jump to
+ BCS tact2              \ tact2 to rotate the meanie towards the robot ???
 
- LDA targetVisibility
- BEQ tact5
+ CPY playerObject       \ If the robot is not the player object, then the player
+ BNE tact4              \ must have transferred to a different robot, so jump to
+                        \ tact4 to ???
+
+ LDA targetVisibility   \ If the meanie can't see the robot or the robot's tile
+ BEQ tact5              \ then targetVisibility will be zero, so jump to tact5
+                        \ ???
+
+                        \ If we get here then the meanie is looking at a robot,
+                        \ the robot is within the meanie's viewing arc, the
+                        \ robot is the player object and the meanie can either
+                        \ see the robot's tile or the robot itself
+                        \
+                        \ This means the meanie can see the player, so it can
+                        \ force the player into hyperspace
 
  JSR PerformHyperspace  \ Hyperspace the player to a brand new tile
 
- LDA #4
- STA titleObjectToDraw
+ LDA #4                 \ Set titleObjectToDraw to the object type for a meanie,
+ STA titleObjectToDraw  \ so if the hyperspace fails because the player doesn't
+                        \ have enough energy, then the game over screen will
+                        \ show a meanie to indicate that it was responsible for
+                        \ the player's demise
 
- JMP MoveOnToNextEnemy
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
+                        \ for the next iteration of the gameplay loop, returning
+                        \ from the subroutine using a tail call
 
 .tact2
 
- LDA #&08
+ LDA #8
+
  BIT objectViewYawHi
  BPL tact3
+
  LDA #&F8
 
 .tact3
 
  STA L0C0E
+
  LDY enemyObject
  LDX enemyMeanieTree,Y
  TXA
@@ -8510,7 +8549,7 @@
  ADC L0C0E
  STA objectYawAngle,X
  LDA #&0A
- STA objTacticsTimer,Y
+ STA enemyTacticTimer,Y
  TXA
  PHA
  LDX #&03
@@ -8538,7 +8577,7 @@
  LDA #%10000000         \ Set bit 7 of enemyMeanieTree to ???
  STA enemyMeanieTree,Y
 
- LDA #2                 \ Turn the enemy into a tree ???
+ LDA #2                 \ Turn the meanie back into a tree ???
  STA objectTypes,X
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
@@ -8630,7 +8669,7 @@
 
  LDA enemyTimer1,X
  BEQ tact11
- LDY enemyData6,X
+ LDY enemyTarget,X
  LDA #0
  JSR CheckEnemyGaze
  LDA targetVisibility
@@ -8689,7 +8728,7 @@
  BCS tact17
  LDY enemyObject
  LDA #&1E
- STA objTacticsTimer,Y
+ STA enemyTacticTimer,Y
  JMP tact25
 
 .tact16
@@ -8737,7 +8776,7 @@
 .tact19
 
  TYA
- STA enemyData6,X
+ STA enemyTarget,X
  LDA targetVisibility
  STA enemyData7,X
  LDA enemyTimer1,X
@@ -8758,7 +8797,7 @@
  JSR DrainObjectEnergy
  LDY enemyObject
  LDA #&1E
- STA objTacticsTimer,Y
+ STA enemyTacticTimer,Y
  BCS C187F
  JMP tact25
 
@@ -8783,7 +8822,7 @@
 .tact24
 
  LDA #&32
- STA objTacticsTimer,Y
+ STA enemyTacticTimer,Y
  LDX enemyMeanieTree,Y
 
 \ ******************************************************************************
@@ -8832,7 +8871,10 @@
 \
 \ Arguments:
 \
-\   A                   The type of the object to match against the target
+\   A                   The type of the object to match against the target (this
+\                       ensures that we only perform the gaze calculations when
+\                       the target object is of this type; if it isn't, the
+\                       routine aborts without doing the calculations)
 \
 \   Y                   The number of the target object to analyse
 \
@@ -8842,20 +8884,23 @@
 \
 \ Returns:
 \
-\   targetVisibility    The visibility result:
+\   targetVisibility    The target visibility result:
 \
-\                         * Bit 7 set if the enemy can see the target object's
-\                           tile, clear if it can't
+\                         * If the target object is a robot, then bit 6 will be
+\                           set if the robot object can be seen, even if the
+\                           robot's tile can't be seen
 \
-\                         * Bit 6 set if the enemy is looking towards a robot
-\                           and the robot object is visible
+\                         * Bit 7 will be set if the enemy can see the target
+\                           object's tile
 \
-\   treeVisibility      The visibility result:
+\   treeVisibility      The tree visibility result:
 \
-\                         * Bit 7 set if the enemy can see a tree ???
+\                         * If the target object is a robot, then bit 6 will be
+\                           set if there is a tree blocking the view of the
+\                           robot object
 \
-\                         * Bit 6 set if the enemy is looking towards a robot and
-\                           a tree is in the way
+\                         * Bit 7 will be set if there is a tree blocking the
+\                           view of the target object's tile
 \
 \   C flag              Status flag (though note that this is ignored for every
 \                       call to this routine):
@@ -9047,7 +9092,15 @@
 
  SEC                    \ Set bit 7 of enemyCheckingRobot so the call to the
  ROR enemyCheckingRobot \ FollowGazeVector routine below will know that the
-                        \ enemy is looking towards a robot ???
+                        \ enemy is looking towards a robot
+                        \
+                        \ This tells FollowGazeVector to return a positive
+                        \ result for looking at the robot even when the viewer
+                        \ is lower than the robot, so even though the enemy
+                        \ can't see the tile that the robot is standing on, it
+                        \ will still record that the enemy can see the robot
+                        \ object (so the robot is partially visible and we can
+                        \ use this to fill in the scanner halfway)
 
  LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo)
  STA xDeltaLo           \
@@ -9057,8 +9110,9 @@
                         \ GetPitchAngleDelta to calculate the pitch angle of the
                         \ gaze from the enemy to the object
 
-                        \ We do the following loop twice, using the counter we
-                        \ set in gazeCheckCounter
+                        \ Because the enemy is looking towards a robot, we do
+                        \ the following loop twice, using the counter we set in
+                        \ gazeCheckCounter
                         \
                         \ The first time we follow the gaze from the enemy to
                         \ the target object, and the second time we follow the
@@ -9084,7 +9138,7 @@
                         \ This also sets T to the low byte in vectorPitchAngleLo
 
  JSR GetVectorForAngles \ Convert the pitch and yaw angles of the enemy's gaze
-                        \ vector towards the object::
+                        \ vector towards the object:
                         \
                         \   vectorPitchAngle(Hi Lo)
                         \
@@ -9127,17 +9181,39 @@
                         \   * Bit 7 clear = gaze vector cannot see a tree
                         \
                         \   * Bit 7 set = gaze vector can see a tree
+                        \
+                        \ If we call this with bit 7 of enemyCheckingRobot set,
+                        \ which we do on the first pass when the enemy is
+                        \ looking at a robot, then this will return a positive
+                        \ response even if the enemy is at a lower altitude than
+                        \ the robot and can't see the tile that the robot is on,
+                        \ so this lets us record partial visibility of robots
 
- ROL targetOnTile       \ Set bit 7 of targetVisibility to bit 7 of targetOnTile
- ROR targetVisibility   \ ???
+                        \ The following rotations ensure that we record the
+                        \ results correctly in the targetVisibility and
+                        \ treeVisibility variables:
+                        \
+                        \   * If the enemy is looking at a robot then they will
+                        \     ensure that bit 6 records the results when looking
+                        \     at the robot, and bit 7 records the results when
+                        \     looking at the robot's tile
+                        \
+                        \   * If the enemy is not looking at a robot then they
+                        \     will ensure that bit 7 records the results of
+                        \     looking at the target object's tile
 
- ROL gazeCanSeeTree     \ Set bit 7 of treeVisibility to bit 7 of gazeCanSeeTree
- ROR treeVisibility     \ ???
+ ROL targetOnTile       \ Rotate bit 7 of targetOnTile into bit 7 of
+ ROR targetVisibility   \ targetVisibility
+
+ ROL gazeCanSeeTree     \ Rotate bit 7 of gazeCanSeeTree into bit 7 of
+ ROR treeVisibility     \ treeVisibility
 
 .egaz2
 
  LSR enemyCheckingRobot \ Clear bit 7 of enemyCheckingRobot to pass to the next
-                        \ call to FollowGazeVector ???
+                        \ call to FollowGazeVector (which will be the second
+                        \ call if we are looking at a robot, or the only call if
+                        \ we are not looking at a robot)
 
  LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo) - &E0
  SEC                    \                  = yDelta(Hi Lo) - 224
@@ -9211,7 +9287,7 @@
 
 .C1930
 
- LDA enemyData6,X
+ LDA enemyTarget,X
  CMP playerObject
  BNE C1945
  LDA enemyTimer1,X
@@ -9302,7 +9378,7 @@
  LDY enemyData1,X
  BNE C1998
  INC enemyData4,X
- LDA enemyData6,X
+ LDA enemyTarget,X
  STA enemyData3,X
  SEC
  RTS
@@ -9316,7 +9392,7 @@
  LDA objectTypes,Y
  CMP #&02
  BNE C1986
- LDA enemyData6,X
+ LDA enemyTarget,X
  TAX
  LDA xObject,X
  SEC
@@ -9839,6 +9915,9 @@
                         \ list, looping through object numbers 7 to 0 repeatedly
                         \ and processing one enemy for each iteration of the
                         \ gameplay loop
+                        \
+                        \ This also returns from the subroutine using a tail
+                        \ call
 
 \ ******************************************************************************
 \
@@ -11129,7 +11208,11 @@
 \
 \   zVector(Lo Bot)     The z-coordinate of the scaled-down gaze vector
 \
-\   enemyCheckingRobot  If bit 7 is set then the target object is a robot ???
+\   enemyCheckingRobot  Set bit 7 if this routine is being called when an enemy
+\                       is checking to see if it can see a robot object (i.e. in
+\                       the CheckEnemyGaze routine)
+\
+\   targetObject        The target object
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11144,8 +11227,7 @@
 \                           the gaze vector
 \
 \   targetOnTile        Records whether the gaze vector can see a tile
-\                       containing the target object whose number is in
-\                       targetObject:
+\                       containing the target object:
 \
 \                         * Bit 7 clear = gaze vector cannot see the target
 \                                         object
