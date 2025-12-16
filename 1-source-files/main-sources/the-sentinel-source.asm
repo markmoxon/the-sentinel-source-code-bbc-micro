@@ -5462,8 +5462,8 @@
                         \ just been initiated, such as a pan of the landscape
                         \ view, absorb, transfer and so on
 
- STA L0C1E              \ Set bit 7 of L0C1E to return early from the sub_C5E5F
-                        \ subroutine ???
+ STA L0C1E              \ Set bit 7 of L0C1E to return early from the
+                        \ DitherScreenBuffer subroutine ???
 
 .focu1
 
@@ -5928,7 +5928,8 @@
 
                         \ If we get here then the call to ProcessActionKeys
                         \ added or removed an object, so we now need to make the
-                        \ appropriate sound and ???
+                        \ appropriate sound and draw the updated object
+                        \ on-screen
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
@@ -5940,8 +5941,9 @@
 
  LSR L0C1E              \ Clear bit 7 of L0C1E ???
 
- JSR sub_C1F84          \ Something to do with objects, could be a redraw or
-                        \ something as we have added/removed an object ???
+ JSR DrawUpdatedObject  \ Draw the updated object (or the landscape where the
+                        \ object used to be) into the screen buffer and dither
+                        \ it onto the screen, pixel by pixel and randomly
 
  JSR FlushSoundBuffer0  \ Flush the sound channel 0 buffer
 
@@ -8560,7 +8562,7 @@
 
  PLA
  TAX
- JMP C1876
+ JMP tact26
 
 .tact4
 
@@ -8762,7 +8764,7 @@
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
- JMP C1876
+ JMP tact26
 
 \ ******************************************************************************
 \
@@ -8798,7 +8800,7 @@
  LDY enemyObject
  LDA #&1E
  STA enemyTacticTimer,Y
- BCS C187F
+ BCS tact27
  JMP tact25
 
 .tact22
@@ -8811,13 +8813,13 @@
  BCS tact23
  LDA #&80
  STA enemyData8,Y
- BNE C187F
+ BNE tact27
 
 .tact23
 
  LDA #0
  STA enemyTimer1,Y
- BEQ C187F
+ BEQ tact27
 
 .tact24
 
@@ -8825,37 +8827,36 @@
  STA enemyTacticTimer,Y
  LDX enemyMeanieTree,Y
 
-\ ******************************************************************************
-\
-\       Name: tact25
-\       Type: Subroutine
-\   Category: ???
-\    Summary: ???
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   X                   The object number of ??? (e.g. tree that was spawned by
-\                       an enemy being drained of energy)
-\
-\ ******************************************************************************
-
 .tact25
 
- LDA #&40
+                        \ We jump here with an object number in X, depending on
+                        \ how we got here:
+                        \
+                        \   * From ApplyEnemyTactics: X is the tree that was
+                        \     spawned by an enemy being drained of energy ???
+                        \
+                        \   * From ???
+                        \
+                        \ We now update that object on-screen by drawing the
+                        \ object (or the landscape without the object) and
+                        \ dithering the result to the screen, pixel by pixel in
+                        \ a random manner
+
+ LDA #%01000000         \ Clear bit 7 and set bit 6 of L0C6D ???
  STA L0C6D
 
-.C1876
+.tact26
 
- STX currentObject
+ STX currentObject      \ Set the current object to X so the call 
 
  LDA playerObject       \ Set viewingObject to the object number of the player
  STA viewingObject
 
- JSR sub_C1F84
+ JSR DrawUpdatedObject  \ Draw the updated object (or the landscape where the
+                        \ object used to be) into the screen buffer and dither
+                        \ it onto the screen, pixel by pixel and randomly
 
-.C187F
+.tact27
 
  JMP MoveOnToNextEnemy
 
@@ -13164,14 +13165,14 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1F84
+\       Name: DrawUpdatedObject
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing objects
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.C1F78
+.updo1
 
  LDA #0
  STA L0C6D
@@ -13181,19 +13182,19 @@
 
  RTS
 
-.sub_C1F84
+.DrawUpdatedObject
 
  JSR GetObjVisibility
- BCS C1F78
+ BCS updo1
  LDA #&19
  STA L2094
  LDA L0C6D
- BPL C1F98
+ BPL updo2
  SEI
  JSR RemoveSights
  CLI
 
-.C1F98
+.updo2
 
  LDX viewingObject
  LDA objYawOffset
@@ -13230,16 +13231,16 @@
                         \ for the sky
 
  BIT L0C4D
- BPL C1FD2
+ BPL updo3
  LDY currentObject
  JSR DrawObject
- JMP C1FD5
+ JMP updo4
 
-.C1FD2
+.updo3
 
  JSR DrawLandscapeView  \ Draw the landscape view
 
-.C1FD5
+.updo4
 
  LDY #0                 \ Set screenBufferAddr(1 0) to the address of the left
  JSR SetBufferAddress   \ column of the screen buffer
@@ -13264,26 +13265,26 @@
  LDA viewScreenAddr+1
  ADC U
  CMP #&80
- BCC C2008
+ BCC updo5
  SBC #&20
 
-.C2008
+.updo5
 
  STA L2092+1
  BIT L0C6D
- BVC C2022
+ BVC updo7
  BIT sentinelHasWon
- BPL C201A
+ BPL updo6
  LDA #&28
  STA L2094
 
-.C201A
+.updo6
 
- JSR sub_C5E5F
+ JSR DitherScreenBuffer
  LDA sentinelHasWon
- BMI C2061
+ BMI updo11
 
-.C2022
+.updo7
 
  SEI
  JSR RemoveSights
@@ -13296,9 +13297,9 @@
  STA toAddr+1
  LDA bufferColumns
  STA loopCounter
- JMP C2058
+ JMP updo10
 
-.C203D
+.updo8
 
  LDA L2092
  CLC
@@ -13308,15 +13309,15 @@
  LDA L2092+1
  ADC #&00
  CMP #&80
- BCC C2053
+ BCC updo9
  SBC #&20
 
-.C2053
+.updo9
 
  STA L2092+1
  STA toAddr+1
 
-.C2058
+.updo10
 
  LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
                         \ pressed (which may not still be held down)
@@ -13337,9 +13338,9 @@
                         \ screen memory
 
  DEC loopCounter
- BNE C203D
+ BNE updo8
 
-.C2061
+.updo11
 
  LDA objYawOffset
  CLC
@@ -13348,24 +13349,24 @@
  LDA objYawWidth
  SEC
  SBC bufferColumns
- BEQ C2080
+ BEQ updo12
  STA objYawWidth
  STA bufferColumns
  STA L2094
- JMP C1F98
+ JMP updo2
 
-.C2080
+.updo12
 
  LSR doNotDrawSights
  LDA sightsAreVisible
- BPL C208D
+ BPL updo13
  SEI
  JSR DrawSights
  CLI
 
-.C208D
+.updo13
 
- JMP C1F78
+ JMP updo1
 
 \ ******************************************************************************
 \
@@ -35494,14 +35495,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: sub_C5E5F
+\       Name: DitherScreenBuffer
 \       Type: Subroutine
-\   Category: ???
+\   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C5E5F
+.DitherScreenBuffer
 
  LDA #&FF
  STA L0CD2
@@ -35512,21 +35513,21 @@ L314A = C3148+2
  STA L0CD3
  SEC
  SBC #&01
- BEQ C5E7B
+ BEQ dith2
  LDY #&FF
 
-.P5E74
+.dith1
 
  ASL A
  INY
- BCC P5E74
+ BCC dith1
  LDA leadingBitMask,Y
 
-.C5E7B
+.dith2
 
  STA L0CCF
 
-.C5E7E
+.dith3
 
  SEI
 
@@ -35539,10 +35540,10 @@ L314A = C3148+2
  ADC L0CCD
  AND L0CCF
  CMP L0CD3
- BCC C5E98
+ BCC dith4
  SBC L0CD3
 
-.C5E98
+.dith4
 
  STA L0CCD
  LDA L0CD0
@@ -35576,10 +35577,10 @@ L314A = C3148+2
  LDA L2092+1
  ADC fromAddr+1
  CMP #&80
- BCC C5ED9
+ BCC dith5
  SBC #&20
 
-.C5ED9
+.dith5
 
  STA toAddr+1
  LDA fromAddr+1
@@ -35587,7 +35588,7 @@ L314A = C3148+2
  ADC #&3F
  STA fromAddr+1
  CMP #&53
- BCC C5EF3
+ BCC dith6
  LDA fromAddr
  SEC
  SBC #&60
@@ -35596,7 +35597,7 @@ L314A = C3148+2
  SBC #&13
  STA fromAddr+1
 
-.C5EF3
+.dith6
 
  LDA L0CD0
  ASL A
@@ -35613,23 +35614,23 @@ L314A = C3148+2
  ORA L0013
  STA (toAddr),Y
 
- BIT L0C1E              \ If bit 7 of L0C1E is set, jump to CRE41 to return from
- BMI CRE41              \ the subroutine
+ BIT L0C1E              \ If bit 7 of L0C1E is set, jump to dith8 to return from
+ BMI dith8              \ the subroutine
 
  DEC L0CD2
- BNE C5F20
+ BNE dith7
 
  JSR ProcessSound       \ Process any sounds or music that are being made in the
                         \ background
 
  DEC L2094
- BEQ CRE41
+ BEQ dith8
 
-.C5F20
+.dith7
 
- JMP C5E7E
+ JMP dith3
 
-.CRE41
+.dith8
 
  RTS
 
@@ -35654,9 +35655,9 @@ L314A = C3148+2
 \                         * 30 = 72,000 dots for when the player is absorbed by
 \                                the Sentinel
 \
-\   titleObjectToDraw   The type of object to draw on the game over screen
-\
-\                         * ???
+\   titleObjectToDraw   The type of object that caused the player's demise (be
+\                       it the Sentinel, a sentry, a meanie or the player
+\                       themselves)
 \
 \ ******************************************************************************
 
@@ -35690,14 +35691,20 @@ L314A = C3148+2
 
  LDA titleObjectToDraw  \ Call SpawnTitleObject to spawn an object of type
  JSR SpawnTitleObject   \ titleObjectToDraw as object #1, using the
-                        \ configuration specified in Y (i.e. 0) so the object
+                        \ configuration specified in Y (i.e. 0), so the object
                         \ is spawned for use in the game over screen
+                        \
+                        \ By the time the game ends, titleObjectToDraw has been
+                        \ set to the type of object that caused the player's
+                        \ demise (be it the Sentinel, a sentry, a meanie or the
+                        \ player themselves), so this call spawns that object
+                        \ as object #1
 
  LDA #3                 \ Set screenBackground = 3 so the next time the screen
  STA screenBackground   \ is cleared, it shows a black background with stars
 
- LDA #1                 \ Set currentObject = 1 ???
- STA currentObject
+ LDA #1                 \ Set currentObject = 1 so the call to DrawUpdatedObject
+ STA currentObject      \ draws object #1
 
  LDA #%11000000         \ Set bits 6 and 7 of L0C4D ???
  STA L0C4D
@@ -35709,7 +35716,9 @@ L314A = C3148+2
  LDA #50                \ Call the PlayMusic routine with A = 50 to play the
  JSR PlayMusic          \ game over music
 
- JSR sub_C1F84          \ ???
+ JSR DrawUpdatedObject  \ Draw the current object (or the landscape where the
+                        \ object used to be) into the screen buffer and dither
+                        \ it onto the screen, pixel by pixel and randomly
 
  LDA #30                \ Smother the screen in 30 * 2400 = 72,000 randomly
  JMP DecayScreenToBlack \ placed black dots to decay the screen to black,

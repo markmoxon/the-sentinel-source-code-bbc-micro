@@ -4394,12 +4394,12 @@
 .tact25
      1871   A9 40      LDA #&40
      1873   8D 6D 0C   STA &0C6D
-.C1876
+.tact26
      1876   86 01      STX &01
      1878   A5 0B      LDA &0B
      187A   85 6E      STA &6E
      187C   20 84 1F   JSR &1F84
-.C187F
+.tact27
      187F   4C C9 16   JMP &16C9
 .CheckEnemyGaze
      1882   85 74      STA &74
@@ -5380,13 +5380,13 @@
      1F76   60         RTS
 .tileNumber
      1F77   00
-.C1F78
+.updo1
      1F78   A9 00      LDA #&00
      1F7A   8D 6D 0C   STA &0C6D
      1F7D   8D 4D 0C   STA &0C4D
      1F80   8D 1E 0C   STA &0C1E
      1F83   60         RTS
-.sub_C1F84
+.DrawUpdatedObject
      1F84   20 96 20   JSR &2096
      1F87   B0 EF      BCS &1F78
      1F89   A9 19      LDA #&19
@@ -5396,7 +5396,7 @@
      1F93   78         SEI
      1F94   20 A7 3A   JSR &3AA7
      1F97   58         CLI
-.C1F98
+.updo2
      1F98   A6 6E      LDX &6E
      1F9A   AD 62 0C   LDA &0C62
      1F9D   8D 95 20   STA &2095
@@ -5420,9 +5420,9 @@
      1FCA   A4 01      LDY &01
      1FCC   20 33 5D   JSR &5D33
      1FCF   4C D5 1F   JMP &1FD5
-.C1FD2
+.updo3
      1FD2   20 24 26   JSR &2624
-.C1FD5
+.updo4
      1FD5   A0 00      LDY #&00
      1FD7   20 FB 38   JSR &38FB
      1FDA   A6 6E      LDX &6E
@@ -5447,7 +5447,7 @@
      2002   C9 80      CMP #&80
      2004   90 02      BCC &2008
      2006   E9 20      SBC #&20
-.C2008
+.updo5
      2008   8D 93 20   STA &2093
      200B   2C 6D 0C   BIT &0C6D
      200E   50 12      BVC &2022
@@ -5455,11 +5455,11 @@
      2013   10 05      BPL &201A
      2015   A9 28      LDA #&28
      2017   8D 94 20   STA &2094
-.C201A
+.updo6
      201A   20 5F 5E   JSR &5E5F
      201D   AD 4E 0C   LDA &0C4E
      2020   30 3F      BMI &2061
-.C2022
+.updo7
      2022   78         SEI
      2023   20 A7 3A   JSR &3AA7
      2026   38         SEC
@@ -5472,7 +5472,7 @@
      2035   AD 69 0C   LDA &0C69
      2038   85 15      STA &15
      203A   4C 58 20   JMP &2058
-.C203D
+.updo8
      203D   AD 92 20   LDA &2092
      2040   18         CLC
      2041   69 08      ADC #&08
@@ -5483,15 +5483,15 @@
      204D   C9 80      CMP #&80
      204F   90 02      BCC &2053
      2051   E9 20      SBC #&20
-.C2053
+.updo9
      2053   8D 93 20   STA &2093
      2056   85 65      STA &65
-.C2058
+.updo10
      2058   A4 08      LDY &08
      205A   20 32 38   JSR &3832
      205D   C6 15      DEC &15
      205F   D0 DC      BNE &203D
-.C2061
+.updo11
      2061   AD 62 0C   LDA &0C62
      2064   18         CLC
      2065   6D 69 0C   ADC &0C69
@@ -5504,14 +5504,14 @@
      2077   8D 69 0C   STA &0C69
      207A   8D 94 20   STA &2094
      207D   4C 98 1F   JMP &1F98
-.C2080
+.updo12
      2080   4E D7 0C   LSR &0CD7
      2083   AD 5F 0C   LDA &0C5F
      2086   10 05      BPL &208D
      2088   78         SEI
      2089   20 D9 39   JSR &39D9
      208C   58         CLI
-.C208D
+.updo13
      208D   4C 78 1F   JMP &1F78
 .screenBufferAddr
      2090   00 00
@@ -18668,7 +18668,7 @@
      5E5C   00
      5E5D   01
      5E5E   03
-.sub_C5E5F
+.DitherScreenBuffer
      5E5F   A9 FF      LDA #&FF
      5E61   8D D2 0C   STA &0CD2
      5E64   AD 69 0C   LDA &0C69
@@ -18680,14 +18680,14 @@
      5E6E   E9 01      SBC #&01
      5E70   F0 09      BEQ &5E7B
      5E72   A0 FF      LDY #&FF
-.P5E74
+.dith1
      5E74   0A         ASL A
      5E75   C8         INY
      5E76   90 FC      BCC &5E74
      5E78   B9 B4 15   LDA &15B4,Y
-.C5E7B
+.dith2
      5E7B   8D CF 0C   STA &0CCF
-.C5E7E
+.dith3
      5E7E   78         SEI
      5E7F   20 8E 56   JSR &568E
      5E82   AC D0 56   LDY &56D0
@@ -18699,7 +18699,7 @@
      5E90   CD D3 0C   CMP &0CD3
      5E93   90 03      BCC &5E98
      5E95   ED D3 0C   SBC &0CD3
-.C5E98
+.dith4
      5E98   8D CD 0C   STA &0CCD
      5E9B   AD D0 0C   LDA &0CD0
      5E9E   29 1F      AND #&1F
@@ -18734,7 +18734,7 @@
      5ED3   C9 80      CMP #&80
      5ED5   90 02      BCC &5ED9
      5ED7   E9 20      SBC #&20
-.C5ED9
+.dith5
      5ED9   85 65      STA &65
      5EDB   A5 63      LDA &63
      5EDD   18         CLC
@@ -18749,7 +18749,7 @@
      5EED   A5 63      LDA &63
      5EEF   E9 13      SBC #&13
      5EF1   85 63      STA &63
-.C5EF3
+.dith6
      5EF3   AD D0 0C   LDA &0CD0
      5EF6   0A         ASL A
      5EF7   2A         ROL A
@@ -18771,9 +18771,9 @@
      5F18   20 5A 35   JSR &355A
      5F1B   CE 94 20   DEC &2094
      5F1E   F0 03      BEQ &5F23
-.C5F20
+.dith7
      5F20   4C 7E 5E   JMP &5E7E
-.CRE41
+.dith8
      5F23   60         RTS
 .ShowGameOverScreen
      5F24   48         PHA
