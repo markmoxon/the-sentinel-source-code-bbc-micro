@@ -217,7 +217,15 @@
 
 .targetVisibility
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Reports whether a target object is visible from an
+                        \ enemy in the CheckEnemyGaze routine
+                        \
+                        \   * If the target object is a robot, then bit 6 will
+                        \     be set if the robot object can be seen, even if
+                        \     the robot's tile can't be seen
+                        \
+                        \  * Bit 7 will be set if the enemy can see the target
+                        \    object's tile
 
 .loopCounter
 
@@ -335,6 +343,11 @@
                         \ the landscape in the SpawnTrees routine
 
 .gazeCheckCounter
+
+ SKIP 0                 \ A counter for the number of checks that are performed
+                        \ when following an enemy's gaze in CheckEnemyGaze
+
+.L001E
 
  SKIP 1                 \ ???
 
@@ -832,8 +845,11 @@
 
 .viewingObject
 
- SKIP 0                 \ The number of the object that is viewing the landscape
-                        \ (or the title screen or game over screen) ???
+ SKIP 0                 \ The number of the viewing object
+                        \
+                        \ This can be the object that is viewing the landscape,
+                        \ the enemy object scanning for targets, the viewer of
+                        \ the title screen or the game over screen, and so on
 
 .enemyCounter
 
@@ -1666,9 +1682,10 @@
                         \ the ProcessGameplay routine from deep within the
                         \ tactics routines if required
 
-.L0C0E
+.meanieYawStep
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The yaw angle through which we rotate a meanie as it
+                        \ searches for the player in the ApplyTactics routine
 
 .textDropShadow
 
@@ -1738,21 +1755,23 @@
                         \
                         \   * Bit 7 set = same pan key is being held down
 
-.enemyTimer1
+.enemyDrainTimer
 
- EQUB 0, 0, 0, 0        \ Enemy timer ???
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ A timer for each enemy that counts down every 0.06
+ EQUB 0, 0, 0, 0        \ seconds and controls the rate at which an enemy will
+                        \ drain energy from its target object
 
-.enemyTimer2
+.enemyRotateTimer
 
- EQUB 0, 0, 0, 0        \ Enemy timer ???
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ A timer for each enemy that counts down every 0.06
+ EQUB 0, 0, 0, 0        \ seconds and controls the rate at which the enemy
+                        \ rotates with the rotation step given in enemyYawStep
 
 .enemyTacticTimer
 
- EQUB 0, 0, 0, 0        \ A timer for each enemy that counts down on each
- EQUB 0, 0, 0, 0        \ iteration of the gameplay loop and controls the rate
-                        \ at which we apply tactics to that enemy
+ EQUB 0, 0, 0, 0        \ A timer for each enemy that counts down every 0.06
+ EQUB 0, 0, 0, 0        \ seconds and controls the rate at which we apply
+                        \ tactics to that enemy
 
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
  EQUB 0, 0, 0, 0
@@ -1834,9 +1853,15 @@
                         \   * 3 = fill with solid colour 1 (black) and draw 240
                         \         randomly positioned stars on the background
 
-.L0C4D
+.drawLandscape
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Configures whether to draw the landscape behind the
+                        \ object in the DrawUpdatedObject routine
+                        \
+                        \   * Bit 7 clear = draw the landscape behind the object
+                        \                  as well as the object
+                        \
+                        \   * Bit 7 set = just draw the object
 
 .sentinelHasWon
 
@@ -1861,7 +1886,8 @@
 
 .updateTimer
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A counter that ensures the enemy timers are updated on
+                        \ one of every three calls to the interrupt handler
 
 .uTurnStatus
 
@@ -2060,7 +2086,8 @@
 
 .enemyViewingArc
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The viewing arc of the enemy that is being processed
+                        \ in the ApplyTactics routine
 
 .bufferColumns
 
@@ -2082,13 +2109,27 @@
 
  EQUB 0                 \ The number of the object on the top of an object stack
 
-.L0C6D
+.ditherObjectSights
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Configures how an updated object is drawn onto the
+                        \ screen
+                        \
+                        \   * Bit 6 set = dither the updated object onto the
+                        \                 screen
+                        \
+                        \   * Bit 7 set = remove the sights from the screen
+                        \                 before drawing the object
 
 .enemyCheckingRobot
 
- EQUB 0                 \ Another bit 7 flag ???
+ EQUB 0                 \ A flag to pass to the FollowGazeVector routine, with
+                        \ bit 7 set if the routine is being called when an enemy
+                        \ is checking to see if it can see a robot object
+                        \
+                        \ This allows the routine to return a positive result
+                        \ even if the viewer is below the robot and can't see
+                        \ the robot's tile (so we can show a partial scan of the
+                        \ player on the scanner)
 
 .numberOfEnemies
 
@@ -2165,7 +2206,15 @@
 
 .treeVisibility
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Reports whether a gaze is interrupted by a tree in the
+                        \ CheckEnemyGaze routine
+                        \
+                        \   * If the target object is a robot, then bit 6 will
+                        \     be set if there is a tree blocking the view of the
+                        \     robot object
+                        \
+                        \  * Bit 7 will be set if there is a tree blocking the
+                        \    view of the target object's tile
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -2235,7 +2284,7 @@
  EQUB 0, 0, 0, 0        \ ???
  EQUB 0, 0, 0, 0
 
- EQUB 0                 \ ???
+ EQUB 0                 \ This byte appears to be unused
 
 .scrollCounter
 
@@ -4904,7 +4953,7 @@
  JSR StartScrollingView \ buffer into the side of the on-screen landscape view,
                         \ so call StartScrollingView to configure a background
                         \ task to scroll 16 character columns from the screen
-                        \ buffer onto the screen, using the interrupt routine
+                        \ buffer onto the screen, using the interrupt handler
                         \ to do it in the background
 
  RTS                    \ Return from the subroutine
@@ -5016,7 +5065,7 @@
                         \ landscape view, so call StartScrollingView to
                         \ configure a background task to scroll 8 character rows
                         \ from the screen buffer onto the screen, using the
-                        \ interrupt routine to do it in the background
+                        \ interrupt handler to do it in the background
 
 .lpan5
 
@@ -5198,7 +5247,7 @@
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Check for various game key presses and update the key logger and
-\             relevant variables (during the interrupt routine)
+\             relevant variables (during the interrupt handler)
 \
 \ ******************************************************************************
 
@@ -5936,8 +5985,8 @@
  LDA #2                 \ Make sound #2 (create/absorb object white noise)
  JSR MakeSound
 
- LDA #%11000000         \ Set bit 6 and 7 of L0C6D ???
- STA L0C6D
+ LDA #%11000000         \ Set bit 6 and 7 of ditherObjectSights ???
+ STA ditherObjectSights
 
  LSR L0C1E              \ Clear bit 7 of L0C1E ???
 
@@ -5997,7 +6046,7 @@
                         \ we decrement the timers on one out of every three
                         \ calls to the UpdateEnemyTimers
                         \
-                        \ UpdateEnemyTimers is called from the interrupt routine
+                        \ UpdateEnemyTimers is called from the interrupt handler
                         \ at IRQHandler, but only once the game has started and
                         \ the Sentinel is active
                         \
@@ -6011,7 +6060,7 @@
  LDX #23                \ There are 24 bytes of enemy timers, split into three
                         \ timers keeping track of up to eight enemies each:
                         \
-                        \   * enemyTimer1
+                        \   * enemyDrainTimer
                         \
                         \   * enemyTacticTimer
                         \
@@ -6022,14 +6071,14 @@
 
 .time1
 
- LDA enemyTimer1,X      \ If the X-th timer is less than 2 then it has already
+ LDA enemyDrainTimer,X  \ If the X-th timer is less than 2 then it has already
  CMP #2                 \ counted down to 1, so jump to time2 to leave the timer
  BCC time2              \ alone as it is inactive
 
                         \ So the timers count down until they reach 1, at which
                         \ point they stay put, inactive until they are reset
 
- DEC enemyTimer1,X      \ The X-th timer is actively counting down, so decrement
+ DEC enemyDrainTimer,X  \ The X-th timer is actively counting down, so decrement
                         \ the timer
 
 .time2
@@ -8353,12 +8402,12 @@
                         \ flag set, then either the enemy didn't have any energy
                         \ to expend or we couldn't spawn a tree, so jump to
                         \ MoveOnToNextEnemy to move on to the next enemy for the
-                        \ next iteration of the gameplay loop, returning from
+                        \ next iteration of the gameplay loop and return from
                         \ the subroutine using a tail call
 
  JMP tact25             \ Otherwise jump to tact25 with X set to the object
-                        \ number of the tree to ??? and return from the
-                        \ subroutine using a tail call
+                        \ number of the tree to update the tree on-screen and
+                        \ return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -8397,7 +8446,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 1 of ???)
+\       Name: ApplyTactics (Part 1 of 6)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
@@ -8415,18 +8464,23 @@
 \
 \ Other entry points:
 \
-\   tact25              ???
+\   tact25              Dither the updated object #X onto the screen, with bit 7
+\                       of drawLandscape determining whether the object is drawn
+\                       on its own (bit 7 set) or with the surrounding landscape
+\                       (bit 7 clear)
 \
 \ ******************************************************************************
 
 .ApplyTactics
 
  LDA enemyTacticTimer,X \ If enemyTacticTimer >= 2 for this enemy, then jump to
- CMP #2                 \ MoveOnToNextEnemy to skip the rest of the the tactics
+ CMP #2                 \ MoveOnToNextEnemy to skip the rest of the tactics
  BCS MoveOnToNextEnemy  \ routines and move on to the next enemy so we can apply
                         \ apply tactics to it in the next iteration of the
-                        \ gameplay loop (and this also returns from the
-                        \ subroutine using a tail call)
+                        \ gameplay loop
+                        \
+                        \ This also returns from the subroutine using a tail
+                        \ call
 
                         \ If we get here then enemyTacticTimer for this enemy
                         \ has counted down to be less than 2, so it's time to
@@ -8454,7 +8508,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 2 of ???)
+\       Name: ApplyTactics (Part 2 of 6)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
@@ -8475,11 +8529,12 @@
 
  LDA objectFlags,Y      \ If bit 7 of the object flags for object #Y is set then
  BMI tact4              \ object #Y doesn't have an associated object, so jump
-                        \ to tact4 to ???
+                        \ to tact4 to restart the enemy's drain counter and turn
+                        \ the meanie back into a tree
 
  LDA #0                 \ Set A = 0 to pass to CheckEnemyGaze as the object type
                         \ of the target (object type 0 being a robot), so we
-                        \ only ruin the gaze calculations when object #Y is a
+                        \ only run the gaze calculations when object #Y is a
                         \ robot
 
  JSR CheckEnemyGaze     \ Call CheckEnemyGaze to check the gaze of the meanie
@@ -8499,15 +8554,17 @@
 
  LDA objectViewYawHi    \ If objectViewYawHi >= 20 then the robot is outside of
  CMP #20                \ the meanie's viewing arc of 20 yaw angles, so jump to
- BCS tact2              \ tact2 to rotate the meanie towards the robot ???
+ BCS tact2              \ tact2 to rotate the meanie in the direction of the
+                        \ robot
 
  CPY playerObject       \ If the robot is not the player object, then the player
  BNE tact4              \ must have transferred to a different robot, so jump to
-                        \ tact4 to ???
+                        \ tact4 to restart the enemy's drain counter and turn
+                        \ the meanie back into a tree
 
  LDA targetVisibility   \ If the meanie can't see the robot or the robot's tile
  BEQ tact5              \ then targetVisibility will be zero, so jump to tact5
-                        \ ???
+                        \ to turn the meanie back into a tree
 
                         \ If we get here then the meanie is looking at a robot,
                         \ the robot is within the meanie's viewing arc, the
@@ -8526,72 +8583,107 @@
                         \ the player's demise
 
  JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
-                        \ for the next iteration of the gameplay loop, returning
+                        \ in the next iteration of the gameplay loop, returning
                         \ from the subroutine using a tail call
 
 .tact2
 
- LDA #8
+ LDA #8                 \ Set A = 8 to use as the value of meanieYawStep when
+                        \ the meanie needs to rotate clockwise towards the
+                        \ player
 
- BIT objectViewYawHi
- BPL tact3
+ BIT objectViewYawHi    \ If objectViewYawHi is positive then the player is to
+ BPL tact3              \ the right of the meanie's viewing arc, so jump to
+                        \ tact3 to set the yaw step to +8 so the meanie rotates
+                        \ right (clockwise( towards the player to the right
 
- LDA #&F8
+ LDA #&F8               \ Otherwise objectViewYawHi is negative and the player
+                        \ is to the left of the meanie's viewing arc, so set A
+                        \ to -8 for the yaw step so the meanie rotates left
+                        \ (anticlockwise) towards the player to the left
 
 .tact3
 
- STA L0C0E
+ STA meanieYawStep      \ Store the value of A in meanieYawStep, so we can add
+                        \ it to the meanie's yaw angle below to make it rotate
+                        \ towards the player
 
- LDY enemyObject
- LDX enemyMeanieTree,Y
- TXA
- JSR AbortWhenVisible
- LDA objectYawAngle,X
- CLC
- ADC L0C0E
+ LDY enemyObject        \ Set X to the object number of the meanie that we are
+ LDX enemyMeanieTree,Y  \ processing
+
+ TXA                    \ Check to see whether it is safe to redraw the meanie
+ JSR AbortWhenVisible   \ without risk of corrupting a screen pan (if there is
+                        \ a risk and it can't be updated, then the call to
+                        \ AbortWhenVisible will not return here and will instead
+                        \ abort tactics for this iteration of the gameplay loop)
+
+ LDA objectYawAngle,X   \ Add meanieYawStep to the yaw angle for the meanie so
+ CLC                    \ it rotates towards the player
+ ADC meanieYawStep
  STA objectYawAngle,X
- LDA #&0A
- STA enemyTacticTimer,Y
- TXA
- PHA
- LDX #&03
- LDY #&46
 
- LDA #1                 \ Make sound #1 (???) with the pitch in X and Y
- JSR MakeSound-6
+ LDA #10                \ Set enemyTacticTimer for the meanie to 10 so we wait
+ STA enemyTacticTimer,Y \ for 0.6 seconds before applying tactics to the meanie
+                        \ again
 
- PLA
+ TXA                    \ Store the enemy object number on the stack so we can
+ PHA                    \ retrieve it below
+
+ LDX #3                 \ Set X = 3 to pass to MakeSound-6 as the pitch of the
+                        \ first part of the rotating meanie sound
+
+ LDY #70                \ Set Y = 70 to pass to MakeSound-6 as the pitch of the
+                        \ second part of the rotating meanie sound
+
+ LDA #1                 \ Make sound #1 (rotating meanie) with the pitches in X
+ JSR MakeSound-6        \ and Y
+
+ PLA                    \ Retrieve the enemy object number from the stack into X
  TAX
- JMP tact26
+
+ JMP tact26             \ Jump to tact26 to draw the updated object without a
+                        \ dithered effect, so the meanie rotates instantly if it
+                        \ is on the screen
 
 .tact4
 
- LDA #0                 \ Set enemyTimer1 = 0 for this enemy ???
- STA enemyTimer1,X
+ LDA #0                 \ Set enemyDrainTimer = 0 to restart the drain counter
+ STA enemyDrainTimer,X  \ for the enemy in part 5 of ApplyTactics, so it doesn't
+                        \ drain energy for another 120 timer ticks (120 * 0.06 =
+                        \ 7.2 seconds)
 
 .tact5
 
- LDY enemyObject        \ Check to see if the object in enemyMeanieTree is
- LDX enemyMeanieTree,Y  \ visible and abort if it is, otherwise keep going ???
- TXA
- JSR AbortWhenVisible
+                        \ If we get here then we need to turn the meanie back
+                        \ into a tree
 
- LDA #%10000000         \ Set bit 7 of enemyMeanieTree to ???
- STA enemyMeanieTree,Y
+ LDY enemyObject        \ Set X to the object number of the meanie that we are
+ LDX enemyMeanieTree,Y  \ processing
 
- LDA #2                 \ Turn the meanie back into a tree ???
- STA objectTypes,X
+ TXA                    \ Check to see whether it is safe to redraw the meanie
+ JSR AbortWhenVisible   \ without risk of corrupting a screen pan (if there is
+                        \ a risk and it can't be updated, then the call to
+                        \ AbortWhenVisible will not return here and will instead
+                        \ abort tactics for this iteration of the gameplay loop)
+
+ LDA #%10000000         \ Set bit 7 of enemyMeanieTree so the enemy that turned
+ STA enemyMeanieTree,Y  \ a tree into the meanie is no longer flagged as such
+
+ LDA #2                 \ Turn the meanie object back into a tree (an object of
+ STA objectTypes,X      \ type 2)
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
-                        \ the tree to ??? and return from the subroutine using a
-                        \ tail call
+                        \ the tree to update the tree on-screen with a dithered
+                        \ effect and return from the subroutine using a tail
+                        \ call
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 3 of ???)
+\       Name: ApplyTactics (Part 3 of 6)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: If the enemy has any residual energy, try expending it onto the
+\             landscape in the form of a tree (and end tactics if successful)
 \
 \ ******************************************************************************
 
@@ -8618,16 +8710,18 @@
 
  BCS tact7              \ If the call to ExpendEnemyEnergy returned with the C
                         \ flag set, then either the enemy didn't have any energy
-                        \ to expend or we couldn't spawn a tree, so jump to tact7
-                        \ to keep applying tactics
+                        \ to expend or we couldn't spawn a tree, so jump to part
+                        \ 4 to keep applying tactics
 
- JMP tact25             \ Otherwise jump to tact25 with X set to the object
-                        \ number of the tree to ??? and return from the
-                        \ subroutine using a tail call
+ JMP tact25             \ Otherwise that's enough tactics for this iteration, so
+                        \ jump to tact25 with X set to the object number of
+                        \ the tree, so we draw the new tree on-screen as part of
+                        \ the landscape and return from the subroutine using a
+                        \ tail call
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 4 of ???)
+\       Name: ApplyTactics (Part 4 of 6)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: ???
@@ -8660,7 +8754,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 5 of ???)
+\       Name: ApplyTactics (Part 5 of 6)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: ???
@@ -8669,7 +8763,7 @@
 
 .tact9
 
- LDA enemyTimer1,X
+ LDA enemyDrainTimer,X
  BEQ tact11
  LDY enemyTarget,X
  LDA #0
@@ -8680,7 +8774,10 @@
 
 .tact10
 
- STA enemyTimer1,X
+ STA enemyDrainTimer,X  \ Set enemyDrainTimer = 0 to restart the drain counter
+                        \ for the enemy in part 5 of ApplyTactics, so it doesn't
+                        \ drain energy for another 120 timer ticks (120 * 0.06 =
+                        \ 7.2 seconds)
 
 .tact11
 
@@ -8719,8 +8816,11 @@
 
 .tact14
 
- LDA #0
- STA enemyTimer1,X
+ LDA #0                 \ Set enemyDrainTimer = 0 to restart the drain counter
+ STA enemyDrainTimer,X  \ for the enemy in part 5 of ApplyTactics, so it doesn't
+                        \ drain energy for another 120 timer ticks (120 * 0.06 =
+                        \ 7.2 seconds)
+
  JSR sub_C1AA7
  BCS tact16
 
@@ -8736,7 +8836,7 @@
 .tact16
 
  LDX enemyObject
- LDA enemyTimer2,X
+ LDA enemyRotateTimer,X
  CMP #&02
  BCC tact18
 
@@ -8746,14 +8846,18 @@
 
 .tact18
 
- TXA
- JSR AbortWhenVisible
+ TXA                    \ Check to see whether it is safe to redraw object #X
+ JSR AbortWhenVisible   \ without risk of corrupting a screen pan (if there is
+                        \ a risk and it can't be updated, then the call to
+                        \ AbortWhenVisible will not return here and will instead
+                        \ abort tactics for this iteration of the gameplay loop)
+
  LDA objectYawAngle,X
  CLC
  ADC enemyYawStep,X
  STA objectYawAngle,X
  LDA #&C8
- STA enemyTimer2,X
+ STA enemyRotateTimer,X
  JSR SetEnemyData
  LDX #&07
  LDY #&78
@@ -8768,7 +8872,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 5 of ???)
+\       Name: ApplyTactics (Part 6 of 6)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: ???
@@ -8781,11 +8885,13 @@
  STA enemyTarget,X
  LDA targetVisibility
  STA enemyData7,X
- LDA enemyTimer1,X
+ LDA enemyDrainTimer,X
  CMP #&01
  BCS tact21
- LDA #&78
- STA enemyTimer1,X
+
+ LDA #120               \ Set enemyDrainTimer = 120 so the enemy doesn't drain
+ STA enemyDrainTimer,X  \ energy for another 120 timer ticks (120 * 0.06 =
+                        \ 7.2 seconds)
 
 .tact20
 
@@ -8794,6 +8900,9 @@
 .tact21
 
  BNE tact20
+
+                        \ We only get here when enemyDrainTimer = 1
+
  LDA targetVisibility
  BPL tact22
  JSR DrainObjectEnergy
@@ -8817,8 +8926,11 @@
 
 .tact23
 
- LDA #0
- STA enemyTimer1,Y
+ LDA #0                 \ Set enemyDrainTimer = 0 to restart the drain counter
+ STA enemyDrainTimer,Y  \ for the enemy in part 5 of ApplyTactics, so it doesn't
+                        \ drain energy for another 120 timer ticks (120 * 0.06 =
+                        \ 7.2 seconds)
+
  BEQ tact27
 
 .tact24
@@ -8842,8 +8954,8 @@
                         \ dithering the result to the screen, pixel by pixel in
                         \ a random manner
 
- LDA #%01000000         \ Clear bit 7 and set bit 6 of L0C6D ???
- STA L0C6D
+ LDA #%01000000         \ Clear bit 7 and set bit 6 of ditherObjectSights so the
+ STA ditherObjectSights \ updated object is dithered onto the screen
 
 .tact26
 
@@ -8858,7 +8970,9 @@
 
 .tact27
 
- JMP MoveOnToNextEnemy
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
+                        \ in the next iteration of the gameplay loop, returning
+                        \ from the subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -9291,7 +9405,7 @@
  LDA enemyTarget,X
  CMP playerObject
  BNE C1945
- LDA enemyTimer1,X
+ LDA enemyDrainTimer,X
  BEQ C1945
  LDY #&04
  LDA enemyData7,X
@@ -9551,8 +9665,11 @@
                         \ If we get here then we need to drain energy from
                         \ object #X
 
- TXA                    \ Call AbortWhenVisible with the object number in A ???
- JSR AbortWhenVisible
+ TXA                    \ Check to see whether it is safe to redraw object #X
+ JSR AbortWhenVisible   \ without risk of corrupting a screen pan (if there is
+                        \ a risk and it can't be updated, then the call to
+                        \ AbortWhenVisible will not return here and will instead
+                        \ abort tactics for this iteration of the gameplay loop)
 
  LDA objectTypes,X      \ Set A to the type of object #X
 
@@ -9562,9 +9679,10 @@
                         \ If we get here then we are draining energy from a
                         \ robot in object #X
 
- LDY enemyObject        \ Set enemyTimer1 for the enemy object to zero ???
- LDA #0
- STA enemyTimer1,Y
+ LDY enemyObject        \ Set enemyDrainTimer = 0 to restart the drain counter
+ LDA #0                 \ for the enemy in part 5 of ApplyTactics, so it doesn't
+ STA enemyDrainTimer,Y  \ drain energy for another 120 timer ticks (120 * 0.06 =
+                        \ 7.2 seconds)
 
  LDA #3                 \ Set A = 3 so the robot loses one energy unit and
                         \ changes into a boulder (i.e. an object of type 3)
@@ -9862,8 +9980,8 @@
 \       Name: AbortWhenVisible
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Abort applying the tactics for this gameplay loop if the specified
-\             object is visible on-screen
+\    Summary: Abort applying the tactics for this gameplay loop if updating the
+\             object on-screen will corrupt a screen pan
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9878,19 +9996,17 @@
  JSR CheckObjVisibility \ Check whether object A is visible and could therefore
                         \ be seen on-screen by the player
 
- BCS cvis1              \ If the C flag is set then we are either not repeating
-                        \ the same screen pan, or we are but the object is not
-                        \ visible on-screen, so in either case object A won't
-                        \ only partially appear on-screen so we can jump to
-                        \ cvis1 to return from the subroutine and continue the
-                        \ process of applying tactics
-
-                        \ If the C flag is clear then we are about to repeat the
-                        \ same screen pan (as the player is still holding down
-                        \ the same pan key) and the object we just added would be
-                        \ visible in the landscape view if we drew it again, so
-                        \ fall through into FinishEnemyTactics to stop applying
-                        \ tactics for this gameplay loop
+ BCS cvis1              \ If the C flag is clear then the object is partially
+                        \ on-screen and we are about to repeat a screen pan, so
+                        \ the object must not be updated or it could corrupt the
+                        \ landscape view, so in this case fall through into
+                        \ FinishEnemyTactics to stop applying tactics for this
+                        \ gameplay loop
+                        \
+                        \ Otherwise the C flag is set so we can safely update
+                        \ the object without fear of corrupting a screen pan,
+                        \ so we can jump to cvis1 to return from the subroutine
+                        \ without aborting the tactics routine
 
 \ ******************************************************************************
 \
@@ -13170,13 +13286,38 @@
 \   Category: Drawing objects
 \    Summary: ???
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   currentObject       The number of the object to update on-screen
+\
+\   drawLandscape       Configure whether to draw the landscape behind the
+\                       object:
+\
+\                         * Bit 7 clear = draw the landscape behind the object
+\                                         as well as the object
+\
+\                         * Bit 7 set = just draw the object, and configure the
+\                                       interrupt handler to draw random black
+\                                       dots on the screen if the Sentinel has
+\                                       won the game
+\
+\   ditherObjectSights  Configure how the update is drawn onto the screen:
+\
+\                         * Bit 6 set = dither the updated object onto the
+\                                       screen
+\
+\                         * Bit 7 set = remove the sights from the screen
+\                                       before drawing the object
+\
 \ ******************************************************************************
 
 .updo1
 
  LDA #0
- STA L0C6D
- STA L0C4D
+ STA ditherObjectSights
+ STA drawLandscape
 
  STA L0C1E              \ Clear bit 7 of L0C1E ???
 
@@ -13188,7 +13329,7 @@
  BCS updo1
  LDA #&19
  STA L2094
- LDA L0C6D
+ LDA ditherObjectSights
  BPL updo2
  SEI
  JSR RemoveSights
@@ -13209,7 +13350,7 @@
  LDY #0
  STY lastPanKeyPressed
  LDA bufferColumns
- JSR sub_C2997
+ JSR ConfigureObjBuffer
 
  LDA #25                \ Set A = 25 to pass to FillScreen, so we fill the
                         \ screen buffer (as opposed to screen memory)
@@ -13230,7 +13371,7 @@
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
 
- BIT L0C4D
+ BIT drawLandscape
  BPL updo3
  LDY currentObject
  JSR DrawObject
@@ -13271,7 +13412,7 @@
 .updo5
 
  STA L2092+1
- BIT L0C6D
+ BIT ditherObjectSights
  BVC updo7
  BIT sentinelHasWon
  BPL updo6
@@ -13433,7 +13574,7 @@
 \
 \ Arguments:
 \
-\   currentObject       The number of the object number to check
+\   currentObject       The number of the object to check
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18558,20 +18699,21 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2997
+\       Name: ConfigureObjBuffer
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Screen buffer
+\    Summary: Set up the variables required to configure the screen buffer for
+\             updating an object
 \
 \ ------------------------------------------------------------------------------
 \
 \ Other entry points:
 \
-\   CRE17               Contains an RTS
+\   buff1               Contains an RTS
 \
 \ ******************************************************************************
 
-.sub_C2997
+.ConfigureObjBuffer
 
  STA T
  LSR A
@@ -18604,7 +18746,7 @@ L23E3 = C23E2+1
  LDA #&02
  STA screenBufferType
 
-.CRE17
+.buff1
 
  RTS
 
@@ -18647,7 +18789,7 @@ L23E3 = C23E2+1
                         \
                         \   * 9 for block (left), no block (right)
 
- BEQ CRE17              \ If the object type is zero then jump to CRE17 to
+ BEQ buff1              \ If the object type is zero then jump to buff1 to
                         \ return from the subroutine without drawing anything
 
                         \ Otherwise we have set the type of object #63 to the
@@ -18690,9 +18832,9 @@ L23E3 = C23E2+1
                         \ object and is marked as not being visible from the
                         \ player's point of view in the tileVisibility table)
 
- BEQ CRE17              \ If A is zero then we marked this tile as being hidden
+ BEQ buff1              \ If A is zero then we marked this tile as being hidden
                         \ in part 3 of the GetTileViewAngles routine, so jump to
-                        \ CRE17 to return from the subroutine without drawing
+                        \ buff1 to return from the subroutine without drawing
                         \ anything
 
  CMP #%11000000         \ If both bits 6 and 7 are set in the tile data then the
@@ -21089,7 +21231,7 @@ L23E3 = C23E2+1
  LDA #0
  STA tileAltitude
  STA zVectorLo
- STA gazeCheckCounter
+ STA L001E
  LDA #&FF
  STA L0004
  STA yVectorLo
@@ -21183,7 +21325,7 @@ L23E3 = C23E2+1
 
 .C2E60
 
- LDA gazeCheckCounter
+ LDA L001E
  CMP polygonPointCount
  BNE C2E88
  LDA drawViewPitchHi,X
@@ -21232,7 +21374,7 @@ L23E3 = C23E2+1
 
 .C2EA5
 
- INC gazeCheckCounter
+ INC L001E
  JMP C2E56
 
 .C2EAA
@@ -23397,7 +23539,7 @@ L314A = C3148+2
 \
 \                         * 0 = ??? (two-part)
 \
-\                         * 1 = ??? (two-part)
+\                         * 1 = rotating meanie (two-part)
 \
 \                         * 2 = ???
 \
@@ -24495,7 +24637,7 @@ L314A = C3148+2
                         \ the scanner box
 
  LDA numberOfScrolls    \ Set scrollCounter to the number of scrolls required,
- STA scrollCounter      \ so the interrupt routine will scroll the screen by
+ STA scrollCounter      \ so the interrupt handler will scroll the screen by
                         \ this many steps in the background
 
 .game14
@@ -24883,8 +25025,9 @@ L314A = C3148+2
 \   * If a game is not in progress (i.e. we are in the title screen rather than
 \     playing a landscape), return from the handler
 \
-\   * If the Sentinel has won, then call DrawBlackDots (while bit 7 of L0C4D is
-\     set), and return from the handler
+\   * If the Sentinel has won and bit 7 of drawLandscape is set, then call
+\     DrawBlackDots to draw 80 random black dots for the game over screen, and
+\     return from the handler
 \
 \   * If the game is paused, scan for the pause and volume keys and return from
 \     the handler
@@ -24957,8 +25100,8 @@ L314A = C3148+2
                         \ without updating the game state
 
  LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is set then the Sentinel
- BMI irqh7              \ has won the game, so jump to irqh7 to ??? and return
-                        \ from the interrupt handler
+ BMI irqh7              \ has won the game, so jump to irqh7 to draw black dots
+                        \ on the game over screen (when it is showing)
 
  LDA gamePaused         \ If bit 7 of gamePaused is set then the game is paused,
  BMI irqh5              \ so jump to irqh5 to scan for the unpause and volume
@@ -25036,10 +25179,19 @@ L314A = C3148+2
 
 .irqh7
 
-                        \ If we get here then the Sentinel has won the game
+                        \ If we get here then the Sentinel has won the game, so
+                        \ we draw black dots on the game over screen (when it is
+                        \ showing)
 
- LDA L0C4D              \ If bit 7 of L0C4D is clear, skip the following to
- BPL irqh8              \ return from the interrupt handler ???
+ LDA drawLandscape      \ If bit 7 of drawLandscape is clear, skip the
+ BPL irqh8              \ following to return from the interrupt handler
+
+                        \ If bit 7 of drawLandscape is set then we are showing
+                        \ the game over screen, which combines dithering of an
+                        \ object to the screen while at the same time fading the
+                        \ screen to black, to create the hypnotic effect of the
+                        \ winning entity fading in and out of the screen as the
+                        \ game ends
 
  JSR DrawBlackDots      \ Draw 80 randomly positioned dots on the screen in
                         \ colour 1 (black) to fade the screen to black in a
@@ -25699,7 +25851,7 @@ L314A = C3148+2
 \ ------------------------------------------------------------------------------
 \
 \ This table contains the address within the screen buffer from which the
-\ interrupt routine should start pulling screen content to scroll onto the
+\ interrupt handler should start pulling screen content to scroll onto the
 \ screen, depending on the direction of the scroll. The content that should be
 \ pulled onto the screen at the start of the scrolling process is as follows:
 \
@@ -25938,12 +26090,12 @@ L314A = C3148+2
  STA numberOfScrolls    \ Store the number of scroll steps required in the
                         \ variable
                         \
-                        \ When this variable is non-zero, the interrupt routine
+                        \ When this variable is non-zero, the interrupt handler
                         \ will scroll the screen by this many steps in the
                         \ background
 
                         \ Fall through into SetBufferAddress to set the address
-                        \ from which the interrupt routine should start fetching
+                        \ from which the interrupt handler should start fetching
                         \ new content to scroll onto the screen
 
 \ ******************************************************************************
@@ -25952,7 +26104,7 @@ L314A = C3148+2
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Set screenBufferAddr(1 0) to the address from which the interrupt
-\             routine should fetch new content to scroll onto the screen
+\             handler should fetch new content to scroll onto the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25976,7 +26128,7 @@ L314A = C3148+2
  STA screenBufferAddr   \ screenBufferHi and screenBufferLo lookup tables
  LDA screenBufferHi,Y   \
  STA screenBufferAddr+1 \ This sets screenBufferAddr(1 0) to the address from
-                        \ which the interrupt routine should start pulling
+                        \ which the interrupt handler should start pulling
                         \ screen content to scroll onto the screen, so:
                         \
                         \   * When panning right: The left column of the
@@ -25996,7 +26148,7 @@ L314A = C3148+2
                         \     scrolls in from below
                         \
                         \ So this sets screenBufferAddr(1 0) to the address
-                        \ where the interrupt routine should start fetching new
+                        \ where the interrupt handler should start fetching new
                         \ content to scroll onto the screen
                         \
                         \ See the documentation for screenBufferHi for a
@@ -35706,10 +35858,16 @@ L314A = C3148+2
  LDA #1                 \ Set currentObject = 1 so the call to DrawUpdatedObject
  STA currentObject      \ draws object #1
 
- LDA #%11000000         \ Set bits 6 and 7 of L0C4D ???
- STA L0C4D
+ LDA #%11000000         \ Set bit 7 of drawLandscape so the interrupt handler
+ STA drawLandscape      \ draws random black dots on the screen, so we combine
+                        \ dithering of object #1 to the screen while at the same
+                        \ time fading the screen to black, to create the
+                        \ hypnotic effect of the winning entity fading in and
+                        \ out of the screen as the game ends
 
- STA L0C6D              \ Set bits 6 and 7 of L0C6D ???
+ STA ditherObjectSights \ Set bits 6 and 7 of ditherObjectSights so the call to
+                        \ DrawUpdatedObject removes the sights from the screen
+                        \ and dithers object #1 onto the screen
 
  LSR L0C1E              \ Clear bit 7 of L0C1E ???
 
@@ -36065,7 +36223,7 @@ L314A = C3148+2
 \       Name: DrawTitleObjects
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: ???
+\    Summary: Draw an object on top of a tower on the title screen
 \
 \ ------------------------------------------------------------------------------
 \

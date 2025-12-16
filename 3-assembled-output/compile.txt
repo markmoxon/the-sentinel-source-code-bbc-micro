@@ -90,6 +90,8 @@
      001E
 .gazeCheckCounter
      001E
+.L001E
+     001E
 .yawAdjustmentLo
      001F
 .screenLeftYawHi
@@ -2434,7 +2436,7 @@
      0C0C   00
 .gameplayStack
      0C0D   00
-.L0C0E
+.meanieYawStep
      0C0E   00
 .textDropShadow
      0C0F   00
@@ -2462,7 +2464,7 @@
      0C1E   00
 .samePanKeyPress
      0C1F   00
-.enemyTimer1
+.enemyDrainTimer
      0C20   00
      0C21   00
      0C22   00
@@ -2471,7 +2473,7 @@
      0C25   00
      0C26   00
      0C27   00
-.enemyTimer2
+.enemyRotateTimer
      0C28   00
      0C29   00
      0C2A   00
@@ -2521,7 +2523,7 @@
      0C4B   80
 .screenBackground
      0C4C   01
-.L0C4D
+.drawLandscape
      0C4D   00
 .sentinelHasWon
      0C4E   00
@@ -2585,7 +2587,7 @@
      0C6B   00
 .topObjectOnStack
      0C6C   00
-.L0C6D
+.ditherObjectSights
      0C6D   00
 .enemyCheckingRobot
      0C6E   00
@@ -6871,7 +6873,7 @@
      2994   14
      2995   14
      2996   08
-.sub_C2997
+.ConfigureObjBuffer
      2997   85 74      STA &74
      2999   4A         LSR A
      299A   85 07      STA &07
@@ -6902,7 +6904,7 @@
      29C2   85 29      STA &29
      29C4   A9 02      LDA #&02
      29C6   85 10      STA &10
-.CRE17
+.buff1
      29C8   60         RTS
 .tobj1
      29C9   BD 80 01   LDA &0180,X
