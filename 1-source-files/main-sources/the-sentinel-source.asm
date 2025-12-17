@@ -8406,8 +8406,9 @@
                         \ the subroutine using a tail call
 
  JMP tact25             \ Otherwise jump to tact25 with X set to the object
-                        \ number of the tree to update the tree on-screen and
-                        \ return from the subroutine using a tail call
+                        \ number of the tree to update it on-screen with a
+                        \ dithered effect and return from the subroutine using
+                        \ a tail call
 
 \ ******************************************************************************
 \
@@ -8446,7 +8447,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 1 of 6)
+\       Name: ApplyTactics (Part 1 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
@@ -8508,7 +8509,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 2 of 6)
+\       Name: ApplyTactics (Part 2 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
@@ -8524,13 +8525,15 @@
                         \ checks below are performed from the point of view of
                         \ the meanie
 
- LDY enemyTarget,X      \ Set Y to the object number in enemyTarget, so object #Y
-                        \ is the meanie's target object
+ LDY enemyTarget,X      \ Set Y to the object number in enemyTarget, so when we
+                        \ refer to object #Y, it's the meanie's target object
 
- LDA objectFlags,Y      \ If bit 7 of the object flags for object #Y is set then
- BMI tact4              \ object #Y doesn't have an associated object, so jump
-                        \ to tact4 to restart the enemy's drain counter and turn
-                        \ the meanie back into a tree
+ LDA objectFlags,Y      \ If bit 7 of the object flags for the meanie's target
+ BMI tact4              \ is set then the target doesn't have an associated
+                        \ object, so the player must have transferred and
+                        \ reabsorbed the original robot that the meanie was
+                        \ targeting, so jump to tact4 to restart the enemy's
+                        \ drain counter and turn the meanie back into a tree
 
  LDA #0                 \ Set A = 0 to pass to CheckEnemyGaze as the object type
                         \ of the target (object type 0 being a robot), so we
@@ -8641,7 +8644,7 @@
  PLA                    \ Retrieve the enemy object number from the stack into X
  TAX
 
- JMP tact26             \ Jump to tact26 to draw the updated object without a
+ JMP tact26             \ Jump to tact26 to draw the updated object #X without a
                         \ dithered effect, so the meanie rotates instantly if it
                         \ is on the screen
 
@@ -8673,13 +8676,12 @@
  STA objectTypes,X      \ type 2)
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
-                        \ the tree to update the tree on-screen with a dithered
-                        \ effect and return from the subroutine using a tail
-                        \ call
+                        \ the tree to update it on-screen with a dithered effect
+                        \ and return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 3 of 6)
+\       Name: ApplyTactics (Part 3 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: If the enemy has any residual energy, try expending it onto the
@@ -8715,13 +8717,12 @@
 
  JMP tact25             \ Otherwise that's enough tactics for this iteration, so
                         \ jump to tact25 with X set to the object number of
-                        \ the tree, so we draw the new tree on-screen as part of
-                        \ the landscape and return from the subroutine using a
-                        \ tail call
+                        \ the tree to update ir on-screen with a dithered effect
+                        \ and return from the subroutine using a tail call
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 4 of 6)
+\       Name: ApplyTactics (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: ???
@@ -8738,11 +8739,12 @@
 
  JSR sub_C1AA7          \ ???
 
- LDX enemyObject
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
 
  BCS tact8              \ If sub_C1AA7 set the C flag, jump to tact8 ???
 
- LDA #&40
+ LDA #64
  STA enemyData1,X
 
  BNE tact15             \ Jump to tact15 to ??? (this BNE is effectively a JMP
@@ -8754,7 +8756,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 5 of 6)
+\       Name: ApplyTactics (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: ???
@@ -8831,7 +8833,10 @@
  LDY enemyObject
  LDA #&1E
  STA enemyTacticTimer,Y
- JMP tact25
+
+ JMP tact25             \ Jump to tact25 with X set to the object number of
+                        \ the ??? to update it on-screen with a dithered effect
+                        \ and return from the subroutine using a tail call
 
 .tact16
 
@@ -8866,16 +8871,18 @@
  JSR MakeSound-6
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
-                        \ are applying tactics (so this is now object #X)
+                        \ are applying tactics
 
- JMP tact26
+ JMP tact26             \ Jump to tact26 to draw the updated object #X without a
+                        \ dithered effect, so the enemy rotates instantly if it
+                        \ is on the screen
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 6 of 6)
+\       Name: ApplyTactics (Part 6 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Drain energy ???
 \
 \ ******************************************************************************
 
@@ -8910,7 +8917,10 @@
  LDA #&1E
  STA enemyTacticTimer,Y
  BCS tact27
- JMP tact25
+
+ JMP tact25             \ Jump to tact25 with X set to the object number of
+                        \ the ??? to update it on-screen with a dithered effect
+                        \ and return from the subroutine using a tail call
 
 .tact22
 
@@ -8939,25 +8949,35 @@
  STA enemyTacticTimer,Y
  LDX enemyMeanieTree,Y
 
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 7 of 7)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Redraw the object on the screen, optionally with a dithered
+\             effect
+\
+\ ******************************************************************************
+
 .tact25
 
-                        \ We jump here with an object number in X, depending on
-                        \ how we got here:
+                        \ We jump here to update object #X on-screen by drawing
+                        \ the object (or the landscape without the object) onto
+                        \ the screen with a dithered effect
                         \
-                        \   * From ApplyEnemyTactics: X is the tree that was
-                        \     spawned by an enemy being drained of energy ???
-                        \
-                        \   * From ???
-                        \
-                        \ We now update that object on-screen by drawing the
-                        \ object (or the landscape without the object) and
-                        \ dithering the result to the screen, pixel by pixel in
-                        \ a random manner
+                        \ This is used to show objects being absorbed, for
+                        \ example
 
  LDA #%01000000         \ Clear bit 7 and set bit 6 of ditherObjectSights so the
  STA ditherObjectSights \ updated object is dithered onto the screen
 
 .tact26
+
+                        \ If we jump here instead of tact25, then we update
+                        \ object #X on-screen, but instantly rather than with a
+                        \ dithered effect
+                        \
+                        \ This is used to show objects rotating, for example
 
  STX currentObject      \ Set the current object to X so the call 
 
@@ -9554,8 +9574,8 @@
                         \
                         \ This means that when we pan the screen, the new part
                         \ of the screen that pans into view might show part of
-                        \ the meanie while the rest of the screen won't, and that
-                        \ won't look good
+                        \ the meanie while the rest of the screen won't, and
+                        \ that won't look good
                         \
                         \ So jump to C19F1 to move on to the next enemy, thus
                         \ aborting the whole process
