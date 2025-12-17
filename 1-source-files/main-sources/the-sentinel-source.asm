@@ -353,7 +353,12 @@
 
 .yawAdjustmentLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A yaw adjustment to apply to the landscape drawing
+                        \ process so that when we update objects on-screen, we
+                        \ can yaw the viewer's gaze to the right to move the
+                        \ left edge of the object to the left edge of the screen
+                        \ so the object will fit into the screen buffer as
+                        \ efficiently as possible (low byte)
 
 .screenLeftYawHi
 
@@ -805,7 +810,9 @@
 
 .viewingQuadrantx4
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The quadrant number containing the right edge of the
+                        \ viewing arc, multiplied by 4, for use when calculating
+                        \ the number of faces in a tile in DrawSlopingTile
 
 .smoothingAction
 
@@ -2118,7 +2125,7 @@
 .ditherObjectSights
 
  EQUB 0                 \ Configures how an updated object is drawn onto the
-                        \ screen
+                        \ screen in the DrawUpdatedObject routine
                         \
                         \   * Bit 6 set = dither the updated object onto the
                         \                 screen
@@ -2352,9 +2359,10 @@
                         \ the sights, relative to the top-left corner of the
                         \ character block containig the top of the sights
 
-.L0CCD
+.pixelByteToDither
 
- EQUB 0                 \ ???
+ EQUB 0                 \ A random pixel byte in a character row in the screen
+                        \ buffer to use when dithering an object to the screen
 
 .doNotCheckSecret
 
@@ -2365,13 +2373,17 @@
                         \
                         \   * Bit 7 set = do not perform check
 
-.L0CCF
+.bitMaskDither
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Used to store a bit mask in the DitherScreenBuffer
+                        \ routine that has a matching number of leading zeroes
+                        \ as the size of the screen buffer in bytes
 
-.L0CD0
+.randomPixelDither
 
- EQUB 0                 \ ???
+ EQUB 0                 \ Storage for a random value in the DitherScreenBuffer
+                        \ routine to use as a random pixel number when drawing
+                        \ the dithered effect
 
 .numberOfScrolls
 
@@ -2386,9 +2398,10 @@
  EQUB 0                 \ A counter for the inner loop when dithering objects to
                         \ the screen in the DitherScreenBuffer routine
 
-.L0CD3
+.bufferWidthBytes
 
- EQUB 0                 \ ???
+ EQUB 0                 \ The width of the screen buffer in pixel bytes for
+                        \ implementing the dithered effect in DitherScreenBuffer
 
 .minObjWidth
 
@@ -5995,8 +6008,10 @@
  LDA #2                 \ Make sound #2 (create/absorb object white noise)
  JSR MakeSound
 
- LDA #%11000000         \ Set bit 6 and 7 of ditherObjectSights ???
- STA ditherObjectSights
+ LDA #%11000000         \ Set bits 6 and 7 of ditherObjectSights so we dither
+ STA ditherObjectSights \ the updated object onto the screen (bit 6) and remove
+                        \ the sights before updating (bit 7) in the call to the
+                        \ DrawUpdatedObject routine
 
  LSR doNotDitherObject  \ Clear bit 7 of doNotDitherObject to enable objects to
                         \ be updated on the screen with a dithered effect
@@ -8980,7 +8995,8 @@
                         \ example
 
  LDA #%01000000         \ Clear bit 7 and set bit 6 of ditherObjectSights so the
- STA ditherObjectSights \ updated object is dithered onto the screen
+ STA ditherObjectSights \ updated object is dithered onto the screen in the call
+                        \ to DrawUpdatedObject below
 
 .tact26
 
@@ -9357,9 +9373,10 @@
 .egaz2
 
  LSR enemyCheckingRobot \ Clear bit 7 of enemyCheckingRobot to pass to the next
-                        \ call to FollowGazeVector (which will be the second
-                        \ call if we are looking at a robot, or the only call if
-                        \ we are not looking at a robot)
+                        \ call to FollowGazeVector, so it returns results for
+                        \ the tile visibility rather than the object itself (so
+                        \ this will be on the second call if we are looking at a
+                        \ robot, or the only call if we are not looking at a robot)
 
  LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo) - &E0
  SEC                    \                  = yDelta(Hi Lo) - 224
@@ -10297,7 +10314,8 @@
                         \ absorb or transfer
 
  LSR enemyCheckingRobot \ Clear bit 7 of enemyCheckingRobot to pass to the call
-                        \ to FollowGazeVector below ???
+                        \ to FollowGazeVector below, so it returns results for
+                        \ the tile visibility rather than the object itself
 
  JSR GetSightsVector    \ Calculate the vector from the player's eyes to the
                         \ sights, returning it in both angle format:
@@ -13359,7 +13377,7 @@
 
 .updo1
 
- LDA #0                 \ Clear bits 6 and 7 of ditherObjectSights so the next
+ LDA #%00000000         \ Clear bits 6 and 7 of ditherObjectSights so the next
  STA ditherObjectSights \ call to DrawUpdatedObject will, by default, draw the
                         \ object straight onto the screen without a dithered
                         \ effect, and will not remove the sights first
@@ -13386,12 +13404,12 @@
                         \ If the object is visible, also set the following:
                         \
                         \   * bufferColumns = the number of character columns
-                        \     in the screen buffer that the object spans
+                        \     in the screen buffer that the object spans (capped
+                        \     to a maximum value of 20)
                         \
                         \   * objYawOffset = the yaw offset of the left edge of
                         \     the object from the left edge of the screen, in
                         \     character columns
-
 
  BCS updo1              \ If the C flag is set then the object is not visible
                         \ on-screen, so jump to updo1 to reset the various
@@ -13408,13 +13426,15 @@
                         \ the object on-screen, so jump to updo2 to skip the
                         \ following
 
- SEI                    \ Bit 7 of ditherObjectSights is set, so we need to
- JSR RemoveSights       \ remove the sights from the screen before we update the
- CLI                    \ object on-scren, so call the RemoveSights routine
-                        \
-                        \ We disable interrupts during this process to ensure
-                        \ that the screen doesn't scroll while we are removing
-                        \ the sights, as that could corrupt the screen
+ SEI                    \ Disable interrupts to ensure that the screen doesn't
+                        \ scroll while we are removing the sights, as that could
+                        \ corrupt the screen
+
+ JSR RemoveSights       \ Bit 7 of ditherObjectSights is set, so we need to
+                        \ remove the sights from the screen before we update the
+                        \ object on-screen, so call the RemoveSights routine
+
+ CLI                    \ Re-enable interrupts
 
 .updo2
 
@@ -13442,8 +13462,11 @@
                         \ The addition works because the ROR instruction clears
                         \ the C flag, as A is zero before the rotation
 
- LDY #0                 \ Zero lastPanKeyPressed to indicate pan right ???
- STY lastPanKeyPressed
+ LDY #0                 \ Zero lastPanKeyPressed so that when we draw the screen
+ STY lastPanKeyPressed  \ buffer onto the screen below, we draw the buffer onto
+                        \ the screen in columns, working from left to right, in
+                        \ the same way as for a pan to the right (which is what
+                        \ a zero value of lastPanKeyPressed usually represents)
 
  LDA bufferColumns      \ Set up the screen buffer so it will hold an object
  JSR ConfigureObjBuffer \ with the number of character columns that the object
@@ -13512,8 +13535,9 @@
 
  LDX viewingObject      \ Set X to the viewing object
 
- LDA #0                 \ Set yawAdjustmentLo = 0 ???
- STA yawAdjustmentLo
+ LDA #0                 \ Set yawAdjustmentLo = 0 so when we draw the landscape
+ STA yawAdjustmentLo    \ again, it doesn't include the yaw adjustment for
+                        \ drawing this object
 
  SEC                    \ Subtract yawAdjustmentHi from the yaw angle for the
  LDA objectYawAngle,X   \ viewing, so the reverses the addition that we did
@@ -13613,91 +13637,162 @@
                         \ In either case we now need to draw the whole object
                         \ onto the screen
 
- SEI
- JSR RemoveSights
- SEC
- ROR doNotDrawSights
- CLI
+ SEI                    \ Disable interrupts to ensure that the screen doesn't
+                        \ scroll while we are removing the sights, as that could
+                        \ corrupt the screen
 
- LDA objScreenAddr
- STA toAddr
- LDA objScreenAddr+1
- STA toAddr+1
- LDA bufferColumns
- STA loopCounter
- JMP updo10
+ JSR RemoveSights       \ Remove the sights from the screen before we update the
+                        \ object on-screen by calling the RemoveSights routine
+
+ SEC                    \ Set bit 7 of doNotDrawSights so the DrawSights routine
+ ROR doNotDrawSights    \ does not draw the sights on-screen going forward
+                        \
+                        \ This prevents the interrupt handler from drawing the
+                        \ sights, in case it starts processing a sights-related
+                        \ key press while we still are doing the updating
+
+ CLI                    \ Re-enable interrupts
+
+ LDA objScreenAddr      \ Set toAddr(1 0) to the address of the object in screen
+ STA toAddr             \ memory which we put into objScreenAddr(1 0) above, so
+ LDA objScreenAddr+1    \ we copy the screen contents from the screen buffer to
+ STA toAddr+1           \ the correct place on-screen
+
+ LDA bufferColumns      \ We are now going to loop through the character columns
+ STA loopCounter        \ that we want to copy to the screen, so set a loop
+                        \ counter to the number of columns in bufferColumns,
+                        \ which we set to the column count for covering the
+                        \ whole object (or as many as we can fit into the column
+                        \ buffer, at least)
+
+ JMP updo10             \ We are now ready to copy the configured number of
+                        \ character columns from the screen buffer to the
+                        \ screen, so jump into the following loop at updo10
 
 .updo8
 
- LDA objScreenAddr
- CLC
- ADC #&08
- STA objScreenAddr
- STA toAddr
- LDA objScreenAddr+1
- ADC #&00
- CMP #&80
- BCC updo9
- SBC #&20
+                        \ We have updated an on-screen character column, so now
+                        \ we move to the next character column to the right
+
+ LDA objScreenAddr      \ Set (A objScreenAddr) = objScreenAddr(1 0) + 8
+ CLC                    \
+ ADC #8                 \ and (A toAddr) = objScreenAddr(1 0) + 8
+ STA objScreenAddr      \
+ STA toAddr             \ So this moves both the from and to addresses to the
+ LDA objScreenAddr+1    \ next character column along
+ ADC #0
+
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC updo9              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
 .updo9
 
- STA objScreenAddr+1
- STA toAddr+1
+ STA objScreenAddr+1    \ Store the high byte of the result, so we now have:
+                        \
+                        \   objScreenAddr(1 0) = objScreenAddr(1 0) + 8
+                        \
+                        \ with the address wrapped around as required
+
+ STA toAddr+1           \ Store the high byte of the result, so we now have:
+                        \
+                        \   toAddr(1 0) = toAddr(1 0) + 8
+                        \
+                        \ with the address wrapped around as required
 
 .updo10
 
- LDY lastPanKeyPressed  \ Set Y to the direction of the last pan key that was
-                        \ pressed (which may not still be held down)
+                        \ This is where we enter the screen-updating loop
+
+ LDY lastPanKeyPressed  \ Set Y to the value of lastPanKeyPressed, which we set
+                        \ to zero above
                         \
-                        \ So this contains the direction of any scrolling that
-                        \ we still need to apply, as follows:
-                        \
-                        \   * 0 = pan right
-                        \
-                        \   * 1 = pan left
-                        \
-                        \   * 2 = pan up
-                        \
-                        \   * 3 = pan down
+                        \ Zero is normally the value for when we are panning the
+                        \ screen to the right, but we use it here because when
+                        \ we pan to the right, we draw the screen buffer onto
+                        \ the screen in columns, working from left to right, and
+                        \ that's also what we want to do when updating the
+                        \ object
 
  JSR ShowScreenBuffer   \ Update the player's scrolling landscape view by
                         \ copying the relevant parts of the screen buffer into
                         \ screen memory
 
- DEC loopCounter
- BNE updo8
+ DEC loopCounter        \ Decrement the loop counter to move on to the next
+                        \ character column in the updated object
+
+ BNE updo8              \ Loop back to keep drawing character columns from the
+                        \ screen buffer until we have drawn them all
 
 .updo11
 
- LDA objYawOffset
- CLC
- ADC bufferColumns
- STA objYawOffset
- LDA objYawWidth
- SEC
- SBC bufferColumns
- BEQ updo12
- STA objYawWidth
- STA bufferColumns
+                        \ We now need to check whether we have updated the whole
+                        \ object on-screen
+                        \
+                        \ The column buffer is 24 character rows tall and up to
+                        \ 20 character columns wide, so if the on-screen object
+                        \ wider than 20 character columns (i.e. wider than half
+                        \ a screen width), then we can't fit the whole object
+                        \ into the column buffer in one go, so we need to draw
+                        \ it in two stages
+
+ LDA objYawOffset       \ Set objYawOffset = objYawOffset + bufferColumns
+ CLC                    \
+ ADC bufferColumns      \ This sets the yaw offset to the character column to
+ STA objYawOffset       \ the right of the on-screen block that we just drew
+                        \ to update the object
+
+ LDA objYawWidth        \ Set A = objYawWidth - bufferColumns
+ SEC                    \
+ SBC bufferColumns      \ We just drew bufferColumns character columns of the
+                        \ object and objYawWidth contains the full width of the
+                        \ on-screen object in character columns, so A now
+                        \ contains the number of character columns that we still
+                        \ have to draw
+
+ BEQ updo12             \ If A = 0 then we have drawn the whole object, so jump
+                        \ to updo12 to finish off
+
+                        \ If we get here then A is non-zero so we still have
+                        \ more of the object to update on-screen, so we update
+                        \ the variables and loop back to draw the next set of
+                        \ 20 character columns to the right, dithering them in
+                        \ the same way if required
+
+ STA objYawWidth        \ Set the width of the on-screen object to A so it
+                        \ contains the number of character columns we still have
+                        \ to draw
+
+ STA bufferColumns      \ Configure the buffer width to the correct size for the
+                        \ second batch of character columns
 
  STA ditherOuterLoop    \ Set ditherOuterLoop to A, so the dithered effect in
                         \ the DitherScreenBuffer routine implements A outer
                         \ loops, where each inner loop dithers 255 pixels to the
                         \ screen
 
- JMP updo2
+ JMP updo2              \ Jump back to updo2 to update the second part of the
+                        \ on-screen object
 
 .updo12
 
- LSR doNotDrawSights
+ LSR doNotDrawSights    \ Clear bit 7 of doNotDrawSights so the DrawSights
+                        \ routine is enabled once again
 
- LDA sightsAreVisible
- BPL updo13
+ LDA sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
+ BPL updo13             \ are not currently being shown on-scren, so jump to
+                        \ updo13 to skip the following
 
- SEI
- JSR DrawSights
- CLI
+ SEI                    \ Disable interrupts to ensure that the screen doesn't
+                        \ scroll while we are drawing the sights, as that could
+                        \ corrupt the screen
+
+ JSR DrawSights         \ Bit 7 of sightsAreVisible is set, so we need to draw
+                        \ the sights that we removed when updating the object,
+                        \ so call DrawSights to put them back
+
+ CLI                    \ Re-enable interrupts
 
 .updo13
 
@@ -13758,7 +13853,12 @@
 
 .yawAdjustmentHi
 
- EQUB 0
+ EQUB 0                 \ A yaw adjustment to apply to the landscape drawing
+                        \ process so that when we update objects on-screen, we
+                        \ can yaw the viewer's gaze to the right to move the
+                        \ left edge of the object to the left edge of the screen
+                        \ so the object will fit into the screen buffer as
+                        \ efficiently as possible (high byte)
 
 \ ******************************************************************************
 \
@@ -16713,7 +16813,8 @@ L23E3 = C23E2+1
  STA viewingQuadrantx4  \ containing the right edge of the viewing arc,
                         \ multiplied by 4
                         \
-                        \ This is used by the DrawSlopingTile routine ???
+                        \ This is used by the DrawSlopingTile routine to work
+                        \ out the number of faces in a sloping tile
 
  TYA                    \ Set viewingQuadrantOpp = Y - 2
  SEC                    \
@@ -18179,7 +18280,11 @@ L23E3 = C23E2+1
                         \     the screen, so the result is effectively a screen
                         \     x-coordinate where zero is the left screen edge
                         \
-                        \   * yawAdjustmentLo from the low byte so ???
+                        \   * yawAdjustmentLo from the low byte so if we are
+                        \     drawing an object for updating, we include the
+                        \     correct yaw offset to enable the object to be
+                        \     drawn flush with the left edge of the screen
+                        \     buffer (see the DrawUpdatedObject routine)
 
  LDY drawingTableIndex  \ Set Y to the drawing table index for this tile
 
@@ -21254,6 +21359,9 @@ L23E3 = C23E2+1
 \
 \   * Colour 3 can be green, red, yellow or cyan
 \
+\ Note that all the tiles have an edge colour of 0 (blue) apart from the first
+\ one, which has an edge colour of green to match the fill colour. ???
+\
 \ ******************************************************************************
 
 .tileShapeColour
@@ -23988,7 +24096,7 @@ L314A = C3148+2
                         \ DELETE (volume down, volume up, pause, unpause)
 
  BEQ volk1              \ If X = 0 then "7" (volume down) has been pressed, so
-                        \ jump to volk1 ???
+                        \ jump to volk1 to process it
 
                         \ If we get here then X must be 1, 2 or 3 (for "8",
                         \ COPY and DELETE)
@@ -24597,7 +24705,12 @@ L314A = C3148+2
  STA screenOrBuffer     \ routines to draw directly onto the screen (as opposed
                         \ to drawing into the screen buffer)
 
- STA lastPanKeyPressed  \ Zero lastPanKeyPressed to indicate pan right ???
+ STA lastPanKeyPressed  \ Zero lastPanKeyPressed so that when we draw the whole
+                        \ landscape view onto the screen below, we draw it in
+                        \ character columns, working from left to right, in the
+                        \ same order as we would for a pan to the right (which
+                        \ is what a zero value of lastPanKeyPressed usually
+                        \ represents)
 
  STA sightsByteCount    \ Set sightsByteCount to zero to reset the sights pixel
                         \ byte stash
@@ -27914,13 +28027,23 @@ L314A = C3148+2
 \ be able to store eight full character rows in the buffer).
 \
 \ We only need to use the second batch of locations when we are drawing the left
-\ or right buffers when scrolling sideways, as we then need to fit 24 character
-\ rows into the buffer. We can fit the first 16 rows into the first batch of
-\ buffer rows, but we need more. Luckily, when scrolling sideways, each row is
-\ only eight character blocks wide, so each buffer row only needs to be 64 bytes
-\ long rather than the 320 bytes needed when scrolling up or down. This means
-\ that we are only using the first 64 bytes of each buffer, so we can stick a
-\ second batch of buffers in the latter part of each of the first batch.
+\ or right buffers when scrolling sideways, or when updating an object on-screen
+\ via the screen buffer, as we then need to fit all 24 character rows into the
+\ buffer. We can fit the first 16 rows into the first batch of buffer rows, but
+\ we need more.
+\
+\ Luckily, when scrolling sideways, each row is only eight character blocks
+\ wide, so each buffer row only needs to be 64 bytes long rather than the 320
+\ bytes needed when scrolling up or down. This means that we are only using the
+\ first 64 bytes of each buffer, so we can stick a second batch of buffers in
+\ the latter part of each of the first batch.
+\
+\ However, when using the screen buffer to update an on-screen object, we can't
+\ necessarily fit the entire object into the screen buffer in one go, as it
+\ could be as wide as the screen. In this case we use the full 160 bytes of each
+\ row in the screen buffer, which can contain half a screen (as half a screen is
+\ 20 character rows that takes up 160 bytes). We therefore do the object update
+\ in two stages.
 \
 \ In other words, when the player pans up or down, we need to draw eight
 \ full-width character rows of new screen content into the screen buffers, each
@@ -27965,8 +28088,14 @@ L314A = C3148+2
 \   &4720 to &475F for character row 22 (first 64 bytes of screenBufferRow22)
 \   &4860 to &489F for character row 23 (first 64 bytes of screenBufferRow23)
 \
+\ And when we update an object on-screen that is wider than half a screen, we
+\ use 160 bytes in all 24 row buffers to draw the first 20 character columns of
+\ the object, and then we repeat the process to finish off drawing the remainder
+\ of the object.
+\
 \ This structure ensures that the screen buffer always fits into the collection
-\ of screenBufferRow blocks, irrespective of the scrolling direction.
+\ of screenBufferRow blocks, irrespective of the scrolling direction or the size
+\ of the object we're drawing.
 \
 \ ******************************************************************************
 
@@ -34571,7 +34700,11 @@ L314A = C3148+2
                         \     is the relative yaw angle from object #X (the
                         \     viewer's gaze) to the object
                         \
-                        \   * yawAdjustmentLo from the low byte so ???
+                        \   * yawAdjustmentLo from the low byte so if we are
+                        \     drawing an object for updating, we include the
+                        \     correct yaw offset to enable the object to be
+                        \     drawn flush with the left edge of the screen
+                        \     buffer (see the DrawUpdatedObject routine)
                         \
                         \ and add the following:
                         \
@@ -35892,92 +36025,171 @@ L314A = C3148+2
 
 .DitherScreenBuffer
 
- LDA #&FF
- STA ditherInnerLoop
- LDA bufferColumns
- ASL A
- ASL A
- ASL A
- STA L0CD3
- SEC
- SBC #&01
- BEQ dith2
- LDY #&FF
+ LDA #255               \ Each inner loop of the dithering process updates 255
+ STA ditherInnerLoop    \ random pixels on-screen, so set the inner loop counter
+                        \ in ditherInnerLoop accordingly
+
+ LDA bufferColumns      \ Set bufferWidthBytes = bufferColumns * 8
+ ASL A                  \
+ ASL A                  \ This converts the number of character columns into
+ ASL A                  \ pixel bytes, as each character block contains eight
+ STA bufferWidthBytes   \ bytes
+
+ SEC                    \ Set A = bufferWidthBytes - 1
+ SBC #1
+
+                        \ We now set bitMask to a bit mask that covers all the
+                        \ non-zero bits in the list length in A, so if A is of
+                        \ the form %001xxxxx, for example, then bitMask will
+                        \ contain %00111111, while A being like %000001xx will
+                        \ give a bitMask of %00000111
+                        \
+                        \ To do this we count the number of continuous clear
+                        \ bits at the top of A, and then use this as an index
+                        \ into the leadingBitMask table
+                        \
+                        \ So we count zeroes from bit 7 down until we hit a 1,
+                        \ and put the result into Y
+
+ BEQ dith2              \ If A = 0 then jump to dith2 to skip the following
+                        \ process and set bitMaskDither to %00000000, which has
+                        \ the same number of leading zeroes as A
+
+ LDY #&FF               \ Set Y = -1 so the following loop counts the number of
+                        \ zeroes correctly
 
 .dith1
 
- ASL A
- INY
- BCC dith1
- LDA leadingBitMask,Y
+ ASL A                  \ Shift A to the left, moving the top bit into the C
+                        \ flag
+
+ INY                    \ Increment the zero counter in Y
+
+ BCC dith1              \ Loop back to keep shifting and counting zeroes until
+                        \ we shift a 1 out of bit 7, at which point Y contains
+                        \ the length of the run of zeroes in bits 7 to 0 of the
+                        \ buffer width in bytes
+
+ LDA leadingBitMask,Y   \ Set A to the Y-th entry from the leadingBitMask table,
+                        \ which will give us a bit mask with a matching number
+                        \ of leading zeroes as A
 
 .dith2
 
- STA L0CCF
+ STA bitMaskDither      \ Set bitMaskDither to a bit mask with a matching number
+                        \ of leading zeroes as the buffer width in bytes
 
 .dith3
 
- SEI
+ SEI                    \ Disable interrupts so we can fateh a random number
+                        \ without clashing with the dithering process in the
+                        \ handler (which is activated on the game over screen,
+                        \ which also uses this routine)
 
  JSR GetRandomNumber    \ Set A to a random number
 
- LDY randomGenerator+1
- STY L0CD0
- CLI
- CLC
- ADC L0CCD
- AND L0CCF
- CMP L0CD3
- BCC dith4
- SBC L0CD3
+ LDY randomGenerator+1  \ Set randomPixelDither to the second byte of the random
+ STY randomPixelDither  \ number generator, so this is also a random number
+
+ CLI                    \ Re-enable interrupts
+
+ CLC                    \ Set A = A + pixelByteToDither
+ ADC pixelByteToDither  \
+                        \ This sets A to a random value in the range 0 to 255
+                        \ that's unlikely to be the same as pixelByteToDither,
+                        \ which is the pixel byte that we dithered last time we
+                        \ were here
+                        \
+                        \ We don't care that pixelByteToDither isn't initialised
+                        \ outside of the reset routine, as we want this to be
+                        \ random
+
+ AND bitMaskDither      \ We set bitMaskDither above to a bit mask that has a
+                        \ matching number of leading zeroes as the number of
+                        \ bytes in the buffer width, so this instruction
+                        \ converts A into a number with the same range of
+                        \ non-zero bits as bufferWidthBytes
+
+ CMP bufferWidthBytes   \ If A < bufferWidthBytes then jump to dith4 to skip the
+ BCC dith4              \ next instruction
+
+ SBC bufferWidthBytes   \ Subtract bufferWidthBytes from A to bring it into the
+                        \ range 0 to bufferWidthBytes (which works because we
+                        \ already reduced A to a maximum value of bitMaskDither,
+                        \ so A must be less than bufferWidthBytes * 2)
+                        \
+                        \ The subtraction works because we just passed through a
+                        \ BCC, so we know the C flag is set
 
 .dith4
 
- STA L0CCD
- LDA L0CD0
- AND #&1F
+ STA pixelByteToDither  \ Set pixelByteToDither to the result in A, which is a
+                        \ valid pixel byte number within the range of the pixel
+                        \ bytes in the screen buffer row
+
+                        \ We now set (L0013 A) to the address of a random row in
+                        \ the screen buffer, as an offset from the first screen
+                        \ row buffer at screenBufferRow0
+
+ LDA randomPixelDither  \ Set L0013 to bits 0 to 4 of our random number, so
+ AND #%00011111         \ that's a in the range 0 to 31
  STA L0013
- LSR A
- CLC
- ADC L0013
- AND #&FE
+
+ LSR A                  \ Set L0013 = L0013 / 2 + L0013
+ CLC                    \           = 1.5 * rand(0, 31)
+ ADC L0013              \
+ AND #%11111110         \ rounded down to the nearest even number
  STA L0013
- ASL A
- ASL A
- ADC L0013
+
+ ASL A                  \ Set L0013 = L0013 * 4 + L0013
+ ASL A                  \           = rand(0, 31) * 6 + rand(0, 31) * 1.5
+ ADC L0013              \           = rand(0, 31) * 7.5
  STA L0013
- LDA #0
+
+ LDA #0                 \ Set (L0013 A) = (L0013 0) / 8
  LSR L0013
  ROR A
  LSR L0013
  ROR A
  LSR L0013
  ROR A
- ADC L0CCD
+
+ ADC pixelByteToDither  \ Set fromAddr(1 0) = (L0013 A) + pixelByteToDither
  STA fromAddr
  LDA L0013
- ADC #&00
+ ADC #0
  STA fromAddr+1
- LDA objScreenAddr
+
+ LDA objScreenAddr      \ Set (A toAddr) = objScreenAddr(1 0) + fromAddr(1 0)
  CLC
  ADC fromAddr
  STA toAddr
  LDA objScreenAddr+1
  ADC fromAddr+1
- CMP #&80
- BCC dith5
- SBC #&20
+
+ CMP #&80               \ If the high byte in A >= &80 then the new address is
+ BCC dith5              \ past the end of screen memory, so subtract &20 from
+ SBC #&20               \ the high byte so the address wraps around within the
+                        \ range of screen memory between &6000 and &8000
 
 .dith5
 
- STA toAddr+1
- LDA fromAddr+1
+ STA toAddr+1           \ Store the high byte of the result, so we now have:
+                        \
+                        \   toAddr(1 0) = ???
+                        \
+                        \ with the address wrapped around as required
+
+ LDA fromAddr+1         \ Set fromAddr(1 0) = fromAddr(1 0) + screenBufferRow0
  CLC
- ADC #&3F
+ ADC #HI(screenBufferRow0)
  STA fromAddr+1
- CMP #&53
- BCC dith6
- LDA fromAddr
+
+ CMP #&53               \ If the result of the addition is less than &5300, then
+ BCC dith6              \ we have not reached the end of the screen buffer, so
+                        \ jump to dith6 to skip the following
+
+ LDA fromAddr           \ Set fromAddr(1 0) = fromAddr(1 0) - &1360
  SEC
  SBC #&60
  STA fromAddr
@@ -35987,7 +36199,7 @@ L314A = C3148+2
 
 .dith6
 
- LDA L0CD0
+ LDA randomPixelDither
  ASL A
  ROL A
  ROL A
@@ -36023,7 +36235,7 @@ L314A = C3148+2
 
 .dith8
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \

@@ -2710,19 +2710,19 @@
      0CCA   80 7F
 .xSightsBrush
      0CCC   00
-.L0CCD
+.pixelByteToDither
      0CCD   00
 .doNotCheckSecret
      0CCE   00
-.L0CCF
+.bitMaskDither
      0CCF   00
-.L0CD0
+.randomPixelDither
      0CD0   00
 .numberOfScrolls
      0CD1   00
 .ditherInnerLoop
      0CD2   00
-.L0CD3
+.bufferWidthBytes
      0CD3   00
 .minObjWidth
      0CD4   00
