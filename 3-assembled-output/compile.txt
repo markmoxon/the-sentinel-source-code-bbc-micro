@@ -42,7 +42,7 @@
      000F
 .screenBufferType
      0010
-.L0011
+.L0011YawHi
      0011
 .maxYawAngleHi
      0012
@@ -114,7 +114,7 @@
      0027
 .minYawAngleLo
      0028
-.L0029
+.L0011YawLo
      0029
 .randomPixel
      002A
@@ -2460,7 +2460,7 @@
      0C1C   05
 .latestPanKeyPress
      0C1D   00
-.L0C1E
+.doNotDitherObject
      0C1E   00
 .samePanKeyPress
      0C1F   00
@@ -2720,7 +2720,7 @@
      0CD0   00
 .numberOfScrolls
      0CD1   00
-.L0CD2
+.ditherInnerLoop
      0CD2   00
 .L0CD3
      0CD3   00
@@ -5517,11 +5517,11 @@
      208D   4C 78 1F   JMP &1F78
 .screenBufferAddr
      2090   00 00
-.L2092
+.objScreenAddr
      2092   00 00
-.L2094
+.ditherOuterLoop
      2094   00
-.L2095
+.yawAdjustmentHi
      2095   00
 .GetObjVisibility
      2096   A4 01      LDY &01
