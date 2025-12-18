@@ -4686,9 +4686,9 @@
      1A9F   A2 05      LDX #&05
      1AA1   20 AD 36   JSR &36AD
      1AA4   4C AB 33   JMP &33AB
-.sub_C1AA7
+.FindObjectToDrain
      1AA7   A2 3F      LDX #&3F
-.C1AA9
+.dran1
      1AA9   BD 00 01   LDA &0100,X
      1AAC   30 34      BMI &1AE2
      1AAE   C9 40      CMP #&40
@@ -4696,7 +4696,7 @@
      1AB2   BD 40 0A   LDA &0A40,X
      1AB5   C9 03      CMP #&03
      1AB7   D0 29      BNE &1AE2
-.C1AB9
+.dran2
      1AB9   BD 00 09   LDA &0900,X
      1ABC   85 24      STA &24
      1ABE   BD 80 09   LDA &0980,X
@@ -4710,14 +4710,14 @@
      1AD0   F0 04      BEQ &1AD6
      1AD2   C9 03      CMP #&03
      1AD4   D0 0C      BNE &1AE2
-.C1AD6
+.dran3
      1AD6   20 82 18   JSR &1882
      1AD9   A5 14      LDA &14
      1ADB   10 05      BPL &1AE2
      1ADD   8C 58 0C   STY &0C58
      1AE0   18         CLC
      1AE1   60         RTS
-.C1AE2
+.dran4
      1AE2   CA         DEX
      1AE3   10 C4      BPL &1AA9
      1AE5   38         SEC

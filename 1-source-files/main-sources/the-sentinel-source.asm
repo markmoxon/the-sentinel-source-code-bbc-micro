@@ -8568,7 +8568,7 @@
 
  JSR CheckEnemyGaze     \ Call CheckEnemyGaze to check the gaze of the meanie
                         \ towards the robot, returning the following if the
-                        \ the object is a tree (an object of type 0):
+                        \ the object is a robot (an object of type 0):
                         \
                         \   * objectViewYaw(Hi Lo) = the yaw angle of the robot
                         \     relative to the view (i.e. relative to the
@@ -8760,17 +8760,22 @@
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
- LDA enemyData8,X       \ If bit 7 of enemyData8 is clear, jump to tact9
- BPL tact9
+ LDA enemyData8,X       \ If bit 7 of enemyData8 is clear, jump to part 5 to
+ BPL tact9              \ skip the following
 
- JSR sub_C1AA7          \ ???
+ JSR FindObjectToDrain  \ Find a suitable object for the enemy to drain (i.e. a
+                        \ tree that is stacked on top of another object, or a
+                        \ boulder, which is exposed to the enemy and on a tile
+                        \ that can be seen by the enemy)
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
- BCS tact8              \ If sub_C1AA7 set the C flag, jump to tact8 ???
+ BCS tact8              \ If FindObjectToDrain set the C flag, then no suitable
+                        \ object was found for the enemy to drain, so jump to
+                        \ tact8 ???
 
- LDA #64
+ LDA #64                \ Set enemyData1 = 64 for the enemy ???
  STA enemyData1,X
 
  BNE tact15             \ Jump to tact15 to ??? (this BNE is effectively a JMP
@@ -8849,7 +8854,11 @@
                         \ drain energy for another 120 timer ticks (120 * 0.06 =
                         \ 7.2 seconds)
 
- JSR sub_C1AA7
+ JSR FindObjectToDrain  \ Find a suitable object for the enemy to drain (i.e. a
+                        \ tree that is stacked on top of another object, or a
+                        \ boulder, which is exposed to the enemy and on a tile
+                        \ that can be seen by the enemy)
+
  BCS tact16
 
 .tact15
@@ -8956,8 +8965,10 @@
  LDA enemyData4,Y
  CMP #&02
  BCS tact23
- LDA #&80
+
+ LDA #%10000000
  STA enemyData8,Y
+
  BNE tact27
 
 .tact23
@@ -9511,8 +9522,8 @@
  LDA #0                 \ Zero enemyData4 for object #X ???
  STA enemyData4,X
 
- LDA #%01000000         \ Clear bit 7 and set bit 6 of enemyData1 for object #X
- STA enemyData1,X       \ ???
+ LDA #64                \ Set enemyData1 = 64 for object #X ???
+ STA enemyData1,X
 
  RTS                    \ Return from the subroutine
 
@@ -9965,30 +9976,71 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C1AA7
+\       Name: FindObjectToDrain
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Find a suitable target object for an enemy to drain
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   viewingObject       The viewing object (i.e. the enemy doing the scanning)
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Status flag:
+\
+\                         * Clear if we have found an object that is a suitable
+\                           target for the enemy to drain (i.e. a tree that is
+\                           stacked on top of another object, or a boulder,
+\                           which is exposed to the enemy and on a tile that can
+\                           be seen by the enemy)
+\
+\                         * Set if no objects of them are suitable targets for
+\                           the enemy to drain
+\
+\   targetObject        The number of the target object (if the C flag is set)
 \
 \ ******************************************************************************
 
-.sub_C1AA7
+.FindObjectToDrain
 
- LDX #&3F
+ LDX #63                \ Set a counter in X to work through the object numbers
+                        \ until we find a suitable tree or boulder that can be
+                        \ seen by the viewing object
+                        \
+                        \ Note that we only call this routine with the viewing
+                        \ object set to the enemy that we are processing in the
+                        \ ApplyTactics routine, so I'll refer to the viewing
+                        \ object as the enemy in the following to make it
+                        \ easier to follow
 
-.C1AA9
+.dran1
 
- LDA objectFlags,X      \ Set A to the object flags for object #X
+ LDA objectFlags,X      \ Set A to the object flags for object #X, which are
+                        \ stored in the X-th entry in the objectFlags table
 
- BMI C1AE2
+ BMI dran4              \ If bit 7 of object flags for object #X is set then
+                        \ this object number is not yet allocated to an object,
+                        \ so jump to dran4 to move on to the next object number
 
- CMP #&40
- BCS C1AB9
- LDA objectTypes,X
- CMP #&03
- BNE C1AE2
+ CMP #%01000000         \ If bit 6 of the object flags for object #X is set
+ BCS dran2              \ then object #X is stacked on top of another object,
+                        \ so jump to dran2 to keep checking as this is a
+                        \ potential target
 
-.C1AB9
+ LDA objectTypes,X      \ If object #X is not a boulder (an object of type 3)
+ CMP #3                 \ then jump to dran4 to move on to the next object
+ BNE dran4              \ number
+
+.dran2
+
+                        \ If we get here then object #X is either a boulder or
+                        \ it is an object that is stacked on top of another
+                        \ object
 
  LDA xObject,X          \ Set (xTile, zTile) to the tile coordinates of the
  STA xTile              \ tile containing object #X
@@ -9999,30 +10051,70 @@
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCC C1AE2
- AND #&3F
- TAY
- LDA objectTypes,Y
- CMP #&02
- BEQ C1AD6
- CMP #&03
- BNE C1AE2
+ BCC dran4              \ If the C flag is clear then this tile does not already
+                        \ have an object placed on it, so jump to dran4 to move
+                        \ on to the next object number
 
-.C1AD6
+ AND #%00111111         \ Because the tile has an object on it, the tile data
+ TAY                    \ contains the number of the top object on the tile in
+                        \ bits 0 to 5, so extract the object number into Y (so
+                        \ object #Y is either directly on the tile or is on the
+                        \ top of the stack, so in either case it is the exposed
+                        \ object in terms of potential targets)
 
- JSR CheckEnemyGaze
- LDA targetVisibility
- BPL C1AE2
- STY targetObject
- CLC
- RTS
+ LDA objectTypes,Y      \ Set A to the type of object that's exposed on the tile
+                        \ (i.e. the type of object #Y)
 
-.C1AE2
+ CMP #2                 \ If the exposed object is a tree (an object of type 2),
+ BEQ dran3              \ jump to dran3 to keep checking as this is a potential
+                        \ target
 
- DEX
- BPL C1AA9
- SEC
- RTS
+ CMP #3                 \ If the exposed object is a boulder (an object of
+ BNE dran4              \ type 3), jump to dran4 to move on to the next object
+                        \ number
+
+.dran3
+
+                        \ If we get here then object #Y is either a boulder or
+                        \ it is a tree that is stacked on top of another object,
+                        \ and it is exposed as a potential target, so now we
+                        \ check whether the enemy can see the object's tile (and
+                        \ therefore whether it can be drained of energy by the
+                        \ enemy)
+
+ JSR CheckEnemyGaze     \ Call CheckEnemyGaze to check the gaze of the enemy
+                        \ towards object #Y, returning the following if the
+                        \ the object matches the object type in A:
+                        \
+                        \   * targetVisibility = bit 7 set if the object's tile
+                        \     is visible, bit 6 set if the object is visible
+
+ LDA targetVisibility   \ If bit 7 of targetVisibility is clear then the enemy
+ BPL dran4              \ can't see the exposed object's tile, so jump to dran4
+                        \ to move on to the next object number
+
+                        \ If we get here then object #Y's tile can be seen by
+                        \ the enemy, so it is a suitable target for draining
+
+ STY targetObject       \ Set targetObject to the object number in Y
+
+ CLC                    \ Clear the C flag to indicate that the enemy can see a
+                        \ drainable tree or boulder
+
+ RTS                    \ Return from the subroutine
+
+.dran4
+
+ DEX                    \ Decrement the counter in X to move on to the next
+                        \ object number
+
+ BPL dran1              \ Loop back to dran1 to check the next object number
+
+ SEC                    \ If we get here then we have checked all 64 object
+                        \ numbers and none of them are suitable targets for the
+                        \ enemy to drain, so set the C flag to indicate this
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -12517,10 +12609,10 @@
  LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
                         \ (i.e. the type of object #Y)
 
- CMP #3                 \ If the tile contains an object of type 3 (a boulder),
+ CMP #3                 \ If the tile contains a boulder (an object of type 3),
  BEQ data4              \ jump to data4 to extract details about the boulder
 
- CMP #2                 \ If the tile contains an object of type 2 (a tree),
+ CMP #2                 \ If the tile contains a tree (an object of type 2),
  BEQ data4              \ jump to data4 to extract details about the tree
 
  CMP #6                 \ If the tile doesn't contain the Sentinel's tower (type
@@ -12617,7 +12709,7 @@
                         \ jump to data6 to return the altitude of the tile
                         \ rather than the tree or boulder
 
- LDA objectTypes,Y      \ If object #Y is an object of type 2 (a tree), jump to
+ LDA objectTypes,Y      \ If object #Y is a tree (an object of type 2), jump to
  CMP #2                 \ data5
  BEQ data5
 
@@ -12729,7 +12821,7 @@
 
  LDA objectTypes,Y      \ Set A to the type of object #Y
 
- CMP #2                 \ If the tile contains an object of type 2 (a tree),
+ CMP #2                 \ If the tile contains a tree (an object of type 2),
  BEQ data7              \ jump to data7 to skip the following instruction
 
  LDA #%11000000         \ Set bits 6 and 7 of considerObjects ???
@@ -13060,7 +13152,7 @@
                         \ tile number in Y, so tileDataPage+Y now points to the
                         \ tile data entry in the tileData table
 
- BCC objt4              \ If C flag is clear then this tile does not already
+ BCC objt4              \ If the C flag is clear then this tile does not already
                         \ have an object placed on it, so jump to objt4 to place
                         \ object #X on the tile
 
@@ -13075,7 +13167,7 @@
  LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
                         \ (i.e. the type of object #Y)
 
- CMP #3                 \ If the tile contains an object of type 3 (a boulder),
+ CMP #3                 \ If the tile contains a boulder (an object of type 3),
  BEQ objt1              \ jump to objt1 to put the new object on top of the
                         \ boulder
 
@@ -14542,7 +14634,8 @@
  AND #%00111111         \ Because the tile has an object on it, the tile data
  TAY                    \ contains the number of the top object on the tile in
                         \ bits 0 to 5, so extract the object number into Y (so
-                        \ the tile effectively contains object #Y)
+                        \ object #Y is on the tile, though it might be part of
+                        \ an object stack)
 
  LDA objectFlags,Y      \ Set A to the object flags for the object on the tile
 
