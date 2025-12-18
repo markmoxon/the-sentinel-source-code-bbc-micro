@@ -187,9 +187,17 @@
  SKIP 0                 \ Temporary storage for Y so it can be preserved through
                         \ calls to GetTileViewAngles
 
-.L000F
+.playerTileObscured
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Records when an enemy can see the player object but
+                        \ can't see the tile that the player is on
+                        \
+                        \   * Bit 7 set = enemy can't see player object
+                        \
+                        \   * Bit 7 clear = enemy can see the player object but
+                        \                   can't see the tile that the player
+                        \                   is on, player object number is in
+                        \                   bits 0 to 6
 
 .screenBufferType
 
@@ -225,8 +233,8 @@
                         \     be set if the robot object can be seen, even if
                         \     the robot's tile can't be seen
                         \
-                        \  * Bit 7 will be set if the enemy can see the target
-                        \    object's tile
+                        \   * Bit 7 will be set if the enemy can see the target
+                        \     object's tile
 
 .loopCounter
 
@@ -7637,7 +7645,7 @@
                         \ to place the Sentinel or sentry in the correct place
                         \ on the landscape
 
- JSR SetEnemyData       \ ???
+ JSR ResetEnemyData     \ Reset the enemy data for enemy #X to the defaults
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
@@ -8493,7 +8501,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 1 of 7)
+\       Name: ApplyTactics (Part 1 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
@@ -8533,9 +8541,9 @@
                         \ has counted down to be less than 2, so it's time to
                         \ apply tactics to the enemy
 
- LDA #4                 \ Reset the enemy's tactics timer to count down from 4,
- STA enemyTacticTimer,X \ so this is the default length of the timer (we may
-                        \ change this later)
+ LDA #4                 \ Set enemyTacticTimer for the enemy to 4 so by default
+ STA enemyTacticTimer,X \ we wait for 4 * 0.06 = 0.6 seconds before applying
+                        \ tactics to the enemy again (though we may change this)
 
  LDA #20                \ Set enemyViewingArc = 20, so the enemy's gaze has a
  STA enemyViewingArc    \ viewing arc that's the same width as the screen (as
@@ -8555,7 +8563,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 2 of 7)
+\       Name: ApplyTactics (Part 2 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
@@ -8727,7 +8735,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 3 of 7)
+\       Name: ApplyTactics (Part 3 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: If the enemy has any residual energy, try expending it onto the
@@ -8768,7 +8776,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 4 of 7)
+\       Name: ApplyTactics (Part 4 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: If configured, search the landscape for a suitable target for the
@@ -8816,23 +8824,41 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 5 of 7)
+\       Name: ApplyTactics (Part 5 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Look for a suitable robot to drain of energy, or look for a
+\             drainable tree or boulder if there are no suitable robots
 \
 \ ******************************************************************************
 
 .tact9
 
- LDA enemyDrainTimer,X
- BEQ tact11
- LDY enemyTarget,X
- LDA #0
- JSR CheckEnemyGaze
- LDA targetVisibility
- BEQ tact10
- JMP tact19
+ LDA enemyDrainTimer,X  \ If enemyDrainTimer for the enemy is zero then jump to
+ BEQ tact11             \ tact11 to skip the following, as this timer is not in
+                        \ use
+
+ LDY enemyTarget,X      \ Set Y to the object number in enemyTarget, so when we
+                        \ refer to object #Y, it's the enemy's target object
+                        \
+                        \ If this hasn't been set to a valid object number yet
+                        \ then the call to CheckEnemyGaze will simply say the
+                        \ object is not visible
+
+ LDA #0                 \ Call CheckEnemyGaze to check the gaze of the enemy
+ JSR CheckEnemyGaze     \ towards object #Y, returning the following if the
+                        \ the object is a robot (an object of type 0):
+                        \
+                        \   * targetVisibility = bit 7 set if the object's tile
+                        \     is visible, bit 6 set if the object is visible
+
+ LDA targetVisibility   \ If the target is not a robot, or the target is a robot
+ BEQ tact10             \ but the enemy can't see it, then jump to tact10 to
+                        \ keep applying tactics
+
+ JMP tact19             \ Otherwise the target is a robot and the enemy can see
+                        \ at least some of it, so jump to part 7 with the target
+                        \ object number in Y to ???
 
 .tact10
 
@@ -8843,38 +8869,97 @@
 
 .tact11
 
- LDA #&80
- STA L000F
- LDY #&3F
+                        \ We now loop through every object on the landscape,
+                        \ looking for a robot that the enemy can drain of energy
+                        \ (in other words, a robot whose tile the enemy can see)
+                        \
+                        \ If the robot turns out to be the player object, then
+                        \ we also check whether the object 
+
+ LDA #%10000000         \ Set bit 7 of playerTileObscured, so by default the
+ STA playerTileObscured \ the player object can't be seen at all (though we will
+                        \ change this in the following loop if the enemy can see
+                        \ the partially obscured player object)
+
+ LDY #63                \ Set a counter in Y to work through the object numbers
 
 .tact12
 
- LDA #0
- JSR CheckEnemyGaze
- LDA treeVisibility
- AND #&40
- BNE tact13
- LDA targetVisibility
- BEQ tact13
- BMI tact19
- CPY playerObject
- BNE tact13
- STY L000F
+ LDA #0                 \ Call CheckEnemyGaze to check the gaze of the enemy
+ JSR CheckEnemyGaze     \ towards object #Y, returning the following if the
+                        \ the object is a robot (an object of type 0):
+                        \
+                        \   * targetVisibility = bit 7 set if the object's tile
+                        \     is visible, bit 6 set if the object is visible
+                        \
+                        \   * treeVisibility = bit 7 set if there is a tree in
+                        \     the way of the robot's tile, bit 6 set if there is
+                        \     a tree in the way of the robot
+
+ LDA treeVisibility     \ If bit 6 of treeVisibility is set then there is a tree
+ AND #%01000000         \ in the way between the enemy and the robot, so jump to
+ BNE tact13             \ tact13 to move on to the next object
+
+ LDA targetVisibility   \ If targetVisibility is zero then both bits 6 and 7 are
+ BEQ tact13             \ clear, so the enemy can't see the robot or the tile
+                        \ it's on, so jump to tact13 to move on to the next
+                        \ object
+
+ BMI tact19             \ If bit 7 of targetVisibility is set then the enemy can
+                        \ see the robot's tile, so jump to part 7 with the
+                        \ robot's object number in Y to ???
+
+ CPY playerObject       \ If the robot is not the player object then jump to
+ BNE tact13             \ tact13 to move on to the next object
+
+ STY playerTileObscured \ The robot is the player object and we know that bit 6
+                        \ of targetVisibility must be set (as targetVisibility
+                        \ is non-zero and bit 7 is clear), so this means the
+                        \ enemy can see the player but it can't see the tile
+                        \ that the player is on
+                        \
+                        \ So set playerTileObscured to the object number of the
+                        \ player, so we can process this fact after we have
+                        \ finished looping through the object (assuming the
+                        \ enemy doesn't first get distracted by a different
+                        \ robot whose tile it can see, which will take
+                        \ precedence)
 
 .tact13
 
- DEY
- BPL tact12
+ DEY                    \ Decrement the counter in Y to move on to the next
+                        \ object number
 
- LDY L000F
- BMI tact14
- TYA
- CMP enemyData3,X
- BEQ tact14
- JSR SetEnemyData
- LDA #&40
- STA targetVisibility
- BNE tact19
+ BPL tact12             \ Loop back to tact12 to check the next object number
+
+                        \ If we get here then we have checked all 64 object
+                        \ numbers and none of them are suitable robots for the
+                        \ enemy to drain, so now we check whether any of them
+                        \ are the partially obscured player object
+
+ LDY playerTileObscured \ If bit 7 of playerTileObscured is set then we didn't
+ BMI tact14             \ change it to the number of the player object in the
+                        \ above loop, so we didn't find a partially obscured
+                        \ player object so jump to tact14 to look for trees
+                        \ and boulders for the enemy to drain instead
+
+                        \ If we get here then the enemy can see the player
+                        \ but it can't see the tile that the player is on, and
+                        \ the player object number is in Y
+
+ TYA                    \ If enemyData3 <> the player object for this enemy,
+ CMP enemyData3,X       \ jump to tact14 to look for trees and boulders for
+ BEQ tact14             \ the enemy to drain instead
+
+ JSR ResetEnemyData     \ Reset the enemy data for the enemy to the defaults
+
+ LDA #%01000000         \ Set targetVisibility to record that the enemy can see
+ STA targetVisibility   \ the player object (bit 6 set) but it can't see the
+                        \ tile the player is on (bit 7 clear), so we store this
+                        \ in the enemy's data when we jump to part 7
+
+ BNE tact19             \ Jump to part 7 with the target object number in Y to
+                        \ ??? (this BNE is effectively a JMP as A is never zero)
 
 .tact14
 
@@ -8893,7 +8978,7 @@
 
  BCS tact16             \ If FindObjectToDrain set the C flag, then no suitable
                         \ object was found for the enemy to drain, so jump to
-                        \ tact16 ???
+                        \ tact16 to keep applying tactics
 
 .tact15
 
@@ -8908,7 +8993,8 @@
 
  BCS tact17             \ If DrainObjectEnergy set the C flag then the enemy
                         \ just drained the player object, so jump to tact17 to
-                        \ skip the following as we don't need to update the
+                        \ move on to the next enemy in the next iteration of
+                        \ the gameplay loop, as we don't need to update the
                         \ player object on-screen (as we never see the player
                         \ object)
 
@@ -8917,21 +9003,37 @@
  STA enemyTacticTimer,Y \ to the enemy again
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
-                        \ the ??? to update it on-screen with a dithered effect
-                        \ and return from the subroutine using a tail call
+                        \ the enemy to update it on-screen with a dithered
+                        \ effect and return from the subroutine using a tail
+                        \ call
 
 .tact16
 
- LDX enemyObject
- LDA enemyRotateTimer,X
- CMP #&02
- BCC tact18
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
+
+ LDA enemyRotateTimer,X \ If the rotation timer for the enemy is less than 2
+ CMP #2                 \ then it has run all the way down, so jump to part 6
+ BCC tact18             \ to rotate the enemy
 
 .tact17
 
- JMP MoveOnToNextEnemy
+ JMP MoveOnToNextEnemy  \ Otherwise jump to MoveOnToNextEnemy to move on to the
+                        \ next enemy in the next iteration of the gameplay loop,
+                        \ returning from the subroutine using a tail call
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 6 of 8)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Rotate the enemy and make a rotation sound
+\
+\ ******************************************************************************
 
 .tact18
+
+                        \ If we get here then we need to rotate enemy #X
 
  TXA                    \ Check to see whether it is safe to redraw object #X
  JSR AbortWhenVisible   \ without risk of corrupting a screen pan (if there is
@@ -8939,18 +9041,25 @@
                         \ AbortWhenVisible will not return here and will instead
                         \ abort tactics for this iteration of the gameplay loop)
 
- LDA objectYawAngle,X
- CLC
- ADC enemyYawStep,X
- STA objectYawAngle,X
- LDA #&C8
- STA enemyRotateTimer,X
- JSR SetEnemyData
- LDX #&07
- LDY #&78
+ LDA objectYawAngle,X   \ Set objectYawAngle = objectYawAngle + enemyYawStep
+ CLC                    \
+ ADC enemyYawStep,X     \ So this rotates the enemy by the yaw angle in this
+ STA objectYawAngle,X   \ enemy's enemyYawStep variable
 
- LDA #0                 \ Make sound #0 (???) with the pitch in X and Y
- JSR MakeSound-6
+ LDA #200               \ Set enemyRotateTimer for the enemy to 200 so we wait
+ STA enemyRotateTimer,X \ for 200 * 0.06 = 12 seconds before rotating the enemy
+                        \ again
+
+ JSR ResetEnemyData     \ Reset the enemy data for the enemy to the defaults
+
+ LDX #7                 \ Set X = 7 to pass to MakeSound-6 as the pitch of the
+                        \ first part of the rotating enemy sound
+
+ LDY #120               \ Set Y = 70 to pass to MakeSound-6 as the pitch of the
+                        \ second part of the rotating enemy sound
+
+ LDA #0                 \ Make sound #0 (rotating enemy) with the pitches in X
+ JSR MakeSound-6        \ and Y
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics
@@ -8961,7 +9070,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 6 of 7)
+\       Name: ApplyTactics (Part 7 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Drain energy ???
@@ -8970,8 +9079,12 @@
 
 .tact19
 
- TYA
- STA enemyTarget,X
+                        \ If we get here then there is a suitable target for the
+                        \ enemy to drain, and the target's object number is in Y
+
+ TYA                    \ Store the target number in enemyTarget in the enemy's
+ STA enemyTarget,X      \ data
+
  LDA targetVisibility
  STA enemyData7,X
  LDA enemyDrainTimer,X
@@ -8984,7 +9097,9 @@
 
 .tact20
 
- JMP MoveOnToNextEnemy
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
+                        \ in the next iteration of the gameplay loop, returning
+                        \ from the subroutine using a tail call
 
 .tact21
 
@@ -9043,7 +9158,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 7 of 7)
+\       Name: ApplyTactics (Part 8 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Redraw the object on the screen, optionally with a dithered
@@ -9554,10 +9669,10 @@
 
 \ ******************************************************************************
 \
-\       Name: SetEnemyData
+\       Name: ResetEnemyData
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: Reset the enemy data for a specific enemy to the defaults
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9567,10 +9682,10 @@
 \
 \ ******************************************************************************
 
-.SetEnemyData
+.ResetEnemyData
 
- LDA #%10000000         \ Set bit 7 of enemyMeanieTree for object #X ???
- STA enemyMeanieTree,X
+ LDA #%10000000         \ Set bit 7 of enemyMeanieTree for object #X to indicate
+ STA enemyMeanieTree,X  \ that the enemy has not turned a tree into a meanie
 
  STA enemyData3,X       \ Set bit 7 of enemyData3 for object #X ???
 
@@ -24021,19 +24136,19 @@ L314A = C3148+2
 \
 \   A                   The number of the sound to make (0 to 6):
 \
-\                         * 0 = ??? (two-part)
+\                         * 0 = rotating enemy (two-part)
 \
 \                         * 1 = rotating meanie (two-part)
 \
-\                         * 2 = ???
+\                         * 2 = create/absorb object white noise
 \
-\                         * 3 = ???
+\                         * 3 = music
 \
-\                         * 4 = ???
+\                         * 4 = scanner
 \
 \                         * 5 = ping
 \
-\                         * 6 = ??? (two-part)
+\                         * 6 = game over (two-part)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24687,7 +24802,7 @@ L314A = C3148+2
                         \ the sound is made
 
  CMP #4                 \ If A = 4 then this is the scanner sound, so jump to
- BEQ psou3              \ psou3 to process the scanner sound ???
+ BEQ psou3              \ psou3 to process the scanner sound
 
  CMP #3                 \ If A = 3 then this is music, so jump to ProcessMusic
  BEQ psou2              \ via psou2 to process the music being played
@@ -24739,8 +24854,8 @@ L314A = C3148+2
 
 .psou3
 
-                        \ If we get here then soundEffect = 4, so this is some
-                        \ kind of scanner sound ???
+                        \ If we get here then soundEffect = 4, so this is the
+                        \ scanner sound
 
  LDA #50                \ Set soundCounter = 50 to count down while the next
  STA soundCounter       \ sound is made
@@ -24751,7 +24866,7 @@ L314A = C3148+2
  LDA #3                 \ Set the second parameter of sound data block #2 to 3,
  STA soundData+18       \ to set the amplitude
 
- LDA #4                 \ Make sound #4 (???)
+ LDA #4                 \ Make sound #4 (scanner)
  JSR MakeSound
 
  RTS                    \ Return from the subroutine
@@ -34274,17 +34389,17 @@ L314A = C3148+2
 
  EQUB &10, &00          \ Sound data block #0: SOUND &10, 1, 7, 5
  EQUB &01, &00          \
- EQUB &07, &00          \ Used for the first part of sounds #0 (???), #1 (???)
- EQUB &05, &00          \ and #6 (game over)
+ EQUB &07, &00          \ Used for the first part of sounds #0 (rotating enemy),
+ EQUB &05, &00          \ #1 (rotating meanie) and #6 (game over)
 
  EQUB &11, &00          \ Sound data block #1: SOUND &11, 0, 120, 10
  EQUB &00, &00          \
- EQUB &78, &00          \ Used for the second part of sounds #0 (???), #1 (???)
- EQUB &0A, &00          \ and #6 (game over)
+ EQUB &78, &00          \ Used for the second part of sounds #0 (rotating enemy),
+ EQUB &0A, &00          \ #1 (rotating meanie) and #6 (game over)
 
  EQUB &12, &00          \ Sound data block #2: SOUND &12, 3, 34, 20
  EQUB &03, &00          \
- EQUB &22, &00          \ Used for sounds #3 (music) and #4 (???)
+ EQUB &22, &00          \ Used for sounds #3 (music) and #4 (scanner)
  EQUB &14, &00
 
  EQUB &13, &00          \ Sound data block #3: SOUND &13, 4, 144, 20
@@ -34308,17 +34423,17 @@ L314A = C3148+2
 \
 \ There are six sound envelopes defined in The Sentinel.
 \
-\   * Envelope 0 is used for sounds #0 and #1 (???).
+\   * Envelope 0 is used for sounds #0 (rotating enemy) and #1 (rotating meanie)
 \
-\   * Envelope 1 is used for sound #2 (create/absorb object white noise).
+\   * Envelope 1 is used for sound #2 (create/absorb object white noise)
 \
-\   * Envelope 2 is used for sound #3 (???).
+\   * Envelope 2 is used for sound #3 (music)
 \
-\   * Envelope 3 is used for sound #4 (???).
+\   * Envelope 3 is used for sound #4 (scanner)
 \
-\   * Envelope 4 is used for sound #5 (ping).
+\   * Envelope 4 is used for sound #5 (ping)
 \
-\   * Envelope 5 is used for sound #6 (game over).
+\   * Envelope 5 is used for sound #6 (game over)
 \
 \ ******************************************************************************
 

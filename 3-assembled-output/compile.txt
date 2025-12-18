@@ -38,7 +38,7 @@
      000E
 .yStoreTileView
      000F
-.L000F
+.playerTileObscured
      000F
 .screenBufferType
      0010
@@ -4523,7 +4523,7 @@
      1966   20 55 35   JSR &3555
 .CRE08
      1969   60         RTS
-.SetEnemyData
+.ResetEnemyData
      196A   A9 80      LDA #&80
      196C   9D A0 0C   STA &0CA0,X
      196F   9D 90 0C   STA &0C90,X
