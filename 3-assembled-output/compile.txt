@@ -2682,7 +2682,7 @@
      0CB5   00
      0CB6   00
      0CB7   00
-.enemyData8
+.enemyDrainScan
      0CB8   00
      0CB9   00
      0CBA   00

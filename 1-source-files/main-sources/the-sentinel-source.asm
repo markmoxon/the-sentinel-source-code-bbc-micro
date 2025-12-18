@@ -2260,43 +2260,63 @@
 
 .enemyData1
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
  EQUB 0, 0, 0, 0
 
 .enemyEnergy
 
- EQUB 0, 0, 0, 0        \ Energy levels for up to eight enemies (the Sentinel
- EQUB 0, 0, 0, 0        \ and up to seven sentries)
+ EQUB 0, 0, 0, 0        \ Enemy energy levels (one byte per enemy)
+ EQUB 0, 0, 0, 0        \
+                        \ If an enemy has a non-zero energy level, it will try
+                        \ to expend that energy on the landscape by creating
+                        \ trees
 
 .enemyData3
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
  EQUB 0, 0, 0, 0
 
 .enemyData4
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
  EQUB 0, 0, 0, 0
 
 .enemyMeanieTree
 
- EQUB 0, 0, 0, 0        \ Contains an object number when bit 7 is clear ???
- EQUB 0, 0, 0, 0        \ Bit 7 can also be set
+ EQUB 0, 0, 0, 0        \ Enemy has turned a tree into a meanie (one byte per
+ EQUB 0, 0, 0, 0        \ enemy)
+                        \
+                        \ If bit 7 of this flag is clear then the enemy has
+                        \ turned a tree into a meanie and the object number
+                        \ of the tree/meanie is in bits 0 to 6
+                        \
+                        \ If bit 7 of this flag is clear then the enemy has
+                        \ not turned a tree into a meanie
 
 .enemyTarget
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
  EQUB 0, 0, 0, 0
 
 .enemyData7
 
- EQUB 0, 0, 0, 0        \ ???
+ EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
  EQUB 0, 0, 0, 0
 
-.enemyData8
+.enemyDrainScan
 
- EQUB 0, 0, 0, 0        \ ???
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Enemy will perform a scan for a drainable object (one
+ EQUB 0, 0, 0, 0        \ byte per enemy)
+                        \
+                        \ If bit 7 of this flag is set for an enemy, then the
+                        \ next time we apply tactics to the enemy, it will scan
+                        \ the landscape for a suitable object for draining of
+                        \ energy (i.e. an exposed boulder or a tree on top of
+                        \ another object, where the enemy can see the object's
+                        \ tile)
+                        \
+                        \ If bit 7 of this flag is clear then the enemy will not
+                        \ scan for a drainable object
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -8652,8 +8672,8 @@
  STA objectYawAngle,X
 
  LDA #10                \ Set enemyTacticTimer for the meanie to 10 so we wait
- STA enemyTacticTimer,Y \ for 0.6 seconds before applying tactics to the meanie
-                        \ again
+ STA enemyTacticTimer,Y \ for 10 * 0.06 = 0.6 seconds before applying tactics to
+                        \ the meanie again
 
  TXA                    \ Store the enemy object number on the stack so we can
  PHA                    \ retrieve it below
@@ -8751,7 +8771,8 @@
 \       Name: ApplyTactics (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: ???
+\    Summary: If configured, search the landscape for a suitable target for the
+\             enemy to drain of energy
 \
 \ ******************************************************************************
 
@@ -8760,30 +8781,38 @@
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
- LDA enemyData8,X       \ If bit 7 of enemyData8 is clear, jump to part 5 to
- BPL tact9              \ skip the following
+ LDA enemyDrainScan,X   \ If bit 7 of enemyDrainScan is clear, jump to part 5 to
+ BPL tact9              \ skip the search for a drainable object
 
- JSR FindObjectToDrain  \ Find a suitable object for the enemy to drain (i.e. a
-                        \ tree that is stacked on top of another object, or a
-                        \ boulder, which is exposed to the enemy and on a tile
-                        \ that can be seen by the enemy)
+ JSR FindObjectToDrain  \ Find a suitable target object for the enemy to drain
+                        \ (i.e. a tree that is stacked on top of another object,
+                        \ or a boulder, which is exposed to the enemy and on a
+                        \ tile that can be seen by the enemy)
+                        \
+                        \ If successful, the object number is in targetObject
+                        \ and the C flag is clear, otherwise the C flag is set
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
  BCS tact8              \ If FindObjectToDrain set the C flag, then no suitable
                         \ object was found for the enemy to drain, so jump to
-                        \ tact8 ???
+                        \ tact8 to stop the enemy from searching again and keep
+                        \ applying tactics
 
  LDA #64                \ Set enemyData1 = 64 for the enemy ???
  STA enemyData1,X
 
- BNE tact15             \ Jump to tact15 to ??? (this BNE is effectively a JMP
-                        \ as A is never zero)
+ BNE tact15             \ Jump to tact15 to drain energy from the target object
+                        \ (this BNE is effectively a JMP as A is never zero)
 
 .tact8
 
- LSR enemyData8,X       \ Clear bit 7 of enemyData8 to indicate that ???
+ LSR enemyDrainScan,X   \ Clear bit 7 of enemyDrainScan for this enemy to stop
+                        \ it searching for a drainable target for now
+
+                        \ Fall through into part 5 to keep applying tactics to
+                        \ this enemy
 
 \ ******************************************************************************
 \
@@ -8854,20 +8883,38 @@
                         \ drain energy for another 120 timer ticks (120 * 0.06 =
                         \ 7.2 seconds)
 
- JSR FindObjectToDrain  \ Find a suitable object for the enemy to drain (i.e. a
-                        \ tree that is stacked on top of another object, or a
-                        \ boulder, which is exposed to the enemy and on a tile
-                        \ that can be seen by the enemy)
+ JSR FindObjectToDrain  \ Find a suitable target object for the enemy to drain
+                        \ (i.e. a tree that is stacked on top of another object,
+                        \ or a boulder, which is exposed to the enemy and on a
+                        \ tile that can be seen by the enemy)
+                        \
+                        \ If successful, the object number is in targetObject
+                        \ and the C flag is clear, otherwise the C flag is set
 
- BCS tact16
+ BCS tact16             \ If FindObjectToDrain set the C flag, then no suitable
+                        \ object was found for the enemy to drain, so jump to
+                        \ tact16 ???
 
 .tact15
 
- JSR DrainObjectEnergy
- BCS tact17
- LDY enemyObject
- LDA #&1E
- STA enemyTacticTimer,Y
+                        \ If we get here then we drain energy from the target
+                        \ object in targetObject
+
+ JSR DrainObjectEnergy  \ Drain energy from the target object into the enemy,
+                        \ transforming it into an object with an energy level
+                        \ of one unit less (if applicable)
+                        \
+                        \ This updates enemyEnergy with the drained energy
+
+ BCS tact17             \ If DrainObjectEnergy set the C flag then the enemy
+                        \ just drained the player object, so jump to tact17 to
+                        \ skip the following as we don't need to update the
+                        \ player object on-screen (as we never see the player
+                        \ object)
+
+ LDY enemyObject        \ Set enemyTacticTimer for the enemy to 30 so we wait
+ LDA #30                \ for 30 * 0.06 = 1.8 seconds before applying tactics
+ STA enemyTacticTimer,Y \ to the enemy again
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
                         \ the ??? to update it on-screen with a dithered effect
@@ -8947,10 +8994,17 @@
 
  LDA targetVisibility
  BPL tact22
- JSR DrainObjectEnergy
- LDY enemyObject
- LDA #&1E
- STA enemyTacticTimer,Y
+
+ JSR DrainObjectEnergy  \ Drain energy from the target object into the enemy,
+                        \ transforming it into an object with an energy level
+                        \ of one unit less (if applicable)
+                        \
+                        \ This updates enemyEnergy with the drained energy
+
+ LDY enemyObject        \ Set enemyTacticTimer for the enemy to 30 so we wait
+ LDA #30                \ for 30 * 0.06 = 1.8 seconds before applying tactics
+ STA enemyTacticTimer,Y \ to the enemy again
+
  BCS tact27
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
@@ -8966,8 +9020,9 @@
  CMP #&02
  BCS tact23
 
- LDA #%10000000
- STA enemyData8,Y
+ LDA #%10000000         \ Set bit 7 of enemyDrainScan so the next time we apply
+ STA enemyDrainScan,Y   \ tactics to the enemy it will scan for an object to
+                        \ drain
 
  BNE tact27
 
@@ -16421,7 +16476,7 @@ L23E3 = C23E2+1
 
                         \ The calculation above adds the scaled vector from the
                         \ player to the tile corner, which is in xVector, to the
-                        \ player's object coordinates, which is in xCoord
+                        \ player's object coordinate, which is in xCoord
                         \
                         \ So this calculation effectively follows the player's
                         \ gaze towards the tile corner, adding one of the steps
