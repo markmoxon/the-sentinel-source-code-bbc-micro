@@ -2619,7 +2619,7 @@
      0C7D   01
      0C7E   00
      0C7F   00
-.enemyData1
+.enemyMeanieScan
      0C80   00
      0C81   00
      0C82   00
@@ -2637,7 +2637,7 @@
      0C8D   00
      0C8E   00
      0C8F   00
-.enemyData3
+.enemyFailTarget
      0C90   00
      0C91   00
      0C92   00
@@ -2646,7 +2646,7 @@
      0C95   00
      0C96   00
      0C97   00
-.enemyData4
+.enemyFailCounter
      0C98   00
      0C99   00
      0C9A   00
@@ -2673,7 +2673,7 @@
      0CAD   00
      0CAE   00
      0CAF   00
-.enemyData7
+.enemyVisibility
      0CB0   00
      0CB1   00
      0CB2   00
@@ -4523,7 +4523,7 @@
      1966   20 55 35   JSR &3555
 .CRE08
      1969   60         RTS
-.ResetEnemyData
+.ResetMeanieScan
      196A   A9 80      LDA #&80
      196C   9D A0 0C   STA &0CA0,X
      196F   9D 90 0C   STA &0C90,X
@@ -4532,12 +4532,12 @@
      1977   A9 40      LDA #&40
      1979   9D 80 0C   STA &0C80,X
      197C   60         RTS
-.sub_C197D
+.ScanForMeanieTree
      197D   A9 28      LDA #&28
      197F   8D 68 0C   STA &0C68
      1982   A6 00      LDX &00
      1984   86 6E      STX &6E
-.C1986
+.mean1
      1986   A6 00      LDX &00
      1988   BC 80 0C   LDY &0C80,X
      198B   D0 0B      BNE &1998
@@ -4546,7 +4546,7 @@
      1993   9D 90 0C   STA &0C90,X
      1996   38         SEC
      1997   60         RTS
-.C1998
+.mean2
      1998   DE 80 0C   DEC &0C80,X
      199B   88         DEY
      199C   B9 00 01   LDA &0100,Y
@@ -4563,7 +4563,7 @@
      19B5   49 FF      EOR #&FF
      19B7   18         CLC
      19B8   69 01      ADC #&01
-.C19BA
+.mean3
      19BA   C9 0A      CMP #&0A
      19BC   B0 C8      BCS &1986
      19BE   BD 80 09   LDA &0980,X
@@ -4573,7 +4573,7 @@
      19C7   49 FF      EOR #&FF
      19C9   18         CLC
      19CA   69 01      ADC #&01
-.C19CC
+.mean4
      19CC   C9 0A      CMP #&0A
      19CE   B0 B6      BCS &1986
      19D0   A9 02      LDA #&02
@@ -4592,7 +4592,7 @@
      19EC   8D D4 0C   STA &0CD4
      19EF   18         CLC
      19F0   60         RTS
-.C19F1
+.mean5
      19F1   FE 80 0C   INC &0C80,X
      19F4   4C EC 1A   JMP &1AEC
 .dobj1

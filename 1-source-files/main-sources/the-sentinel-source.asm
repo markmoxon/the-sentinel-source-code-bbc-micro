@@ -2266,65 +2266,82 @@
  EQUB 0
  EQUB 0
 
-.enemyData1
+.enemyMeanieScan
 
- EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Enemy meanie scan object counter (one byte per enemy)
+ EQUB 0, 0, 0, 0        \
+                        \ A counter that works through all the object numbers as
+                        \ we scan the objects from last to first for a tree to
+                        \ turn into a meanie
 
 .enemyEnergy
 
  EQUB 0, 0, 0, 0        \ Enemy energy levels (one byte per enemy)
  EQUB 0, 0, 0, 0        \
                         \ If an enemy has a non-zero energy level, it will try
-                        \ to expend that energy on the landscape by creating
-                        \ trees
+                        \ to expend that energy on the landscape by creating a
+                        \ tree
 
-.enemyData3
+.enemyFailTarget
 
- EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Enemy failed to find meanie: target object (one byte
+ EQUB 0, 0, 0, 0        \ per enemy)
+                        \
+                        \ If an enemy searches for a tree to turn into a meanie
+                        \ to attack a target enemy on its behalf, but it can't 
+                        \ find a suitable tree, then the target object number is
+                        \ stored here so the enemy doesn't try looking again
 
-.enemyData4
+.enemyFailCounter
 
- EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Enemy failed to find meanie: counter (one byte per
+ EQUB 0, 0, 0, 0        \ enemy)
+                        \
+                        \ If an enemy searches for a tree to turn into a meanie
+                        \ to attack a target enemy on its behalf, but it can't 
+                        \ find a suitable tree, then the this counter is
+                        \ incremented
 
 .enemyMeanieTree
 
  EQUB 0, 0, 0, 0        \ Enemy has turned a tree into a meanie (one byte per
  EQUB 0, 0, 0, 0        \ enemy)
                         \
-                        \ If bit 7 of this flag is clear then the enemy has
-                        \ turned a tree into a meanie and the object number
-                        \ of the tree/meanie is in bits 0 to 6
+                        \   * Bit 7 clear = the enemy has turned a tree into a
+                        \                   meanie and the object number of the
+                        \                   tree/meanie is in bits 0 to 6
                         \
-                        \ If bit 7 of this flag is clear then the enemy has
-                        \ not turned a tree into a meanie
+                        \   * Bit 7 set = the enemy has not turned a tree into a
+                        \                 meanie
 
 .enemyTarget
 
- EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ The object number of the enemy's target (one byte per
+ EQUB 0, 0, 0, 0        \ enemy)
 
-.enemyData7
+.enemyVisibility
 
- EQUB 0, 0, 0, 0        \ ??? (one byte per enemy)
- EQUB 0, 0, 0, 0
+ EQUB 0, 0, 0, 0        \ Visibility of the enemy's target (one byte per enemy)
+ EQUB 0, 0, 0, 0        \
+                        \   * Bit 7 set = the enemy can see the target's tile
+                        \
+                        \   * Bit 7 set = the enemy can see the target object
+                        \                 but it can't see the target's tile
 
 .enemyDrainScan
 
  EQUB 0, 0, 0, 0        \ Enemy will perform a scan for a drainable object (one
  EQUB 0, 0, 0, 0        \ byte per enemy)
                         \
-                        \ If bit 7 of this flag is set for an enemy, then the
-                        \ next time we apply tactics to the enemy, it will scan
-                        \ the landscape for a suitable object for draining of
-                        \ energy (i.e. an exposed boulder or a tree on top of
-                        \ another object, where the enemy can see the object's
-                        \ tile)
+                        \   * Bit 7 set = the next time we apply tactics to the
+                        \                 enemy, it will scan the landscape for
+                        \                 a suitable object for draining of
+                        \                 energy (i.e. an exposed boulder or a
+                        \                 tree on top of another object, where
+                        \                 the enemy can see the object's tile)
                         \
-                        \ If bit 7 of this flag is clear then the enemy will not
-                        \ scan for a drainable object
+                        \   * Bit 7 clear = the enemy will not scan for a
+                        \                   drainable object
 
  EQUB 0                 \ This byte appears to be unused
 
@@ -4844,8 +4861,8 @@
  JSR ClearIconsScanner  \ Clear the energy icon and scanner row at the top of
                         \ the screen
 
- LDA #0                 \ Set screen variables of some kind with A = 0 ???
- JSR ConfigureBuffer
+ LDA #0                 \ Call ConfigureBuffer with A = 0 to set up the screen
+ JSR ConfigureBuffer    \ buffer for use as a row buffer
 
  LDA #0                 \ Set A = 0 to pass to FillScreen, so we clear the
                         \ screen (as opposed to the screen buffer)
@@ -7645,7 +7662,9 @@
                         \ to place the Sentinel or sentry in the correct place
                         \ on the landscape
 
- JSR ResetEnemyData     \ Reset the enemy data for enemy #X to the defaults
+ JSR ResetMeanieScan    \ Reset the data stored for any meanie scans that the
+                        \ enemy has tried in the past, so the enemy can start
+                        \ looking for potential meanies with a clean slate
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers
@@ -7658,9 +7677,10 @@
  ORA #5
 
  STA enemyTacticTimer,X \ Set the enemy's tactics timer to the number in A, so
-                        \ this determines how many iterations of the gameplay
-                        \ loop we have to wait before applying tactics to this
-                        \ enemy in the ApplyTactics routine
+                        \ we wait for A * 0.06 seconds before applying tactics
+                        \ to this enemy in the ApplyTactics routine (so that's
+                        \ somewhere between 5 * 0.06 = 0.3 seconds and
+                        \ 63 * 0.06 = 3.8 seconds)
 
  LDA #20                \ Set A to either 20 or 236, depending on the value that
  BCC aden5              \ we gave to the C flag above
@@ -8409,11 +8429,9 @@
                         \ We only apply tactics to the Sentinel and sentries,
                         \ so we don't need to apply tactics to this object
                         \
-                        \ So jump to MoveOnToNextEnemy to skip all the tactics
-                        \ routines and move on to the next enemy so we can apply
-                        \ tactics to it in the next iteration of the gameplay
-                        \ loop (and this also returns from the subroutine using
-                        \ a tail call)
+                        \ So jump to MoveOnToNextEnemy to stop applying tactics
+                        \ to this enemy and set things up so we move on to the
+                        \ next enemy in the next iteration of the gameplay loop
 
 .etac1
 
@@ -8455,9 +8473,9 @@
  BCS MoveOnToNextEnemy  \ If the call to ExpendEnemyEnergy returned with the C
                         \ flag set, then either the enemy didn't have any energy
                         \ to expend or we couldn't spawn a tree, so jump to
-                        \ MoveOnToNextEnemy to move on to the next enemy for the
-                        \ next iteration of the gameplay loop and return from
-                        \ the subroutine using a tail call
+                        \ MoveOnToNextEnemy to stop applying tactics to this
+                        \ enemy and set things up so we move on to the next
+                        \ enemy in the next iteration of the gameplay loop
 
  JMP tact25             \ Otherwise jump to tact25 with X set to the object
                         \ number of the tree to update it on-screen with a
@@ -8529,13 +8547,10 @@
 .ApplyTactics
 
  LDA enemyTacticTimer,X \ If enemyTacticTimer >= 2 for this enemy, then jump to
- CMP #2                 \ MoveOnToNextEnemy to skip the rest of the tactics
- BCS MoveOnToNextEnemy  \ routines and move on to the next enemy so we can apply
-                        \ apply tactics to it in the next iteration of the
-                        \ gameplay loop
-                        \
-                        \ This also returns from the subroutine using a tail
-                        \ call
+ CMP #2                 \ MoveOnToNextEnemy to jump to MoveOnToNextEnemy to
+ BCS MoveOnToNextEnemy  \ stop applying tactics to this enemy and set things up
+                        \ so we move on to the next enemy in the next iteration
+                        \ of the gameplay loop
 
                         \ If we get here then enemyTacticTimer for this enemy
                         \ has counted down to be less than 2, so it's time to
@@ -8639,9 +8654,9 @@
                         \ show a meanie to indicate that it was responsible for
                         \ the player's demise
 
- JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
-                        \ in the next iteration of the gameplay loop, returning
-                        \ from the subroutine using a tail call
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to stop applying tactics to
+                        \ this enemy and set things up so we move on to the next
+                        \ enemy in the next iteration of the gameplay loop
 
 .tact2
 
@@ -8808,8 +8823,9 @@
                         \ tact8 to stop the enemy from searching again and keep
                         \ applying tactics
 
- LDA #64                \ Set enemyData1 = 64 for the enemy ???
- STA enemyData1,X
+ LDA #64                \ Set enemyMeanieCheck = 64 for the enemy so if we start
+ STA enemyMeanieScan,X  \ scanning objects for trees to potentially turn into a
+                        \ meanie, we start from the last object and work down
 
  BNE tact15             \ Jump to tact15 to drain energy from the target object
                         \ (this BNE is effectively a JMP as A is never zero)
@@ -8858,7 +8874,8 @@
 
  JMP tact19             \ Otherwise the target is a robot and the enemy can see
                         \ at least some of it, so jump to part 7 with the target
-                        \ object number in Y to ???
+                        \ object number in Y to try draining energy from the
+                        \ robot
 
 .tact10
 
@@ -8907,7 +8924,8 @@
 
  BMI tact19             \ If bit 7 of targetVisibility is set then the enemy can
                         \ see the robot's tile, so jump to part 7 with the
-                        \ robot's object number in Y to ???
+                        \ robot's object number in Y to try draining energy from
+                        \ the robot
 
  CPY playerObject       \ If the robot is not the player object then jump to
  BNE tact13             \ tact13 to move on to the next object
@@ -8947,11 +8965,16 @@
                         \ but it can't see the tile that the player is on, and
                         \ the player object number is in Y
 
- TYA                    \ If enemyData3 <> the player object for this enemy,
- CMP enemyData3,X       \ jump to tact14 to look for trees and boulders for
- BEQ tact14             \ the enemy to drain instead
+ TYA                    \ If the value of enemyFailTarget for this enemy matches
+ CMP enemyFailTarget,X  \ the player object number, then this enemy already
+ BEQ tact14             \ tried scanning for a tree to turn into a meanie to
+                        \ attack the player and they failed to find one, so jump
+                        \ to tact14 to look for trees and boulders for the enemy
+                        \ to drain instead
 
- JSR ResetEnemyData     \ Reset the enemy data for the enemy to the defaults
+ JSR ResetMeanieScan    \ Reset the data stored for any meanie scans that the
+                        \ enemy has tried in the past, so the enemy can start
+                        \ looking for potential meanies with a clean slate
 
  LDA #%01000000         \ Set targetVisibility to record that the enemy can see
  STA targetVisibility   \ the player object (bit 6 set) but it can't see the
@@ -8959,7 +8982,8 @@
                         \ in the enemy's data when we jump to part 7
 
  BNE tact19             \ Jump to part 7 with the target object number in Y to
-                        \ ??? (this BNE is effectively a JMP as A is never zero)
+                        \ try draining energy from the target object (this BNE
+                        \ is effectively a JMP as A is never zero)
 
 .tact14
 
@@ -8989,7 +9013,12 @@
                         \ transforming it into an object with an energy level
                         \ of one unit less (if applicable)
                         \
-                        \ This updates enemyEnergy with the drained energy
+                        \ This updates enemyEnergy with the drained energy, so
+                        \ it can be expended back onto the landscape later on
+                        \
+                        \ It also sets X to the object number of the target that
+                        \ has been drained of energy (and which has therefore
+                        \ been transformed into a different object type)
 
  BCS tact17             \ If DrainObjectEnergy set the C flag then the enemy
                         \ just drained the player object, so jump to tact17 to
@@ -9004,8 +9033,9 @@
 
  JMP tact25             \ Jump to tact25 with X set to the object number of
                         \ the enemy to update it on-screen with a dithered
-                        \ effect and return from the subroutine using a tail
-                        \ call
+                        \ effect (as it has now been transformed into a
+                        \ different type of object) and return from the
+                        \ subroutine using a tail call
 
 .tact16
 
@@ -9018,9 +9048,10 @@
 
 .tact17
 
- JMP MoveOnToNextEnemy  \ Otherwise jump to MoveOnToNextEnemy to move on to the
-                        \ next enemy in the next iteration of the gameplay loop,
-                        \ returning from the subroutine using a tail call
+ JMP MoveOnToNextEnemy  \ Otherwise jump to MoveOnToNextEnemy to stop applying
+                        \ tactics to this enemy and set things up so we move on
+                        \ to the next enemy in the next iteration of the
+                        \ gameplay loop
 
 \ ******************************************************************************
 \
@@ -9050,7 +9081,9 @@
  STA enemyRotateTimer,X \ for 200 * 0.06 = 12 seconds before rotating the enemy
                         \ again
 
- JSR ResetEnemyData     \ Reset the enemy data for the enemy to the defaults
+ JSR ResetMeanieScan    \ Reset the data stored for any meanie scans that the
+                        \ enemy has tried in the past, so the enemy can start
+                        \ looking for potential meanies with a clean slate
 
  LDX #7                 \ Set X = 7 to pass to MakeSound-6 as the pitch of the
                         \ first part of the rotating enemy sound
@@ -9073,7 +9106,8 @@
 \       Name: ApplyTactics (Part 7 of 8)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Drain energy ???
+\    Summary: Drain energy from the enemy's target object, or try scanning for
+\             a tree to turn into a meanie if the targets's tile is obscured
 \
 \ ******************************************************************************
 
@@ -9083,13 +9117,17 @@
                         \ enemy to drain, and the target's object number is in Y
 
  TYA                    \ Store the target number in enemyTarget in the enemy's
- STA enemyTarget,X      \ data
+ STA enemyTarget,X      \ data, so it is set as the enemy's target going forward
 
- LDA targetVisibility
- STA enemyData7,X
- LDA enemyDrainTimer,X
- CMP #&01
- BCS tact21
+ LDA targetVisibility   \ Store the target's visibilty in 
+ STA enemyVisibility,X
+
+ LDA enemyDrainTimer,X  \ If enemyDrainTimer for this enemy is non-zero then it
+ CMP #1                 \ is either counting down or has counted down, so jump
+ BCS tact21             \ to tact21 to process this
+
+                        \ If we get here then enemyDrainTimer is zero, so we
+                        \ restart the timer from 120
 
  LDA #120               \ Set enemyDrainTimer = 120 so the enemy doesn't drain
  STA enemyDrainTimer,X  \ energy for another 120 timer ticks (120 * 0.06 =
@@ -9097,49 +9135,91 @@
 
 .tact20
 
- JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
-                        \ in the next iteration of the gameplay loop, returning
-                        \ from the subroutine using a tail call
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to stop applying tactics to
+                        \ this enemy and set things up so we move on to the next
+                        \ enemy in the next iteration of the gameplay loop
 
 .tact21
 
- BNE tact20
+ BNE tact20             \ We jump knowing that the enemyDrainTimer for the enemy
+                        \ is 1 or greater, so this jumps to tact20 to move on to
+                        \ the next enemy when enemyDrainTimer is greater than 1
+                        \ and is still counting down
 
-                        \ We only get here when enemyDrainTimer = 1
+                        \ If we get here then enemyDrainTimer for the enemy has
+                        \ counted down to 1, so we need to process that
 
- LDA targetVisibility
- BPL tact22
+ LDA targetVisibility   \ If bit 7 of targetVisibility is clear then the enemy
+ BPL tact22             \ can't see the tile containing the enemy's target (but
+                        \ we know it can see the enemy object as otherwise we
+                        \ wouldn't have reached this point), so jump to tact22
+                        \ to consider turning a tree into a meanie
+
+                        \ If we get here then the enemy can see the tile
+                        \ containing the target, so it can drain its target of
+                        \ energy
 
  JSR DrainObjectEnergy  \ Drain energy from the target object into the enemy,
                         \ transforming it into an object with an energy level
                         \ of one unit less (if applicable)
                         \
-                        \ This updates enemyEnergy with the drained energy
+                        \ This updates enemyEnergy with the drained energy, so
+                        \ it can be expended back onto the landscape later on
+                        \
+                        \ It also sets X to the object number of the target that
+                        \ has been drained of energy (and which has therefore
+                        \ been transformed into a different object type)
 
  LDY enemyObject        \ Set enemyTacticTimer for the enemy to 30 so we wait
  LDA #30                \ for 30 * 0.06 = 1.8 seconds before applying tactics
  STA enemyTacticTimer,Y \ to the enemy again
 
- BCS tact27
+ BCS tact27             \ If DrainObjectEnergy set the C flag then the enemy
+                        \ just drained the player object, so jump to tact27 to
+                        \ stop applying tactics to this enemy and set things up
+                        \ so we move on to the next enemy in the next iteration
+                        \ of the gameplay loop
 
- JMP tact25             \ Jump to tact25 with X set to the object number of
-                        \ the ??? to update it on-screen with a dithered effect
-                        \ and return from the subroutine using a tail call
+ JMP tact25             \ Otherwise it wasn't the player object being drained,
+                        \ so jump to tact25 with X set to the number of the
+                        \ object that was drained so we update it on-screen with
+                        \ a dithered effect (as it has now been transformed into
+                        \ a different type of object) and return from the
+                        \ subroutine using a tail call
 
 .tact22
 
- JSR sub_C197D
- LDY enemyObject
- BCC tact24
- LDA enemyData4,Y
- CMP #&02
- BCS tact23
+                        \ If we get here then the enemy can't see the tile
+                        \ containing the enemy's target, but it can see the
+                        \ target object, so now we consider turning a tree into
+                        \ a meanie
 
- LDA #%10000000         \ Set bit 7 of enemyDrainScan so the next time we apply
- STA enemyDrainScan,Y   \ tactics to the enemy it will scan for an object to
-                        \ drain
+ JSR ScanForMeanieTree  \ Scan through the objects in the landscape to see if
+                        \ any of them are trees that are suitable for turning
+                        \ into a meanie to attack the target
 
- BNE tact27
+ LDY enemyObject        \ Set Y to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #Y)
+
+ BCC tact24             \ If the call to ScanForMeanieTree cleared the C flag
+                        \ then we have successfully turned a tree into a meanie,
+                        \ so jump to tact24 to set up the enemy's tactics timer
+                        \ and redraw the transformed tree on-screen
+
+ LDA enemyFailCounter,Y \ If enemyFailCounter for this enemy is two or more then
+ CMP #2                 \ the enemy has failed to find a suitable tree to turn
+ BCS tact23             \ into a meanie on more than one occasion, so jump to
+                        \ tact23 to have a fairly long pause before applying
+                        \ tactics to this enemy again
+
+ LDA #%10000000         \ Otherwise set bit 7 of enemyDrainScan so the next time
+ STA enemyDrainScan,Y   \ we apply tactics to the enemy it will immediately scan
+                        \ for an object to drain
+
+ BNE tact27             \ Jump to tact27 to stop applying tactics to this enemy
+                        \ and set things up so we move on to the next enemy in
+                        \ the next iteration of the gameplay loop (this BNE is
+                        \ effectively a JMP as A is always non-zero)
 
 .tact23
 
@@ -9148,13 +9228,24 @@
                         \ drain energy for another 120 timer ticks (120 * 0.06 =
                         \ 7.2 seconds)
 
- BEQ tact27
+ BEQ tact27             \ Jump to tact27 to stop applying tactics to this enemy
+                        \ and set things up so we move on to the next enemy in
+                        \ the next iteration of the gameplay loop (this BEQ is
+                        \ effectively a JMP as A is always zero)
 
 .tact24
 
- LDA #&32
- STA enemyTacticTimer,Y
- LDX enemyMeanieTree,Y
+                        \ If we get here then we have just turned a tree into a
+                        \ meanie and the enemy number is in Y
+
+ LDA #50                \ Set enemyTacticTimer for the enemy to 50 so we wait
+ STA enemyTacticTimer,Y \ for 50 * 0.06 = 3.0 seconds before applying tactics to
+                        \ the enemy again
+
+ LDX enemyMeanieTree,Y  \ Set X to the object number of the tree that we just
+                        \ turned into a meanie, and fall through into part 8 to
+                        \ redraw the transformed object on the screen with a
+                        \ dithered effect
 
 \ ******************************************************************************
 \
@@ -9198,9 +9289,9 @@
 
 .tact27
 
- JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to move on to the next enemy
-                        \ in the next iteration of the gameplay loop, returning
-                        \ from the subroutine using a tail call
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to stop applying tactics to
+                        \ this enemy and set things up so we move on to the next
+                        \ enemy in the next iteration of the gameplay loop
 
 \ ******************************************************************************
 \
@@ -9638,7 +9729,7 @@
  LDA enemyDrainTimer,X
  BEQ C1945
  LDY #&04
- LDA enemyData7,X
+ LDA enemyVisibility,X
  STA T
  BMI C1948
 
@@ -9669,10 +9760,11 @@
 
 \ ******************************************************************************
 \
-\       Name: ResetEnemyData
+\       Name: ResetMeanieScan
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Reset the enemy data for a specific enemy to the defaults
+\    Summary: Reset the data stored for any meanie scans that the enemy has
+\             tried in the past, so we can start looking with a clean slate
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9682,102 +9774,168 @@
 \
 \ ******************************************************************************
 
-.ResetEnemyData
+.ResetMeanieScan
 
  LDA #%10000000         \ Set bit 7 of enemyMeanieTree for object #X to indicate
  STA enemyMeanieTree,X  \ that the enemy has not turned a tree into a meanie
 
- STA enemyData3,X       \ Set bit 7 of enemyData3 for object #X ???
+ STA enemyFailTarget,X  \ Set bit 7 of enemyFailTarget for object #X to remove
+                        \ the details of any failed meanie scans for this enemy
 
- LDA #0                 \ Zero enemyData4 for object #X ???
- STA enemyData4,X
+ LDA #0                 \ Zero enemyFailCounter for object #X to reset the
+ STA enemyFailCounter,X \ recorded number of failed meanie scans for this enemy
 
- LDA #64                \ Set enemyData1 = 64 for object #X ???
- STA enemyData1,X
+ LDA #64                \ Set enemyMeanieCheck = 64 for the enemy so if we start
+ STA enemyMeanieScan,X  \ scanning objects for trees to potentially turn into a
+                        \ meanie, we start from the last object and work down
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: sub_C197D
+\       Name: ScanForMeanieTree
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Scan through the objects in the landscape to see if any of them
+\             are trees that are suitable for turning into a meanie
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              The result of the tree scan:
+\
+\                         * Clear = we have successfully turned a tree into a
+\                                   meanie
+\
+\                         * Set = we have not been able to find a suitable tree
+\                                 to turn into a meanie
 \
 \ ******************************************************************************
 
-.sub_C197D
+.ScanForMeanieTree
 
  LDA #40                \ Set enemyViewingArc = 40, so the enemy's gaze has a
  STA enemyViewingArc    \ viewing arc that's twice the width of the screen (as
                         \ the screen is 20 yaw angles across)
 
- LDX enemyObject
- STX viewingObject
+ LDX enemyObject        \ Set the viewing object to the enemy so the gaze checks
+ STX viewingObject      \ below are performed from the point of view of the
+                        \ enemy object
 
-.C1986
-
- LDX enemyObject        \ Set X to the object number of the enemy to which we
-                        \ are applying tactics (so this is now object #X)
-
- LDY enemyData1,X
- BNE C1998
- INC enemyData4,X
- LDA enemyTarget,X
- STA enemyData3,X
- SEC
- RTS
-
-.C1998
-
- DEC enemyData1,X
- DEY
- LDA objectFlags,Y
- BMI C1986
- LDA objectTypes,Y
- CMP #&02
- BNE C1986
- LDA enemyTarget,X
- TAX
- LDA xObject,X
- SEC
- SBC xObject,Y
- BPL C19BA
- EOR #&FF
- CLC
- ADC #&01
-
-.C19BA
-
- CMP #&0A
- BCS C1986
- LDA zObject,X
- SEC
- SBC zObject,Y
- BPL C19CC
- EOR #&FF
- CLC
- ADC #&01
-
-.C19CC
-
- CMP #&0A
- BCS C1986
- LDA #&02
- JSR CheckEnemyGaze
- LDA targetVisibility
- BPL C1986
+.mean1
 
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics (so this is now object #X)
 
- TYA
+ LDY enemyMeanieScan,X  \ Set Y to the object number that we have reached while
+                        \ scanning for a tree to turn into a meanie, which is
+                        \ stored in the enemyMeanieScan for this enemy
+
+ BNE mean2              \ If enemyMeanieScan is non-zero then we have not yet
+                        \ scanned every object for a tree to turn into a meanie,
+                        \ so jump to mean2 to check the next object
+
+ INC enemyFailCounter,X \ We just failed to find a suitable tree to attack the
+                        \ target, so increment the failure counter for the enemy
+                        \ in enemyFailCounter
+
+ LDA enemyTarget,X      \ We just failed to find a suitable tree to attack the
+ STA enemyFailTarget,X  \ target, so store the target number in enemyFailTarget
+                        \ for this enemy to record this fact, so the enemy
+                        \ doesn't try spawning a meanie for this target again
+                        \ (at least, until the enemy's data is reset)
+
+ SEC                    \ Set the C flag to indicate that we have not been able
+                        \ to find a suitable tree to turn into a meanie
+
+ RTS                    \ Return from the subroutine
+
+.mean2
+
+ DEC enemyMeanieScan,X  \ Decrement the object number that we are checking for
+                        \ meanie potential, so we work our way down the object
+                        \ list
+
+ DEY                    \ We already set Y to the object number before jumping
+                        \ here, so decrement Y as well, so object #Y is our
+                        \ potential meanie
+
+ LDA objectFlags,Y      \ If bit 7 of the object flags for the potential meanie
+ BMI mean1              \ is set then the object number doesn't have an
+                        \ associated object, so jump to mean1 to move on to the
+                        \ next object to check that instead
+
+ LDA objectTypes,Y      \ If the potential meanie is not a tree (an object of
+ CMP #2                 \ type 2) then it can't be turned into a meanie, so jump
+ BNE mean1              \ to mean1 to move on to the next object to check that
+                        \ instead
+
+ LDA enemyTarget,X      \ Set X to the enemy's current target object, so object
+ TAX                    \ #X is the target object
+
+ LDA xObject,X          \ Set A to the difference in x-coordinate between object
+ SEC                    \ #X and object #Y (i.e between the target and potential
+ SBC xObject,Y          \ meanie)
+
+ BPL mean3              \ If the result is positive, jump to mean3 as the result
+                        \ is already the correct sign
+
+ EOR #&FF               \ Negate A using two's complement, so that A is now
+ CLC                    \ positive and contains the absolute value of the
+ ADC #1                 \ distance in the x-axis between the target and
+                        \ potential meanie
+
+.mean3
+
+ CMP #10                \ If the target and potential meanie are ten or more
+ BCS mean1              \ tiles apart then this is too far away from the target
+                        \ to be turned into a meanie, so jump to mean1 to move
+                        \ on to the next object to check that instead
+
+ LDA zObject,X          \ Set A to the difference in z-coordinate between object
+ SEC                    \ #X and object #Y (i.e between the target and potential
+ SBC zObject,Y          \ meanie)
+
+ BPL mean4              \ If the result is positive, jump to mean4 as the result
+                        \ is already the correct sign
+
+ EOR #&FF               \ Negate A using two's complement, so that A is now
+ CLC                    \ positive and contains the absolute value of the
+ ADC #1                 \ distance in the z-axis between the target and
+                        \ potential meanie
+
+.mean4
+
+ CMP #10                \ If the target and potential meanie are ten or more
+ BCS mean1              \ tiles apart then this is too far away from the target
+                        \ to be turned into a meanie, so jump to mean1 to move
+                        \ on to the next object to check that instead
+
+ LDA #2                 \ Call CheckEnemyGaze to check the gaze of the enemy
+ JSR CheckEnemyGaze     \ towards the potential meanie in object #Y, returning
+                        \ the following if object #Y is a tree (an object of
+                        \ type 2), which we have already confirmed:
+                        \
+                        \   * targetVisibility = bit 7 set if the tree's tile
+                        \     is visible, bit 6 set if the tree is visible
+
+
+ LDA targetVisibility   \ If bit 7 of targetVisibility is clear then the enemy
+ BPL mean1              \ can't see the tree's tile, so it can't turn it into
+                        \ a meanie, so jump to mean1 to move on to the next
+                        \ object to check that instead
+
+ LDX enemyObject        \ Set X to the object number of the enemy to which we
+                        \ are applying tactics (so this is now object #X)
+
+ TYA                    \ Set A to the object number of the potential meanie
 
  JSR CheckObjVisibility \ Check whether the potential meanie in object A is
                         \ visible and could therefore be seen on-screen by the
                         \ player
 
- BCC C19F1              \ If the C flag is clear then we are about to repeat the
+ BCC mean5              \ If the C flag is clear then we are about to repeat the
                         \ same screen pan (as the player is still holding down
                         \ the same pan key) and the potential meanie would be
                         \ visible in the landscape view if we drew it again
@@ -9787,25 +9945,42 @@
                         \ the meanie while the rest of the screen won't, and
                         \ that won't look good
                         \
-                        \ So jump to C19F1 to move on to the next enemy, thus
-                        \ aborting the whole process
+                        \ So jump to mean5 to stop processing this potential
+                        \ meanie for now, but set things up so we can come back
+                        \ to it the next time we process tactics for this enemy,
+                        \ as the player might not be panning the screen by then
 
- TYA
- STA enemyMeanieTree,X
+                        \ If we get here then we have found a suitable tree to
+                        \ turn into a meanie, so let's do that
 
- LDA #4                 \ Set the type of object #Y to 4, for a meanie
- STA objectTypes,Y
+ TYA                    \ Set enemyMeanieTree for this enemy to Y, as object #Y
+ STA enemyMeanieTree,X  \ is the object number of the tree that we are going to
+                        \ turn into a meanie, and storing it in enemyMeanieTree
+                        \ records the fact that the enemy has changed this
+                        \ object from a tree into a meanie
+
+ LDA #4                 \ Set the type of object #Y to 4, so it turns into a
+ STA objectTypes,Y      \ meanie (an object of type 4)
 
  LDA #104               \ Set minObjWidth = 104 so we use the width of the wider
- STA minObjWidth        \ object, the tree, when we calculate the object's
+ STA minObjWidth        \ object, i.e. the tree, when we calculate the object's
                         \ visibility when updating the object on-screen ???
 
- CLC
- RTS
+ CLC                    \ Clear the C flag to indicate that we have successfully
+                        \ turned a tree into a meanie
 
-.C19F1
+ RTS                    \ Return from the subroutine
 
- INC enemyData1,X
+.mean5
+
+ INC enemyMeanieScan,X  \ If we get here then we have found a suitable tree to
+                        \ turn into a meanie but updating it on-screen might
+                        \ corrupt the landscape view as a pan is in progress
+                        \
+                        \ So increment the object number in enemyMeanieScan, so
+                        \ the next time we apply tactics to this enemy, we can
+                        \ pick up where we left off, by which time the player
+                        \ might no longer be panning the screen
 
  JMP FinishEnemyTactics \ Jump to FinishEnemyTactics to stop applying tactics to
                         \ the current enemy and return to the ProcessGameplay
@@ -9844,6 +10019,10 @@
 \                             won
 \
 \                           * The player object is not being drained
+\
+\   X                   The object number of the target that has been drained of
+\                       energy (and which has therefore been transformed into a
+\                       different object type)
 \
 \ ******************************************************************************
 
@@ -10337,15 +10516,9 @@
                         \ back to the ProcessGameplay routine, just after the
                         \ JSR ApplyEnemyTactics instruction at play2
 
- JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to update enemyObject so the
-                        \ next time we consider applying enemy tactics in the
-                        \ gameplay loop, we apply them to the next enemy in the
-                        \ list, looping through object numbers 7 to 0 repeatedly
-                        \ and processing one enemy for each iteration of the
-                        \ gameplay loop
-                        \
-                        \ This also returns from the subroutine using a tail
-                        \ call
+ JMP MoveOnToNextEnemy  \ Jump to MoveOnToNextEnemy to stop applying tactics to
+                        \ this enemy and set things up so we move on to the next
+                        \ enemy in the next iteration of the gameplay loop
 
 \ ******************************************************************************
 \
@@ -10981,11 +11154,17 @@
  TXA                    \ Set A to the object number of the meanie that the
                         \ player is trying to absorb
 
- CMP enemyMeanieTree,Y  \ If A <> enemyMeanieTree for object #Y, jump to pkey14
- BNE pkey14             \ to move on to the next enemy object ???
+ CMP enemyMeanieTree,Y  \ If enemyMeanieTree for object #Y does not match the
+ BNE pkey14             \ object number of the meanie we are absorbing, then
+                        \ this means object #Y did not create this meanie, so
+                        \ jump to pkey14 to move on to the next enemy object
 
- LDA #%10000000         \ Set bit 7 of enemyMeanieTree for object #Y (the sentry
- STA enemyMeanieTree,Y  \ or Sentinel) ???
+                        \ If we get here then we have found the enemy that
+                        \ turned a tree into the meanie that is being absorbed
+
+ LDA #%10000000         \ Set bit 7 of enemyMeanieTree so the enemy that turned
+ STA enemyMeanieTree,Y  \ a tree into the meanie is no longer flagged as such
+                        \ (as the meanie has been absorbed)
 
  BNE pkey6              \ Jump to pkey6 to delete the meanie in object #X, add
                         \ the meanie's energy to the player's energy, and return
