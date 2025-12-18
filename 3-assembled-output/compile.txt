@@ -46,7 +46,7 @@
      0011
 .maxYawAngleHi
      0012
-.L0013
+.ditherStore
      0013
 .targetVisibility
      0014
@@ -2716,7 +2716,7 @@
      0CCE   00
 .bitMaskDither
      0CCF   00
-.randomPixelDither
+.ditherRandom
      0CD0   00
 .numberOfScrolls
      0CD1   00

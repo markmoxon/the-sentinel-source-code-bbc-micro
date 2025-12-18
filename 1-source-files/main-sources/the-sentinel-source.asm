@@ -211,9 +211,10 @@
 
  SKIP 1                 \ ???
 
-.L0013
+.ditherStore
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage for use in the DitherScreenBuffer
+                        \ routine
 
 .targetVisibility
 
@@ -395,7 +396,7 @@
 
 .xTileToDraw
 
- SKIP 0                \ The column number of the tile we are currently drawing
+ SKIP 0                 \ The column number of the tile we are currently drawing
 
 .columnCounter
 
@@ -2379,11 +2380,10 @@
                         \ routine that has a matching number of leading zeroes
                         \ as the size of the screen buffer in bytes
 
-.randomPixelDither
+.ditherRandom
 
  EQUB 0                 \ Storage for a random value in the DitherScreenBuffer
-                        \ routine to use as a random pixel number when drawing
-                        \ the dithered effect
+                        \ routine
 
 .numberOfScrolls
 
@@ -9376,7 +9376,8 @@
                         \ call to FollowGazeVector, so it returns results for
                         \ the tile visibility rather than the object itself (so
                         \ this will be on the second call if we are looking at a
-                        \ robot, or the only call if we are not looking at a robot)
+                        \ robot, or the only call if we are not looking at a
+                        \ robot)
 
  LDA yDeltaLo           \ Set (A xDeltaLo) = yDelta(Hi Lo) - &E0
  SEC                    \                  = yDelta(Hi Lo) - 224
@@ -25908,8 +25909,8 @@ L314A = C3148+2
                         \ in the screen buffer
 
  CMP #&53               \ If the result of the addition is less than &5300, then
- BNE dcol2              \ we have not reached the end of the screen buffer, so
-                        \ jump to dcol2 to skip the following
+ BNE dcol2              \ we have not reached the end of row 15 in the screen
+                        \ buffer, so jump to dcol2 to skip the following
 
                         \ At this point the screen buffer wraps around so the
                         \ buffer entries continue at a lower address
@@ -36088,8 +36089,8 @@ L314A = C3148+2
 
  JSR GetRandomNumber    \ Set A to a random number
 
- LDY randomGenerator+1  \ Set randomPixelDither to the second byte of the random
- STY randomPixelDither  \ number generator, so this is also a random number
+ LDY randomGenerator+1  \ Set ditherRandom to the second byte of the random
+ STY ditherRandom       \ number generator, so this is also a random number
 
  CLI                    \ Re-enable interrupts
 
@@ -36127,44 +36128,68 @@ L314A = C3148+2
                         \ valid pixel byte number within the range of the pixel
                         \ bytes in the screen buffer row
 
-                        \ We now set (L0013 A) to the address of a random row in
-                        \ the screen buffer, as an offset from the first screen
-                        \ row buffer at screenBufferRow0
+                        \ We now set (ditherStore A) to the address of a random
+                        \ row in the screen buffer, as an offset from the first
+                        \ screen row buffer at screenBufferRow0, using bits 0 to
+                        \ 4 of the random number in ditherRandom
 
- LDA randomPixelDither  \ Set L0013 to bits 0 to 4 of our random number, so
- AND #%00011111         \ that's a in the range 0 to 31
- STA L0013
+ LDA ditherRandom       \ Set ditherStore to bits 0 to 4 of our random number,
+ AND #%00011111         \ so that's a number in the range 0 to &1F
+ STA ditherStore
 
- LSR A                  \ Set L0013 = L0013 / 2 + L0013
- CLC                    \           = 1.5 * rand(0, 31)
- ADC L0013              \
- AND #%11111110         \ rounded down to the nearest even number
- STA L0013
+ LSR A                  \ Set ditherStore = ditherStore / 2 + ditherStore
+ CLC                    \
+ ADC ditherStore        \ and round the result down to the nearest even number,
+ AND #%11111110         \ so that's an even number in the range 0 to &2E
+ STA ditherStore
 
- ASL A                  \ Set L0013 = L0013 * 4 + L0013
- ASL A                  \           = rand(0, 31) * 6 + rand(0, 31) * 1.5
- ADC L0013              \           = rand(0, 31) * 7.5
- STA L0013
+ ASL A                  \ Set A = ditherStore * 4
+ ASL A                  \
+                        \ So that's a multiple of 8 in the range 0 to &B8
 
- LDA #0                 \ Set (L0013 A) = (L0013 0) / 8
- LSR L0013
+ ADC ditherStore        \ Set ditherStore = ditherStore + A
+ STA ditherStore        \
+                        \ So that's an even number in the range 0 to &2E
+
+ LDA #0                 \ Set (ditherStore A) = (ditherStore 0) / 8
+ LSR ditherStore        \
+ ROR A                  \ This gives us the address of a randomly picked screen
+ LSR ditherStore        \ row in (ditherStore A), as an offset from within
+ ROR A                  \ screen memory ???
+ LSR ditherStore
  ROR A
- LSR L0013
- ROR A
- LSR L0013
- ROR A
 
- ADC pixelByteToDither  \ Set fromAddr(1 0) = (L0013 A) + pixelByteToDither
- STA fromAddr
- LDA L0013
- ADC #0
- STA fromAddr+1
+ ADC pixelByteToDither  \ Set the following:
+ STA fromAddr           \
+ LDA ditherStore        \   fromAddr(1 0) = (ditherStore A) + pixelByteToDither
+ ADC #0                 \
+ STA fromAddr+1         \ So fromAddr(1 0) now contains the offset address
+                        \ within screen memory of a randomly picked pixel byte
+                        \ within the width of the screen buffer
+                        \
+                        \ This is calculated by adding the address of a randomly
+                        \ picked screen row in (ditherStore A) and a randomly
+                        \ picked pixel byte within the width of the screen
+                        \ buffer in pixelByteToDither
+
+                        \ The address in fromAddr(1 0) is now the offset within
+                        \ screen memory of the random pixel byte that we can use
+                        \ for dithering one pixel of the screen buffer to the
+                        \ screen (as we will dither just one pixel of this byte
+                        \ on each iteration of the inner loop)
+                        \
+                        \ The next step is to convert this offset into both a
+                        \ screen memory address and the corresponding screen
+                        \ buffer address, so we can copy the pixel from the
+                        \ screen buffer to the screen
+                        \
+                        \ We start with the screen memory address
 
  LDA objScreenAddr      \ Set (A toAddr) = objScreenAddr(1 0) + fromAddr(1 0)
- CLC
- ADC fromAddr
- STA toAddr
- LDA objScreenAddr+1
+ CLC                    \
+ ADC fromAddr           \ This gives us the address in screen memory of the
+ STA toAddr             \ random pixel byte, as objScreenAddr(1 0) contains the
+ LDA objScreenAddr+1    \ screen address of the object
  ADC fromAddr+1
 
  CMP #&80               \ If the high byte in A >= &80 then the new address is
@@ -36176,62 +36201,114 @@ L314A = C3148+2
 
  STA toAddr+1           \ Store the high byte of the result, so we now have:
                         \
-                        \   toAddr(1 0) = ???
+                        \   toAddr(1 0) = objScreenAddr(1 0) + fromAddr(1 0)
                         \
                         \ with the address wrapped around as required
 
- LDA fromAddr+1         \ Set fromAddr(1 0) = fromAddr(1 0) + screenBufferRow0
+                        \ And now we calculate the equivalent address in the
+                        \ screen buffer, which is a column buffer, so we start
+                        \ by adding the offset in fromAddr(1 0) to the address
+                        \ of the first screen buffer row at screenBufferRow0
+                        \ (we can skip adding the low bytes as the low byte of
+                        \ screenBufferRow0 is zero)
+                        \
+                        \ It's worth noting that the structure of the screen
+                        \ buffer is similar to the screen, with each row in
+                        \ the screen buffer being spaced out by 320 bytes, just
+                        \ as in screen memory, so this means we can just add
+                        \ screenBufferRow0 and fromAddr(1 0) to get the address
+                        \
+                        \ However, as we use a column buffer to update objects
+                        \ on-screen, we need to wrap around after buffer row 15,
+                        \ so we also need to check for this
+
+ LDA fromAddr+1         \ Set fromAddr(1 0) = screenBufferRow0 + fromAddr(1 0)
  CLC
  ADC #HI(screenBufferRow0)
  STA fromAddr+1
 
  CMP #&53               \ If the result of the addition is less than &5300, then
- BCC dith6              \ we have not reached the end of the screen buffer, so
-                        \ jump to dith6 to skip the following
+ BCC dith6              \ we have not reached the end of row 15 in the screen
+                        \ buffer, so jump to dith6 to skip the following
 
  LDA fromAddr           \ Set fromAddr(1 0) = fromAddr(1 0) - &1360
- SEC
- SBC #&60
- STA fromAddr
- LDA fromAddr+1
- SBC #&13
- STA fromAddr+1
+ SEC                    \
+ SBC #&60               \ If we get here then we have reached character row 16
+ STA fromAddr           \ in the screen buffer, so we need to wrap around
+ LDA fromAddr+1         \
+ SBC #&13               \ The value of &1360 is calculated as follows
+ STA fromAddr+1         \
+                        \ Character row 15 in the screen buffer is at address
+                        \ &51C0, and adding another 320 to that address gives
+                        \ us &5300, but this is past the end of the screen
+                        \ buffer, so we need to wrap it around
+                        \
+                        \ Character row 16 is actually at address &3FA0, so we
+                        \ need to subtract &5300 - &3FA0 = &1360 from the
+                        \ address to perform the wraparound
 
 .dith6
 
- LDA randomPixelDither
- ASL A
+ LDA ditherRandom       \ Set X to bits 6 and 7 of ditherRandom, shifted into
+ ASL A                  \ bits 0 and 1 to create a random number in the range
+ ROL A                  \ 0 to 3
  ROL A
- ROL A
- AND #&03
+ AND #%00000011
  TAX
- LDY #0
- LDA (fromAddr),Y
- AND pixelBitMask,X
- STA L0013
- LDA (toAddr),Y
- AND clearPixelMask,X
- ORA L0013
- STA (toAddr),Y
+
+ LDY #0                 \ Set A to the pixel byte that we want to dither onto
+ LDA (fromAddr),Y       \ the screen, taking it from the screen buffer at
+                        \ address fromAddr(1 0)
+
+ AND pixelBitMask,X     \ Convert X from a number in the range 0 to 3 into a bit
+                        \ mask with that pixel number set (where pixel 0 is on
+                        \ the left and pixel 3 is on the right), and clear all
+                        \ the bits in A apart from the two bits for that pixel
+                        \
+                        \ So if X is 2, for example, the resulting mask will be
+                        \ %00100010, in which pixel 2 is set, so only these two
+                        \ bits of the pixel byte will be kept
+
+ STA ditherStore        \ Store the pixel that we want to dither in ditherStore
+
+ LDA (toAddr),Y         \ Set A to the current screen contents of the pixel byte
+                        \ that we are updating,  taking it from the screen at
+                        \ address toAddr(1 0)
+
+ AND clearPixelMask,X   \ Clear the pixel number in A by applying a pixel bit
+                        \ mask from clearPixelMask where the bits for every
+                        \ pixel are set except for pixel X
+
+ ORA ditherStore        \ Set the colour of pixel X to the colour of the pixel
+                        \ from the screen buffer by OR'ing in the pixel bits
+                        \ that we set above
+
+ STA (toAddr),Y         \ Store the updated pixel byte in screen memory to draw
+                        \ the pixel from the screen buffer on-screen
 
  BIT doNotDitherObject  \ If bit 7 of doNotDitherObject is set then the dithered
  BMI dith8              \ effect has been disabled (while we focus on processing
                         \ an action key), so jump to dith8 to return from the
                         \ subroutine without doing any more dithering
 
- DEC ditherInnerLoop
+ DEC ditherInnerLoop    \ Decrement the inner loop counter
 
- BNE dith7
+ BNE dith7              \ If we have not yet finished the inner loop, jump to
+                        \ dith7 to loop back to dither another pixel onto the
+                        \ screen, until we have done all 255 pixels in the
+                        \ inner loop
 
  JSR ProcessSound       \ Process any sounds or music that are being made in the
                         \ background
 
- DEC ditherOuterLoop
- BEQ dith8
+ DEC ditherOuterLoop    \ Decrement the outer loop counter
+
+ BEQ dith8              \ If we have finished the outer loop, jump to dith8 to
+                        \ return from the subroutine
 
 .dith7
 
- JMP dith3
+ JMP dith3              \ Loop back to dither another pixel onto the screen
 
 .dith8
 
