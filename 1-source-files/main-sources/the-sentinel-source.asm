@@ -1551,14 +1551,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L0B40
+\       Name: L0B40Hi
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L0B40
+.L0B40Hi
 
  EQUB &10, &10, &10, &10, &10, &10, &10, &10    \ These values are workspace
  EQUB &10, &10, &10, &10, &10, &10, &10, &10    \ noise and have no meaning
@@ -20053,9 +20053,21 @@ L23E3 = C23E2+1
 
 .DrawPolygon
 
- LDY screenBufferType   \ If screenBufferType >= 2 then we must be drawing into
- CPY #2                 \ the column buffer, so jump to poly2 ???
- BCS poly2
+ LDY screenBufferType   \ If screenBufferType >= 2 then we are drawing into the
+ CPY #2                 \ column buffer, so jump to poly2 as the column is
+ BCS poly2              \ always drawn in one stage
+
+                        \ If we get here then screenBufferType must be 0 or 1
+                        \ and we are drawing into the left or right row buffer
+                        \
+                        \ The left row buffer covers the leftmost 256 bytes of
+                        \ each screen row, while the right row buffer covers the
+                        \ remaining 64 bytes
+                        \
+                        \ It would be possible to draw the polygon into both
+                        \ buffers at once, but drawing it separately is more
+                        \ efficient as we don't need to manage the x-coordinate
+                        \ as a 16-bit value
 
  JSR sub_C2D36          \ Seems to check something to do with drawing ???
 
@@ -20064,16 +20076,20 @@ L23E3 = C23E2+1
 
  JSR sub_C2299          \ Seems to do the actual drawing ???
 
- LDY screenBufferType   \ screenBufferType is 0 or 1, so this must be ???, so
- LDA L002C,Y            \ set A = L002C or L002D
+ LDY screenBufferType   \ Aet A = L002C or L002D for left/right row buffer ???
+ LDA L002C,Y
 
  CMP #1                 \ If L002C or L002D = 1, jump to poly3 to return from
- BEQ poly3              \ the subroutine
+ BEQ poly3              \ the subroutine ???
 
 .poly1
 
- JSR FlipBufferType     \ Flip the buffer type between 0 and 1 and set lots of
-                        \ variables accordingly ???
+                        \ We have drawn the relevant parts of the polygon into
+                        \ the left row buffer, so now we draw relevant parts of
+                        \ the polygon into the right row buffer
+
+ JSR FlipBufferType     \ Flip the buffer type between 0 and 1 and configure the
+                        \ buffer accordingly
 
 .poly2
 
@@ -22027,7 +22043,7 @@ L23E3 = C23E2+1
  ROL A
  ROL T
  ROL A
- STA L54A0,X
+ STA L0B40Lo,X
  LDA T
  ROL A
  AND #&07
@@ -22037,7 +22053,7 @@ L23E3 = C23E2+1
 
 .C2D8A
 
- STA L0B40,X
+ STA L0B40Hi,X
  DEY
  BPL C2D63
  JMP C2DBC
@@ -22066,7 +22082,7 @@ L23E3 = C23E2+1
  ROL A
  ASL T
  ROL A
- STA L54A0,X
+ STA L0B40Lo,X
  DEY
  BPL C2D99
 
@@ -22117,8 +22133,8 @@ L23E3 = C23E2+1
  STA V
  BIT L006C
  BVC C2E1C
- LDA L0B40,Y
- ORA L0B40,X
+ LDA L0B40Hi,Y
+ ORA L0B40Hi,X
  BEQ C2E1C
  LDA V
  BNE C2E19
@@ -22134,8 +22150,8 @@ L23E3 = C23E2+1
  LDA V
  BEQ C2E2B
  LDA #0
- STA L0B40,Y
- STA L0B40,X
+ STA L0B40Hi,Y
+ STA L0B40Hi,X
  JMP C2FCC
 
 .C2E2B
@@ -22150,9 +22166,9 @@ L23E3 = C23E2+1
  STA vectorPitchAngleLo
  LDA drawViewPitchLo,X
  STA L0016
- LDA L54A0,Y
+ LDA L0B40Lo,Y
  STA L0018
- LDA L54A0,X
+ LDA L0B40Lo,X
  STA L0039
  LDA #0
  STA L0041
@@ -22205,7 +22221,7 @@ L23E3 = C23E2+1
 
 .C2E96
 
- LDA L54A0,X
+ LDA L0B40Lo,X
  CMP zVectorLo
  BCC C2E9F
  STA zVectorLo
@@ -22487,12 +22503,12 @@ L2F79 = C2F77+2
  STX L000E
  LDA #0
  STA vectorPitchAngleHi
- LDA L54A0,Y
+ LDA L0B40Lo,Y
  SEC
- SBC L54A0,X
+ SBC L0B40Lo,X
  STA T
- LDA L0B40,Y
- SBC L0B40,X
+ LDA L0B40Hi,Y
+ SBC L0B40Hi,X
  STA L000A
 
  JSR Absolute16Bit      \ Set (A T) = |A T|
@@ -22528,9 +22544,9 @@ L2F79 = C2F77+2
  STA L0043
  LDA T
  STA xCoordHi
- LDA L54A0,Y
+ LDA L0B40Lo,Y
  STA L0039
- LDA L0B40,Y
+ LDA L0B40Hi,Y
  STA L0042
  LDA drawViewPitchHi,Y
  STA vectorPitchAngleLo
@@ -22578,9 +22594,9 @@ L2F79 = C2F77+2
  STA L0016
  LDA drawViewPitchHi,X
  STA vectorPitchAngleLo
- LDA L54A0,X
+ LDA L0B40Lo,X
  STA L0039
- LDA L0B40,X
+ LDA L0B40Hi,X
  STA L0042
  LDA L001A
  SEC
@@ -32786,14 +32802,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L54A0
+\       Name: L0B40Lo
 \       Type: Variable
 \   Category: ???
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L54A0
+.L0B40Lo
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
