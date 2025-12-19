@@ -21950,15 +21950,24 @@ L23E3 = C23E2+1
 \
 \ Arguments:
 \
-\   L0045               ???
+\   polygonType         The polygon type
 \
-\   polygonType         The polygon type, in which we know bit 7 is set
+\ ------------------------------------------------------------------------------
 \
-\   V flag              Set according to bit 6 of polygonType
+\ Returns:
+\
+\   C flag              Status flag:
+\
+\                         * Clear if ???
+\
+\                         * Set if ???
 \
 \ ******************************************************************************
 
 .C2D13
+
+                        \ If we get here then we are drawing a two-face tile as
+                        \ a pair of triangles
 
  LDY L0045
 
@@ -21967,7 +21976,7 @@ L23E3 = C23E2+1
                         \ C2D1E to do this
 
                         \ If we get here then bit 6 and 7 of polygonType are
-                        \ both set, so we are drawing the first triangle in a
+                        \ both set, so we are drawing the second triangle in a
                         \ two-face file
 
  CLC
@@ -21991,8 +22000,8 @@ L23E3 = C23E2+1
 
 .sub_C2D36
 
- LDA xTileToDraw
- ORA drawingTableOffset
+ LDA xTileToDraw        \ Set A to the drawing table offset plus the column
+ ORA drawingTableOffset \ number of the tile we are currently drawing ???
 
  BIT polygonType        \ If bit 7 of polygonType is set then we are drawing a
  BMI C2D13              \ two-face tile as a pair of triangles, so jump to C2D13
@@ -22239,7 +22248,7 @@ L23E3 = C23E2+1
 
 .C2EAA
 
- JMP C3087
+ JMP sub_C3087
 
 .CRE25
 
@@ -22605,7 +22614,16 @@ L2F79 = C2F77+2
  JSR sub_C2EAE
  JMP C2E56
 
-.C3087
+\ ******************************************************************************
+\
+\       Name: sub_C3087
+\       Type: Subroutine
+\   Category: ???
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C3087
 
  LDA L0018
  SEC

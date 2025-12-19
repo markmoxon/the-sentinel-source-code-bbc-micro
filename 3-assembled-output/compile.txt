@@ -7904,7 +7904,7 @@
      307F   85 0C      STA &0C
      3081   20 AE 2E   JSR &2EAE
      3084   4C 56 2E   JMP &2E56
-.C3087
+.sub_C3087
      3087   A5 18      LDA &18
      3089   38         SEC
      308A   E5 39      SBC &39
