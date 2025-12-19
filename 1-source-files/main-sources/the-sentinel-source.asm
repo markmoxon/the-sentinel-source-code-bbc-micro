@@ -1798,25 +1798,10 @@
  EQUB 0, 0, 0, 0        \ These bytes appear to be unused
  EQUB 0, 0, 0, 0
 
-.L0C40
+.polygonPoint
 
- EQUB 0                 \ ???
-
-.L0C41
-
- EQUB 0                 \ ???
-
-.L0C42
-
- EQUB 0                 \ ???
-
-.L0C43
-
- EQUB 0                 \ ???
-
-.L0C44
-
- EQUB 0
+ EQUB 0, 0, 0, 0, 0     \ Up to five coordinates for the points of the polygon
+                        \ being drawn
 
  EQUB 0, 0              \ These bytes appear to be unused
 
@@ -2207,9 +2192,9 @@
                         \
                         \   * 3 = music
                         \
-                        \   * 4 = scanner sound effect ???
+                        \   * 4 = scanner sound
                         \
-                        \   * 6 = game over sound effect
+                        \   * 6 = game over sound
 
 .gameOverSoundPitch
 
@@ -2325,7 +2310,7 @@
  EQUB 0, 0, 0, 0        \
                         \   * Bit 7 set = the enemy can see the target's tile
                         \
-                        \   * Bit 7 set = the enemy can see the target object
+                        \   * Bit 6 set = the enemy can see the target object
                         \                 but it can't see the target's tile
 
 .enemyDrainScan
@@ -2450,9 +2435,12 @@
 
 .minObjWidth
 
- EQUB 0                 \ When set to a non-zero width, this width is taken into
-                        \ consideration when calculating whether an object is
-                        \ visible on-screen ???
+ EQUB 0                 \ The on-screen width to use when updating objects
+                        \
+                        \ When set to a non-zero width, this width is taken into
+                        \ consideration when calculating how much of an object
+                        \ visible on-screen, particularly when an object is
+                        \ being updated
 
  EQUB 0, 0              \ These bytes appear to be unused
 
@@ -5960,7 +5948,8 @@
                         \ play3 to return from the subroutine with the C flag
                         \ set
 
- JSR sub_C191A          \ Something to do with player and enemy objects ???
+ JSR GetPlayerDrain     \ Calculate whether the player is being scanned by an
+                        \ enemy and whether the enemy can see the player's tile
 
  JSR ProcessPauseKeys   \ Pause or unpause the game when COPY or DELETE are
                         \ pressed
@@ -8356,11 +8345,11 @@
 
  EQUB 0                 \ The current state of the scanner:
                         \
-                        \   * 0 = fill scanner with black
+                        \   * 0 = fill the scanner with black
                         \
                         \   * 4 = fill the scanner with static in colour 3
                         \
-                        \   * 8 = fill scanner with green
+                        \   * 8 = fill the scanner with green
 
 \ ******************************************************************************
 \
@@ -9695,68 +9684,145 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C191A
+\       Name: GetPlayerDrain
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Gameplay
+\    Summary: Calculate whether the player is being scanned by an enemy and
+\             whether the enemy can see the player's tile
 \
 \ ******************************************************************************
 
-.sub_C191A
+.GetPlayerDrain
 
- LDY #0
- STY T
- LDX #&07
+ LDY #0                 \ Set Y = 0 to use as the default state of the scanner
+                        \ (fill scanner with black)
 
-.C1920
+ STY T                  \ Set T = 0 to store in playerTileIsHidden after the
+                        \ loop below, so the default value is that the player
+                        \ is not exposed to an enemy scan (though we may change
+                        \ this)
 
- LDA objectFlags,X      \ Set A to the object flags for object #X
+ LDX #7                 \ We now loop through all eight enemies, so set an enemy
+                        \ counter in X
 
- BMI C1945
+.pdra1
 
- LDA objectTypes,X
+ LDA objectFlags,X      \ If bit 7 is set for object #Y then this object number
+ BMI pdra3              \ is not allocated to an object, so jump to pdra3 to
+                        \ move on to the next enemy object
 
- CMP #&01
- BEQ C1930
- CMP #&05
- BNE C1945
+ LDA objectTypes,X      \ Set A to the object type for the enemy in object #X
 
-.C1930
+ CMP #1                 \ If object #X is a sentry (an object of type 1) then
+ BEQ pdra2              \ jump to pdra2
 
- LDA enemyTarget,X
- CMP playerObject
- BNE C1945
- LDA enemyDrainTimer,X
- BEQ C1945
- LDY #&04
- LDA enemyVisibility,X
- STA T
- BMI C1948
+ CMP #5                 \ If object #X is not the Sentinel (an object of type
+ BNE pdra3              \ 5), then jump to pdra3 to move on to the next enemy
+                        \ object
 
-.C1945
+.pdra2
 
- DEX
- BPL C1920
+                        \ If we get here then object #X is the Sentinel or a
+                        \ sentry
 
-.C1948
+ LDA enemyTarget,X      \ If the enemy's target is not the player, jump to pdra3
+ CMP playerObject       \ to move on to the next enemy object
+ BNE pdra3
 
- STY scannerUpdate
- LDA T
- STA playerTileIsHidden
- LDA soundEffect
- CPY soundEffect
- STY soundEffect
- BEQ CRE08
- LDY #&12
- STY soundData+16       \ First parameter of sound block #2 (channel)
- CMP #&03
- BEQ CRE08
- LDX #&06
- JSR FlushBuffer
+ LDA enemyDrainTimer,X  \ If the drain timer for the enemy is zero, jump to
+ BEQ pdra3              \ pdra3 to move on to the next enemy object
 
-.CRE08
+                        \ If we get here then the enemy is targeting the player
+                        \ and has a non-zero drain timer, so the player is at
+                        \ least partially exposed an the enemy who can drain
+                        \ them
 
- RTS
+ LDY #4                 \ Set Y = 4 to use as the state of the scanner (fill the
+                        \ scanner with static in colour 3)
+
+ LDA enemyVisibility,X  \ Set T to the visibility of the enemy's target (the
+ STA T                  \ player) to store in playerTileIsHidden after the loop
+                        \
+                        \ This will either have bit 7 set (target's tile is
+                        \ visible) or bit 6 set (target's tile is not visible
+                        \ but target object is)
+
+ BMI pdra4              \ If bit 7 of enemyVisibility is set then the enemy can
+                        \ see the player's tile, so jump to pdra4 to record this
+                        \ fact
+                        \
+                        \ If bit 7 of enemyVisibility is clear then the enemy
+                        \ can see the player object but it can't see the
+                        \ player's tile, so we keep looping in case there is
+                        \ another target whose tile the enemy can see, as this
+                        \ will take precedence over the partially exposed player
+
+.pdra3
+
+ DEX                    \ Decrement the enemy counter in X
+
+ BPL pdra1              \ Loop back until we have checked all eight enemies
+
+.pdra4
+
+ STY scannerUpdate      \ Set scannerUpdate to the value of Y, which will be:
+                        \
+                        \   * Zero if the player is not exposed to the enemy (so
+                        \     the scanner will not be updated)
+                        \
+                        \   * Non-zero (i.e. 4) if the player is exposed to the
+                        \     enemy (so the scanner will then be updated)
+
+ LDA T                  \ Set playerTileIsHidden to the value of T, which will
+ STA playerTileIsHidden \ be:
+                        \
+                        \   * Zero if the player is not exposed to the enemy
+                        \
+                        \   * 128 (i.e. bit 7 set) if the player's tile is
+                        \     exposed to the enemy
+                        \
+                        \   * 64 (i.e. bit 6 set) if the player is exposed to
+                        \     the enemy but the enemy can't see the player's
+                        \     tile
+                        \
+                        \ This value is used in the UpdateScannerNow routine
+                        \ to determine whether we show the scanner with a full
+                        \ display of static (not 64) or only half (64)
+
+ LDA soundEffect        \ Set A to soundEffect, which determines how the current
+                        \ sound is processed by the ProcessSound routine
+
+ CPY soundEffect        \ Set the flags on the comparison of the current setting
+                        \ of soundEffect and the value of Y
+
+ STY soundEffect        \ Set soundEffect to Y, which will be:
+                        \
+                        \   * Zero if the player is not exposed to the enemy (so
+                        \     no sound processing is required)
+                        \
+                        \   * Non-zero (i.e. 4) if the player is exposed to the
+                        \     enemy (so the scanner sound is processed in the
+                        \     ProcessSound routine)
+
+ BEQ pdra5              \ If the value of soundEffect has not changed, jump to
+                        \ pdra5 to return from the subroutine
+
+ LDY #&12               \ Set the first parameter of sound block #2 (channel) to
+ STY soundData+16       \ &12, so we make the scanner sound on channel 2 and
+                        \ with a flush control of 1 to make the sound instantly
+
+ CMP #3                 \ We set A to soundEffect above, so if soundEffect = 3,
+ BEQ pdra5              \ which denotes that we are currently applying the music
+                        \ sound effect, jump to pdra5 to return from the
+                        \ subroutine to let the music sound finish first
+
+ LDX #6                 \ Otherwise we are not currently applying the music
+ JSR FlushBuffer        \ sound effect, so call the FlushBuffer routine with
+                        \ X = 6 to flush the sound channel 2 buffer
+
+.pdra5
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9963,7 +10029,7 @@
  STA objectTypes,Y      \ meanie (an object of type 4)
 
  LDA #104               \ Set minObjWidth = 104 so we use the width of the wider
- STA minObjWidth        \ object, i.e. the tree, when we calculate the object's
+ STA minObjWidth        \ object, the tree, when we calculate the object's
                         \ visibility when updating the object on-screen ???
 
  CLC                    \ Clear the C flag to indicate that we have successfully
@@ -17219,9 +17285,9 @@ L23E3 = C23E2+1
  LDX viewingObject      \ Set X to the number of the object that is viewing the
                         \ landscape
 
- LDA #LO(L0C40)         \ Set drawViewAngles(1 0) = L0C40 ???
+ LDA #LO(polygonPoint)  \ Set drawViewAngles(1 0) = polygonPoint ???
  STA drawViewAngles
- LDA #HI(L0C40)
+ LDA #HI(polygonPoint)
  STA drawViewAngles+1
 
  LDA objectYawAngle,X   \ Set A to the yaw angle of the viewer's object
@@ -19976,9 +20042,9 @@ L23E3 = C23E2+1
 \
 \                         * 2 = column buffer (for left/right pan)
 \
-\   drawViewAngles(1 0) The point data:
+\   drawViewAngles      The point data:
 \
-\                         * When drawing tile faces, this points to L0C40 ???
+\                         * When drawing tile faces, this points to polygonPoint
 \
 \                         * When drawing object polygons, this points to a list
 \                           of object-relative numbers of polygon points
@@ -21896,14 +21962,14 @@ L23E3 = C23E2+1
 
 .C2D1E
 
- STA L0C40
- STA L0C43
+ STA polygonPoint
+ STA polygonPoint+3
  EOR #&20
- STA L0C41
+ STA polygonPoint+1
  CLC
  ADC L2CDF,Y
  AND #&3F
- STA L0C42
+ STA polygonPoint+2
  LDX #&03
  BNE C2D58
 
@@ -21923,15 +21989,15 @@ L23E3 = C23E2+1
                         \ are clear, so we are drawing a tile as a four-sided
                         \ shape (quadrilateral)
 
- STA L0C40
- STA L0C44
+ STA polygonPoint
+ STA polygonPoint+4
  EOR #&20
- STA L0C41
+ STA polygonPoint+1
  CLC
  ADC #&01
- STA L0C42
+ STA polygonPoint+2
  EOR #&20
- STA L0C43
+ STA polygonPoint+3
  LDX #&04
 
 .C2D58
@@ -36010,9 +36076,9 @@ L314A = C3148+2
 
 .drob8
 
- LDA #LO(L0C40)         \ Set drawViewAngles(1 0) = L0C40 ???
+ LDA #LO(polygonPoint)  \ Set drawViewAngles(1 0) = polygonPoint ???
  STA drawViewAngles     \
- LDA #HI(L0C40)         \ This resets drawViewAngles(1 0) so DrawPolygon will
+ LDA #HI(polygonPoint)  \ This resets drawViewAngles(1 0) so DrawPolygon will
  STA drawViewAngles+1   \ return to the default setting of drawing using point
                         \ data for tile faces rather than object polygons
 

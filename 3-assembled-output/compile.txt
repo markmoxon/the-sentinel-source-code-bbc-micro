@@ -2499,15 +2499,11 @@
      0C3D   00
      0C3E   00
      0C3F   00
-.L0C40
+.polygonPoint
      0C40   00
-.L0C41
      0C41   00
-.L0C42
      0C42   00
-.L0C43
      0C43   00
-.L0C44
      0C44   00
      0C45   00
      0C46   00
@@ -4482,11 +4478,11 @@
      1918   60         RTS
 .xStoreEnemyGaze
      1919   00
-.sub_C191A
+.GetPlayerDrain
      191A   A0 00      LDY #&00
      191C   84 74      STY &74
      191E   A2 07      LDX #&07
-.C1920
+.pdra1
      1920   BD 00 01   LDA &0100,X
      1923   30 20      BMI &1945
      1925   BD 40 0A   LDA &0A40,X
@@ -4494,7 +4490,7 @@
      192A   F0 04      BEQ &1930
      192C   C9 05      CMP #&05
      192E   D0 15      BNE &1945
-.C1930
+.pdra2
      1930   BD A8 0C   LDA &0CA8,X
      1933   C5 0B      CMP &0B
      1935   D0 0E      BNE &1945
@@ -4504,10 +4500,10 @@
      193E   BD B0 0C   LDA &0CB0,X
      1941   85 74      STA &74
      1943   30 03      BMI &1948
-.C1945
+.pdra3
      1945   CA         DEX
      1946   10 D8      BPL &1920
-.C1948
+.pdra4
      1948   8C 04 0C   STY &0C04
      194B   A5 74      LDA &74
      194D   8D 4F 0C   STA &0C4F
@@ -4521,7 +4517,7 @@
      1962   F0 05      BEQ &1969
      1964   A2 06      LDX #&06
      1966   20 55 35   JSR &3555
-.CRE08
+.pdra5
      1969   60         RTS
 .ResetMeanieScan
      196A   A9 80      LDA #&80
