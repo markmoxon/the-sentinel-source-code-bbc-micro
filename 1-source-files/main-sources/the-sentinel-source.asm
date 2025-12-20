@@ -15642,14 +15642,14 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C2299
+\       Name: DrawPolygonPixels
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: Draw an analysed polygon into the screen buffer
 \
 \ ******************************************************************************
 
-.sub_C2299
+.DrawPolygonPixels
 
  LDA #&01
  STA L002C
@@ -19420,7 +19420,7 @@ L23E3 = C23E2+1
  STA maxYawAngleHi      \ ???
 
  LDA L298B,Y            \ Set the high byte of L0011Yaw(Hi Lo) to 10, 2, or 12
- STA L0011YawHi         \ Gets added to drawViewYawHi in sub_C2D36 ???
+ STA L0011YawHi         \ Gets added to drawViewYawHi in AnalysePolygon ???
 
  LDA L2991,Y            \ Set L0061 to 112, 112 or 64 ???
  STA L0061              \ 112 = 14 * 8, 64 = 8 * 8
@@ -20069,12 +20069,13 @@ L23E3 = C23E2+1
                         \ efficient as we don't need to manage the x-coordinate
                         \ as a 16-bit value
 
- JSR sub_C2D36          \ Seems to check something to do with drawing ???
+ JSR AnalysePolygon     \ Analyse the polygon and prepare it for drawing into
+                        \ the screen buffer ???
 
- BCS poly1              \ If the call to sub_C2D36 set the C flag then ???, so
-                        \ jump to poly1 to skip the following
+ BCS poly1              \ If the call to AnalysePolygon set the C flag then ???,
+                        \ so jump to poly1 to skip the following
 
- JSR sub_C2299          \ Seems to do the actual drawing ???
+ JSR DrawPolygonPixels  \ Draw the polygon into the screen buffer
 
  LDY screenBufferType   \ Aet A = L002C or L002D for left/right row buffer ???
  LDA L002C,Y
@@ -20093,12 +20094,13 @@ L23E3 = C23E2+1
 
 .poly2
 
- JSR sub_C2D36          \ Seems to check something to do with drawing ???
+ JSR AnalysePolygon     \ Analyse the polygon and prepare it for drawing into
+                        \ the screen buffer ???
 
- BCS poly3              \ If the call to sub_C2D36 set the C flag then ???, so
-                        \ jump to poly3 to return from the subroutine
+ BCS poly3              \ If the call to AnalysePolygon set the C flag then ???,
+                        \ so jump to poly3 to return from the subroutine
 
- JSR sub_C2299          \ Seems to do the actual drawing ???
+ JSR DrawPolygonPixels  \ Draw the polygon into the screen buffer
 
 .poly3
 
@@ -21854,7 +21856,10 @@ L23E3 = C23E2+1
 
 .L2CDF
 
- EQUB &01, &21, &FF, &1F
+ EQUB 1
+ EQUB 32 + 1
+ EQUB -1
+ EQUB 32 - 1
 
 \ ******************************************************************************
 \
@@ -21941,10 +21946,11 @@ L23E3 = C23E2+1
 
 \ ******************************************************************************
 \
-\       Name: sub_C2D36
+\       Name: AnalysePolygon (Part 1 of ???)
 \       Type: Subroutine
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: Analyse a polygon and prepare it for drawing into the screen
+\             buffer
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21964,73 +21970,164 @@ L23E3 = C23E2+1
 \
 \ ******************************************************************************
 
-.C2D13
+.apol1
 
                         \ If we get here then we are drawing a two-face tile as
-                        \ a pair of triangles
+                        \ a pair of triangles and A contains the offset of the
+                        \ rear left tile corner in the drawing tables
 
- LDY L0045
+ LDY L0045              \ Set Y = L0045 = 0 or 1 ???
 
- BVC C2D1E              \ If bit 6 of polygonType is clear then we are drawing
+ BVC apol2              \ If bit 6 of polygonType is clear then we are drawing
                         \ the first triangle in a two-face tile, so jump to
-                        \ C2D1E to do this
+                        \ apol2 to do this
 
                         \ If we get here then bit 6 and 7 of polygonType are
                         \ both set, so we are drawing the second triangle in a
                         \ two-face file
 
- CLC
- ADC #&21
- AND #&3F
- INY
- INY
+ CLC                    \ Set A = (A + 32 + 1) mod 64
+ ADC #33                \
+ AND #63
 
-.C2D1E
+ INY                    \ Set Y = Y + 2
+ INY                    \
+                        \ to give 2 or 3
 
- STA polygonPoint
- STA polygonPoint+3
- EOR #&20
- STA polygonPoint+1
- CLC
+.apol2
+
+ STA polygonPoint       \ Set the first triangle point to A
+
+ STA polygonPoint+3     \ Set the fourth triangle point to A, so the third edge
+                        \ in the triangle joins with the start of the first
+                        \ edge
+
+ EOR #32                \ Set the second triangle point to the equivalent to A
+ STA polygonPoint+1     \ but in the other drawing table offset
+
+ CLC                    \ Set the third triangle point to A + the Y-th 
  ADC L2CDF,Y
- AND #&3F
+ AND #63
  STA polygonPoint+2
- LDX #&03
- BNE C2D58
 
-.sub_C2D36
+ LDX #3                 \ Set X = 3 to set as the value of polygonPointCount as
+                        \ there are three edges in a triangle polygon
+
+ BNE apol3              \ Jump to apol3 to set polygonPointCount = 3 and move on
+                        \ to part 2
+
+.AnalysePolygon
 
  LDA xTileToDraw        \ Set A to the drawing table offset plus the column
- ORA drawingTableOffset \ number of the tile we are currently drawing ???
+ ORA drawingTableOffset \ number of the tile we are currently drawing, so if we
+                        \ are drawing a tile, this is the offset of the first
+                        \ point of the tile in the drawing tables
+                        \
+                        \ So A is the position in the drawViewYaw(Hi Lo) and
+                        \ drawViewPitch(Hi Lo) tables of the tile corners
+                        \
+                        \ The four points are laid out with the front edge in
+                        \ one drawing table offset (0 or 32) and the back edge
+                        \ in the other drawing table offset (32 or 0), and the
+                        \ left-right points are together in the same offset
+                        \
+                        \ Specifially, the four tile corners will be offset in
+                        \ the drawing tables in one of two layouts
+                        \
+                        \ This is the layout when drawingTableOffset = 0:
+                        \
+                        \   offset x          offset x + 1
+                        \
+                        \   offset 32 + x     offset 32 + x + 1
+                        \
+                        \ where x is xTileToDraw and the top row is the back row
+                        \ away from the viewer
+                        \
+                        \ And this is the layout when drawingTableOffset = 32:
+                        \
+                        \   offset 32 + x     offset 32 + x + 1
+                        \
+                        \   offset x          offset x + 1
+                        \
+                        \ So the offset in A will point to the drawing data for
+                        \ the top-left point above, i.e. the rear left tile
+                        \ corner from the perspective of the viewer
+                        \
+                        \ Also, consider the above layouts and how we can move
+                        \ between the corners:
+                        \
+                        \   * We can move from left to right by adding 1 to the
+                        \     offset, and from right to left by subtracting 1
+                        \
+                        \   * We can move between the top and bottom rows by
+                        \     using EOR #32 on the offset, as this will flip
+                        \     between x and x + 32
+                        \
+                        \ We use these calculations to work out which points in
+                        \ the drawing table we should map to points 1 to 5 in
+                        \ polygonPoint for use in the polygon-drawing process
 
  BIT polygonType        \ If bit 7 of polygonType is set then we are drawing a
- BMI C2D13              \ two-face tile as a pair of triangles, so jump to C2D13
+ BMI apol1              \ two-face tile as a pair of triangles, so jump to apol1
                         \ to do this
 
- BVS C2D93              \ If bit 7 of polygonType is clear and bit 6 is set then
-                        \ we are drawing an object, so jump to C2D93 to do this
+ BVS apol4              \ If bit 7 of polygonType is clear and bit 6 is set then
+                        \ we are drawing an object, so jump to part 2 as the
+                        \ point numbers in polygonPoint are already set up
+                        \ correctly for the polygon
 
                         \ If we get here then both bits 6 and 7 of polygonType
                         \ are clear, so we are drawing a tile as a four-sided
-                        \ shape (quadrilateral)
+                        \ shape (quadrilateral) and A contains the offset of the
+                        \ rear left tile corner in the drawing tables
+                        \
+                        \ For a quadrilateral, we number the points like
+                        \ this:
+                        \
+                        \   1. Rear left       4. Rear right
+                        \
+                        \   2. Front left      3. Front right
+                        \
+                        \ We also set point 5 to be the same as point 1, so that
+                        \ the fourth edge from point 4 to point 5 is effectively
+                        \ from point 4 to point 1
 
- STA polygonPoint
- STA polygonPoint+4
- EOR #&20
- STA polygonPoint+1
- CLC
- ADC #&01
+ STA polygonPoint       \ Set the first quadrilateral point to the rear-left
+                        \ tile corner
+
+ STA polygonPoint+4     \ Set the fifth quadrilateral point to A, so the fourth
+                        \ edge in the quadrilateral joins with the start of the
+                        \ first edge
+
+ EOR #32                \ Set the second quadrilateral point to the front-left
+ STA polygonPoint+1     \ tile corner
+
+ CLC                    \ Set the third quadrilateral point to the front-right
+ ADC #1                 \ tile corner
  STA polygonPoint+2
- EOR #&20
- STA polygonPoint+3
- LDX #&04
 
-.C2D58
+ EOR #32                \ Set the fourth quadrilateral point to the rear-right
+ STA polygonPoint+3     \ tile corner
 
- STX polygonPointCount
- JMP C2D93
+ LDX #4                 \ Set X = 4 to set as the value of polygonPointCount as
+                        \ there are four edges in a quadrilateral
 
-.C2D5D
+.apol3
+
+ STX polygonPointCount  \ Set polygonPointCount to the value in X
+
+ JMP apol4              \ Jump to part 2
+
+\ ******************************************************************************
+\
+\       Name: sub_C2D5D
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C2D5D
 
  LDA #&C0
  STA L006C
@@ -22065,15 +22162,25 @@ L23E3 = C23E2+1
  STA L0B40Hi,X
  DEY
  BPL C2D63
- JMP C2DBC
+ JMP apol6
 
-.C2D93
+\ ******************************************************************************
+\
+\       Name: AnalysePolygon (Part 2 of ???)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.apol4
 
  LDA #0
  STA L006C
+
  LDY polygonPointCount
 
-.C2D99
+.apol5
 
  LDA (drawViewAngles),Y
  TAX
@@ -22084,7 +22191,7 @@ L23E3 = C23E2+1
  LDA drawViewYawHi,X
  ADC L0011YawHi
  CMP #&20
- BCS C2D5D
+ BCS sub_C2D5D
  ASL T
  ROL A
  ASL T
@@ -22093,9 +22200,9 @@ L23E3 = C23E2+1
  ROL A
  STA L0B40Lo,X
  DEY
- BPL C2D99
+ BPL apol5
 
-.C2DBC
+.apol6
 
  LDA #0
  STA tileAltitude
@@ -22107,7 +22214,7 @@ L23E3 = C23E2+1
  STA L007F
  LDY #0
 
-.C2DCE
+.apol7
 
  STY L004A
  LDA (drawViewAngles),Y
@@ -22123,7 +22230,7 @@ L23E3 = C23E2+1
  STA L000C
  LDA drawViewPitchHi,Y
  SBC drawViewPitchHi,X
- BPL C2E03
+ BPL apol8
  STA V
  INC L0002
  STX T
@@ -22137,36 +22244,36 @@ L23E3 = C23E2+1
  LDA #0
  SBC V
 
-.C2E03
+.apol8
 
  STA V
  BIT L006C
- BVC C2E1C
+ BVC apol10
  LDA L0B40Hi,Y
  ORA L0B40Hi,X
- BEQ C2E1C
+ BEQ apol10
  LDA V
- BNE C2E19
+ BNE apol9
  LDA L000C
- BEQ C2E56
+ BEQ apol12
 
-.C2E19
+.apol9
 
- JMP C2FCC
+ JMP sub_C2FCC
 
-.C2E1C
+.apol10
 
  LDA V
- BEQ C2E2B
+ BEQ apol11
  LDA #0
  STA L0B40Hi,Y
  STA L0B40Hi,X
- JMP C2FCC
+ JMP sub_C2FCC
 
-.C2E2B
+.apol11
 
  LDA L000C
- BEQ C2E96
+ BEQ apol16
  LDA drawViewPitchHi,Y
  STA vectorYawAngleHi
  LDA drawViewPitchLo,Y
@@ -22184,26 +22291,26 @@ L23E3 = C23E2+1
  STA L0042
  JSR sub_C2EAE
 
-.C2E56
+.apol12
 
  LDY L004A
  INY
  CPY polygonPointCount
- BEQ C2E60
- JMP C2DCE
+ BEQ apol13
+ JMP apol7
 
-.C2E60
+.apol13
 
  LDA L001E
  CMP polygonPointCount
- BNE C2E88
+ BNE apol14
  LDA drawViewPitchHi,X
- BNE C2E88
+ BNE apol14
  LDY drawViewPitchLo,X
  CPY minPitchAngle
- BCC C2E88
+ BCC apol14
  CPY maxPitchAngle
- BCS C2E88
+ BCS apol14
  STY L0004
  STY tileAltitude
  LDA yVectorLo
@@ -22213,44 +22320,44 @@ L23E3 = C23E2+1
  LDA #0
  STA L007F
 
-.C2E88
+.apol14
 
  LDA L007F
- BNE C2E94
+ BNE apol15
  LDA tileAltitude
  CMP L0004
- BCC C2E94
+ BCC apol15
  CLC
  RTS
 
-.C2E94
+.apol15
 
  SEC
  RTS
 
-.C2E96
+.apol16
 
  LDA L0B40Lo,X
  CMP zVectorLo
- BCC C2E9F
+ BCC apol17
  STA zVectorLo
 
-.C2E9F
+.apol17
 
  CMP yVectorLo
- BCS C2EA5
+ BCS apol18
  STA yVectorLo
 
-.C2EA5
+.apol18
 
  INC L001E
- JMP C2E56
+ JMP apol12
 
-.C2EAA
+.apol19
 
  JMP sub_C3087
 
-.CRE25
+.apol20
 
  RTS
 
@@ -22267,10 +22374,10 @@ L23E3 = C23E2+1
 
  LDA vectorPitchAngleLo
  BMI C2EC2
- BNE CRE25
+ BNE apol20
  LDA L0016
  CMP maxPitchAngle
- BCS CRE25
+ BCS apol20
  CMP L0004
  BCS C2EC6
  CMP minPitchAngle
@@ -22287,11 +22394,11 @@ L23E3 = C23E2+1
 .C2EC6
 
  LDA vectorYawAngleHi
- BMI CRE25
+ BMI apol20
  BNE C2EDA
  LDA L001A
  CMP minPitchAngle
- BCC CRE25
+ BCC apol20
  CMP tileAltitude
  BCC C2EE1
  CMP maxPitchAngle
@@ -22311,7 +22418,7 @@ L23E3 = C23E2+1
 
  LDA L0041
  ORA L0042
- BNE C2EAA
+ BNE apol19
  LDA L0018
  SEC
  SBC L0039
@@ -22507,7 +22614,16 @@ L2F79 = C2F77+2
  DEC L2F78
  JMP C2F7A
 
-.C2FCC
+\ ******************************************************************************
+\
+\       Name: sub_C2FCC
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.sub_C2FCC
 
  STX L000E
  LDA #0
@@ -22612,7 +22728,7 @@ L2F79 = C2F77+2
  SBC L0016
  STA L000C
  JSR sub_C2EAE
- JMP C2E56
+ JMP apol12
 
 \ ******************************************************************************
 \

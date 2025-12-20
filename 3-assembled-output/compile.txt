@@ -5835,7 +5835,7 @@
      2296   00
      2297   00
      2298   00
-.sub_C2299
+.DrawPolygonPixels
      2299   A9 01      LDA #&01
      229B   85 2C      STA &2C
      229D   85 2D      STA &2D
@@ -7419,7 +7419,7 @@
      2D10   00
      2D11   01
      2D12   01
-.C2D13
+.apol1
      2D13   A4 45      LDY &45
      2D15   50 07      BVC &2D1E
      2D17   18         CLC
@@ -7427,7 +7427,7 @@
      2D1A   29 3F      AND #&3F
      2D1C   C8         INY
      2D1D   C8         INY
-.C2D1E
+.apol2
      2D1E   8D 40 0C   STA &0C40
      2D21   8D 43 0C   STA &0C43
      2D24   49 20      EOR #&20
@@ -7438,7 +7438,7 @@
      2D2F   8D 42 0C   STA &0C42
      2D32   A2 03      LDX #&03
      2D34   D0 22      BNE &2D58
-.sub_C2D36
+.AnalysePolygon
      2D36   A5 25      LDA &25
      2D38   05 05      ORA &05
      2D3A   24 3B      BIT &3B
@@ -7454,10 +7454,10 @@
      2D51   49 20      EOR #&20
      2D53   8D 43 0C   STA &0C43
      2D56   A2 04      LDX #&04
-.C2D58
+.apol3
      2D58   86 17      STX &17
      2D5A   4C 93 2D   JMP &2D93
-.C2D5D
+.sub_C2D5D
      2D5D   A9 C0      LDA #&C0
      2D5F   85 6C      STA &6C
      2D61   A4 17      LDY &17
@@ -7488,11 +7488,11 @@
      2D8D   88         DEY
      2D8E   10 D3      BPL &2D63
      2D90   4C BC 2D   JMP &2DBC
-.C2D93
+.apol4
      2D93   A9 00      LDA #&00
      2D95   85 6C      STA &6C
      2D97   A4 17      LDY &17
-.C2D99
+.apol5
      2D99   B1 3C      LDA (&3C),Y
      2D9B   AA         TAX
      2D9C   BD A0 0B   LDA &0BA0,X
@@ -7512,7 +7512,7 @@
      2DB6   9D A0 54   STA &54A0,X
      2DB9   88         DEY
      2DBA   10 DD      BPL &2D99
-.C2DBC
+.apol6
      2DBC   A9 00      LDA #&00
      2DBE   85 06      STA &06
      2DC0   85 31      STA &31
@@ -7522,7 +7522,7 @@
      2DC8   85 30      STA &30
      2DCA   85 7F      STA &7F
      2DCC   A0 00      LDY #&00
-.C2DCE
+.apol7
      2DCE   84 4A      STY &4A
      2DD0   B1 3C      LDA (&3C),Y
      2DD2   AA         TAX
@@ -7550,7 +7550,7 @@
      2DFD   85 0C      STA &0C
      2DFF   A9 00      LDA #&00
      2E01   E5 76      SBC &76
-.C2E03
+.apol8
      2E03   85 76      STA &76
      2E05   24 6C      BIT &6C
      2E07   50 13      BVC &2E1C
@@ -7561,16 +7561,16 @@
      2E13   D0 04      BNE &2E19
      2E15   A5 0C      LDA &0C
      2E17   F0 3D      BEQ &2E56
-.C2E19
+.apol9
      2E19   4C CC 2F   JMP &2FCC
-.C2E1C
+.apol10
      2E1C   A5 76      LDA &76
      2E1E   F0 0B      BEQ &2E2B
      2E20   A9 00      LDA #&00
      2E22   99 40 0B   STA &0B40,Y
      2E25   9D 40 0B   STA &0B40,X
      2E28   4C CC 2F   JMP &2FCC
-.C2E2B
+.apol11
      2E2B   A5 0C      LDA &0C
      2E2D   F0 67      BEQ &2E96
      2E2F   B9 E0 0A   LDA &0AE0,Y
@@ -7589,13 +7589,13 @@
      2E4F   85 41      STA &41
      2E51   85 42      STA &42
      2E53   20 AE 2E   JSR &2EAE
-.C2E56
+.apol12
      2E56   A4 4A      LDY &4A
      2E58   C8         INY
      2E59   C4 17      CPY &17
      2E5B   F0 03      BEQ &2E60
      2E5D   4C CE 2D   JMP &2DCE
-.C2E60
+.apol13
      2E60   A5 1E      LDA &1E
      2E62   C5 17      CMP &17
      2E64   D0 22      BNE &2E88
@@ -7614,7 +7614,7 @@
      2E81   99 00 5B   STA &5B00,Y
      2E84   A9 00      LDA #&00
      2E86   85 7F      STA &7F
-.C2E88
+.apol14
      2E88   A5 7F      LDA &7F
      2E8A   D0 08      BNE &2E94
      2E8C   A5 06      LDA &06
@@ -7622,24 +7622,24 @@
      2E90   90 02      BCC &2E94
      2E92   18         CLC
      2E93   60         RTS
-.C2E94
+.apol15
      2E94   38         SEC
      2E95   60         RTS
-.C2E96
+.apol16
      2E96   BD A0 54   LDA &54A0,X
      2E99   C5 31      CMP &31
      2E9B   90 02      BCC &2E9F
      2E9D   85 31      STA &31
-.C2E9F
+.apol17
      2E9F   C5 30      CMP &30
      2EA1   B0 02      BCS &2EA5
      2EA3   85 30      STA &30
-.C2EA5
+.apol18
      2EA5   E6 1E      INC &1E
      2EA7   4C 56 2E   JMP &2E56
-.C2EAA
+.apol19
      2EAA   4C 87 30   JMP &3087
-.CRE25
+.apol20
      2EAD   60         RTS
 .sub_C2EAE
      2EAE   A5 3F      LDA &3F
@@ -7811,7 +7811,7 @@
 .C2FC6
      2FC6   CE 78 2F   DEC &2F78
      2FC9   4C 7A 2F   JMP &2F7A
-.C2FCC
+.sub_C2FCC
      2FCC   86 0E      STX &0E
      2FCE   A9 00      LDA #&00
      2FD0   85 40      STA &40
