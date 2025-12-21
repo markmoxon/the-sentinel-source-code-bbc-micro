@@ -103,7 +103,7 @@
                         \ can draw the landscape along the line of sight,
                         \ towards the viewer's tile
 
-.L0004
+.yPolygonBottom
 
  SKIP 1                 \ ???
 
@@ -111,6 +111,10 @@
 
  SKIP 1                 \ The offset to use within the various drawing data
                         \ tables for the tile we are analysing
+
+.yPolygonTop
+
+ SKIP 0                 \ ???
 
 .tileAltitude
 
@@ -15614,8 +15618,9 @@
 \
 \       Name: L2293Lo
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: An offset to add to the screen address of the right column screen
+\             buffer (low byte)
 \
 \ ******************************************************************************
 
@@ -15629,8 +15634,9 @@
 \
 \       Name: L2293Hi
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: An offset to add to the screen address of the right column screen
+\             buffer (low byte)
 \
 \ ******************************************************************************
 
@@ -15642,65 +15648,98 @@
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels
+\       Name: DrawPolygonPixels (Part 1 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw an analysed polygon into the screen buffer
 \
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   yPolygonTop         The pixel line number of the top of the polygon (the
+\                       highest y-coordinate in the polygon)
+\
+\   yPolygonBottom      The pixel line number of the bottom of the polygon (the
+\                       lowest y-coordinate in the polygon)
+\
+
 \ ******************************************************************************
 
 .DrawPolygonPixels
 
- LDA #&01
+ LDA #1                 \ Set L002C = 1 ???
  STA L002C
- STA L002D
- LDA tileAltitude
- CLC
- ADC L0004
- ROR A
+
+ STA L002D              \ Set L002D = 1 ???
+
+ LDA yPolygonTop        \ Set X = (yPolygonTop + yPolygonBottom) / 2
+ CLC                    \
+ ADC yPolygonBottom     \ So X is the pixel line number of the middle pixel line
+ ROR A                  \ in the polygon
  TAX
- LDA L5B00,X
- CMP L5A00,X
- BCC CRE13
- LDA #&F0
- CLC
- SBC tileAltitude
- STA T
- LSR A
- LSR A
- LSR A
+
+ LDA xPolygonRight,X    \ If the x-coordinate of the right edge is less than the
+ CMP xPolygonLeft,X     \ x-coordinate of the left edge for the middle line,
+ BCC dpol2              \ then the polygon must be facing away from us, so jump
+                        \ to dpol2 to return from the subroutine without drawing
+                        \ the polygon
+
+ LDA #240               \ Set T = 240 - yPolygonTop - 1
+ CLC                    \
+ SBC yPolygonTop        \ So T contains the screen y-coordinate of polygon pixel
+ STA T                  \ line number yPolygonTop (as the screen y-coordinates
+                        \ increase as you go down the screen, unlike the polygon
+                        \ pixel line numbers which follow the same direction as
+                        \ the normal 3D world y-axis, which increases as you go
+                        \ up the screen)
+
+ LSR A                  \ Set A = T / 8
+ LSR A                  \
+ LSR A                  \ So A is the number of the character row that contains
+                        \ the screem y-coordinate in T
 
  CLC                    \ If we are configured to draw into the screen buffer
  ADC screenOrBuffer     \ then screenOrBuffer will be 25, so this makes us fetch
                         \ row addresses from bufferRowAddrLo and bufferRowAddrHi
                         \ (as bufferRowAddrLo - screenRowAddrLo is 25)
                         \
-                        \ Otherwise vwe are configured to draw directly onto the
+                        \ Otherwise we are configured to draw directly onto the
                         \ screen and screenOrBuffer is zero, in which case this
                         \ addition doesn't change anything
 
- TAX
- LDA T
- AND #&07
- CLC
- ADC screenRowAddrLo,X
- STA R
- LDA screenRowAddrHi,X
- STA S
- LDY screenBufferType
- LDA R
- CLC
- ADC L2293Lo,Y          \ Adds &60 when Y = 1
+ TAX                    \ Set X to the offset within the screenRowAddr(Hi Lo)
+                        \ table of the character row containing y-coordinate
+                        \ yPolygonTop, for either the screen or screen buffer
+                        \ (as configured in screenOrBuffer)
+
+ LDA T                  \ Set A = T mod 8
+ AND #%00000111         \
+                        \ So T contains the offset within the character block at
+                        \ the start of the character row that contains screen
+                        \ y-coordinate T 
+
+ CLC                    \ Set (S R) = A + screenRowAddr(Hi Lo) for row X
+ ADC screenRowAddrLo,X  \
+ STA R                  \ So (S R) contains the screen address of the start of
+ LDA screenRowAddrHi,X  \ the pixel row containing the pixel line number in
+ STA S                  \ yPolygonTop
+
+ LDY screenBufferType   \ If this is the right column screen buffer, then do the
+ LDA R                  \ following:
+ CLC                    \
+ ADC L2293Lo,Y          \   (S R) = (S R) + &60 ???
  STA R
  LDA S
- ADC L2293Hi,Y          \ Adds &60 when Y = 1
+ ADC L2293Hi,Y
  STA S
 
- LDA polygonColours
+ LDA polygonColours     \ Set A to the polygon colour byte for the polygon we
+                        \ we are drawing
 
  BIT blendPolygonEdges  \ If bit 7 of blendPolygonEdges is clear then polygon
- BPL C22EF              \ edges should be drawn in the edge colour, so jump to
-                        \ C22EF to skip the following
+ BPL dpol1              \ edges should be drawn in the edge colour, so jump to
+                        \ dpol1 to skip the following
 
                         \ If we get here then bit 7 of blendPolygonEdges is set,
                         \ so we draw the polygon edges in the same colour as the
@@ -15718,44 +15757,65 @@
  AND #%00110000
  ORA T
 
-.C22EF
+.dpol1
 
- STA L23C7
- STA L2367
- ORA #&40
- STA L23A2
+ STA dpol16+1           \ Modify the following instruction in DrawPolygonPixels
+                        \ (part 3):
+                        \
+                        \   ORA &3E3C,X -> ORA (L3E00 + A),X
+                        \
+                        \ so the ORA instruction uses the correct byte for the
+                        \ the specified colour from the L3E00 table at address
+                        \ &3E00
+
+ STA dpol10+1           \ Modify the following instruction in DrawPolygonPixels
+                        \ (part 2):
+                        \
+                        \   ORA &3E3C,X -> ORA (&3E00 + A),X
+                        \
+                        \ so the ORA instruction ORs with the correct byte for
+                        \ the specified colour ???
+
+ ORA #&40               \ Modify the following instruction in DrawPolygonPixels
+ STA dpol14+1           \ (part 2):
+                        \
+                        \   ORA &3E3C,X -> ORA (&3E40 + A),X
+                        \
+                        \ so the ORA instruction ORs with the correct byte for
+                        \ the specified colour ???
+
  LSR A
  LSR A
  AND #&03
  TAY
  LDA colourPixels,Y
  STA L0058
- LDY tileAltitude
+ LDY yPolygonTop
  STY L001A
- CPY L0004
- BCS C237F
+ CPY yPolygonBottom
+ BCS dpol13
 
-.CRE13
+.dpol2
 
  RTS
 
 \ ******************************************************************************
 \
-\       Name: sub_C230D
+\       Name: DrawPolygonPixels (Part 2 of ???)
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C230D
+.dpol3
 
  LDY L001A
- CPY L0004
- BEQ CRE13
+ CPY yPolygonBottom
+ BEQ dpol2
  TYA
  AND #&07
- BNE C237A
+ BNE dpol11
  LDA R
  CLC
  ADC #&39
@@ -15763,37 +15823,37 @@
  LDA S
  ADC #&01
  CMP #&53
- BNE C232F
+ BNE dpol4
  LDA bufferRowAddrLo+16
  STA R
  LDA bufferRowAddrHi+16
 
-.C232F
+.dpol4
 
  STA S
- BNE C237C
+ BNE dpol12
 
-.C2333
+.dpol5
 
  LDA #0
  STA L002D
- BEQ sub_C230D
+ BEQ dpol3
 
-.C2339
+.dpol6
 
  LDA #0
  STA L002C
- BEQ sub_C230D
+ BEQ dpol3
 
-.C233F
+.dpol7
 
  LDA L0061
  ASL A
  STA L0056
  STA L002C
- BNE C23A6
+ BNE dpol15
 
-.C2348
+.dpol8
 
  LDA R
  SEC
@@ -15805,9 +15865,9 @@
  LDA #0
  STA L002D
  LDA #&F8
- BNE C23D8
+ BNE dpol17
 
-.C235D
+.dpol9
 
  TXA
  AND #&03
@@ -15815,38 +15875,51 @@
  LDA L0054
  AND pixelsToLeft,X
 
-.C2366
+.dpol10
 
-L2367 = C2366+1
+ ORA L3E00+&3C,X        \ This instruction is modified in part 1 to point to the
+                        \ correct entry for the specified polygon colour:
+                        \
+                        \   ORA (L3E00 + polygonColours),X
+                        \
+                        \ So this ???
 
- ORA L3E3C,X
  AND leftPixels,X
  STA T
  LDA (R),Y
  AND pixelsToRight,X
  ORA T
  STA (R),Y
- JMP sub_C230D
+ JMP dpol3
 
-.C237A
+.dpol11
 
  INC R
 
-.C237C
+.dpol12
 
  DEY
  STY L001A
 
-.C237F
+\ ******************************************************************************
+\
+\       Name: DrawPolygonPixels (Part 3 of ???)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
 
- LDA L5B00,Y
- CMP L5A00,Y
- BCC CRE13
+.dpol13
+
+ LDA xPolygonRight,Y
+ CMP xPolygonLeft,Y
+ BCC dpol2
  TAX
  SBC L0035
- BCC C2333
+ BCC dpol5
  CMP L0061
- BCS C233F
+ BCS dpol7
  ASL A
  AND #&F8
  TAY
@@ -15858,39 +15931,47 @@ L2367 = C2366+1
  STA L0054
  AND pixelsToRight,X
 
-.C23A1
+.dpol14
 
-L23A2 = C23A1+1
+ ORA L3E40+&3C,X        \ This instruction is modified in part 1 to point to the
+                        \ correct entry for the specified polygon colour:
+                        \
+                        \   ORA (L3E40 + polygonColours),X
+                        \
+                        \ So this ???
 
- ORA L3E7C,X
  STA (R),Y
 
-.C23A6
+.dpol15
 
  LDY L001A
- LDA L5A00,Y
+ LDA xPolygonLeft,Y
  TAX
  CMP L0036
- BCS C2339
+ BCS dpol6
  SEC
  SBC L0035
- BCC C2348
+ BCC dpol8
  ASL A
  AND #&F8
  TAY
  CPY L0056
- BCS C235D
+ BCS dpol9
  TXA
  AND #&03
  TAX
  LDA (R),Y
  AND pixelsToLeft,X
 
-.C23C6
+.dpol16
 
-L23C7 = C23C6+1
+ ORA L3E00+&3C,X        \ This instruction is modified in part 1 to point to the
+                        \ correct entry for the specified polygon colour:
+                        \
+                        \   ORA (L3E00 + polygonColours),X
+                        \
+                        \ So this ???
 
- ORA L3E3C,X
  STA (R),Y
  TYA
  CLC
@@ -15901,20 +15982,28 @@ L23C7 = C23C6+1
  STA Q
  TYA
 
-.C23D8
+.dpol17
 
  SEC
  SBC L0056
  LSR A
- STA L23E3
+ STA dpol18+1
+
+\ ******************************************************************************
+\
+\       Name: DrawPolygonPixels (Part 4 of ???)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
+
  LDA L0058
  CLC
 
-.C23E2
+.dpol18
 
-L23E3 = C23E2+1
-
- BCC C2460
+ BCC dpol19             \ Modified by dpol17
 
  LDY #&F8
  STA (P),Y
@@ -15979,9 +16068,9 @@ L23E3 = C23E2+1
  LDY #&08
  STA (P),Y
 
-.C2460
+.dpol19
 
- JMP sub_C230D
+ JMP dpol3
 
 \ ******************************************************************************
 \
@@ -18171,7 +18260,7 @@ L23E3 = C23E2+1
 
  EQUB 32 + 1            \ Looking at 6 o'clock (rear right corner)
 
- EQUb 32                \ Looking at 9 o'clock (rear left corner)
+ EQUB 32                \ Looking at 9 o'clock (rear left corner)
 
 \ ******************************************************************************
 \
@@ -19426,7 +19515,8 @@ L23E3 = C23E2+1
  STA L0061              \ 112 = 14 * 8, 64 = 8 * 8
 
  LDA L298E,Y            \ Set L0035 to 80, 64, 96 ???
- STA L0035              \ Gets subtracted from values in L5B00 or L5A00 ???
+ STA L0035              \ Gets subtracted from values in xPolygonRight or
+                        \ xPolygonLeft ???
 
  CLC                    \ Set L0036 = L0035 + L0061
  ADC L0061              \
@@ -20077,7 +20167,7 @@ L23E3 = C23E2+1
 
  JSR DrawPolygonPixels  \ Draw the polygon into the screen buffer
 
- LDY screenBufferType   \ Aet A = L002C or L002D for left/right row buffer ???
+ LDY screenBufferType   \ Set A = L002C or L002D for left/right row buffer ???
  LDA L002C,Y
 
  CMP #1                 \ If L002C or L002D = 1, jump to poly3 to return from
@@ -21976,7 +22066,17 @@ L23E3 = C23E2+1
                         \ a pair of triangles and A contains the offset of the
                         \ rear left tile corner in the drawing tables
 
- LDY L0045              \ Set Y = L0045 = 0 or 1 ???
+                        \ For a triangle, we number the points like this: ???
+                        \
+                        \   1. Rear left
+                        \                      3. Front or rear right, L2CDF ???
+                        \   2. Front left
+                        \
+                        \ We also set point 4 to be the same as point 1, so that
+                        \ the third edge from point 3 to point 4 is effectively
+                        \ from point 3 to point 1
+
+ LDY L0045              \ Set Y = L0045 = 0 or 1 ??? which triangle ???
 
  BVC apol2              \ If bit 6 of polygonType is clear then we are drawing
                         \ the first triangle in a two-face tile, so jump to
@@ -21987,7 +22087,7 @@ L23E3 = C23E2+1
                         \ two-face file
 
  CLC                    \ Set A = (A + 32 + 1) mod 64
- ADC #33                \
+ ADC #33
  AND #63
 
  INY                    \ Set Y = Y + 2
@@ -22116,7 +22216,7 @@ L23E3 = C23E2+1
 
  STX polygonPointCount  \ Set polygonPointCount to the value in X
 
- JMP apol4              \ Jump to part 2
+ JMP apol4              \ Jump to part 2 to continue analysing the polygon
 
 \ ******************************************************************************
 \
@@ -22205,11 +22305,11 @@ L23E3 = C23E2+1
 .apol6
 
  LDA #0
- STA tileAltitude
+ STA yPolygonTop
  STA zVectorLo
  STA L001E
  LDA #&FF
- STA L0004
+ STA yPolygonBottom
  STA yVectorLo
  STA L007F
  LDY #0
@@ -22311,12 +22411,12 @@ L23E3 = C23E2+1
  BCC apol14
  CPY maxPitchAngle
  BCS apol14
- STY L0004
- STY tileAltitude
+ STY yPolygonBottom
+ STY yPolygonTop
  LDA yVectorLo
- STA L5A00,Y
+ STA xPolygonLeft,Y
  LDA zVectorLo
- STA L5B00,Y
+ STA xPolygonRight,Y
  LDA #0
  STA L007F
 
@@ -22324,8 +22424,8 @@ L23E3 = C23E2+1
 
  LDA L007F
  BNE apol15
- LDA tileAltitude
- CMP L0004
+ LDA yPolygonTop
+ CMP yPolygonBottom
  BCC apol15
  CLC
  RTS
@@ -22378,7 +22478,7 @@ L23E3 = C23E2+1
  LDA L0016
  CMP maxPitchAngle
  BCS apol20
- CMP L0004
+ CMP yPolygonBottom
  BCS C2EC6
  CMP minPitchAngle
  BCS C2EC4
@@ -22389,7 +22489,7 @@ L23E3 = C23E2+1
 
 .C2EC4
 
- STA L0004
+ STA yPolygonBottom
 
 .C2EC6
 
@@ -22399,7 +22499,7 @@ L23E3 = C23E2+1
  LDA L001A
  CMP minPitchAngle
  BCC apol20
- CMP tileAltitude
+ CMP yPolygonTop
  BCC C2EE1
  CMP maxPitchAngle
  BCC C2EDF
@@ -22412,7 +22512,7 @@ L23E3 = C23E2+1
 
 .C2EDF
 
- STA tileAltitude
+ STA yPolygonTop
 
 .C2EE1
 
@@ -22812,7 +22912,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX L5A00
+ STX xPolygonLeft
  DEC L30EA
  BEQ C30F8
 
@@ -22885,7 +22985,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX L5A00
+ STX xPolygonLeft
  DEC U
  BNE C3137
  JMP CRE26
@@ -28558,7 +28658,7 @@ L314A = C3148+2
 \
 \       Name: L3E00
 \       Type: Variable
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -28572,11 +28672,19 @@ L314A = C3148+2
  EQUB &80, &40, &20, &10, &87, &43, &21, &10
  EQUB &F0, &70, &30, &10, &F7, &73, &31, &10
  EQUB &88, &44, &22, &11, &8F, &47, &23, &11
- EQUB &F8, &74, &32, &11
+ EQUB &F8, &74, &32, &11, &FF, &77, &33, &11
 
-.L3E3C
+\ ******************************************************************************
+\
+\       Name: L3E40
+\       Type: Variable
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
 
- EQUB &FF, &77, &33, &11
+.L3E40
+
  EQUB &00, &00, &00, &00, &00, &08, &0C, &0E
  EQUB &00, &80, &C0, &E0, &00, &88, &CC, &EE
  EQUB &08, &04, &02, &01, &08, &0C, &0E, &0F
@@ -28584,11 +28692,7 @@ L314A = C3148+2
  EQUB &80, &40, &20, &10, &80, &48, &2C, &1E
  EQUB &80, &C0, &E0, &F0, &80, &C8, &EC, &FE
  EQUB &88, &44, &22, &11, &88, &4C, &2E, &1F
- EQUB &88, &C4, &E2, &F1
-
-.L3E7C
-
- EQUB &88, &CC, &EE, &FF
+ EQUB &88, &C4, &E2, &F1, &88, &CC, &EE, &FF
 
 \ ******************************************************************************
 \
@@ -34902,18 +35006,19 @@ L314A = C3148+2
 
 .iconBuffer
 
- SKIP 0                 \ The icon screen buffer shares memory with L5A00
+ SKIP 0                 \ The icon screen buffer shares memory with xPolygonLeft
 
 \ ******************************************************************************
 \
-\       Name: L5A00
+\       Name: xPolygonLeft
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: The x-coordinate of the left edge of each pixel line in the
+\             polygon being drawn
 \
 \ ******************************************************************************
 
-.L5A00
+.xPolygonLeft
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -34950,14 +35055,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L5B00
+\       Name: xPolygonRight
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: The x-coordinate of the right edge of each pixel line in the
+\             polygon being drawn
 \
 \ ******************************************************************************
 
-.L5B00
+.xPolygonRight
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -35008,13 +35114,13 @@ L314A = C3148+2
                         \ for storing tile data that can be discarded once the
                         \ landscape is generated
                         \
-                        \ During gameplay it is used to store the L5A00 and
-                        \ L5B00 variables
+                        \ During gameplay it is used to store the xPolygonLeft
+                        \ and xPolygonRight tables
                         \
                         \ These lines rewind BeebAsm's assembly back to &5A00
                         \ and clear the block from that point to the end of the
-                        \ L5A00 and L5B00 variables at &5C00, so we can assemble
-                        \ the landscape variables
+                        \ xPolygonLeft and xPolygonRight variables at &5C00, so
+                        \ we can assemble the landscape variables
                         \
                         \ The game binary actually contains snippets of the
                         \ original source code, left over from the BBC Micro

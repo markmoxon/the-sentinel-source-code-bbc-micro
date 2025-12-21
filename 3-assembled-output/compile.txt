@@ -8,10 +8,12 @@
      0002
 .xTileViewer
      0003
-.L0004
+.yPolygonBottom
      0004
 .drawingTableOffset
      0005
+.yPolygonTop
+     0006
 .tileAltitude
      0006
 .minYawAngleHi
@@ -5882,7 +5884,7 @@
      22EA   0A         ASL A
      22EB   29 30      AND #&30
      22ED   05 74      ORA &74
-.C22EF
+.dpol1
      22EF   8D C7 23   STA &23C7
      22F2   8D 67 23   STA &2367
      22F5   09 40      ORA #&40
@@ -5897,9 +5899,9 @@
      2306   84 1A      STY &1A
      2308   C4 04      CPY &04
      230A   B0 73      BCS &237F
-.CRE13
+.dpol2
      230C   60         RTS
-.sub_C230D
+.dpol3
      230D   A4 1A      LDY &1A
      230F   C4 04      CPY &04
      2311   F0 F9      BEQ &230C
@@ -5917,24 +5919,24 @@
      2327   AD AC 3D   LDA &3DAC
      232A   85 72      STA &72
      232C   AD DE 3D   LDA &3DDE
-.C232F
+.dpol4
      232F   85 73      STA &73
      2331   D0 49      BNE &237C
-.C2333
+.dpol5
      2333   A9 00      LDA #&00
      2335   85 2D      STA &2D
      2337   F0 D4      BEQ &230D
-.C2339
+.dpol6
      2339   A9 00      LDA #&00
      233B   85 2C      STA &2C
      233D   F0 CE      BEQ &230D
-.C233F
+.dpol7
      233F   A5 61      LDA &61
      2341   0A         ASL A
      2342   85 56      STA &56
      2344   85 2C      STA &2C
      2346   D0 5E      BNE &23A6
-.C2348
+.dpol8
      2348   A5 72      LDA &72
      234A   38         SEC
      234B   E9 08      SBC #&08
@@ -5946,13 +5948,13 @@
      2357   85 2D      STA &2D
      2359   A9 F8      LDA #&F8
      235B   D0 7B      BNE &23D8
-.C235D
+.dpol9
      235D   8A         TXA
      235E   29 03      AND #&03
      2360   AA         TAX
      2361   A5 54      LDA &54
      2363   3D 87 22   AND &2287,X
-.C2366
+.dpol10
      2366   1D 3C 3E   ORA &3E3C,X
      2369   3D 8F 22   AND &228F,X
      236C   85 74      STA &74
@@ -5961,12 +5963,12 @@
      2373   05 74      ORA &74
      2375   91 72      STA (&72),Y
      2377   4C 0D 23   JMP &230D
-.C237A
+.dpol11
      237A   E6 72      INC &72
-.C237C
+.dpol12
      237C   88         DEY
      237D   84 1A      STY &1A
-.C237F
+.dpol13
      237F   B9 00 5B   LDA &5B00,Y
      2382   D9 00 5A   CMP &5A00,Y
      2385   90 85      BCC &230C
@@ -5985,10 +5987,10 @@
      239A   B1 72      LDA (&72),Y
      239C   85 54      STA &54
      239E   3D 8B 22   AND &228B,X
-.C23A1
+.dpol14
      23A1   1D 7C 3E   ORA &3E7C,X
      23A4   91 72      STA (&72),Y
-.C23A6
+.dpol15
      23A6   A4 1A      LDY &1A
      23A8   B9 00 5A   LDA &5A00,Y
      23AB   AA         TAX
@@ -6007,7 +6009,7 @@
      23C0   AA         TAX
      23C1   B1 72      LDA (&72),Y
      23C3   3D 87 22   AND &2287,X
-.C23C6
+.dpol16
      23C6   1D 3C 3E   ORA &3E3C,X
      23C9   91 72      STA (&72),Y
      23CB   98         TYA
@@ -6018,14 +6020,14 @@
      23D3   69 00      ADC #&00
      23D5   85 71      STA &71
      23D7   98         TYA
-.C23D8
+.dpol17
      23D8   38         SEC
      23D9   E5 56      SBC &56
      23DB   4A         LSR A
      23DC   8D E3 23   STA &23E3
      23DF   A5 58      LDA &58
      23E1   18         CLC
-.C23E2
+.dpol18
      23E2   90 7C      BCC &2460
      23E4   A0 F8      LDY #&F8
      23E6   91 70      STA (&70),Y
@@ -6089,7 +6091,7 @@
      245A   91 70      STA (&70),Y
      245C   A0 08      LDY #&08
      245E   91 70      STA (&70),Y
-.C2460
+.dpol19
      2460   4C 0D 23   JMP &230D
 .GetTileVisibility
      2463   AD DE 0C   LDA &0CDE
@@ -10284,11 +10286,11 @@
      3E39   74
      3E3A   32
      3E3B   11
-.L3E3C
      3E3C   FF
      3E3D   77
      3E3E   33
      3E3F   11
+.L3E40
      3E40   00
      3E41   00
      3E42   00
@@ -10349,7 +10351,6 @@
      3E79   C4
      3E7A   E2
      3E7B   F1
-.L3E7C
      3E7C   88
      3E7D   CC
      3E7E   EE
@@ -17317,7 +17318,7 @@
      59FF   FF
 .iconBuffer
      5A00
-.L5A00
+.xPolygonLeft
      5A00   00
      5A01   00
      5A02   00
@@ -17574,7 +17575,7 @@
      5AFD   00
      5AFE   00
      5AFF   00
-.L5B00
+.xPolygonRight
      5B00   00
      5B01   00
      5B02   00
