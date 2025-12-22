@@ -5839,7 +5839,7 @@
      2296   00
      2297   00
      2298   00
-.DrawPolygonPixels
+.DrawPolygonLines
      2299   A9 01      LDA #&01
      229B   85 2C      STA &2C
      229D   85 2D      STA &2D

@@ -298,7 +298,7 @@
 .yPolygonLine
 
  SKIP 0                 \ The polygon y-coordinate of the pixel line being drawn
-                        \ in the DrawPolygonPixels routine
+                        \ in the DrawPolygonLines routine
 
 .zTileRow
 
@@ -15656,7 +15656,7 @@
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 1 of 4)
+\       Name: DrawPolygonLines (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw an analysed polygon into the screen buffer
@@ -15685,7 +15685,7 @@
 \
 \ ******************************************************************************
 
-.DrawPolygonPixels
+.DrawPolygonLines
 
  LDA #1                 \ Set L002C = 1 ???
  STA L002C
@@ -15831,10 +15831,11 @@
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 2 of 4)
+\       Name: DrawPolygonLines (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Draw the left and right edges of the polygon line for the special
+\             cases where the line overflows the buffer or fits into one byte
 \
 \ ******************************************************************************
 
@@ -15963,10 +15964,11 @@
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 3 of 4)
+\       Name: DrawPolygonLines (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Draw the left and right edges of the polygon line and fall into
+\             part 4 to draw the line inbetween
 \
 \ ******************************************************************************
 
@@ -16138,13 +16140,18 @@
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 4 of 4)
+\       Name: DrawPolygonLines (Part 4 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw a horizontal pixel line of a specific length in character
 \             columns
 \
 \ ******************************************************************************
+
+                        \ We now draw the horizontal line between the left and
+                        \ right edges to complete the drawing of this polygon
+                        \ line, before looping back to draw the rest of the
+                        \ polygon
 
  TYA                    \ Set (Q P) = (S R) + Y
  CLC                    \
@@ -16219,7 +16226,7 @@
                         \ executed, the operand of the BCC is added to the
                         \ address of the first instruction after the BCC
                         \
-                        \ In other words, this routine draws a line of length of
+                        \ In other words, this routine draws a line of length
                         \ 31 - (A / 4) character columns
 
  LDA polygonFillPixels  \ Set A to the contents of polygonFillPixels, which we
@@ -20441,7 +20448,8 @@
  BCS poly1              \ If the call to AnalysePolygon set the C flag then ???,
                         \ so jump to poly1 to skip the following
 
- JSR DrawPolygonPixels  \ Draw the polygon into the screen buffer
+ JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
+                        \ shape from top to bottom, horizontal and line by line
 
  LDY screenBufferType   \ Set A = L002C or L002D for left/right row buffer ???
  LDA L002C,Y
@@ -20466,7 +20474,8 @@
  BCS poly3              \ If the call to AnalysePolygon set the C flag then ???,
                         \ so jump to poly3 to return from the subroutine
 
- JSR DrawPolygonPixels  \ Draw the polygon into the screen buffer
+ JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
+                        \ shape from top to bottom, horizontal and line by line
 
 .poly3
 
