@@ -154,11 +154,11 @@
      0034
 .yCoordBot
      0035
-.L0035
+.bufferYawLeft
      0035
 .zCoordBot
      0036
-.L0036
+.bufferYawRight
      0036
 .xCoordLo
      0037
@@ -221,11 +221,11 @@
      0052
 .drawingPhaseCount
      0053
-.L0054
+.rightEdgeContents
      0054
 .screenOrBuffer
      0055
-.L0056
+.xPolygonRightEdge
      0056
 .screenRowCounter
      0057
@@ -246,7 +246,7 @@
      0060
 .secondAxis
      0060
-.L0061
+.bufferYawWidth
      0061
 .fromAddr
      0062
@@ -6861,15 +6861,15 @@
      298B   0A
      298C   02
      298D   0C
-.L298E
+.buffersYawLeft
      298E   50
      298F   40
      2990   60
-.L2991
+.buffersYawWidth
      2991   70
      2992   70
      2993   40
-.minBufferYaw
+.buffersYawMin
      2994   14
      2995   14
      2996   08
@@ -17320,7 +17320,7 @@
      59FF   FF
 .iconBuffer
      5A00
-.xPolygonLeft
+.polygonYawLeft
      5A00   00
      5A01   00
      5A02   00
@@ -17577,7 +17577,7 @@
      5AFD   00
      5AFE   00
      5AFF   00
-.xPolygonRight
+.polygonYawRight
      5B00   00
      5B01   00
      5B02   00

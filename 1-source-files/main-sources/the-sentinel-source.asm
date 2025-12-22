@@ -562,9 +562,9 @@
                         \
                         \ Stored as a 24-bit value yCoord(Hi Lo Bot)
 
-.L0035
+.bufferYawLeft
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The yaw angle of the left edge of the screen buffer
 
 .zCoordBot
 
@@ -572,9 +572,9 @@
                         \
                         \ Stored as a 24-bit value zCoord(Hi Lo Bot)
 
-.L0036
+.bufferYawRight
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The yaw angle of the right edge of the screen buffer
 
 .xCoordLo
 
@@ -746,9 +746,10 @@
  SKIP 1                 \ A phase counter for objects that need to be drawn in
                         \ multiple phases
 
-.L0054
+.rightEdgeContents
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The original contents of the screen behind the right
+                        \ edge of the polygon being drawn
 
 .screenOrBuffer
 
@@ -759,9 +760,10 @@
                         \
                         \   * 25 = draw into the screeen buffer
 
-.L0056
+.xPolygonRightEdge
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The screen x-coordinate of the right edge of the
+                        \ polygon being drawn
 
 .screenRowCounter
 
@@ -813,9 +815,9 @@
  SKIP 1                 \ The number of the second axis to calculate in the
                         \ GetRotationMatrix routine
 
-.L0061
+.bufferYawWidth
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The width in yaw angles of the screen buffer
 
 .fromAddr
 
@@ -12063,7 +12065,7 @@
                         \ checks
 
  BNE gaze4              \ If the high byte of the result is non-zero and
-                        \ positive, then the the gaze is passing through the
+                        \ positive, then the gaze is passing through the
                         \ y-coordinate below the tile or platform, in terms of
                         \ whole numbers (so it is essentially in the "tile cube"
                         \ beneath the tile)
@@ -12612,7 +12614,7 @@
                         \ the gaze vector
 
                         \ Fall into part 5 to check whether the gaze vector is
-                        \ obscured by the the edge we just chose
+                        \ obscured by the edge we just chose
 
 \ ******************************************************************************
 \
@@ -15675,7 +15677,11 @@
 \
 \   L002C               ???
 \
+\                         * 0 if left edge of polygon is right of buffer
+\
 \   L002D               ???
+\
+\                         * 0 if right edge of polygon is left of buffer
 \
 \ ******************************************************************************
 
@@ -15692,10 +15698,10 @@
  ROR A                  \ in the polygon
  TAX
 
- LDA xPolygonRight,X    \ If the x-coordinate of the right edge is less than the
- CMP xPolygonLeft,X     \ x-coordinate of the left edge for the middle line,
- BCC dpol2              \ then the polygon must be facing away from us, so jump
-                        \ to dpol2 to return from the subroutine without drawing
+ LDA polygonYawRight,X  \ If the yaw angle of the right edge is less than the
+ CMP polygonYawLeft,X   \ yaw angle of the left edge for the middle line, then
+ BCC dpol2              \ the polygon must be facing away from us, so jump to
+                        \ dpol2 to return from the subroutine without drawing
                         \ the polygon
 
  LDA #240               \ Set T = 240 - yPolygonTop - 1
@@ -15710,7 +15716,7 @@
  LSR A                  \ Set A = T / 8
  LSR A                  \
  LSR A                  \ So A is the number of the character row that contains
-                        \ the screem y-coordinate in T
+                        \ the screen y-coordinate in T
 
  CLC                    \ If we are configured to draw into the screen buffer
  ADC screenOrBuffer     \ then screenOrBuffer will be 25, so this makes us fetch
@@ -15859,13 +15865,18 @@
 
 .dpol5
 
-                        \ Jump here from part 3 if ???
+                        \ Jump here from part 3 if right edge of polygon is left
+                        \ of buffer
 
- LDA #0
+ LDA #0                 \ Set L002D = 0 ???
  STA L002D
+
  BEQ dpol3
 
 .dpol6
+
+                        \ Jump here from part 3 if left edge of polygon is right
+                        \ of buffer
 
  LDA #0                 \ Set L002C = 0 ???
  STA L002C
@@ -15874,15 +15885,19 @@
 
 .dpol7
 
-                        \ Jump here from part 3 if ???
+                        \ Jump here from part 3 if the right edge of the polygon
+                        \ is beyond the right edge of the buffer
 
- LDA L0061
+ LDA bufferYawWidth
  ASL A
- STA L0056
+ STA xPolygonRightEdge
  STA L002C
  BNE dpol15
 
 .dpol8
+
+                        \ Jump here from part 3 if left edge of the polygon is
+                        \ before the left edge of the buffer
 
  LDA R
  SEC
@@ -15900,10 +15915,14 @@
 
 .dpol9
 
+                        \ If we get here then Y >= xPolygonRightEdge and the
+                        \ pixel byte offset for the left edge is to the right
+                        \ of the pixel byte offset for the right edge
+
  TXA
  AND #&03
  TAX
- LDA L0054
+ LDA rightEdgeContents
  AND pixelsToLeft,X
 
 .dpol10
@@ -15956,8 +15975,8 @@
                         \ This is the entry point for the loop that spans parts
                         \ 2, 3 and 4
                         \
-                        \ We jump here from part 1 with Y set to the polygon
-                        \ pixel line at the top of the polygon
+                        \ We jump here from part 1 with Y set to the number of
+                        \ the polygon pixel line at the top of the polygon
                         \
                         \ We also get here on later iterations with Y set to the
                         \ polygon pixel to draw next
@@ -15966,38 +15985,61 @@
                         \ down the polygon one pixel line at a time until we
                         \ reach the bottom
 
- LDA xPolygonRight,Y    \ Set A to the x-coordinate of the right edge for the
-                        \ line we are drawing
+ LDA polygonYawRight,Y  \ Set A to the yaw angle of the right edge for the line
+                        \ we are drawing
 
- CMP xPolygonLeft,Y     \ If the x-coordinate of the right edge is less than the
- BCC dpol2              \ x-coordinate of the left edge for the line we are
+ CMP polygonYawLeft,Y   \ If the yaw angle of the right edge is less than the
+ BCC dpol2              \ yaw angle of the left edge for the line we are
                         \ drawing, then the polygon must be facing away from us,
                         \ so jump to dpol2 to return from the subroutine without
                         \ drawing the polygon
 
- TAX                    \ Set X to the x-coordinate of the right edge 
+ TAX                    \ Set X to the yaw angle of the right edge 
 
- SBC L0035              \ Set A = A - L0035
+ SBC bufferYawLeft      \ Set A = A - bufferYawLeft
+                        \
+                        \ So A is the distance between the right edge of the
+                        \ polygon and the left edge of the buffer
                         \
                         \ This subtraction works because we just passed through
                         \ a BCC, so we know the C flag is set
 
- BCC dpol5              \ If the subtraction overflowed, jump to part 2 to set
-                        \ L002D = 0 and ???
+ BCC dpol5              \ If the subtraction underflowed then the right edge of
+                        \ the polygon is before the left edge of the buffer, so
+                        \ jump to dpol5 in part 2 to process this
 
- CMP L0061              \ If A >= L0061, jump to dpol7
- BCS dpol7
+ CMP bufferYawWidth     \ If A >= bufferYawWidth then the right edge of the
+ BCS dpol7              \ polygon is beyond the right edge of the buffer, so
+                        \ jump to dpol7 in part 2 to process this
 
- ASL A
- AND #&F8
- TAY
- TXA
- AND #&03
- TAX
- STY L0056
- LDA (R),Y
- STA L0054
- AND pixelsToRight,X
+                        \ If we get here then the left and right edges of the
+                        \ polygon are both within the screen buffer
+
+ ASL A                  \ Set Y to the offset within the character row of the
+ AND #%11111000         \ pixel byte containing the right edge of the polygon
+ TAY                    \ ???
+
+ TXA                    \ Set X to the pixel number within the character block
+ AND #%00000011         \ of the left edge of the polygon (as each character
+ TAX                    \ block contains four pixels)
+
+ STY xPolygonRightEdge  \ Store the pixel byte offset within the character row
+                        \ of the right edge of the polygon in xPolygonRightEdge
+
+ LDA (R),Y              \ Set A to the current screen contents of the pixel byte
+                        \ where we want to draw the right edge of the polygon
+
+ STA rightEdgeContents  \ Store the current screen contents for the right edge
+                        \ of the polygon in rightEdgeContents
+
+ AND pixelsToRight,X    \ Clear the pixels to the left of the right edge by
+                        \ AND'ing the current screen contents with a pixel byte
+                        \ with all the pixels to the right of position X set
+                        \
+                        \ So A contains the existing screen contents for the
+                        \ pixels outside the polygon line, and with the polygon
+                        \ line pixels cleared, so now we can OR the polygon line
+                        \ pixels into the space we just cleared
 
 .dpol14
 
@@ -16007,35 +16049,65 @@
                             \
                             \   ORA edgePixelsRight + polygonColours,X
                             \
-                            \ So this ???
+                            \ So this inserts the right edge of the polygon into
+                            \ the left part of the pixel byte in the correct
+                            \ colours for the currently configured fill and edge
+                            \ colours, with the edge pixels starting at the left
+                            \ end of the pixel byte and ending at pixel number X
+                            \ within the byte
                             \
                             \ The original value of edgePixelsRight+&3C is just
                             \ workspace noise and has no meaning, it just sets
                             \ the high byte to HI(edgePixelsRight)
 
  STA (R),Y              \ Poke the pixel byte containing the right edge into
-                        \ screen memory
+                        \ screen memory, so we have now drawn the right edge of
+                        \ the polygon line
 
 .dpol15
 
- LDY yPolygonLine
- LDA xPolygonLeft,Y
- TAX
- CMP L0036
- BCS dpol6
- SEC
- SBC L0035
- BCC dpol8
- ASL A
- AND #&F8
+ LDY yPolygonLine       \ Set A to the yaw angle of the left edge for the line
+ LDA polygonYawLeft,Y   \ we are drawing
+
+ TAX                    \ Set X to the yaw angle of the left edge 
+
+ CMP bufferYawRight     \ If A >= bufferYawRight then the left edge of the
+ BCS dpol6              \ polygon is beyond the right edge of the buffer, so
+                        \ jump to dpol6 in part 2 to process this
+
+ SEC                    \ Set A = A - bufferYawLeft
+ SBC bufferYawLeft      \
+                        \ So A is the distance between the left edge of the
+                        \ polygon and the left edge of the buffer
+
+ BCC dpol8              \ If the subtraction underflowed then the left edge of
+                        \ the polygon is before the left edge of the buffer, so
+                        \ jump to dpol8 in part 2 to process this
+
+ ASL A                  \ Set Y to the offset within the character row of the
+ AND #%11111000         \ pixel byte containing the left edge of the polygon ???
  TAY
- CPY L0056
- BCS dpol9
- TXA
- AND #&03
- TAX
- LDA (R),Y
- AND pixelsToLeft,X
+
+ CPY xPolygonRightEdge  \ If Y >= xPolygonRightEdge then the pixel byte offset
+ BCS dpol9              \ for the left edge is to the right of the pixel byte
+                        \ offset for the right edge, so jump to dpol9 to process
+                        \ this
+
+ TXA                    \ Set X to the pixel number within the character block
+ AND #%00000011         \ of the left edge of the polygon (as each character
+ TAX                    \ block contains four pixels)
+
+ LDA (R),Y              \ Set A to the current screen contents of the pixel byte
+                        \ where we want to draw the left edge of the polygon
+
+ AND pixelsToLeft,X     \ Clear the pixels to the right of the left edge by
+                        \ AND'ing the current screen contents with a pixel byte
+                        \ with all the pixels to the left of position X set
+                        \
+                        \ So A contains the existing screen contents for the
+                        \ pixels outside the polygon line, and with the polygon
+                        \ line pixels cleared, so now we can OR the polygon line
+                        \ pixels into the space we just cleared
 
 .dpol16
 
@@ -16045,14 +16117,24 @@
                             \
                             \   ORA edgePixelsLeft + polygonColours,X
                             \
-                            \ So this applies ???
+                            \ So this inserts the left edge of the polygon into
+                            \ the right part of the pixel byte in the correct
+                            \ colours for the currently configured fill and edge
+                            \ colours, with the edge pixels starting at pixel
+                            \ number X within the byte and ending at the right
+                            \ end of the pixel byte
                             \
                             \ The original value of edgePixelsLeft+&3C is just
                             \ workspace noise and has no meaning, it just sets
                             \ the high byte to HI(edgePixelsLeft)
 
  STA (R),Y              \ Poke the pixel byte containing the left edge into
-                        \ screen memory
+                        \ screen memory, so we have now drawn the left edge of
+                        \ the polygon line
+
+                        \ Fall through into part 4 to draw a line between the
+                        \ left and right edges to finish off this line of the
+                        \ polygon
 
 \ ******************************************************************************
 \
@@ -16066,19 +16148,49 @@
 
  TYA                    \ Set (Q P) = (S R) + Y
  CLC                    \
- ADC R                  \ So (Q P) contains the screen address of the Y-th
- STA P                  \ 
+ ADC R                  \ So (Q P) contains the screen address of the pixel byte
+ STA P                  \ containing the left edge of the polygon line
  LDA S
  ADC #0
  STA Q
 
  TYA                    \ Set A = Y
+                        \
+                        \ So A contains the pixel byte offset within the screen
+                        \ character row of the left edge of the polygon line
 
 .dpol17
 
- SEC                    \ Set A = (A - L0056) / 2
- SBC L0056
- LSR A
+                        \ We now draw a horizontal line that starts in the left
+                        \ with the character column to the right of (Q P), as
+                        \ (Q P) contains the left edge
+                        \
+                        \ And we want the line to end in the character column
+                        \ before the right edge, which we drew at pixel byte
+                        \ offset xPolygonRightEdge
+                        \
+                        \ At this point, A contains the pixel byte offset of the
+                        \ left edge
+                        \
+                        \ So we want to draw a line between pixel byte offset A
+                        \ and pixel byte offset xPolygonRightEdge
+                        \
+                        \ Each character block contains eight bytes, so in terms
+                        \ of character columns, we want to draw a line that's
+                        \ this number of character columns wide:
+                        \
+                        \   (xPolygonRightEdge - A) / 8 
+                        \
+                        \ The following unrolled loop implements this, but in a
+                        \ reverse manner that means we have to negate the above
+                        \ value to calculate the correct entry point (as well as
+                        \ incorporating the fact that the jump points are spaced
+                        \ out by four bytes)
+
+ SEC                    \ Set A = (A - xPolygonRightEdge) / 2
+ SBC xPolygonRightEdge  \
+ LSR A                  \ So that's the above character column calculation, but
+                        \ negated and multiplied by 4
 
  STA dpol18+1           \ Modify the following instruction below:
                         \
@@ -16088,25 +16200,27 @@
                         \ so the following routine draws a line of the length
                         \ given in A, as follows:
                         \
-                        \   * When A = 0, draw from column 31 to column 1
+                        \   * When A = 0 * 4, draw from column 31 to column 1
                         \
-                        \   * When A = 4, draw from column 30 to column 1
+                        \   * When A = 1 * 4, draw from column 30 to column 1
                         \
-                        \   * When A = 8, draw from column 29 to column 1
+                        \   * When A = 2 * 4, draw from column 29 to column 1
                         \
-                        \ and so on
+                        \     ...
+                        \
+                        \   * When A = 28 * 4, draw from column 3 to column 1
+                        \
+                        \   * When A = 29 * 4, draw from column 2 to column 1
+                        \
+                        \   * When A = 30 * 4, draw from column 1 to column 1
                         \
                         \ This works because there are four bytes in each of the
                         \ LDY/STA instruction pairs below, and when the BCC is
                         \ executed, the operand of the BCC is added to the
                         \ address of the first instruction after the BCC
                         \
-                        \ In other words, this routine draws a line of length
-                        \ 31 - (A / 4) character columns, or:
-                        \
-                        \     31 - (A / 4)
-                        \
-                        \   = 31 - (Y - L0056) / 8
+                        \ In other words, this routine draws a line of length of
+                        \ 31 - (A / 4) character columns
 
  LDA polygonFillPixels  \ Set A to the contents of polygonFillPixels, which we
                         \ set in part 1 to a pixel byte containing four pixels
@@ -17587,8 +17701,8 @@
  LDA T                  \ Set screenLeftYawHi = T - 10
  SEC                    \
  SBC #10                \ So screenLeftYawHi contains the yaw angle of the gaze
- STA screenLeftYawHi    \ in the the centre of the viewing arc, less 14.0625
-                        \ degrees (i.e. 360 * 10 / 256)
+ STA screenLeftYawHi    \ in the centre of the viewing arc, less 14.0625 degrees
+                        \ (i.e. 360 * 10 / 256)
                         \
                         \ The screen is 20 yaw angle units across, so this sets
                         \ screenLeftYawHi to the high byte of the yaw angle of
@@ -19663,7 +19777,7 @@
  TAY                    \ Copy the buffer type into Y so we can use it as an
                         \ index into the various buffer configuration tables
 
- LDA minBufferYaw,Y     \ Set the high byte of minYawAngle(Hi Lo) to 20 or 8 ???
+ LDA buffersYawMin,Y    \ Set the high byte of minYawAngle(Hi Lo) to 20 or 8 ???
  STA minYawAngleHi
 
  LSR A                  \ Set maxYawAngleHi = 138 or 132
@@ -19673,16 +19787,16 @@
  LDA L298B,Y            \ Set the high byte of L0011Yaw(Hi Lo) to 10, 2, or 12
  STA L0011YawHi         \ Gets added to drawViewYawHi in AnalysePolygon ???
 
- LDA L2991,Y            \ Set L0061 to 112, 112 or 64 ???
- STA L0061              \ 112 = 14 * 8, 64 = 8 * 8
+ LDA buffersYawWidth,Y  \ Set bufferYawWidth to 112, 112 or 64 ???
+ STA bufferYawWidth     \ 112 = 14 * 8, 64 = 8 * 8
 
- LDA L298E,Y            \ Set L0035 to 80, 64, 96 ???
- STA L0035              \ Gets subtracted from values in xPolygonRight or
-                        \ xPolygonLeft ???
+ LDA buffersYawLeft,Y   \ Set bufferYawLeft to 80, 64, 96 ???
+ STA bufferYawLeft      \ Gets subtracted from values in polygonYawRight or
+                        \ polygonYawLeft ???
 
- CLC                    \ Set L0036 = L0035 + L0061
- ADC L0061              \
- STA L0036              \ i.e. 80 + 112
+ CLC                    \ Set bufferYawRight = bufferYawLeft + bufferYawWidth
+ ADC bufferYawWidth     \
+ STA bufferYawRight     \ i.e. 80 + 112
                         \      64 + 112
                         \      96 + 64 ???
 
@@ -19712,14 +19826,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L298E
+\       Name: buffersYawLeft
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L298E
+.buffersYawLeft
 
  EQUB 80                \ Left row buffer ???
 
@@ -19729,14 +19843,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L2991
+\       Name: buffersYawWidth
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L2991
+.buffersYawWidth
 
  EQUB 112               \ Left row buffer ???
 
@@ -19746,14 +19860,14 @@
 
 \ ******************************************************************************
 \
-\       Name: minBufferYaw
+\       Name: buffersYawMin
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Minimum allowed yaw angles for points in the screen buffer
 \
 \ ******************************************************************************
 
-.minBufferYaw
+.buffersYawMin
 
  EQUB 20                \ Left row buffer contains yaw angles up to 20
 
@@ -19813,26 +19927,26 @@
  EOR #%10000000         \ and with bit 7 flipped ???
  STA maxYawAngleHi
 
- LDA T                  \ Set L0061 = T * 4
+ LDA T                  \ Set bufferYawWidth = T * 4
  ASL A
  ASL A
- STA L0061
+ STA bufferYawWidth
 
- LSR A                  \ Set L0036 = T * 2
+ LSR A                  \ Set bufferYawRight = T * 2
  AND #%11111100         \
  ORA #%10000000         \ reduced to a multiple of 4 and bit 7 set ???
- STA L0036
+ STA bufferYawRight
 
- SEC                    \ Set L0035 = L0036 - L0061
- SBC L0061
- STA L0035
+ SEC                    \ Set bufferYawLeft = bufferYawRight - bufferYawWidth
+ SBC bufferYawWidth
+ STA bufferYawLeft
 
- LSR A                  \ Set the high byte of L0011Yaw(Hi Lo) to L0035 / 8
- LSR A
+ LSR A                  \ Set the high byte of L0011Yaw(Hi Lo) to
+ LSR A                  \ bufferYawLeft / 8
  LSR A
  STA L0011YawHi
 
- LDA #0                 \ Set L0011Yaw(Hi Lo) = 256 * (L0035 / 8)
+ LDA #0                 \ Set L0011Yaw(Hi Lo) = 256 * (bufferYawLeft / 8)
  ROR A                  
  STA L0011YawLo
 
@@ -22576,9 +22690,9 @@
  STY yPolygonBottom
  STY yPolygonTop
  LDA yVectorLo
- STA xPolygonLeft,Y
+ STA polygonYawLeft,Y
  LDA zVectorLo
- STA xPolygonRight,Y
+ STA polygonYawRight,Y
  LDA #0
  STA L007F
 
@@ -23074,7 +23188,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX xPolygonLeft
+ STX polygonYawLeft
  DEC L30EA
  BEQ C30F8
 
@@ -23147,7 +23261,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX xPolygonLeft
+ STX polygonYawLeft
  DEC U
  BNE C3137
  JMP CRE26
@@ -35312,19 +35426,20 @@ L314A = C3148+2
 
 .iconBuffer
 
- SKIP 0                 \ The icon screen buffer shares memory with xPolygonLeft
+ SKIP 0                 \ The icon screen buffer shares memory with the
+                        \ polygonYawLeft variable
 
 \ ******************************************************************************
 \
-\       Name: xPolygonLeft
+\       Name: polygonYawLeft
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: The x-coordinate of the left edge of each pixel line in the
-\             polygon being drawn
+\    Summary: The yaw angle of the left edge of each pixel line in the polygon
+\             being drawn
 \
 \ ******************************************************************************
 
-.xPolygonLeft
+.polygonYawLeft
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -35361,15 +35476,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: xPolygonRight
+\       Name: polygonYawRight
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: The x-coordinate of the right edge of each pixel line in the
-\             polygon being drawn
+\    Summary: The yaw angle of the right edge of each pixel line in the polygon
+\             being drawn
 \
 \ ******************************************************************************
 
-.xPolygonRight
+.polygonYawRight
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -35420,13 +35535,13 @@ L314A = C3148+2
                         \ for storing tile data that can be discarded once the
                         \ landscape is generated
                         \
-                        \ During gameplay it is used to store the xPolygonLeft
-                        \ and xPolygonRight tables
+                        \ During gameplay it is used to store the polygonYawLeft
+                        \ and polygonYawRight tables
                         \
                         \ These lines rewind BeebAsm's assembly back to &5A00
                         \ and clear the block from that point to the end of the
-                        \ xPolygonLeft and xPolygonRight variables at &5C00, so
-                        \ we can assemble the landscape variables
+                        \ polygonYawLeft and polygonYawRight variables at &5C00,
+                        \ so we can assemble the landscape variables
                         \
                         \ The game binary actually contains snippets of the
                         \ original source code, left over from the BBC Micro
@@ -35921,8 +36036,8 @@ L314A = C3148+2
 \
 \ 1. A: Calculate the yaw angle of the point, rotated by the rotation of the
 \ object itself (i.e. its gaze), so this is the yaw angle of the object point
-\ within the object, but with the the correct rotation for the direction the
-\ object is facing.
+\ within the object, but with the correct rotation for the direction the object
+\ is facing.
 \
 \ 2. xDelta(Hi Lo), zDelta(Hi Lo): Convert this yaw angle and the polar distance
 \ into x- and z-coordinates for the point in the y = 0 plane (i.e. on the
