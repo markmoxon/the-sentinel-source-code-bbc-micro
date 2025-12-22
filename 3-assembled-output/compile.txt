@@ -72,6 +72,8 @@
      0019
 .L001A
      001A
+.yPolygonLine
+     001A
 .zTileRow
      001A
 .zBlock
@@ -227,7 +229,7 @@
      0056
 .screenRowCounter
      0057
-.L0058
+.polygonFillPixels
      0058
 .objectGazeYawLo
      0059
@@ -5829,11 +5831,11 @@
      2290   CC
      2291   EE
      2292   FF
-.L2293Lo
+.bufferOffsetLo
      2293   00
      2294   60
      2295   00
-.L2293Hi
+.bufferOffsetHi
      2296   00
      2297   00
      2298   00
@@ -10225,7 +10227,7 @@
      3DFD   00
      3DFE   00
      3DFF   08
-.L3E00
+.edgePixelsLeft
      3E00   00
      3E01   00
      3E02   00
@@ -10290,7 +10292,7 @@
      3E3D   77
      3E3E   33
      3E3F   11
-.L3E40
+.edgePixelsRight
      3E40   00
      3E41   00
      3E42   00

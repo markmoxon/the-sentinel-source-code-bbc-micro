@@ -295,6 +295,11 @@
 
  SKIP 0                 \ ???
 
+.yPolygonLine
+
+ SKIP 0                 \ The polygon y-coordinate of the pixel line being drawn
+                        \ in the DrawPolygonPixels routine
+
 .zTileRow
 
  SKIP 0                 \ Used to store the tile z-coordinate of the tile row we
@@ -763,9 +768,10 @@
  SKIP 1                 \ A counter for filling screen rows in the FillScreen
                         \ routine
 
-.L0058
+.polygonFillPixels
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A pixel byte containing four pixels set to the fill
+                        \ colour for the polygon we are drawing
 
 .objectGazeYawLo
 
@@ -15616,39 +15622,39 @@
 
 \ ******************************************************************************
 \
-\       Name: L2293Lo
+\       Name: bufferOffsetLo
 \       Type: Variable
-\   Category: Drawing polygons
+\   Category: Screen buffer
 \    Summary: An offset to add to the screen address of the right column screen
 \             buffer (low byte)
 \
 \ ******************************************************************************
 
-.L2293Lo
+.bufferOffsetLo
 
- EQUB LO(&0000)
- EQUB LO(&0060)
- EQUB LO(&0000)
+ EQUB LO(0)
+ EQUB LO(96)
+ EQUB LO(0)
 
 \ ******************************************************************************
 \
-\       Name: L2293Hi
+\       Name: bufferOffsetHi
 \       Type: Variable
-\   Category: Drawing polygons
+\   Category: Screen buffer
 \    Summary: An offset to add to the screen address of the right column screen
 \             buffer (low byte)
 \
 \ ******************************************************************************
 
-.L2293Hi
+.bufferOffsetHi
 
- EQUB HI(&0000)
- EQUB HI(&0060)
- EQUB HI(&0000)
+ EQUB HI(0)
+ EQUB HI(96)
+ EQUB HI(0)
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 1 of ???)
+\       Name: DrawPolygonPixels (Part 1 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw an analysed polygon into the screen buffer
@@ -15663,7 +15669,14 @@
 \   yPolygonBottom      The pixel line number of the bottom of the polygon (the
 \                       lowest y-coordinate in the polygon)
 \
-
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   L002C               ???
+\
+\   L002D               ???
+\
 \ ******************************************************************************
 
 .DrawPolygonPixels
@@ -15725,13 +15738,13 @@
  LDA screenRowAddrHi,X  \ the pixel row containing the pixel line number in
  STA S                  \ yPolygonTop
 
- LDY screenBufferType   \ If this is the right column screen buffer, then do the
- LDA R                  \ following:
+ LDY screenBufferType   \ If this is the right row screen buffer then Y = 1, so
+ LDA R                  \ add the following to (S R):
  CLC                    \
- ADC L2293Lo,Y          \   (S R) = (S R) + &60 ???
- STA R
- LDA S
- ADC L2293Hi,Y
+ ADC bufferOffsetLo,Y   \   (S R) = (S R) + 96 ???
+ STA R                  \
+ LDA S                  \ This addition is performed for all buffer types, but
+ ADC bufferOffsetHi,Y   \ the addition is only non-zero for the right row buffer
  STA S
 
  LDA polygonColours     \ Set A to the polygon colour byte for the polygon we
@@ -15759,49 +15772,60 @@
 
 .dpol1
 
- STA dpol16+1           \ Modify the following instruction in DrawPolygonPixels
-                        \ (part 3):
+ STA dpol16+1           \ Modify the following instruction in part 3:
                         \
-                        \   ORA &3E3C,X -> ORA (L3E00 + A),X
+                        \   ORA edgePixelsLeft+&3C,X ->
+                        \                 ORA edgePixelsLeft + polygonColours,X
                         \
                         \ so the ORA instruction uses the correct byte for the
-                        \ the specified colour from the L3E00 table at address
-                        \ &3E00
+                        \ the specified polygon colours from the edgePixelsLeft
+                        \ table
 
- STA dpol10+1           \ Modify the following instruction in DrawPolygonPixels
-                        \ (part 2):
+ STA dpol10+1           \ Modify the following instruction in part 2:
                         \
-                        \   ORA &3E3C,X -> ORA (&3E00 + A),X
+                        \   ORA edgePixelsLeft+&3C,X ->
+                        \                 ORA edgePixelsLeft + polygonColours,X
                         \
-                        \ so the ORA instruction ORs with the correct byte for
-                        \ the specified colour ???
+                        \ so the ORA instruction uses the correct byte for the
+                        \ the specified polygon colours from the edgePixelsLeft
+                        \ table
 
- ORA #&40               \ Modify the following instruction in DrawPolygonPixels
- STA dpol14+1           \ (part 2):
+ ORA #&40               \ Modify the following instruction in part 2:
+ STA dpol14+1           \
+                        \   ORA edgePixelsRight+&3C,X ->
+                        \                 ORA edgePixelsRight + polygonColours,X
                         \
-                        \   ORA &3E3C,X -> ORA (&3E40 + A),X
-                        \
-                        \ so the ORA instruction ORs with the correct byte for
-                        \ the specified colour ???
+                        \ so the ORA instruction uses the correct byte for the
+                        \ the specified polygon colours from the edgePixelsRight
+                        \ table
 
- LSR A
- LSR A
- AND #&03
+ LSR A                  \ Set Y to the fill colour from bits 2-3 of the polygon
+ LSR A                  \ colour byte
+ AND #%00000011
  TAY
- LDA colourPixels,Y
- STA L0058
- LDY yPolygonTop
- STY L001A
- CPY yPolygonBottom
- BCS dpol13
+
+ LDA colourPixels,Y     \ Set polygonFillPixels to a pixel byte containing four
+ STA polygonFillPixels  \ pixels set to the fill colour for the polygon
+
+ LDY yPolygonTop        \ Set Y to the pixel line number of the top of the
+                        \ polygon (the highest y-coordinate in the polygon in
+                        \ terms of 3D world coordinates, so higher values are
+                        \ higher up the screen)
+
+ STY yPolygonLine       \ Store the top pixel line number in yPolygonLine
+
+ CPY yPolygonBottom     \ If yPolygonTop >= yPolygonBottom then there is at
+ BCS dpol13             \ least one visible line to draw in this polygon, so
+                        \ jump to dpol13 to draw the polygon, starting from
+                        \ row Y
 
 .dpol2
 
- RTS
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 2 of ???)
+\       Name: DrawPolygonPixels (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -15810,7 +15834,7 @@
 
 .dpol3
 
- LDY L001A
+ LDY yPolygonLine
  CPY yPolygonBottom
  BEQ dpol2
  TYA
@@ -15835,17 +15859,22 @@
 
 .dpol5
 
+                        \ Jump here from part 3 if ???
+
  LDA #0
  STA L002D
  BEQ dpol3
 
 .dpol6
 
- LDA #0
+ LDA #0                 \ Set L002C = 0 ???
  STA L002C
+
  BEQ dpol3
 
 .dpol7
+
+                        \ Jump here from part 3 if ???
 
  LDA L0061
  ASL A
@@ -15862,8 +15891,10 @@
  LDA S
  SBC #&00
  STA Q
- LDA #0
+
+ LDA #0                 \ Set L002D = 0 ???
  STA L002D
+
  LDA #&F8
  BNE dpol17
 
@@ -15877,20 +15908,29 @@
 
 .dpol10
 
- ORA L3E00+&3C,X        \ This instruction is modified in part 1 to point to the
-                        \ correct entry for the specified polygon colour:
-                        \
-                        \   ORA (L3E00 + polygonColours),X
-                        \
-                        \ So this ???
+ ORA edgePixelsLeft+&3C,X   \ This instruction is modified in part 1 to point to
+                            \ the correct entry for the specified polygon
+                            \ colour:
+                            \
+                            \   ORA edgePixelsLeft + polygonColours,X
+                            \
+                            \ So this ???
+                            \
+                            \ The original value of edgePixelsLeft+&3C is just
+                            \ workspace noise and has no meaning, it just sets
+                            \ the high byte to HI(edgePixelsLeft)
 
  AND leftPixels,X
  STA T
  LDA (R),Y
  AND pixelsToRight,X
  ORA T
- STA (R),Y
- JMP dpol3
+
+ STA (R),Y              \ Poke the pixel byte containing the left edge into
+                        \ screen memory
+
+ JMP dpol3              \ Loop back to dpol3 to draw the next pixel line in the
+                        \ polygon
 
 .dpol11
 
@@ -15898,12 +15938,13 @@
 
 .dpol12
 
- DEY
- STY L001A
+ DEY                    \ Decrement the polygon line number in yPolygonLine to
+ STY yPolygonLine       \ move down one line in the polygon, from the top to the
+                        \ bottom
 
 \ ******************************************************************************
 \
-\       Name: DrawPolygonPixels (Part 3 of ???)
+\       Name: DrawPolygonPixels (Part 3 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -15912,14 +15953,41 @@
 
 .dpol13
 
- LDA xPolygonRight,Y
- CMP xPolygonLeft,Y
- BCC dpol2
- TAX
- SBC L0035
- BCC dpol5
- CMP L0061
+                        \ This is the entry point for the loop that spans parts
+                        \ 2, 3 and 4
+                        \
+                        \ We jump here from part 1 with Y set to the polygon
+                        \ pixel line at the top of the polygon
+                        \
+                        \ We also get here on later iterations with Y set to the
+                        \ polygon pixel to draw next
+                        \
+                        \ In either case we draw polygon pixel line Y and steps
+                        \ down the polygon one pixel line at a time until we
+                        \ reach the bottom
+
+ LDA xPolygonRight,Y    \ Set A to the x-coordinate of the right edge for the
+                        \ line we are drawing
+
+ CMP xPolygonLeft,Y     \ If the x-coordinate of the right edge is less than the
+ BCC dpol2              \ x-coordinate of the left edge for the line we are
+                        \ drawing, then the polygon must be facing away from us,
+                        \ so jump to dpol2 to return from the subroutine without
+                        \ drawing the polygon
+
+ TAX                    \ Set X to the x-coordinate of the right edge 
+
+ SBC L0035              \ Set A = A - L0035
+                        \
+                        \ This subtraction works because we just passed through
+                        \ a BCC, so we know the C flag is set
+
+ BCC dpol5              \ If the subtraction overflowed, jump to part 2 to set
+                        \ L002D = 0 and ???
+
+ CMP L0061              \ If A >= L0061, jump to dpol7
  BCS dpol7
+
  ASL A
  AND #&F8
  TAY
@@ -15933,18 +16001,24 @@
 
 .dpol14
 
- ORA L3E40+&3C,X        \ This instruction is modified in part 1 to point to the
-                        \ correct entry for the specified polygon colour:
-                        \
-                        \   ORA (L3E40 + polygonColours),X
-                        \
-                        \ So this ???
+ ORA edgePixelsRight+&3C,X  \ This instruction is modified in part 1 to point to
+                            \ the correct entry for the specified polygon
+                            \ colour:
+                            \
+                            \   ORA edgePixelsRight + polygonColours,X
+                            \
+                            \ So this ???
+                            \
+                            \ The original value of edgePixelsRight+&3C is just
+                            \ workspace noise and has no meaning, it just sets
+                            \ the high byte to HI(edgePixelsRight)
 
- STA (R),Y
+ STA (R),Y              \ Poke the pixel byte containing the right edge into
+                        \ screen memory
 
 .dpol15
 
- LDY L001A
+ LDY yPolygonLine
  LDA xPolygonLeft,Y
  TAX
  CMP L0036
@@ -15965,112 +16039,200 @@
 
 .dpol16
 
- ORA L3E00+&3C,X        \ This instruction is modified in part 1 to point to the
-                        \ correct entry for the specified polygon colour:
-                        \
-                        \   ORA (L3E00 + polygonColours),X
-                        \
-                        \ So this ???
+ ORA edgePixelsLeft+&3C,X   \ This instruction is modified in part 1 to point to
+                            \ the correct entry for the specified polygon
+                            \ colour:
+                            \
+                            \   ORA edgePixelsLeft + polygonColours,X
+                            \
+                            \ So this applies ???
+                            \
+                            \ The original value of edgePixelsLeft+&3C is just
+                            \ workspace noise and has no meaning, it just sets
+                            \ the high byte to HI(edgePixelsLeft)
 
- STA (R),Y
- TYA
- CLC
- ADC R
- STA P
+ STA (R),Y              \ Poke the pixel byte containing the left edge into
+                        \ screen memory
+
+\ ******************************************************************************
+\
+\       Name: DrawPolygonPixels (Part 4 of 4)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: Draw a horizontal pixel line of a specific length in character
+\             columns
+\
+\ ******************************************************************************
+
+ TYA                    \ Set (Q P) = (S R) + Y
+ CLC                    \
+ ADC R                  \ So (Q P) contains the screen address of the Y-th
+ STA P                  \ 
  LDA S
- ADC #&00
+ ADC #0
  STA Q
- TYA
+
+ TYA                    \ Set A = Y
 
 .dpol17
 
- SEC
+ SEC                    \ Set A = (A - L0056) / 2
  SBC L0056
  LSR A
- STA dpol18+1
 
-\ ******************************************************************************
-\
-\       Name: DrawPolygonPixels (Part 4 of ???)
-\       Type: Subroutine
-\   Category: Drawing polygons
-\    Summary: ???
-\
-\ ******************************************************************************
+ STA dpol18+1           \ Modify the following instruction below:
+                        \
+                        \   BCC dpol19 -> BCC A
+                        \
+                        \ so the BCC instruction jumps to the offset given in A,
+                        \ so the following routine draws a line of the length
+                        \ given in A, as follows:
+                        \
+                        \   * When A = 0, draw from column 31 to column 1
+                        \
+                        \   * When A = 4, draw from column 30 to column 1
+                        \
+                        \   * When A = 8, draw from column 29 to column 1
+                        \
+                        \ and so on
+                        \
+                        \ This works because there are four bytes in each of the
+                        \ LDY/STA instruction pairs below, and when the BCC is
+                        \ executed, the operand of the BCC is added to the
+                        \ address of the first instruction after the BCC
+                        \
+                        \ In other words, this routine draws a line of length
+                        \ 31 - (A / 4) character columns, or:
+                        \
+                        \     31 - (A / 4)
+                        \
+                        \   = 31 - (Y - L0056) / 8
 
- LDA L0058
- CLC
+ LDA polygonFillPixels  \ Set A to the contents of polygonFillPixels, which we
+                        \ set in part 1 to a pixel byte containing four pixels
+                        \ set to the fill colour for the polygon
+                        \
+                        \ So the pixel byte we should use for drawing the line
+                        \ is in A
+
+ CLC                    \ Clear the C flag so the BCC instruction below jumps to
+                        \ the correct entry to draw the specified number of
+                        \ character columns
 
 .dpol18
 
- BCC dpol19             \ Modified by dpol17
+ BCC dpol19             \ This instruction is modified in part 3 to jump to the
+                        \ correct entry in the following list for drawing a
+                        \ horizontal pixel line of the specified length
+                        \
+                        \ The line length is specified in character columns (1
+                        \ to 31) and the drawing starts with the pixel byte to
+                        \ the right of the pixel byte whose screen address is
+                        \ in (Q P), so (Q P) contains the left cap of the line
+                        \ and the line fills the polygon to the right for the
+                        \ specified number of character columns
+                        \   
+                        \ The line is drawn from right to left to enable the
+                        \ routine to be joined at the correct point for the
+                        \ required line length
 
- LDY #&F8
+ LDY #8 * 31            \ Draw a line from column 31 to column 1
  STA (P),Y
- LDY #&F0
+
+ LDY #8 * 30            \ Draw a line from column 30 to column 1
  STA (P),Y
- LDY #&E8
+
+ LDY #8 * 29            \ Draw a line from column 29 to column 1
  STA (P),Y
- LDY #&E0
+
+ LDY #8 * 28            \ Draw a line from column 28 to column 1
  STA (P),Y
- LDY #&D8
+
+ LDY #8 * 27            \ Draw a line from column 27 to column 1
  STA (P),Y
- LDY #&D0
+
+ LDY #8 * 26            \ Draw a line from column 26 to column 1
  STA (P),Y
- LDY #&C8
+
+ LDY #8 * 25            \ Draw a line from column 25 to column 1
  STA (P),Y
- LDY #&C0
+
+ LDY #8 * 24            \ Draw a line from column 24 to column 1
  STA (P),Y
- LDY #&B8
+
+ LDY #8 * 23            \ Draw a line from column 23 to column 1
  STA (P),Y
- LDY #&B0
+
+ LDY #8 * 22            \ Draw a line from column 22 to column 1
  STA (P),Y
- LDY #&A8
+
+ LDY #8 * 21            \ Draw a line from column 21 to column 1
  STA (P),Y
- LDY #&A0
+
+ LDY #8 * 20            \ Draw a line from column 20 to column 1
  STA (P),Y
- LDY #&98
+
+ LDY #8 * 19            \ Draw a line from column 19 to column 1
  STA (P),Y
- LDY #&90
+
+ LDY #8 * 18            \ Draw a line from column 18 to column 1
  STA (P),Y
- LDY #&88
+
+ LDY #8 * 17            \ Draw a line from column 17 to column 1
  STA (P),Y
- LDY #&80
+
+ LDY #8 * 16            \ Draw a line from column 16 to column 1
  STA (P),Y
- LDY #&78
+
+ LDY #8 * 15            \ Draw a line from column 15 to column 1
  STA (P),Y
- LDY #&70
+
+ LDY #8 * 14            \ Draw a line from column 14 to column 1
  STA (P),Y
- LDY #&68
+
+ LDY #8 * 13            \ Draw a line from column 13 to column 1
  STA (P),Y
- LDY #&60
+
+ LDY #8 * 12            \ Draw a line from column 12 to column 1
  STA (P),Y
- LDY #&58
+
+ LDY #8 * 11            \ Draw a line from column 11 to column 1
  STA (P),Y
- LDY #&50
+
+ LDY #8 * 10            \ Draw a line from column 10 to column 1
  STA (P),Y
- LDY #&48
+
+ LDY #8 * 9             \ Draw a line from column 9 to column 1
  STA (P),Y
- LDY #&40
+
+ LDY #8 * 8             \ Draw a line from column 8 to column 1
  STA (P),Y
- LDY #&38
+
+ LDY #8 * 7             \ Draw a line from column 7 to column 1
  STA (P),Y
- LDY #&30
+
+ LDY #8 * 6             \ Draw a line from column 6 to column 1
  STA (P),Y
- LDY #&28
+
+ LDY #8 * 5             \ Draw a line from column 5 to column 1
  STA (P),Y
- LDY #&20
+
+ LDY #8 * 4             \ Draw a line from column 4 to column 1
  STA (P),Y
- LDY #&18
+
+ LDY #8 * 3             \ Draw a line from column 3 to column 1
  STA (P),Y
- LDY #&10
+
+ LDY #8 * 2             \ Draw a line from column 2 to column 1
  STA (P),Y
- LDY #&08
+
+ LDY #8 * 1             \ Draw a line from column 1 to column 1
  STA (P),Y
 
 .dpol19
 
- JMP dpol3
+ JMP dpol3              \ Loop back to part 2 to draw the next pixel line in the
+                        \ polygon
 
 \ ******************************************************************************
 \
@@ -28656,43 +28818,187 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L3E00
+\       Name: edgePixelsLeft
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Table to convert a polygon colours byte and a pixel offset (0-3)
+\             into a pixel byte for the left edge of the polygon pixel line
 \
 \ ******************************************************************************
 
-.L3E00
+.edgePixelsLeft
 
- EQUB &00, &00, &00, &00, &07, &03, &01, &00
- EQUB &70, &30, &10, &00, &77, &33, &11, &00
- EQUB &08, &04, &02, &01, &0F, &07, &03, &01
- EQUB &78, &34, &12, &01, &7F, &37, &13, &01
- EQUB &80, &40, &20, &10, &87, &43, &21, &10
- EQUB &F0, &70, &30, &10, &F7, &73, &31, &10
- EQUB &88, &44, &22, &11, &8F, &47, &23, &11
- EQUB &F8, &74, &32, &11, &FF, &77, &33, &11
+ EQUB %00000000         \ %000000xx = 0-3 pixels, edge colour 0, fill colour 0
+ EQUB %00000000
+ EQUB %00000000
+ EQUB %00000000
+
+ EQUB %00000111         \ %000001xx = 0-3 pixels, edge colour 0, fill colour 1
+ EQUB %00000011
+ EQUB %00000001
+ EQUB %00000000
+
+ EQUB %01110000         \ %000010xx = 0-3 pixels, edge colour 0, fill colour 2
+ EQUB %00110000
+ EQUB %00010000
+ EQUB %00000000
+
+ EQUB %01110111         \ %000011xx = 0-3 pixels, edge colour 0, fill colour 3
+ EQUB %00110011
+ EQUB %00010001
+ EQUB %00000000
+
+ EQUB %00001000         \ %000100xx = 0-3 pixels, edge colour 1, fill colour 0
+ EQUB %00000100
+ EQUB %00000010
+ EQUB %00000001
+
+ EQUB %00001111         \ %000101xx = 0-3 pixels, edge colour 1, fill colour 1
+ EQUB %00000111
+ EQUB %00000011
+ EQUB %00000001
+
+ EQUB %01111000         \ %000110xx = 0-3 pixels, edge colour 1, fill colour 2
+ EQUB %00110100
+ EQUB %00010010
+ EQUB %00000001
+
+ EQUB %01111111         \ %000111xx = 0-3 pixels, edge colour 1, fill colour 3
+ EQUB %00110111
+ EQUB %00010011
+ EQUB %00000001
+
+ EQUB %10000000         \ %001000xx = 0-3 pixels, edge colour 2, fill colour 0
+ EQUB %01000000
+ EQUB %00100000
+ EQUB %00010000
+
+ EQUB %10000111         \ %001001xx = 0-3 pixels, edge colour 2, fill colour 1
+ EQUB %01000011
+ EQUB %00100001
+ EQUB %00010000
+
+ EQUB %11110000         \ %001010xx = 0-3 pixels, edge colour 2, fill colour 2
+ EQUB %01110000
+ EQUB %00110000
+ EQUB %00010000
+
+ EQUB %11110111         \ %001011xx = 0-3 pixels, edge colour 2, fill colour 3
+ EQUB %01110011
+ EQUB %00110001
+ EQUB %00010000
+
+ EQUB %10001000         \ %001100xx = 0-3 pixels, edge colour 3, fill colour 0
+ EQUB %01000100
+ EQUB %00100010
+ EQUB %00010001
+
+ EQUB %10001111         \ %001101xx = 0-3 pixels, edge colour 3, fill colour 1
+ EQUB %01000111
+ EQUB %00100011
+ EQUB %00010001
+
+ EQUB %11111000         \ %001110xx = 0-3 pixels, edge colour 3, fill colour 2
+ EQUB %01110100
+ EQUB %00110010
+ EQUB %00010001
+
+ EQUB %11111111         \ %001111xx = 0-3 pixels, edge colour 3, fill colour 3
+ EQUB %01110111
+ EQUB %00110011
+ EQUB %00010001
 
 \ ******************************************************************************
 \
-\       Name: L3E40
+\       Name: edgePixelsRight
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Table to convert a polygon colours byte and a pixel offset (0-3)
+\             into a pixel byte for the right edge of the polygon pixel line
 \
 \ ******************************************************************************
 
-.L3E40
+.edgePixelsRight
 
- EQUB &00, &00, &00, &00, &00, &08, &0C, &0E
- EQUB &00, &80, &C0, &E0, &00, &88, &CC, &EE
- EQUB &08, &04, &02, &01, &08, &0C, &0E, &0F
- EQUB &08, &84, &C2, &E1, &08, &8C, &CE, &EF
- EQUB &80, &40, &20, &10, &80, &48, &2C, &1E
- EQUB &80, &C0, &E0, &F0, &80, &C8, &EC, &FE
- EQUB &88, &44, &22, &11, &88, &4C, &2E, &1F
- EQUB &88, &C4, &E2, &F1, &88, &CC, &EE, &FF
+ EQUB %00000000         \ %000000xx = 0-3 pixels, fill colour 0, edge colour 0
+ EQUB %00000000
+ EQUB %00000000
+ EQUB %00000000
+
+ EQUB %00000000         \ %000001xx = 0-3 pixels, fill colour 1, edge colour 0
+ EQUB %00001000
+ EQUB %00001100
+ EQUB %00001110
+
+ EQUB %00000000         \ %000010xx = 0-3 pixels, fill colour 2, edge colour 0
+ EQUB %10000000
+ EQUB %11000000
+ EQUB %11100000
+
+ EQUB %00000000         \ %000011xx = 0-3 pixels, fill colour 3, edge colour 0
+ EQUB %10001000
+ EQUB %11001100
+ EQUB %11101110
+
+ EQUB %00001000         \ %000100xx = 0-3 pixels, fill colour 0, edge colour 1
+ EQUB %00000100
+ EQUB %00000010
+ EQUB %00000001
+
+ EQUB %00001000         \ %000101xx = 0-3 pixels, fill colour 1, edge colour 1
+ EQUB %00001100
+ EQUB %00001110
+ EQUB %00001111
+
+ EQUB %00001000         \ %000110xx = 0-3 pixels, fill colour 2, edge colour 1
+ EQUB %10000100
+ EQUB %11000010
+ EQUB %11100001
+
+ EQUB %00001000         \ %000111xx = 0-3 pixels, fill colour 3, edge colour 1
+ EQUB %10001100
+ EQUB %11001110
+ EQUB %11101111
+
+ EQUB %10000000         \ %001000xx = 0-3 pixels, fill colour 0, edge colour 2
+ EQUB %01000000
+ EQUB %00100000
+ EQUB %00010000
+
+ EQUB %10000000         \ %001001xx = 0-3 pixels, fill colour 1, edge colour 2
+ EQUB %01001000
+ EQUB %00101100
+ EQUB %00011110
+
+ EQUB %10000000         \ %001010xx = 0-3 pixels, fill colour 2, edge colour 2
+ EQUB %11000000
+ EQUB %11100000
+ EQUB %11110000
+
+ EQUB %10000000         \ %001011xx = 0-3 pixels, fill colour 3, edge colour 2
+ EQUB %11001000
+ EQUB %11101100
+ EQUB %11111110
+
+ EQUB %10001000         \ %001100xx = 0-3 pixels, fill colour 0, edge colour 3
+ EQUB %01000100
+ EQUB %00100010
+ EQUB %00010001
+
+ EQUB %10001000         \ %001101xx = 0-3 pixels, fill colour 1, edge colour 3
+ EQUB %01001100
+ EQUB %00101110
+ EQUB %00011111
+
+ EQUB %10001000         \ %001110xx = 0-3 pixels, fill colour 2, edge colour 3
+ EQUB %11000100
+ EQUB %11100010
+ EQUB %11110001
+
+ EQUB %10001000         \ %001111xx = 0-3 pixels, fill colour 3, edge colour 3
+ EQUB %11001100
+ EQUB %11101110
+ EQUB %11111111
 
 \ ******************************************************************************
 \
