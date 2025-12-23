@@ -196,7 +196,7 @@
      0042
 .L0043
      0043
-.L0045
+.triangleStartPoint
      0045
 .L004A
      004A
@@ -5831,11 +5831,11 @@
      2290   CC
      2291   EE
      2292   FF
-.bufferOffsetLo
+.buffersOffsetLo
      2293   00
      2294   60
      2295   00
-.bufferOffsetHi
+.buffersOffsetHi
      2296   00
      2297   00
      2298   00
@@ -7368,7 +7368,7 @@
 .shap16
      2CDC   A2 00      LDX #&00
      2CDE   60         RTS
-.L2CDF
+.trianglePointAdd
      2CDF   01
      2CE0   21
      2CE1   FF
@@ -7406,7 +7406,7 @@
      2D00   00
      2D01   04
      2D02   08
-.L2D03
+.triangleStart
      2D03   00
      2D04   00
      2D05   00

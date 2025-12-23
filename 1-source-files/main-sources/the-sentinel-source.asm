@@ -688,9 +688,10 @@
 
  SKIP 2                 \ ???
 
-.L0045
+.triangleStartPoint
 
- SKIP 5                 \ ???
+ SKIP 5                 \ The number of the starting point for the tile shape
+                        \ being drawn
 
 .L004A
 
@@ -15624,7 +15625,7 @@
 
 \ ******************************************************************************
 \
-\       Name: bufferOffsetLo
+\       Name: buffersOffsetLo
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: An offset to add to the screen address of the right column screen
@@ -15632,7 +15633,7 @@
 \
 \ ******************************************************************************
 
-.bufferOffsetLo
+.buffersOffsetLo
 
  EQUB LO(0)
  EQUB LO(96)
@@ -15640,7 +15641,7 @@
 
 \ ******************************************************************************
 \
-\       Name: bufferOffsetHi
+\       Name: buffersOffsetHi
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: An offset to add to the screen address of the right column screen
@@ -15648,7 +15649,7 @@
 \
 \ ******************************************************************************
 
-.bufferOffsetHi
+.buffersOffsetHi
 
  EQUB HI(0)
  EQUB HI(96)
@@ -15747,10 +15748,10 @@
  LDY screenBufferType   \ If this is the right row screen buffer then Y = 1, so
  LDA R                  \ add the following to (S R):
  CLC                    \
- ADC bufferOffsetLo,Y   \   (S R) = (S R) + 96 ???
+ ADC buffersOffsetLo,Y  \   (S R) = (S R) + 96 ???
  STA R                  \
  LDA S                  \ This addition is performed for all buffer types, but
- ADC bufferOffsetHi,Y   \ the addition is only non-zero for the right row buffer
+ ADC buffersOffsetHi,Y  \ the addition is only non-zero for the right row buffer
  STA S
 
  LDA polygonColours     \ Set A to the polygon colour byte for the polygon we
@@ -20095,9 +20096,9 @@
 
  PHA                    \ Store the tile shape on the stack
 
- LDA viewingQuadrantOpp \ Set L0045 to bit 0 of viewingQuadrantOpp to pass to
- AND #1                 \ the DrawTwoFaceTile routine ???
- STA L0045
+ LDA viewingQuadrantOpp \ Set triangleStartPoint to bit 0 of viewingQuadrantOpp
+ AND #1                 \ to pass to the DrawTwoFaceTile routine ???
+ STA triangleStartPoint
 
  PLA                    \ Retrieve the tile shape from the stack
 
@@ -20289,12 +20290,12 @@
                         \ is a different altitude to the othes
                         \
                         \ We now use the value of Y to pick the correct value
-                        \ for L0045 and the correct tileShapeColour table offset
-                        \ for the tile colour, so we can pass them to
-                        \ DrawTwoFaceTile to draw the tile
+                        \ for triangleStartPoint and the correct tileShapeColour
+                        \ table offset for the tile colour, so we can pass them
+                        \ to DrawTwoFaceTile to draw the tile
 
- LDA L2D03,Y            \ Set L0045 = 1 for Y = 6, 7, 14, 15 ???
- STA L0045              \             0 for Y = 2, 3, 10, 11
+ LDA triangleStart,Y    \ Set triangleStartPoint = 1 for Y = 6, 7, 14, 15 ???
+ STA triangleStartPoint \                          0 for Y = 2, 3, 10, 11
 
  TXA                    \ Set A = 1 for tile shapes 6, 7, 14, 15
  AND #%00000100         \         0 for tile shapes 2, 3, 10, 11
@@ -20337,7 +20338,7 @@
 \
 \                         * viewingQuadrantOpp = 1, shape = 2, 3, 10, 11
 \
-\   L0045               Set to 0 or 1 ???
+\   triangleStartPoint  Set to 0 or 1 ???
 \
 \                         * For shapes 4 or 12 = bit 0 of viewingQuadrantOpp
 \
@@ -22222,19 +22223,23 @@
 
 \ ******************************************************************************
 \
-\       Name: L2CDF
+\       Name: trianglePointAdd
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: The value to add to the second point number to get the third point
+\             number when drawing a tile face as two triangles
 \
 \ ******************************************************************************
 
-.L2CDF
+.trianglePointAdd
 
- EQUB 1
- EQUB 32 + 1
- EQUB -1
- EQUB 32 - 1
+ EQUB 1                 \ Add for first triangle when triangleStartPoint = 0
+
+ EQUB 32 + 1            \ Add for first triangle when triangleStartPoint = 1
+
+ EQUB -1                \ Add for second triangle when triangleStartPoint = 0
+
+ EQUB 32 - 1            \ Add for second triangle when triangleStartPoint = 1
 
 \ ******************************************************************************
 \
@@ -22265,59 +22270,80 @@
 \   * Colour 3 can be green, red, yellow or cyan
 \
 \ Note that all the tiles have an edge colour of 0 (blue) apart from the first
-\ one, which has an edge colour of green to match the fill colour. ???
+\ one, which has an edge colour of colour 3 (green, red, yellow or cyan) to
+\ mateh the fill colour.
 \
 \ ******************************************************************************
 
 .tileShapeColour
 
- EQUB 3 << 2 + 3 << 4   \ Shape  0 = colour 3 (green) and colour 0 (blue)
- EQUB 1 << 2            \ Shape  1 = colour 1 (black) and colour 0 (blue)
- EQUB 1 << 2            \ Shape  2 = colour 1 (black) and colour 2 (white)
- EQUB 2 << 2            \ Shape  3 = colour 2 (white) and colour 1 (black)
- EQUB 2 << 2            \ Shape  4 = colour 2 (white) and colour 2 (white)
- EQUB 2 << 2            \ Shape  5 = colour 2 (white) and colour 0 (blue)
- EQUB 1 << 2            \ Shape  6 = colour 1 (black) and colour 2 (white)
- EQUB 2 << 2            \ Shape  7 = colour 2 (white) and colour 1 (black)
- EQUB 0 << 2            \ Shape  8 = unused
- EQUB 1 << 2            \ Shape  9 = colour 1 (black) and colour 0 (blue)
- EQUB 2 << 2            \ Shape 10 = colour 2 (white) and colour 1 (black)
- EQUB 1 << 2            \ Shape 11 = colour 1 (black) and colour 2 (white)
- EQUB 1 << 2            \ Shape 12 = colour 1 (black) and colour 1 (black)
- EQUB 2 << 2            \ Shape 13 = colour 2 (white) and colour 0 (blue)
- EQUB 2 << 2            \ Shape 14 = colour 2 (white) and colour 1 (black)
- EQUB 1 << 2            \ Shape 15 = colour 1 (black) and colour 2 (white)
+                        \ Colours for the first face in a two-face tile, or the
+                        \ only face in a one-face tile
 
- EQUB 0 << 2            \ Shape  0 = colour 3 (green) and colour 0 (blue)
- EQUB 0 << 2            \ Shape  1 = colour 1 (black) and colour 0 (blue)
- EQUB 2 << 2            \ Shape  2 = colour 1 (black) and colour 2 (white)
- EQUB 1 << 2            \ Shape  3 = colour 2 (white) and colour 1 (black)
- EQUB 2 << 2            \ Shape  4 = colour 2 (white) and colour 2 (white)
- EQUB 0 << 2            \ Shape  5 = colour 2 (white) and colour 0 (blue)
- EQUB 2 << 2            \ Shape  6 = colour 1 (black) and colour 2 (white)
- EQUB 1 << 2            \ Shape  7 = colour 2 (white) and colour 1 (black)
- EQUB 0 << 2            \ Shape  8 = unused
- EQUB 0 << 2            \ Shape  9 = colour 1 (black) and colour 0 (blue)
- EQUB 1 << 2            \ Shape 10 = colour 2 (white) and colour 1 (black)
- EQUB 2 << 2            \ Shape 11 = colour 1 (black) and colour 2 (white)
- EQUB 1 << 2            \ Shape 12 = colour 1 (black) and colour 1 (black)
- EQUB 0 << 2            \ Shape 13 = colour 2 (white) and colour 0 (blue)
- EQUB 1 << 2            \ Shape 14 = colour 2 (white) and colour 1 (black)
- EQUB 2 << 2            \ Shape 15 = colour 1 (black) and colour 2 (white)
+ EQUB 3 << 2 + 3 << 4   \ Shape  0: fill colour 3 (green), edge colour 3 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape  1: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape  2: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  3: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  4: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  5: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape  6: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  7: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 0 << 2 + 0 << 4   \ Shape  8 = unused
+ EQUB 1 << 2 + 0 << 4   \ Shape  9: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape 10: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape 11: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape 12: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape 13: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape 14: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape 15: fill colour 1 (black), edge colour 0 (blue)
+
+                        \ Colours for the second face in a two-face tile
+
+ EQUB 0 << 2 + 0 << 4   \ Shape  0: fill colour 3 (green), edge colour 0 (blue)
+ EQUB 0 << 2 + 0 << 4   \ Shape  1: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  2: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape  3: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  4: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 0 << 2 + 0 << 4   \ Shape  5: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape  6: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape  7: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 0 << 2 + 0 << 4   \ Shape  8 = unused
+ EQUB 0 << 2 + 0 << 4   \ Shape  9: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape 10: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape 11: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape 12: fill colour 1 (black), edge colour 0 (blue)
+ EQUB 0 << 2 + 0 << 4   \ Shape 13: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 1 << 2 + 0 << 4   \ Shape 14: fill colour 2 (white), edge colour 0 (blue)
+ EQUB 2 << 2 + 0 << 4   \ Shape 15: fill colour 1 (black), edge colour 0 (blue)
 
 \ ******************************************************************************
 \
-\       Name: L2D03
+\       Name: triangleStart
 \       Type: Variable
-\   Category: ???
-\    Summary: ???
+\   Category: Drawing polygons
+\    Summary: The number of the first point in each two-face shape that is drawn
+\             as a pair of triangles
 \
 \ ******************************************************************************
 
-.L2D03
+.triangleStart
 
- EQUB &00, &00, &00, &00, &00, &00, &01, &01
- EQUB &00, &00, &00, &00, &00, &00, &01, &01
+ EQUB 0                 \ Shape  0 starts with point 0
+ EQUB 0                 \ Shape  1 starts with point 0
+ EQUB 0                 \ Shape  2 starts with point 0
+ EQUB 0                 \ Shape  3 starts with point 0
+ EQUB 0                 \ Shape  4 starts with point 0
+ EQUB 0                 \ Shape  5 starts with point 0
+ EQUB 1                 \ Shape  6 starts with point 1
+ EQUB 1                 \ Shape  7 starts with point 1
+ EQUB 0                 \ Shape  8 is unused
+ EQUB 0                 \ Shape  9 starts with point 0
+ EQUB 0                 \ Shape 10 starts with point 0
+ EQUB 0                 \ Shape 11 starts with point 0
+ EQUB 0                 \ Shape 12 starts with point 0
+ EQUB 0                 \ Shape 13 starts with point 0
+ EQUB 1                 \ Shape 14 starts with point 1
+ EQUB 1                 \ Shape 15 starts with point 1
 
 \ ******************************************************************************
 \
@@ -22354,14 +22380,15 @@
                         \ For a triangle, we number the points like this: ???
                         \
                         \   1. Rear left
-                        \                      3. Front or rear right, L2CDF ???
+                        \                        3. Point 2 + trianglePointAdd,Y
                         \   2. Front left
                         \
                         \ We also set point 4 to be the same as point 1, so that
                         \ the third edge from point 3 to point 4 is effectively
                         \ from point 3 to point 1
 
- LDY L0045              \ Set Y = L0045 = 0 or 1 ??? which triangle ???
+ LDY triangleStartPoint \ Set Y to the number of the starting point for this
+                        \ tile shape ???
 
  BVC apol2              \ If bit 6 of polygonType is clear then we are drawing
                         \ the first triangle in a two-face tile, so jump to
@@ -22372,12 +22399,12 @@
                         \ two-face file
 
  CLC                    \ Set A = (A + 32 + 1) mod 64
- ADC #33
- AND #63
+ ADC #33                \
+ AND #63                \ So ???
 
  INY                    \ Set Y = Y + 2
  INY                    \
-                        \ to give 2 or 3
+                        \ to give 2 or 3 ???
 
 .apol2
 
@@ -22390,8 +22417,8 @@
  EOR #32                \ Set the second triangle point to the equivalent to A
  STA polygonPoint+1     \ but in the other drawing table offset
 
- CLC                    \ Set the third triangle point to A + the Y-th 
- ADC L2CDF,Y
+ CLC                    \ Set the third triangle point to A + the Y-th entry
+ ADC trianglePointAdd,Y \ from trianglePointAdd, mod 64 ???
  AND #63
  STA polygonPoint+2
 
@@ -28947,86 +28974,102 @@ L314A = C3148+2
 \    Summary: Table to convert a polygon colours byte and a pixel offset (0-3)
 \             into a pixel byte for the left edge of the polygon pixel line
 \
+\ ------------------------------------------------------------------------------
+\
+\ Each batch of four pixel bytes contains the pixels for the left edge of the
+\ polygon, for a specific edge and fill colour.
+\
+\ Within each batch of four are the pixel bytes for the edge when the edge pixel
+\ is in the first, second, third and fourth pixel, when counting from the left.
+\
+\ The comments show the index range for each batch. The index matches the
+\ relevant polygonColours variable, which is in the format %00eeff00, where %ee
+\ is the edge colour and %ff is the fill colour. Adding X to this value gives us
+\ the index of the byte in that colour whose edge pixel is in pixel X.
+\
+\ As this is the left edge, the pixel byte contains pixels in the edge colour
+\ on the left and the fill colour on the right.
+\
 \ ******************************************************************************
 
 .edgePixelsLeft
 
- EQUB %00000000         \ %000000xx = 0-3 pixels, edge colour 0, fill colour 0
+ EQUB %00000000         \ Index %000000xx for edge colour 0 then fill colour 0
  EQUB %00000000
  EQUB %00000000
  EQUB %00000000
 
- EQUB %00000111         \ %000001xx = 0-3 pixels, edge colour 0, fill colour 1
+ EQUB %00000111         \ Index %000001xx for edge colour 0 then fill colour 1
  EQUB %00000011
  EQUB %00000001
  EQUB %00000000
 
- EQUB %01110000         \ %000010xx = 0-3 pixels, edge colour 0, fill colour 2
+ EQUB %01110000         \ Index %000010xx for edge colour 0 then fill colour 2
  EQUB %00110000
  EQUB %00010000
  EQUB %00000000
 
- EQUB %01110111         \ %000011xx = 0-3 pixels, edge colour 0, fill colour 3
+ EQUB %01110111         \ Index %000011xx for edge colour 0 then fill colour 3
  EQUB %00110011
  EQUB %00010001
  EQUB %00000000
 
- EQUB %00001000         \ %000100xx = 0-3 pixels, edge colour 1, fill colour 0
+ EQUB %00001000         \ Index %000100xx for edge colour 1 then fill colour 0
  EQUB %00000100
  EQUB %00000010
  EQUB %00000001
 
- EQUB %00001111         \ %000101xx = 0-3 pixels, edge colour 1, fill colour 1
+ EQUB %00001111         \ Index %000101xx for edge colour 1 then fill colour 1
  EQUB %00000111
  EQUB %00000011
  EQUB %00000001
 
- EQUB %01111000         \ %000110xx = 0-3 pixels, edge colour 1, fill colour 2
+ EQUB %01111000         \ Index %000110xx for edge colour 1 then fill colour 2
  EQUB %00110100
  EQUB %00010010
  EQUB %00000001
 
- EQUB %01111111         \ %000111xx = 0-3 pixels, edge colour 1, fill colour 3
+ EQUB %01111111         \ Index %000111xx for edge colour 1 then fill colour 3
  EQUB %00110111
  EQUB %00010011
  EQUB %00000001
 
- EQUB %10000000         \ %001000xx = 0-3 pixels, edge colour 2, fill colour 0
+ EQUB %10000000         \ Index %001000xx for edge colour 2 then fill colour 0
  EQUB %01000000
  EQUB %00100000
  EQUB %00010000
 
- EQUB %10000111         \ %001001xx = 0-3 pixels, edge colour 2, fill colour 1
+ EQUB %10000111         \ Index %001001xx for edge colour 2 then fill colour 1
  EQUB %01000011
  EQUB %00100001
  EQUB %00010000
 
- EQUB %11110000         \ %001010xx = 0-3 pixels, edge colour 2, fill colour 2
+ EQUB %11110000         \ Index %001010xx for edge colour 2 then fill colour 2
  EQUB %01110000
  EQUB %00110000
  EQUB %00010000
 
- EQUB %11110111         \ %001011xx = 0-3 pixels, edge colour 2, fill colour 3
+ EQUB %11110111         \ Index %001011xx for edge colour 2 then fill colour 3
  EQUB %01110011
  EQUB %00110001
  EQUB %00010000
 
- EQUB %10001000         \ %001100xx = 0-3 pixels, edge colour 3, fill colour 0
+ EQUB %10001000         \ Index %001100xx for edge colour 3 then fill colour 0
  EQUB %01000100
  EQUB %00100010
  EQUB %00010001
 
- EQUB %10001111         \ %001101xx = 0-3 pixels, edge colour 3, fill colour 1
+ EQUB %10001111         \ Index %001101xx for edge colour 3 then fill colour 1
  EQUB %01000111
  EQUB %00100011
  EQUB %00010001
 
- EQUB %11111000         \ %001110xx = 0-3 pixels, edge colour 3, fill colour 2
+ EQUB %11111000         \ Index %001110xx for edge colour 3 then fill colour 2
  EQUB %01110100
  EQUB %00110010
  EQUB %00010001
 
- EQUB %11111111         \ %001111xx = 0-3 pixels, edge colour 3, fill colour 3
+ EQUB %11111111         \ Index %001111xx for edge colour 3 then fill colour 3
  EQUB %01110111
  EQUB %00110011
  EQUB %00010001
@@ -29039,86 +29082,102 @@ L314A = C3148+2
 \    Summary: Table to convert a polygon colours byte and a pixel offset (0-3)
 \             into a pixel byte for the right edge of the polygon pixel line
 \
+\ ------------------------------------------------------------------------------
+\
+\ Each batch of four pixel bytes contains the pixels for the right edge of the
+\ polygon, for a specific edge and fill colour.
+\
+\ Within each batch of four are the pixel bytes for the edge when the edge pixel
+\ is in the first, second, third and fourth pixel, when counting from the left.
+\
+\ The comments show the index range for each batch. The index matches the
+\ relevant polygonColours variable, which is in the format %00eeff00, where %ee
+\ is the edge colour and %ff is the fill colour. Adding X to this value gives us
+\ the index of the byte in that colour whose edge pixel is in pixel X.
+\
+\ As this is the right edge, the pixel byte contains pixels in the fill colour
+\ on the left and the edge colour on the right.
+\
 \ ******************************************************************************
 
 .edgePixelsRight
 
- EQUB %00000000         \ %000000xx = 0-3 pixels, fill colour 0, edge colour 0
+ EQUB %00000000         \ Index %000000xx for fill colour 0 then edge colour 0
  EQUB %00000000
  EQUB %00000000
  EQUB %00000000
 
- EQUB %00000000         \ %000001xx = 0-3 pixels, fill colour 1, edge colour 0
+ EQUB %00000000         \ Index %000001xx for fill colour 1 then edge colour 0
  EQUB %00001000
  EQUB %00001100
  EQUB %00001110
 
- EQUB %00000000         \ %000010xx = 0-3 pixels, fill colour 2, edge colour 0
+ EQUB %00000000         \ Index %000010xx for fill colour 2 then edge colour 0
  EQUB %10000000
  EQUB %11000000
  EQUB %11100000
 
- EQUB %00000000         \ %000011xx = 0-3 pixels, fill colour 3, edge colour 0
+ EQUB %00000000         \ Index %000011xx for fill colour 3 then edge colour 0
  EQUB %10001000
  EQUB %11001100
  EQUB %11101110
 
- EQUB %00001000         \ %000100xx = 0-3 pixels, fill colour 0, edge colour 1
+ EQUB %00001000         \ Index %000100xx for fill colour 0 then edge colour 1
  EQUB %00000100
  EQUB %00000010
  EQUB %00000001
 
- EQUB %00001000         \ %000101xx = 0-3 pixels, fill colour 1, edge colour 1
+ EQUB %00001000         \ Index %000101xx for fill colour 1 then edge colour 1
  EQUB %00001100
  EQUB %00001110
  EQUB %00001111
 
- EQUB %00001000         \ %000110xx = 0-3 pixels, fill colour 2, edge colour 1
+ EQUB %00001000         \ Index %000110xx for fill colour 2 then edge colour 1
  EQUB %10000100
  EQUB %11000010
  EQUB %11100001
 
- EQUB %00001000         \ %000111xx = 0-3 pixels, fill colour 3, edge colour 1
+ EQUB %00001000         \ Index %000111xx for fill colour 3 then edge colour 1
  EQUB %10001100
  EQUB %11001110
  EQUB %11101111
 
- EQUB %10000000         \ %001000xx = 0-3 pixels, fill colour 0, edge colour 2
+ EQUB %10000000         \ Index %001000xx for fill colour 0 then edge colour 2
  EQUB %01000000
  EQUB %00100000
  EQUB %00010000
 
- EQUB %10000000         \ %001001xx = 0-3 pixels, fill colour 1, edge colour 2
+ EQUB %10000000         \ Index %001001xx for fill colour 1 then edge colour 2
  EQUB %01001000
  EQUB %00101100
  EQUB %00011110
 
- EQUB %10000000         \ %001010xx = 0-3 pixels, fill colour 2, edge colour 2
+ EQUB %10000000         \ Index %001010xx for fill colour 2 then edge colour 2
  EQUB %11000000
  EQUB %11100000
  EQUB %11110000
 
- EQUB %10000000         \ %001011xx = 0-3 pixels, fill colour 3, edge colour 2
+ EQUB %10000000         \ Index %001011xx for fill colour 3 then edge colour 2
  EQUB %11001000
  EQUB %11101100
  EQUB %11111110
 
- EQUB %10001000         \ %001100xx = 0-3 pixels, fill colour 0, edge colour 3
+ EQUB %10001000         \ Index %001100xx for fill colour 0 then edge colour 3
  EQUB %01000100
  EQUB %00100010
  EQUB %00010001
 
- EQUB %10001000         \ %001101xx = 0-3 pixels, fill colour 1, edge colour 3
+ EQUB %10001000         \ Index %001101xx for fill colour 1 then edge colour 3
  EQUB %01001100
  EQUB %00101110
  EQUB %00011111
 
- EQUB %10001000         \ %001110xx = 0-3 pixels, fill colour 2, edge colour 3
+ EQUB %10001000         \ Index %001110xx for fill colour 2 then edge colour 3
  EQUB %11000100
  EQUB %11100010
  EQUB %11110001
 
- EQUB %10001000         \ %001111xx = 0-3 pixels, fill colour 3, edge colour 3
+ EQUB %10001000         \ Index %001111xx for fill colour 3 then edge colour 3
  EQUB %11001100
  EQUB %11101110
  EQUB %11111111
@@ -35322,8 +35381,8 @@ L314A = C3148+2
 
  EQUB &11, &00          \ Sound data block #1: SOUND &11, 0, 120, 10
  EQUB &00, &00          \
- EQUB &78, &00          \ Used for the second part of sounds #0 (rotating enemy),
- EQUB &0A, &00          \ #1 (rotating meanie) and #6 (game over)
+ EQUB &78, &00          \ Used for the second part of sounds #0 (rotating
+ EQUB &0A, &00          \ enemy), #1 (rotating meanie) and #6 (game over)
 
  EQUB &12, &00          \ Sound data block #2: SOUND &12, 3, 34, 20
  EQUB &03, &00          \
