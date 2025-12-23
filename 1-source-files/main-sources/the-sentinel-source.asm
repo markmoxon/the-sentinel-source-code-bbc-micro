@@ -759,7 +759,7 @@
                         \
                         \   * 0 = draw directly into screen memory
                         \
-                        \   * 25 = draw into the screeen buffer
+                        \   * 25 = draw into the screen buffer
 
 .xPolygonRightEdge
 
@@ -1658,7 +1658,7 @@
 
  EQUB &28               \ A counter for drawing the icons in the top-left of the
                         \ screen that show the player's energy level, as we work
-                        \ from left top right along the x-axis
+                        \ from left to right along the x-axis
 
 .minEnemyAltitude
 
@@ -1685,7 +1685,7 @@
 .lastScannerState
 
  EQUB 0                 \ The state of the scanner the last time that it was
-                        \ upated:
+                        \ updated:
                         \
                         \   * 0 = fill scanner with black
                         \
@@ -1779,7 +1779,6 @@
                         \   * Bit 7 clear = dithering objects is enabled
                         \
                         \   * Bit 7 set = dithering objects is disabled
-
 
 .samePanKeyPress
 
@@ -2176,8 +2175,8 @@
                         \
                         \   * When the player enters an incorrect secret code
                         \
-                        \   * When displaying a landscape's secet code after the
-                        \     level is completed
+                        \   * When displaying a landscape's secret code after
+                        \     the level is completed
                         \
                         \ In both cases we need to generate the landscape before
                         \ we can check or display the secret code, but we don't
@@ -2286,7 +2285,7 @@
  EQUB 0, 0, 0, 0        \ per enemy)
                         \
                         \ If an enemy searches for a tree to turn into a meanie
-                        \ to attack a target enemy on its behalf, but it can't 
+                        \ to attack a target enemy on its behalf, but it can't
                         \ find a suitable tree, then the target object number is
                         \ stored here so the enemy doesn't try looking again
 
@@ -2296,9 +2295,8 @@
  EQUB 0, 0, 0, 0        \ enemy)
                         \
                         \ If an enemy searches for a tree to turn into a meanie
-                        \ to attack a target enemy on its behalf, but it can't 
-                        \ find a suitable tree, then the this counter is
-                        \ incremented
+                        \ to attack a target enemy on its behalf, but it can't
+                        \ find a suitable tree, then this counter is incremented
 
 .enemyMeanieTree
 
@@ -2401,7 +2399,7 @@
 
  EQUB 0                 \ The x-coordinate of the "brush" that we use to draw
                         \ the sights, relative to the top-left corner of the
-                        \ character block containig the top of the sights
+                        \ character block containing the top of the sights
 
 .pixelByteToDither
 
@@ -2504,7 +2502,6 @@
                         \                   trying to hyperspace without being
                         \                   able to create a robot into which
                         \                   they can hyperspace
-
 
 .soundCounter
 
@@ -3033,7 +3030,7 @@
  PLP                    \ Retrieve the result bit from the third shift, which
                         \ we stored on the stack in part 1
                         \
-                        \ This bit repesents the third bit pushed into the
+                        \ This bit represents the third bit pushed into the
                         \ result, so that's what should be bit 5 of the result
                         \
                         \ It is now in the C flag (because it was in the C flag
@@ -4312,7 +4309,6 @@
 
 .scos3
 
-
                         \ If we get here then one of these is true:
                         \
                         \   * Bit 7 of H is clear and bit 6 of H is clear
@@ -4656,7 +4652,7 @@
                         \
                         \ This means that the JSR GenerateLandscape instruction
                         \ below will put its return address onto the top of the
-                        \ stack, so we can maniupulate the return address by
+                        \ stack, so we can manipulate the return address by
                         \ modifying (&01FE &01FF)
                         \
                         \ See the notes on the JSR GenerateLandscape instruction
@@ -4778,7 +4774,7 @@
                         \ the start of the MainTitleLoop routine, we know that
                         \ the JSR GenerateLandscape instruction will put its
                         \ return address onto the top of the stack, so we can
-                        \ maniupulate the return address in the SmoothTileData
+                        \ manipulate the return address in the SmoothTileData
                         \ routine by modifying (&01FE &01FF)
                         \
                         \ See the SmoothTileData routine for more details
@@ -4968,7 +4964,7 @@
                         \ background specified in screenBackground
                         \
                         \ screenBackground variable is zeroed in DrawTitleView
-                        \ before the gameplay starts, so alll calls to the
+                        \ before the gameplay starts, so all calls to the
                         \ FillScreen routine during gameplay fill the buffer
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
@@ -5071,7 +5067,7 @@
                         \ background specified in screenBackground
                         \
                         \ screenBackground variable is zeroed in DrawTitleView
-                        \ before the gameplay starts, so alll calls to the
+                        \ before the gameplay starts, so all calls to the
                         \ FillScreen routine during gameplay fill the buffer
                         \ with alternating colour 0/1 (blue/black) pixel rows,
                         \ for the sky
@@ -5578,7 +5574,7 @@
                         \ view, absorb, transfer and so on
 
  STA doNotDitherObject  \ Set bit 7 of doNotDitherObject to disable updating of
-                        \ obejcts on-screen using a dithered effect, so we don't
+                        \ objects on-screen using a dithered effect, so we don't
                         \ dither any object changes onto the screen while we are
                         \ focusing on processing the action, which itself might
                         \ need to update the screen when it's done
@@ -5651,7 +5647,7 @@
 \
 \       Name: spaceKeyDebounce
 \       Type: Variable
-\   Category: Leyboard
+\   Category: Keyboard
 \    Summary: A variable to flag whether the SPACE key has been pressed, so we
 \             can implement debounce
 \
@@ -6416,7 +6412,7 @@
 \
 \ For a full list of negative inkey values, see Appendix C of the "Advanced User
 \ Guide for the BBC Micro" by Bray, Dickens and Holmes.
-
+\
 \ ******************************************************************************
 
 .gameKeys
@@ -7110,7 +7106,7 @@
                         \     simply a way of incorporating a known value, in
                         \     this case %01111111) and store the results in the
                         \     table at secretCodeStash, from the offset in Y
-                        \     onwards, i.e. from offest stashOffset onwards
+                        \     onwards, i.e. from offset stashOffset onwards
                         \
                         \ If we are checking the code against an entered code,
                         \ then the second step is the important part, and this
@@ -7217,9 +7213,9 @@
                         \ are for the four BCD numbers in the keyboard input
                         \ buffer (i.e. the entered number)
 
-                        \ We now move on to poulate the secret code stash, which
-                        \ contains the result of each of the comparisons with
-                        \ %01111111 added to them
+                        \ We now move on to populate the secret code stash,
+                        \ which contains the result of each of the comparisons
+                        \ with %01111111 added to them
                         \
                         \ The stash is checked in the GetRowVisibility routine
                         \ and will abort the game if the values aren't correct,
@@ -7245,7 +7241,7 @@
                         \             is allocated to an object
                         \
                         \ The Sentinel's tower is always the first object to be
-                        \ spawned, and object numberss are allocated from 63 and
+                        \ spawned, and object numbers are allocated from 63 and
                         \ down, so this means the tower is always object #63, or
                         \ %111111
                         \
@@ -7393,7 +7389,7 @@
                         \             is allocated to an object
                         \
                         \ The Sentinel's tower is always the first object to be
-                        \ spawned, and object numberss are allocated from 63 and
+                        \ spawned, and object numbers are allocated from 63 and
                         \ down, so this means the tower is always object #63, or
                         \ %111111
                         \
@@ -7638,7 +7634,7 @@
  LDA #5                 \ Set the object type for object #0 to type 5, which
  STA objectTypes        \ denotes the Sentinel (so the Sentinel is always
                         \ object #0, while other objects that are spawned are
-                        \ allocated to object #63 and work down the bumbers)
+                        \ allocated to object #63 and work down the numbers)
 
  LDA #6                 \ Spawn the Sentinel's tower (an object of type 6),
  JSR SpawnObject        \ returning the object number of the new object in X
@@ -7857,7 +7853,7 @@
 .galt4
 
  SEC                    \ If we get here then we have checked all 64 tile blocks
-                        \ and none of them are at aan altitude of tileAltitude,
+                        \ and none of them are at an altitude of tileAltitude,
                         \ so set the C flag to indicate that the returned list
                         \ is empty
 
@@ -8047,9 +8043,9 @@
                         \ high5 to move on to the next tile, as this one isn't
                         \ the highest in either this block or the landscape
 
- STA maxAltitude,X      \ If we get here then ths tile we are analysing is the
+ STA maxAltitude,X      \ If we get here then the tile we are analysing is the
                         \ highest in the 4x4 block so far, so store the altitude
-                        \ in the maxAltitude table forthis 4x4 tile block so
+                        \ in the maxAltitude table for this 4x4 tile block so
                         \ the table ends up recording the highest tile altitude
                         \ in each 4x4 block
 
@@ -8166,7 +8162,7 @@
                         \ top of the screen (the top pixel row contains the
                         \ scanner box border)
                         \
-                        \ viewScreenAddr(1 0) contains the addtress of the
+                        \ viewScreenAddr(1 0) contains the address of the
                         \ latter, so we can simply subtract 79
 
  LDA viewScreenAddr     \ Set (A screenAddr) = viewScreenAddr(1 0) - &004F
@@ -8788,7 +8784,7 @@
 
  JMP tact25             \ Otherwise that's enough tactics for this iteration, so
                         \ jump to tact25 with X set to the object number of
-                        \ the tree to update ir on-screen with a dithered effect
+                        \ the tree to update it on-screen with a dithered effect
                         \ and return from the subroutine using a tail call
 
 \ ******************************************************************************
@@ -8893,7 +8889,7 @@
                         \ (in other words, a robot whose tile the enemy can see)
                         \
                         \ If the robot turns out to be the player object, then
-                        \ we also check whether the object 
+                        \ we also check whether the object
 
  LDA #%10000000         \ Set bit 7 of playerTileObscured, so by default the
  STA playerTileObscured \ the player object can't be seen at all (though we will
@@ -9109,7 +9105,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Drain energy from the enemy's target object, or try scanning for
-\             a tree to turn into a meanie if the targets's tile is obscured
+\             a tree to turn into a meanie if the target's tile is obscured
 \
 \ ******************************************************************************
 
@@ -9121,8 +9117,8 @@
  TYA                    \ Store the target number in enemyTarget in the enemy's
  STA enemyTarget,X      \ data, so it is set as the enemy's target going forward
 
- LDA targetVisibility   \ Store the target's visibilty in 
- STA enemyVisibility,X
+ LDA targetVisibility   \ Store the target's visibility in enemyVisibility for
+ STA enemyVisibility,X  \ this enemy
 
  LDA enemyDrainTimer,X  \ If enemyDrainTimer for this enemy is non-zero then it
  CMP #1                 \ is either counting down or has counted down, so jump
@@ -9131,9 +9127,9 @@
                         \ If we get here then enemyDrainTimer is zero, so we
                         \ restart the timer from 120
 
- LDA #120               \ Set enemyDrainTimer = 120 so the enemy doesn't drain
- STA enemyDrainTimer,X  \ energy for another 120 timer ticks (120 * 0.06 =
-                        \ 7.2 seconds)
+ LDA #120               \ Set enemyDrainTimer for this enemy to 120 so the enemy
+ STA enemyDrainTimer,X  \ doesn't drain energy for another 120 timer ticks
+                        \ (120 * 0.06 = 7.2 seconds)
 
 .tact20
 
@@ -9280,7 +9276,7 @@
                         \
                         \ This is used to show objects rotating, for example
 
- STX currentObject      \ Set the current object to X so the call 
+ STX currentObject      \ Set the current object to X so the call
 
  LDA playerObject       \ Set viewingObject to the object number of the player
  STA viewingObject
@@ -9747,8 +9743,7 @@
 
                         \ If we get here then the enemy is targeting the player
                         \ and has a non-zero drain timer, so the player is at
-                        \ least partially exposed an the enemy who can drain
-                        \ them
+                        \ least partially exposed to an enemy who can drain them
 
  LDY #4                 \ Set Y = 4 to use as the state of the scanner (fill the
                         \ scanner with static in colour 3)
@@ -9954,8 +9949,8 @@
  TAX                    \ #X is the target object
 
  LDA xObject,X          \ Set A to the difference in x-coordinate between object
- SEC                    \ #X and object #Y (i.e between the target and potential
- SBC xObject,Y          \ meanie)
+ SEC                    \ #X and object #Y (i.e. between the target and
+ SBC xObject,Y          \ potential meanie)
 
  BPL mean3              \ If the result is positive, jump to mean3 as the result
                         \ is already the correct sign
@@ -9973,8 +9968,8 @@
                         \ on to the next object to check that instead
 
  LDA zObject,X          \ Set A to the difference in z-coordinate between object
- SEC                    \ #X and object #Y (i.e between the target and potential
- SBC zObject,Y          \ meanie)
+ SEC                    \ #X and object #Y (i.e. between the target and
+ SBC zObject,Y          \ potential meanie)
 
  BPL mean4              \ If the result is positive, jump to mean4 as the result
                         \ is already the correct sign
@@ -9998,7 +9993,6 @@
                         \
                         \   * targetVisibility = bit 7 set if the tree's tile
                         \     is visible, bit 6 set if the tree is visible
-
 
  LDA targetVisibility   \ If bit 7 of targetVisibility is clear then the enemy
  BPL mean1              \ can't see the tree's tile, so it can't turn it into
@@ -10583,7 +10577,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Stop applying tactics to the current enemy and return to the
-\             ProcessGameplayroutine to continue with the gameplay loop
+\             ProcessGameplay routine to continue with the gameplay loop
 \
 \ ******************************************************************************
 
@@ -11224,7 +11218,6 @@
  BNE pkey14             \ 5), then jump to pkey14 to move on to the next enemy
                         \ object
 
-
 .pkey13
 
                         \ If we get here then object #Y is the Sentinel or a
@@ -11519,8 +11512,8 @@
                         \ screen
                         \
                         \ We store the resulting x-coordinate in the 16-bit
-                        \ variable (xVectorLo yxVectorBot) and the z-coordinate
-                        \ in (zVectorLo zxVectorBot)
+                        \ variable xVector(Lo Bot) and the z-coordinate in
+                        \ zVector(Lo Bot)
                         \
                         \ We calculate xVector and zVector by considering a
                         \ triangle on the y = 0 plane, so that's a triangle on
@@ -11724,7 +11717,7 @@
 \ Returns:
 \
 \   (A X)               The 16-bit signed number containing the result
-
+\
 \ ******************************************************************************
 
 .DivideBy16
@@ -11748,7 +11741,7 @@
                         \ the C flag
 
  BCC divi1              \ If the sign bit was 0 then the original number was
-                        \ positivem so skip the following
+                        \ positive, so skip the following
 
  JSR Negate16Bit        \ The original 16-bit sign-magnitude number was negative
                         \ so call Negate16Bit to negate the result as follows:
@@ -11880,7 +11873,7 @@
 \ This contains the gaze vector, scaled down to be very small, so we can trace
 \ the line of the gaze by repeatedly adding this vector to the coordinates of
 \ the viewing object to step along the line of the gaze. At each step we check
-\ to see whether the gaze has hit a tile, repeatiung this until we either hit a
+\ to see whether the gaze has hit a tile, repeating this until we either hit a
 \ tile or fall off the edge of the landscape.
 \
 \ ------------------------------------------------------------------------------
@@ -12548,7 +12541,7 @@
                         \   [0] --------------- [3]
                         \
                         \ The calculation below clears the C flag so we compare
-                        \ xCoordLo and zCoordLo, so the calcuation is:
+                        \ xCoordLo and zCoordLo, so the calculation is:
                         \
                         \   * If xCoordLo < zCoordLo, we pick the first entry
                         \     from tileEdges, i.e. 0, which is the left edge
@@ -12601,9 +12594,9 @@
                         \          closer to the top or bottom edge)
                         \
                         \ So we choose the first entry from tileEdges when the
-                        \ gaze vector iscloser to the left or right edge, or the
-                        \ second entry when the gaze vector is closer to the top
-                        \ or bottom edge
+                        \ gaze vector is closer to the left or right edge, or
+                        \ the second entry when the gaze vector is closer to the
+                        \ top or bottom edge
 
  LDA G                  \ Set Y = (G * 2) + C
  ROL A                  \
@@ -12721,8 +12714,8 @@
                         \ The other two edges are similar but the distances are
                         \ in the opposite direction to the axes
                         \
-                        \ So if we we are considering the bottom edge from 3 to
-                        \ 0, the distance is ~xCoordLo, because:
+                        \ So if we are considering the bottom edge from 3 to 0,
+                        \ the distance is ~xCoordLo, because:
                         \
                         \   xCoordLo + ~xCoordLo = 1
                         \
@@ -12794,7 +12787,6 @@
  JSR Multiply8x8        \ Set (A T) = A * U
                         \           = fractional distance * |gradient|
 
-
  PLP                    \ Restore the sign of the gradient which we stored on
                         \ the stack above, so the N flag reflects the sign of
                         \ the gradient
@@ -12843,15 +12835,15 @@
  BPL gaze17             \ If the current position along the gaze vector is
                         \ higher than the corresponding point on the edge, then
                         \ the viewer's gaze is not being obstructed by the edge,
-                        \ so jump to gaze1 via gaze17 to to move along the gaze
+                        \ so jump to gaze1 via gaze17 to move along the gaze
                         \ vector and restart the checks
 
  JMP gaze4              \ Otherwise the current position along the gaze vector
                         \ is below the corresponding point on the edge, and the
                         \ viewer's gaze is being obstructed by the edge, so jump
-                        \ to gaze4 to to return from the subroutine with the
-                        \ C flag set to indicate that the viewer is not looking
-                        \ at a tile
+                        \ to gaze4 to return from the subroutine with the C flag
+                        \ set to indicate that the viewer is not looking at a
+                        \ tile
 
 .gaze17
 
@@ -13113,7 +13105,7 @@
 
  BMI data1              \ Otherwise bit 7 of considerObjects is set and we need
                         \ to take any objects on the tile into consideration, so
-                        \ jump to data1 to to process the objects on the stack
+                        \ jump to data1 to process the objects on the stack
                         \ (this BMI is effectively a JMP as we just passed
                         \ through a BPL)
 
@@ -13265,7 +13257,7 @@
                         \ 5 of the object flags in A, so we can process that
                         \ object instead
 
- LDA yObjectHi,Y        \ Bt this point we have reached the object on the tile
+ LDA yObjectHi,Y        \ At this point we have reached the object on the tile
                         \ itself, so set A to the y-coordinate of that object,
                         \ which will be the tile altitude, and return from the
                         \ subroutine with the C flag clear to denote a flat
@@ -13910,7 +13902,7 @@
  STA doNotDitherObject  \ Clear bit 7 of doNotDitherObject to enable objects to
                         \ be updated on the screen with a dithered effect
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .DrawUpdatedObject
 
@@ -13997,7 +13989,7 @@
                         \ The object might be too wide to fit into the screen
                         \ buffer (as we configure it as a column buffer to make
                         \ sure the entire visible part of the object fits into
-                        \ the buffer heightwise), but this ensures that the
+                        \ the buffer height-wise), but this ensures that the
                         \ buffer contains as much of the visible part of the
                         \ object as possible
 
@@ -14302,7 +14294,7 @@
                         \ routine is enabled once again
 
  LDA sightsAreVisible   \ If bit 7 of sightsAreVisible is clear then the sights
- BPL updo13             \ are not currently being shown on-scren, so jump to
+ BPL updo13             \ are not currently being shown on-screen, so jump to
                         \ updo13 to skip the following
 
  SEI                    \ Disable interrupts to ensure that the screen doesn't
@@ -14482,7 +14474,7 @@
                         \                  _.-´               |  xDeltaLo
                         \              _.-´                   |
                         \           .-´ angle(Hi Lo)          |
-                        \   viewer +--------------------------+ 
+                        \   viewer +--------------------------+
                         \               hypotenuse(Hi Lo)
                         \
                         \ This triangle is flat on the ground with the viewer at
@@ -14503,7 +14495,7 @@
                         \ We can then use this yaw angle delta to work out
                         \ whether the left and right edges of the object are
                         \ within the left-right viewing arc of the screen, and
-                        \ thereforewhether any part of the object is within the
+                        \ therefore whether any part of the object is within the
                         \ screen bounds
                         \
                         \ To do this we call GetPitchAngleDelta, not because we
@@ -14624,8 +14616,8 @@
 
  CMP #21                \ If A >= 21 then set A = 20, so A = max(20, A)
  BCC objv5              \
- LDA #20                \ This clips A to the a maximum of 20 character columns
-                        \ as this is the maximum width of the screen buffer when
+ LDA #20                \ This clips A to the maximum of 20 character columns as
+                        \ this is the maximum width of the screen buffer when
                         \ configured as a column buffer
 
 .objv5
@@ -14857,7 +14849,6 @@
                         \ If we get here then the C flag argument is clear, so
                         \ we add object #X's energy to the player's energy in A
 
-
  ADC objectTypeEnergy,Y \ The objectTypeEnergy table contains the energy levels
                         \ for each of the object types, so this adds the energy
                         \ of object #X to the player's energy in A
@@ -14882,7 +14873,7 @@
 \       Name: objectTypeEnergy
 \       Type: Variable
 \   Category: 3D objects
-\    Summary: The amout of energy required to create each object or the amount
+\    Summary: The amount of energy required to create each object or the amount
 \             energy acquired when absorbing each object
 \
 \ ******************************************************************************
@@ -15184,7 +15175,7 @@
                         \ from the top object down
                         \
                         \ This count is stored in objectStackCounter, which
-                        \ contains the number of objectx we still have to draw,
+                        \ contains the number of objects we still have to draw,
                         \ which is the same as the number of objects above
                         \ object #Y
 
@@ -15201,7 +15192,7 @@
 
  LDX objectStackCounter \ Otherwise set X to the updated object stack counter,
                         \ which is the number of objects above the object that
-                        \ we jusr drew
+                        \ we just drew
 
  BPL stak5              \ Jump to stak5 to start counting down the stack for X
                         \ objects from the top, to give us the object that's
@@ -15737,7 +15728,7 @@
  AND #%00000111         \
                         \ So T contains the offset within the character block at
                         \ the start of the character row that contains screen
-                        \ y-coordinate T 
+                        \ y-coordinate T
 
  CLC                    \ Set (S R) = A + screenRowAddr(Hi Lo) for row X
  ADC screenRowAddrLo,X  \
@@ -15770,8 +15761,8 @@
                         \ edge colours can make those object look messy
 
  AND #%11001111         \ Copy the fill colour from bits 2-3 of the polygon
- STA T                  \ colour byte into to the edge colour in bits 4-5, so
- LDA polygonColours     \ the polygon edge colour merges into the polygon body
+ STA T                  \ colour byte into the edge colour in bits 4-5, so the
+ LDA polygonColours     \ polygon edge colour merges into the polygon body
  ASL A
  ASL A
  AND #%00110000
@@ -15969,7 +15960,7 @@
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw the left and right edges of the polygon line and fall into
-\             part 4 to draw the line inbetween
+\             part 4 to draw the line in between
 \
 \ ******************************************************************************
 
@@ -15997,7 +15988,7 @@
                         \ so jump to dpol2 to return from the subroutine without
                         \ drawing the polygon
 
- TAX                    \ Set X to the yaw angle of the right edge 
+ TAX                    \ Set X to the yaw angle of the right edge
 
  SBC bufferYawLeft      \ Set A = A - bufferYawLeft
                         \
@@ -16072,7 +16063,7 @@
  LDY yPolygonLine       \ Set A to the yaw angle of the left edge for the line
  LDA polygonYawLeft,Y   \ we are drawing
 
- TAX                    \ Set X to the yaw angle of the left edge 
+ TAX                    \ Set X to the yaw angle of the left edge
 
  CMP bufferYawRight     \ If A >= bufferYawRight then the left edge of the
  BCS dpol6              \ polygon is beyond the right edge of the buffer, so
@@ -16187,7 +16178,7 @@
                         \ of character columns, we want to draw a line that's
                         \ this number of character columns wide:
                         \
-                        \   (xPolygonRightEdge - A) / 8 
+                        \   (xPolygonRightEdge - A) / 8
                         \
                         \ The following unrolled loop implements this, but in a
                         \ reverse manner that means we have to negate the above
@@ -16253,7 +16244,7 @@
                         \ in (Q P), so (Q P) contains the left cap of the line
                         \ and the line fills the polygon to the right for the
                         \ specified number of character columns
-                        \   
+                        \
                         \ The line is drawn from right to left to enable the
                         \ routine to be joined at the correct point for the
                         \ required line length
@@ -16371,7 +16362,7 @@
 \ 0 = hidden).
 \
 \ The position of the bit within the tileVisibility table is calculated in a
-\ rather complicated manner, resumably to make it harder to follow what's going
+\ rather complicated manner, presumably to make it harder to follow what's going
 \ on.
 \
 \ ******************************************************************************
@@ -16685,8 +16676,8 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine populates a specified table with the vibility of each tile corner
-\ in a row, populating the table with 32 entries as follows:
+\ This routine populates a specified table with the visibility of each tile
+\ corner in a row, populating the table with 32 entries as follows:
 \
 \   * %00000000 if the tile corner is not visible from the player's position
 \
@@ -16821,7 +16812,7 @@
                         \   xVector(Lo Bot)
                         \           = ((xTileRow 0) - xCoord(Hi Lo)) / 256
                         \
-                        \ Also, its worth noting that this is the vector from
+                        \ Also, it's worth noting that this is the vector from
                         \ the player to the tile corner, because if you add this
                         \ vector to the player's coordinates 256 times, then you
                         \ get the tile corner's coordinates
@@ -16963,7 +16954,7 @@
                         \ We can therefore trace the vector from the player to
                         \ the tile corner by taking the player's coordinates and
                         \ adding the xVector(Hi Lo Bot) vector traceStepCounter
-                        \ times, knowing that togther, these steps will stop
+                        \ times, knowing that together, these steps will stop
                         \ over every tile between the player and the tile corner
                         \ in the process (we may stop over some tiles more than
                         \ once, but that's OK)
@@ -17009,8 +17000,8 @@
                         \
                         \ This ensures that crackers who manage to bypass the
                         \ CheckSecretCode routine will find that the game
-                        \ restarts, unless they also disable this rather well
-                        \ hiddden check
+                        \ restarts, unless they also disable this rather
+                        \ well-hidden check
 
  LDA stashOffset-255,X  \ We know that X is 255 from the loop above, so this
                         \ sets A = stashOffset
@@ -17112,7 +17103,7 @@
                         \ the buffer is padded out with &FF, so inputBuffer+4
                         \ contains &FF at the point of comparison
                         \
-                        \ &FF is not a valud BCD number, so it can never match a
+                        \ &FF is not a valid BCD number, so it can never match a
                         \ BCD number from the landscape's sequence of seed
                         \ numbers, so we know that this comparison can never
                         \ have matched
@@ -17124,8 +17115,8 @@
  LDA (stashAddr),Y      \ Fetch the contents of address stashAddr(1 0)
 
  CMP #%01111111         \ If it matches %01111111 then we know the stash has
- BEQ talt2              \ been compromised, so jump to Mainloop via talt2 to
-                        \ restart the game
+ BEQ talt2              \ been compromised, so jump to MainTitleLoop via talt2
+                        \ to restart the game
 
  SEC                    \ Set bit 7 of doNotCheckSecret so we do not repeat the
  ROR doNotCheckSecret   \ secret code check again (at least, until we reach the
@@ -17157,7 +17148,7 @@
                         \   [ yVector(Hi Lo Bot) ]
                         \   [ zVector(Hi Lo Bot) ]
                         \
-                        \ traceStepCounter times, knowing that togther, these
+                        \ traceStepCounter times, knowing that together, these
                         \ steps will stop over every tile between the player and
                         \ the tile corner in the process (we may stop over some
                         \ tiles more than once, but that's OK)
@@ -17282,7 +17273,7 @@
                         \ and is therefore deemed to be visible
 
  CLC                    \ Clear the C flag so we store %11111111 in the
-                        \ visibilitytable to indicate that this tile corner is
+                        \ visibility table to indicate that this tile corner is
                         \ visible
 
  BCC rvis10             \ Jump to rvis10 to store the result (this BCC is
@@ -17385,7 +17376,7 @@
 
  LDA #&7F               \ Set the high byte of (Q P) = &7F00
  STA Q                  \
-                        \ This is the adddress where we will store the altitude
+                        \ This is the address where we will store the altitude
                         \ data for the back row of tile corners in the landscape
 
                         \ We now iterate through the tile corners with a nested
@@ -17500,7 +17491,7 @@
                         \ we just extracted, and (S R) points to the next set of
                         \ bytes just after the end of the altitude data
 
-                        \ We now work our way through the tiles, usine X as the
+                        \ We now work our way through the tiles, using X as the
                         \ row number iterating from the rear, and Y as the
                         \ column number iterating from right to left along each
                         \ row in turn
@@ -18015,7 +18006,7 @@
                         \ background
 
  DEC zTile              \ Decrement zTile to the z-coordinate of the next tile
-                        \ row forward, towards the viewerm so we can draw this
+                        \ row forward, towards the viewer, so we can draw this
                         \ new row
 
  BMI dlan6              \ If we have already drawn all the rows from 31 to 0,
@@ -18044,7 +18035,7 @@
                         \ visible portion extends beyond the previous visible
                         \ row or doesn't extend as far
                         \
-                        \ If the visaible portions don't match, then we either
+                        \ If the visible portions don't match, then we either
                         \ need to extend the tile data for the current row to
                         \ match, or we need to go back and extend the tile data
                         \ on the previous row to match the current row
@@ -18498,7 +18489,7 @@
  DEC zTile              \ Decrement the row number so it goes back to the row
                         \ containing the viewer
 
-                        \ We now position the corners of the viewe'r's tile so
+                        \ We now position the corners of the viewer's tile so
                         \ it spreads to the left and right screen edges and
                         \ appears to dip down behind the viewer (so it spreads
                         \ down to the bottom of the screen as well)
@@ -18568,7 +18559,7 @@
 \   drawingTableOffset  Defines where we store the results of the analysis in
 \                       the tileViewData, tileViewYaw and tileViewPitch drawing
 \                       data tables; each table contains two complete sets of
-\                       tile data, with the first table at offset 0 and and the
+\                       tile data, with the first table at offset 0 and the
 \                       second table at offset 32, so we store the results
 \                       as follows:
 \
@@ -18971,7 +18962,7 @@
 \   drawingTableOffset  Defines where we store the results of the analysis in
 \                       the tileViewData, tileViewYaw and tileViewPitch drawing
 \                       data tables; each table contains two complete sets of
-\                       tile data, with the first table at offset 0 and and the
+\                       tile data, with the first table at offset 0 and the
 \                       second table at offset 32, so we store the results
 \                       as follows:
 \
@@ -19214,7 +19205,7 @@
                         \ how the tileData table is organised
                         \
                         \ The following code sets (X, Y) to the coordinate of
-                        \ the tile corner we are analysing, i.e (xTile, zTile),
+                        \ the tile corner we are analysing, i.e. (xTile, zTile),
                         \ but with the axes rotated to match the orientation of
                         \ the 3D world rather than the viewer (as xTile and
                         \ zTile contain the coordinates from the perspective of
@@ -19381,7 +19372,7 @@
  AND #%00000011         \       = xTile mod 4
 
  STA T                  \ Store A in T so we can use it in part 3 to calculate
-                        \ the address of the tila's visibility bit
+                        \ the address of the tile's visibility bit
 
                         \ The low byte of tileDataPage(1 0) gets set to zero in
                         \ ResetVariables and is never changed
@@ -19461,7 +19452,7 @@
                         \ through the stack of objects until we reach the object
                         \ at the bottom of the stack)
 
- LDA yObjectHi,Y        \ Bt this point we have reached the object on the tile
+ LDA yObjectHi,Y        \ At this point we have reached the object on the tile
  STA U                  \ itself, so set U to the y-coordinate of that object,
                         \ which will be the tile altitude, and return from the
                         \ subroutine with the C flag clear to denote a flat
@@ -19490,10 +19481,10 @@
  LSR A
  STA U
 
-                        \ We now fetch the tile's visiblility bit from the
+                        \ We now fetch the tile's visibility bit from the
                         \ tileVisibility table, using the reverse of the logic
                         \ in the GetTileVisibility routine for calculating the
-                        \ address of the visiblility bit
+                        \ address of the visibility bit
 
  TYA                    \ Shift Y right by one place, so the C flag is set to
  LSR A                  \ bit 0 of zTile (the row number), and Y contains the
@@ -19955,7 +19946,7 @@
  STA L0011YawHi
 
  LDA #0                 \ Set L0011Yaw(Hi Lo) = 256 * (bufferYawLeft / 8)
- ROR A                  
+ ROR A
  STA L0011YawLo
 
  LDA #2                 \ Configure the screen buffer as a column buffer
@@ -20287,7 +20278,7 @@
 
                         \ If we get here then the tile shape is the second or
                         \ third shape in one of the groups above, so one corner
-                        \ is a different altitude to the othes
+                        \ is a different altitude to the others
                         \
                         \ We now use the value of Y to pick the correct value
                         \ for triangleStartPoint and the correct tileShapeColour
@@ -20366,7 +20357,7 @@
  STA polygonColours     \ the tileShapeColour or tileShapeColour+16 table, so ww
                         \ draw the first polygon in the correct colour
 
- JSR DrawPolygon        \ Draw the first trianglar face
+ JSR DrawPolygon        \ Draw the first triangular face
 
  LDA L0034              \ Set polygonColours to the entry for this shape from
  EOR #16                \ the other tileShapeColour table (so if the previous
@@ -20378,7 +20369,7 @@
  ORA #%01000000         \ so the call to DrawPolygon draws the second triangle
  STA polygonType        \ in the tile face
 
-                        \ Fall into DrawPolygon to draw the second trianglar
+                        \ Fall into DrawPolygon to draw the second triangular
                         \ face
 
 \ ******************************************************************************
@@ -20632,7 +20623,7 @@
                         \ setting its altitude to that of its closest immediate
                         \ neighbour (where "closest" is in terms of altitude)
                         \
-                        \ This smooths over any single-point spikes or troughs
+                        \ This smoothes over any single-point spikes or troughs
                         \ in each row and column
                         \
                         \ This process is repeated twice by the single call to
@@ -20750,7 +20741,7 @@
                         \ caller, i.e. just after the JSR GenerateLandscape
                         \ instruction (which will either be at the end of the
                         \ main title loop if the player enters an incorrect
-                        \ secret code, or when displaying a landscape's secet
+                        \ secret code, or when displaying a landscape's secret
                         \ code after the level is completed)
 
 \ ******************************************************************************
@@ -20895,7 +20886,7 @@
                         \ 1 and 11
                         \
                         \ At this point the tile data contains a seed number,
-                        \ so this processs converts it into a value that we can
+                        \ so this process converts it into a value that we can
                         \ use as the altitude of the tile corner
 
  SEC                    \ Set A = tile data - 128
@@ -21322,7 +21313,7 @@
  ORA smoothingAction    \ We configured the smoothing action in bit 6 of
  STA processAction      \ smoothingAction in the SmoothTileData routine before
                         \ calling this routine, and bit 7 of A tells us whether
-                        \ to smooth a row or a column of tile cornser, so this
+                        \ to smooth a row or a column of tile corners, so this
                         \ combines both configurations from bit 6 and bit 7 into
                         \ one byte that we store in processAction
 
@@ -21334,7 +21325,7 @@
                         \ In the following commentary I will refer to this
                         \ copied row or column of tile corners as a "strip of
                         \ tiles", as saying "row or column of tile corners"
-                        \ every time is a bit of a monthful
+                        \ every time is a bit of a mouthful
                         \
                         \ We actually create a strip of tile data containing 35
                         \ tile corners, with offsets 0 to 31 being the tile data
@@ -21402,9 +21393,9 @@
 \ This part smoothes the strip by working along the strip and applying the
 \ following algorithm:
 \
-\   * If this tile corner is higher then both its neighbours, move it down
+\   * If this tile corner is higher than both its neighbours, move it down
 \
-\   * If this tile corner is lower then both its neighbours, move it up
+\   * If this tile corner is lower than both its neighbours, move it up
 \
 \ In each case, we move the tile corner until it is level with the closest one
 \ to its original altitude. This has the effect of smoothing out single-point
@@ -21468,10 +21459,10 @@
                         \
                         \ Or to simplify:
                         \
-                        \  * If this tile is higher then both its neighbours,
+                        \  * If this tile is higher than both its neighbours,
                         \    move it down until it isn't
                         \
-                        \  * If this tile is lower then both its neighbours,
+                        \  * If this tile is lower than both its neighbours,
                         \    move it up until it isn't
                         \
                         \ So this algorithm smoothes the landscape by squeezing
@@ -21613,8 +21604,8 @@
                         \ the JumpToPreview routine not only contains a JMP
                         \ instruction at JumpToPreview, but it also contains a
                         \ BMI instruction at JumpToPreview+1, if our crackers
-                        \ forgot about this subtlty of the RTS instruction, they
-                        \ might end up going down a rabbit hole
+                        \ forgot about this subtlety of the RTS instruction,
+                        \ they might end up going down a rabbit hole
 
 .stri10
 
@@ -22271,7 +22262,7 @@
 \
 \ Note that all the tiles have an edge colour of 0 (blue) apart from the first
 \ one, which has an edge colour of colour 3 (green, red, yellow or cyan) to
-\ mateh the fill colour.
+\ match the fill colour.
 \
 \ ******************************************************************************
 
@@ -22443,7 +22434,7 @@
                         \ in the other drawing table offset (32 or 0), and the
                         \ left-right points are together in the same offset
                         \
-                        \ Specifially, the four tile corners will be offset in
+                        \ Specifically, the four tile corners will be offset in
                         \ the drawing tables in one of two layouts
                         \
                         \ This is the layout when drawingTableOffset = 0:
@@ -23793,14 +23784,14 @@ L314A = C3148+2
 
  DEX                    \ Decrement the character row counter in X
 
- BMI spac5              \ If we just spawned row 0 then X will noe be negative,
+ BMI spac5              \ If we just spawned row 0 then X will now be negative,
                         \ so jump to spac5 to finish off as we have spawned all
                         \ eight character rows
 
  BNE spac3              \ Otherwise loop back until we have spawned rows 7 to 1
 
                         \ If we get here then we just spawned row 1, so now we
-                        \ need to spawn a blank for for row 0
+                        \ need to spawn a blank for row 0
 
  LDA #0                 \ Zero the character definition row that we will use
  STA characterDef       \ when X is 0, so we don't spawn any blocks for the top
@@ -23848,7 +23839,7 @@ L314A = C3148+2
                         \ This is the shape of 3D text block 1, which is object
                         \ type 7
 
- EQUB 32 + 8           \ %10 = block (left), no block (right)
+ EQUB 32 + 8            \ %10 = block (left), no block (right)
                         \
                         \ This is the shape of 3D text block 2, which is object
                         \ type 8
@@ -25636,7 +25627,7 @@ L314A = C3148+2
 
  JSR GetNextSeedNumber  \ Set A to the next number from the landscape's sequence
                         \ of seed numbers, which by this point in the game is
-                        \ effectigvely a random number
+                        \ effectively a random number
 
  AND #3                 \ Convert the random number in A into a random number in
  CLC                    \ the range 1 to 4
@@ -25730,7 +25721,7 @@ L314A = C3148+2
 
                         \ If we get here then we have either started a brand new
                         \ game or we jumped here from game11 below when one of
-                        \ the following occured:
+                        \ the following occurred:
                         \
                         \   * The Sentinel has won
                         \
@@ -25751,7 +25742,7 @@ L314A = C3148+2
 
                         \ If we get here then we have either started a brand new
                         \ landscape or we jumped to MainGameLoop from game11
-                        \ below when one of the following occured:
+                        \ below when one of the following occurred:
                         \
                         \   * The Sentinel has won
                         \
@@ -26572,7 +26563,7 @@ L314A = C3148+2
                         \ We now reset the first three entries in the key
                         \ logger (i.e. entries 0 to 2), leaving the last entry
                         \ populated (i.e. entry 3, which records the volume,
-                        \ paue and unpause key presses)
+                        \ pause and unpause key presses)
 
  LDX #2                 \ Set a loop counter in X for resetting three entries
 
@@ -26930,7 +26921,7 @@ L314A = C3148+2
                         \ screen buffer into screen memory
 
                         \ Otherwise we are panning left or right, and we are
-                        \ scrolling right or left or up, so fall througn into
+                        \ scrolling right or left or up, so fall through into
                         \ ShowBufferColumn to update the player's scrolling
                         \ landscape view by copying a two-pixel wide column from
                         \ the screen buffer into screen memory
@@ -27674,7 +27665,7 @@ L314A = C3148+2
 \       Type: Subroutine
 \   Category: Sights
 \    Summary: Check for up/down/left/right key presses and move the sights
-\             accordingly, pannign the screen if they go past the screen edges
+\             accordingly, panning the screen if they go past the screen edges
 \
 \ ******************************************************************************
 
@@ -28164,7 +28155,7 @@ L314A = C3148+2
                         \ We have just stepped down into the next character row,
                         \ so we need to recalculate the values in Y and
                         \ sightsByteAddr(1 0) to point to the correct address
-                        \ in the next chadacter row
+                        \ in the next character row
 
  SBC #8                 \ Set Y = Y - 8
  TAY                    \
@@ -28552,7 +28543,7 @@ L314A = C3148+2
                         \ rems2 to return from the subroutine
 
  DEX                    \ Decrement the size of the sights pixel byte stash to
-                        \ give us a loop counter to count throught the bytes
+                        \ give us a loop counter to count through the bytes
 
  LDY #0                 \ Set Y = 0 so the STA (sightsByteAddr),Y instruction
                         \ below behaves like STA (sightsByteAddr)
@@ -33742,7 +33733,7 @@ L314A = C3148+2
                         \
                         \ As we know that (A xDeltaLo) is the longest side, this
                         \ scales both lengths up by the same amount until they
-                        \ are as large as theycan be while still fitting into a
+                        \ are as large as they can be while still fitting into a
                         \ 16-bit number
 
  ASL xDeltaLo           \ Shift (A xDeltaLo) left by one place to scale it up
@@ -33845,7 +33836,7 @@ L314A = C3148+2
                         \
                         \ As we know that (A zDeltaLo) is the longest side, this
                         \ scales both lengths up by the same amount until they
-                        \ are as large as theycan be while still fitting into a
+                        \ are as large as they can be while still fitting into a
                         \ 16-bit number
 
  ASL zDeltaLo           \ Shift (A zDeltaLo) left by one place to scale it up
@@ -33920,7 +33911,7 @@ L314A = C3148+2
 \       Name: GetPitchAngleDelta
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate the pitch angle of a vector relative to an objects's
+\    Summary: Calculate the pitch angle of a vector relative to an object's
 \             pitch angle
 \
 \ ------------------------------------------------------------------------------
@@ -34611,7 +34602,8 @@ L314A = C3148+2
  DEC vduCounter         \ Decrement the byte counter in vduCounter, which is
                         \ always 6 when we jump into this loop
 
- BNE prin1
+ BNE prin1              \ Loop back to print the next character until we have
+                        \ printed the whole VDU 25 command
 
  LDA #6                 \ Reset the byte counter in vduCounter to 6, ready for
  STA vduCounter         \ the next time we perform a VDU 25 command
@@ -35718,8 +35710,8 @@ L314A = C3148+2
  EQUB &41, &20, &45, &4E, &45, &52, &47, &59
  EQUB &3A, &42, &45, &51, &20, &74, &61, &6B
 
- EQUB &35, &0D, &14, &C8, &1E, &20, &20, &20
- EQUB &20, &20, &20, &53, &45, &43, &3A, &53
+ EQUB &35, &0D, &14, &C8, &1E, &20, &20, &20    \ These bytes appear to be
+ EQUB &20, &20, &20, &53, &45, &43, &3A, &53    \ unused
 
 \ ******************************************************************************
 \
@@ -35868,7 +35860,7 @@ L314A = C3148+2
 \   viewType            Landscape preview flag:
 \
 \                         * Zero = this is the landscape preview, so rotate all
-\                                  the in the preview objects to face the viewer
+\                                  the objects in the preview to face the viewer
 \
 \                         * Non-zero = this is not the landscape preview, so
 \                                      leave the objects alone
@@ -36616,7 +36608,7 @@ L314A = C3148+2
 
                         \ If we get here then bit 1 of A must be set, as the
                         \ only values used in the objPolygonPhases table are
-                        \ %00, %10 and and %11
+                        \ %00, %10 and %11
 
  LSR A                  \ If bit 0 of A is set then this object might need two
  BCS drob1              \ drawing phases, so jump to drob1 to work out how many
@@ -36761,7 +36753,7 @@ L314A = C3148+2
 .drob6
 
  AND #%00111100         \ Extract bits 2 to 5 from the polygon data byte to get
- STA polygonColours     \ the polygon's edge and fill colours, and put then into
+ STA polygonColours     \ the polygon's edge and fill colours, and put them into
                         \ polygonColours
 
  LDA objPolygonData,Y   \ Set A to the polygon data byte for the polygon we are
@@ -37081,7 +37073,7 @@ L314A = C3148+2
 \
 \       Name: EnableKeyboard
 \       Type: Subroutine
-\   Category: Keybpard
+\   Category: Keyboard
 \    Summary: Select the keyboard as the input stream and flush the keyboard
 \             buffer
 \
@@ -37335,7 +37327,7 @@ L314A = C3148+2
 
 .dith3
 
- SEI                    \ Disable interrupts so we can fateh a random number
+ SEI                    \ Disable interrupts so we can fetch a random number
                         \ without clashing with the dithering process in the
                         \ handler (which is activated on the game over screen,
                         \ which also uses this routine)
@@ -38449,7 +38441,7 @@ L314A = C3148+2
  CLI                    \ Re-enable interrupts
 
  JMP MainTitleLoop      \ Jump to MainTitleLoop to start the main title loop,
-                        \  wherewe display the title screen, fetch the landscape
+                        \ where we display the title screen, fetch the landscape
                         \ number and code, preview the landscape and then jump
                         \ to the main game loop
 
@@ -38593,9 +38585,9 @@ L314A = C3148+2
 \
 \ ******************************************************************************
 
-                               \ Game addr to file addr
- COPYBLOCK &4900, &4A00, &6000 \ 4900-49FF to 6000-60FF
- COPYBLOCK &5800, &6100, &4100 \ 5800-60FF to 4100-49FF
- COPYBLOCK &0400, &5800, LOAD% \ 0400-57FF to 1900-6CFF
+                                \ Game addr to file addr
+ COPYBLOCK &4900, &4A00, &6000  \ 4900-49FF to 6000-60FF
+ COPYBLOCK &5800, &6100, &4100  \ 5800-60FF to 4100-49FF
+ COPYBLOCK &0400, &5800, LOAD%  \ 0400-57FF to 1900-6CFF
 
  SAVE "3-assembled-output/TheSentinel.bin", LOAD%, P%
