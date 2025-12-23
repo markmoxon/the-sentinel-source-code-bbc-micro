@@ -476,9 +476,21 @@
                         \ sights can be drawn and removed using the contents of
                         \ the sights pixel byte stash
 
-.L002C
+.polygonGoesRight
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A flag to record whether the polygon we are drawing
+                        \ extends to the right of the screen buffer we are
+                        \ drawing in
+                        \
+                        \   * Not 1 = at least one line in the polygon we just
+                        \             drew extends past the right edge of the
+                        \             buffer
+                        \
+                        \   * 1 = the default value
+                        \
+                        \ If we are drawing a polygon into the left row buffer
+                        \ then a value of 1 prevents the DrawPolygon routine
+                        \ from also drawing into the right row buffer
 
 .xVectorBot
 
@@ -487,9 +499,21 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L002D
+.polygonGoesLeft
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A flag to record whether the polygon we are drawing
+                        \ extends to the left of the screen buffer we are
+                        \ drawing in
+                        \
+                        \   * Not 1 = at least one line in the polygon we just
+                        \             drew extends past the left edge of the
+                        \             buffer
+                        \
+                        \   * 1 = the default value
+                        \
+                        \ If we are drawing a polygon into the right row buffer
+                        \ then a value of 1 prevents the DrawPolygon routine
+                        \ from also drawing into the left row buffer
 
 .yVectorBot
 
@@ -747,7 +771,7 @@
  SKIP 1                 \ A phase counter for objects that need to be drawn in
                         \ multiple phases
 
-.rightEdgeContents
+.currentPixelByte
 
  SKIP 1                 \ The original contents of the screen behind the right
                         \ edge of the polygon being drawn
@@ -15667,22 +15691,35 @@
 \
 \ Returns:
 \
-\   L002C               ???
+\   polygonGoesRight    A flag to record whether the polygon fitted into the
+\                       screen buffer:
 \
-\                         * 0 if left edge of polygon is right of buffer
+\                         * Not 1 = at least one line in the polygon we just
+\                                   drew extends past the right edge of the
+\                                   buffer
 \
-\   L002D               ???
+\                         * 1 = the default value
 \
-\                         * 0 if right edge of polygon is left of buffer
+\   polygonGoesLeft     A flag to record whether the polygon fitted into the
+\                       screen buffer:
+\
+\                         * Not 1 = at least one line in the polygon we just
+\                                   drew extends past the left edge of the
+\                                   buffer
+\
+\                         * 1 = the default value
 \
 \ ******************************************************************************
 
 .DrawPolygonLines
 
- LDA #1                 \ Set L002C = 1 ???
- STA L002C
+ LDA #1                 \ Set polygonGoesRight = 1 as the default value, which
+ STA polygonGoesRight   \ we can change to a different value if the polygon
+                        \ extends to the right of the screen buffer
 
- STA L002D              \ Set L002D = 1 ???
+ STA polygonGoesLeft    \ Set polygonGoesLeft = 1 as the default value, which
+                        \ we can change to a different value if the polygon
+                        \ extends to the left of the screen buffer
 
  LDA yPolygonTop        \ Set X = (yPolygonTop + yPolygonBottom) / 2
  CLC                    \
@@ -15826,97 +15863,191 @@
 \       Name: DrawPolygonLines (Part 2 of 4)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: Draw the left and right edges of the polygon line for the special
-\             cases where the line overflows the buffer or fits into one byte
+\    Summary: Process the line overflowing the sides of the buffer, or fitting
+\             into one pixel byte, and loop on to the next polygon pixel line
 \
 \ ******************************************************************************
 
 .dpol3
 
- LDY yPolygonLine
- CPY yPolygonBottom
- BEQ dpol2
- TYA
- AND #&07
- BNE dpol11
- LDA R
- CLC
- ADC #&39
- STA R
- LDA S
- ADC #&01
- CMP #&53
- BNE dpol4
- LDA bufferRowAddrLo+16
- STA R
+                        \ We jump back here to move on to the next pixel line in
+                        \ the polygon
+
+ LDY yPolygonLine       \ Set Y to the number of the polygon pixel line we are
+                        \ drawing (which decrements as we draw the polygon from
+                        \ top to bottom)
+
+ CPY yPolygonBottom     \ If Y = yPolygonBottom then we have reached the bottom
+ BEQ dpol2              \ of the polygon, so jump to dpol2 to return from the
+                        \ subroutine as the whole polygon has now been drawn
+
+ TYA                    \ Set A = Y mod 8
+ AND #%00000111         \
+                        \ So A is the number of the polygon pixel line within the
+                        \ current character row
+
+ BNE dpol11             \ If A is is non-zero then the next polygon line (which
+                        \ will be on polygon pixel row A - 1) will still be in
+                        \ the same character row, so jump to dpol11 to move down
+                        \ one pixel line
+
+                        \ If we get here then A = 0, so the next polygon pixel
+                        \ line is in a different character row, so we need to
+                        \ move on to the next character row in the screen or the
+                        \ screen buffer
+
+ LDA R                  \ Set (A R) = (S R) + &139
+ CLC                    \           = (S R) + 320 - 7
+ ADC #&39               \
+ STA R                  \ We add 320 to move on to the next row down on the
+ LDA S                  \ screen, but we want to be in the top pixel row within
+ ADC #&01               \ that character row, so we subtract 7 to move up to the
+                        \ top of the character block (as each row is eight pixel
+                        \ bytes high)
+
+ CMP #&53               \ If the result of the addition is less than &5300, then
+ BNE dpol4              \ we have not reached the end of row 15 in the screen
+                        \ buffer, so jump to dpol4 to skip the following
+
+                        \ If we get here then we need to wrap the screen buffer
+                        \ address around so we move from screenBufferRow15 to
+                        \ screenBufferRow16
+
+ LDA bufferRowAddrLo+16 \ Set (A R) to the address of screenBufferRow16 from the
+ STA R                  \ bufferRowAddr(Hi Lo)
  LDA bufferRowAddrHi+16
 
 .dpol4
 
- STA S
- BNE dpol12
+ STA S                  \ Store the high byte of the result, so we now have:
+                        \
+                        \   (S R) = (S R) + 320 - 7
+                        \
+                        \ with the address wrapped around as required
+
+ BNE dpol12             \ Jump to dpol12 to draw the next polygon pixel line
+                        \ (this BNE is effectively a JMP as the high byte of the
+                        \ address in A is never zero)
 
 .dpol5
 
-                        \ Jump here from part 3 if right edge of polygon is left
-                        \ of buffer
+                        \ If we get here then the right edge of the polygon line
+                        \ we are drawing extends past the left edge of the
+                        \ screen buffer
 
- LDA #0                 \ Set L002D = 0 ???
- STA L002D
+ LDA #0                 \ Set polygonGoesLeft = 0 to denote that the polygon
+ STA polygonGoesLeft    \ extends past the left edge of the buffer, so if we
+                        \ are drawing in the right row buffer, this makes us
+                        \ draw the rest of the polygon in the left row buffer
+                        \ in the DrawPolygon routine
 
- BEQ dpol3
+ BEQ dpol3              \ Jump to dpol3 to move on to the next pixel line in the
+                        \ polygon (this BEQ is effectively a JMP as A is always
+                        \ zero)
 
 .dpol6
 
-                        \ Jump here from part 3 if left edge of polygon is right
-                        \ of buffer
+                        \ If we get here then the left edge of the polygon line
+                        \ we are drawing extends past the right edge of the
+                        \ screen buffer
 
- LDA #0                 \ Set L002C = 0 ???
- STA L002C
+ LDA #0                 \ Set polygonGoesRight = 0 to denote that the polygon
+ STA polygonGoesRight   \ extends past the right edge of the buffer, so if we
+                        \ are drawing in the left row buffer, this makes us draw
+                        \ the rest of the polygon in the right row buffer in the
+                        \ DrawPolygon routine
 
- BEQ dpol3
+ BEQ dpol3              \ Jump to dpol3 to move on to the next pixel line in the
+                        \ polygon (this BEQ is effectively a JMP as A is always
+                        \ zero)
 
 .dpol7
 
-                        \ Jump here from part 3 if the right edge of the polygon
-                        \ is beyond the right edge of the buffer
+                        \ If we get here then the right edge of the polygon line
+                        \ we are drawing extends past the right edge of the
+                        \ screen buffer
 
- LDA bufferYawWidth
- ASL A
- STA xPolygonRightEdge
- STA L002C
- BNE dpol15
+ LDA bufferYawWidth     \ Set xPolygonRightEdge = bufferYawWidth * 2
+ ASL A                  \
+ STA xPolygonRightEdge  \ This sets the screen x-coordinate of the right end of
+                        \ the polygon line we are drawing to the right edge of
+                        \ the screen buffer (we double the yaw angle to get the
+                        \ x-coordinate) ???
+
+ STA polygonGoesRight   \ Set polygonGoesRight to the value of A, which is at
+                        \ least 2 because bufferYawWidth is non-zero and we just
+                        \ doubled it, so this has the same effect in the
+                        \ DrawPolygon routine as setting polygonGoesRight to 0
+                        \
+                        \ In other words, this denotes that the polygon extends
+                        \ past the right edge of the buffer, so if we are
+                        \ drawing in the left row buffer, this makes us draw the
+                        \ rest of the polygon in the right row buffer in the
+                        \ DrawPolygon routine
+
+ BNE dpol15             \ Jump to dpol15 to draw the left edge and fill line for
+                        \ this polygon line (this BNE is effectively a JMP as A
+                        \ is never zero)
 
 .dpol8
 
-                        \ Jump here from part 3 if left edge of the polygon is
-                        \ before the left edge of the buffer
+                        \ If we get here then the left edge of the polygon line
+                        \ we are drawing extends past the left edge of the
+                        \ screen buffer
+                        \
+                        \ We therefore need to draw the left end of the line in
+                        \ the screen buffer without the edge byte, and with the
+                        \ fill portion starting at the buffer's left edge
 
- LDA R
- SEC
- SBC #&08
- STA P
- LDA S
- SBC #&00
+ LDA R                  \ Set (Q P) = (S R) - 8
+ SEC                    \
+ SBC #8                 \ This sets (Q P) to the very first byte in the screen
+ STA P                  \ row, so we don't reserve the first byte for the left
+ LDA S                  \ edge in part 4 and instead draw the fill portion of
+ SBC #0                 \ the polygon line from the left edge of the screen row
  STA Q
 
- LDA #0                 \ Set L002D = 0 ???
- STA L002D
+ LDA #0                 \ Set polygonGoesLeft = 0 to denote that the polygon
+ STA polygonGoesLeft    \ extends past the left edge of the buffer, so if we
+                        \ are drawing in the right row buffer, this makes us
+                        \ draw the rest of the polygon in the left row buffer
+                        \ in the DrawPolygon routine
 
- LDA #&F8
- BNE dpol17
+ LDA #&F8               \ Set A = -8 to set the left edge of the line to the
+                        \ left edge of the screen (this is the same as setting
+                        \ the left edge to 0 and then subtracting 8 for the same
+                        \ reason we subtracted 8 from (Q P) above)
+
+ BNE dpol17             \ Jump to dpol17 to draw the polygon line in part 4
+                        \ (this BNE is effectively a JMP as A is never zero)
 
 .dpol9
 
-                        \ If we get here then Y >= xPolygonRightEdge and the
-                        \ pixel byte offset for the left edge is to the right
-                        \ of the pixel byte offset for the right edge
+                        \ If we get here then the pixel byte offset for the left
+                        \ edge is the same as the pixel byte offset for the
+                        \ right edge, so we need to draw both the left and right
+                        \ edges within the same pixel byte
 
- TXA
- AND #&03
- TAX
- LDA rightEdgeContents
- AND pixelsToLeft,X
+ TXA                    \ Set X to the pixel number within the character block
+ AND #%00000011         \ of the left edge of the polygon (as each character
+ TAX                    \ block contains four pixels)
+
+ LDA currentPixelByte   \ Set A to the current screen contents for the pixel
+                        \ byte containing the right edge (which is the same as
+                        \ the pixel byte containing the left edge)
+                        \
+                        \ We set this to the result of a LDA (R),Y instruction
+                        \ in part 3, so this is the same as fetching the current
+                        \ screen contents with LDA (R),Y
+
+ AND pixelsToLeft,X     \ Clear the pixels to the right of the left edge by
+                        \ AND'ing the current screen contents with a pixel byte
+                        \ with all the pixels to the left of position X set
+                        \
+                        \ So A contains the existing screen contents for the
+                        \ pixels outside the polygon line, and with the polygon
+                        \ line pixels cleared, so now we can OR the polygon line
+                        \ pixels into the space we just cleared
 
 .dpol10
 
@@ -15926,27 +16057,54 @@
                             \
                             \   ORA edgePixelsLeft + polygonColours,X
                             \
-                            \ So this ???
+                            \ So this inserts the left edge of the polygon into
+                            \ the right part of the pixel byte in the correct
+                            \ colours for the currently configured fill and edge
+                            \ colours, with the edge pixels starting at pixel
+                            \ number X within the byte and ending at the right
+                            \ end of the pixel byte
                             \
                             \ The original value of edgePixelsLeft+&3C is just
                             \ workspace noise and has no meaning, it just sets
                             \ the high byte to HI(edgePixelsLeft)
 
- AND leftPixels,X
- STA T
- LDA (R),Y
- AND pixelsToRight,X
- ORA T
+ AND leftPixels,X       \ Clear all the pixels to the right of the right edge
+ STA T                  \ and store the result in T, so this contains the pixel
+                        \ byte with the left edge in-place and the pixels for
+                        \ the right edge cleared
+                        \
+                        \ The leftPixels bit mask is the complementary pixel
+                        \ byte to pixelsToRight, which we are about to use to
+                        \ fill in the right edge
 
- STA (R),Y              \ Poke the pixel byte containing the left edge into
-                        \ screen memory
+ LDA (R),Y              \ Set A to the current screen contents of the byte we
+                        \ are drawing both edges into
 
- JMP dpol3              \ Loop back to dpol3 to draw the next pixel line in the
+ AND pixelsToRight,X    \ Clear the pixels to the left of the right edge by
+                        \ AND'ing the current screen contents with a pixel byte
+                        \ with all the pixels to the right of position X set
+                        \
+                        \ So A contains the existing screen contents for the
+                        \ pixels outside the polygon line, and with the polygon
+                        \ line pixels cleared, so now we can OR the polygon line
+                        \ pixels into the space we just cleared
+
+ ORA T                  \ Insert the right edge of the polygon into the pixel
+                        \ byte, with the edge pixels starting at the left end
+                        \ of the pixel byte and ending at pixel number X within
+                        \ the byte
+
+ STA (R),Y              \ Poke the pixel byte containing the left and right
+                        \ edges into screen memory
+
+ JMP dpol3              \ Jump to dpol3 to move on to the next pixel line in the
                         \ polygon
 
 .dpol11
 
- INC R
+ INC R                  \ Increment the screen address in (S R) to move down one
+                        \ pixel row within the character row, ready for drawing
+                        \ the next polygon pixel line
 
 .dpol12
 
@@ -16023,8 +16181,10 @@
  LDA (R),Y              \ Set A to the current screen contents of the pixel byte
                         \ where we want to draw the right edge of the polygon
 
- STA rightEdgeContents  \ Store the current screen contents for the right edge
-                        \ of the polygon in rightEdgeContents
+ STA currentPixelByte   \ Store the current screen contents for the right edge
+                        \ of the polygon in currentPixelByte, in case we need
+                        \ to draw the left and right edges in the same pixel
+                        \ byte
 
  AND pixelsToRight,X    \ Clear the pixels to the left of the right edge by
                         \ AND'ing the current screen contents with a pixel byte
@@ -16083,9 +16243,9 @@
  TAY
 
  CPY xPolygonRightEdge  \ If Y >= xPolygonRightEdge then the pixel byte offset
- BCS dpol9              \ for the left edge is to the right of the pixel byte
-                        \ offset for the right edge, so jump to dpol9 to process
-                        \ this
+ BCS dpol9              \ for the left edge is the same as the pixel byte offset
+                        \ for the right edge, so jump to dpol9 to draw both
+                        \ edges within the same pixel byte
 
  TXA                    \ Set X to the pixel number within the character block
  AND #%00000011         \ of the left edge of the polygon (as each character
@@ -16344,8 +16504,8 @@
 
 .dpol19
 
- JMP dpol3              \ Loop back to part 2 to draw the next pixel line in the
-                        \ polygon
+ JMP dpol3              \ Loop back to part 2 to move on to the next pixel line
+                        \ in the polygon
 
 \ ******************************************************************************
 \
@@ -20443,11 +20603,22 @@
  JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
                         \ shape from top to bottom, horizontal and line by line
 
- LDY screenBufferType   \ Set A = L002C or L002D for left/right row buffer ???
- LDA L002C,Y
+ LDY screenBufferType   \ Set A to the following:
+ LDA polygonGoesRight,Y \
+                        \   * polygonGoesRight when screenBufferType = 0 (we
+                        \     have just drawn into the left row buffer)
+                        \
+                        \   * polygonIsToLeft when screenBufferType = 1 (we
+                        \     have just drawn into the right row buffer)
 
- CMP #1                 \ If L002C or L002D = 1, jump to poly3 to return from
- BEQ poly3              \ the subroutine ???
+ CMP #1                 \ If A = 1 then we do not need to draw in the other row
+ BEQ poly3              \ buffer, because:
+                        \
+                        \   * We have just drawn into the left row buffer and
+                        \     polygonGoesRight = 1, so the polygon is fully to
+                        \     the right of the buffer
+                        \
+                        \ So jump to poly3 to return from the subroutine
 
 .poly1
 

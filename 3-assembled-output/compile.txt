@@ -124,11 +124,11 @@
      002A
 .sightsByteAddr
      002A
-.L002C
+.polygonGoesRight
      002C
 .xVectorBot
      002C
-.L002D
+.polygonGoesLeft
      002D
 .yVectorBot
      002D
@@ -221,7 +221,7 @@
      0052
 .drawingPhaseCount
      0053
-.rightEdgeContents
+.currentPixelByte
      0054
 .screenOrBuffer
      0055
