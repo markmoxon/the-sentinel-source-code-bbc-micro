@@ -58,7 +58,7 @@
      0016
 .traceStepCounter
      0017
-.polygonPointCount
+.polygonSideCount
      0017
 .L0018
      0018
@@ -150,7 +150,7 @@
      0033
 .xCoordBot
      0034
-.L0034
+.tileShapeOffset
      0034
 .yCoordBot
      0035
@@ -7461,11 +7461,11 @@
 .apol3
      2D58   86 17      STX &17
      2D5A   4C 93 2D   JMP &2D93
-.sub_C2D5D
+.apol4
      2D5D   A9 C0      LDA #&C0
      2D5F   85 6C      STA &6C
      2D61   A4 17      LDY &17
-.C2D63
+.apol5
      2D63   B1 3C      LDA (&3C),Y
      2D65   AA         TAX
      2D66   BD A0 0B   LDA &0BA0,X
@@ -7487,16 +7487,16 @@
      2D84   C9 04      CMP #&04
      2D86   90 02      BCC &2D8A
      2D88   09 F8      ORA #&F8
-.C2D8A
+.apol6
      2D8A   9D 40 0B   STA &0B40,X
      2D8D   88         DEY
      2D8E   10 D3      BPL &2D63
      2D90   4C BC 2D   JMP &2DBC
-.apol4
+.apol7
      2D93   A9 00      LDA #&00
      2D95   85 6C      STA &6C
      2D97   A4 17      LDY &17
-.apol5
+.apol8
      2D99   B1 3C      LDA (&3C),Y
      2D9B   AA         TAX
      2D9C   BD A0 0B   LDA &0BA0,X
@@ -7516,7 +7516,7 @@
      2DB6   9D A0 54   STA &54A0,X
      2DB9   88         DEY
      2DBA   10 DD      BPL &2D99
-.apol6
+.apol9
      2DBC   A9 00      LDA #&00
      2DBE   85 06      STA &06
      2DC0   85 31      STA &31
@@ -7526,7 +7526,7 @@
      2DC8   85 30      STA &30
      2DCA   85 7F      STA &7F
      2DCC   A0 00      LDY #&00
-.apol7
+.apol10
      2DCE   84 4A      STY &4A
      2DD0   B1 3C      LDA (&3C),Y
      2DD2   AA         TAX
@@ -7554,7 +7554,7 @@
      2DFD   85 0C      STA &0C
      2DFF   A9 00      LDA #&00
      2E01   E5 76      SBC &76
-.apol8
+.apol11
      2E03   85 76      STA &76
      2E05   24 6C      BIT &6C
      2E07   50 13      BVC &2E1C
@@ -7565,16 +7565,16 @@
      2E13   D0 04      BNE &2E19
      2E15   A5 0C      LDA &0C
      2E17   F0 3D      BEQ &2E56
-.apol9
+.apol12
      2E19   4C CC 2F   JMP &2FCC
-.apol10
+.apol13
      2E1C   A5 76      LDA &76
      2E1E   F0 0B      BEQ &2E2B
      2E20   A9 00      LDA #&00
      2E22   99 40 0B   STA &0B40,Y
      2E25   9D 40 0B   STA &0B40,X
      2E28   4C CC 2F   JMP &2FCC
-.apol11
+.apol14
      2E2B   A5 0C      LDA &0C
      2E2D   F0 67      BEQ &2E96
      2E2F   B9 E0 0A   LDA &0AE0,Y
@@ -7593,13 +7593,13 @@
      2E4F   85 41      STA &41
      2E51   85 42      STA &42
      2E53   20 AE 2E   JSR &2EAE
-.apol12
+.apol15
      2E56   A4 4A      LDY &4A
      2E58   C8         INY
      2E59   C4 17      CPY &17
      2E5B   F0 03      BEQ &2E60
      2E5D   4C CE 2D   JMP &2DCE
-.apol13
+.apol16
      2E60   A5 1E      LDA &1E
      2E62   C5 17      CMP &17
      2E64   D0 22      BNE &2E88
@@ -7618,7 +7618,7 @@
      2E81   99 00 5B   STA &5B00,Y
      2E84   A9 00      LDA #&00
      2E86   85 7F      STA &7F
-.apol14
+.apol17
      2E88   A5 7F      LDA &7F
      2E8A   D0 08      BNE &2E94
      2E8C   A5 06      LDA &06
@@ -7626,24 +7626,24 @@
      2E90   90 02      BCC &2E94
      2E92   18         CLC
      2E93   60         RTS
-.apol15
+.apol18
      2E94   38         SEC
      2E95   60         RTS
-.apol16
+.apol19
      2E96   BD A0 54   LDA &54A0,X
      2E99   C5 31      CMP &31
      2E9B   90 02      BCC &2E9F
      2E9D   85 31      STA &31
-.apol17
+.apol20
      2E9F   C5 30      CMP &30
      2EA1   B0 02      BCS &2EA5
      2EA3   85 30      STA &30
-.apol18
+.apol21
      2EA5   E6 1E      INC &1E
      2EA7   4C 56 2E   JMP &2E56
-.apol19
+.apol22
      2EAA   4C 87 30   JMP &3087
-.apol20
+.apol23
      2EAD   60         RTS
 .sub_C2EAE
      2EAE   A5 3F      LDA &3F

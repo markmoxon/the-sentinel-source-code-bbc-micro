@@ -254,14 +254,15 @@
                         \ calculating tile visibility in the GetRowVisibility
                         \ routine
 
-.polygonPointCount
+.polygonSideCount
 
- SKIP 1                 \ The number of points in the polygon point list for the
-                        \ polygon being drawn
+ SKIP 1                 \ The number of sides in the polygon we are drawing,
+                        \ which is one less than the number of points in the
+                        \ polygon's point list (as the last point in the list
+                        \ is always a repeat of the first point)
                         \
-                        \ This will be four for a triangle or five for a
-                        \ quadrilateral, as the list includes the first point
-                        \ repeated at the end
+                        \ This will be three for a triangle or four for a
+                        \ quadrilateral
 
 .L0018
 
@@ -576,9 +577,10 @@
                         \
                         \ Stored as a 24-bit value xCoord(Hi Lo Bot)
 
-.L0034
+.tileShapeOffset
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The tile shape we are drawing, amended to use as an
+                        \ offset into the tileShapeColour table
 
 .yCoordBot
 
@@ -17809,10 +17811,11 @@
  LDX viewingObject      \ Set X to the number of the object that is viewing the
                         \ landscape
 
- LDA #LO(polygonPoint)  \ Set drawViewAngles(1 0) = polygonPoint ???
- STA drawViewAngles
- LDA #HI(polygonPoint)
- STA drawViewAngles+1
+ LDA #LO(polygonPoint)  \ Set drawViewAngles(1 0) = polygonPoint
+ STA drawViewAngles     \
+ LDA #HI(polygonPoint)  \ This sets drawViewAngles(1 0) so DrawPolygon will
+ STA drawViewAngles+1   \ implement the default behaviour of drawing using point
+                        \ data for tile faces rather than object polygons
 
  LDA objectYawAngle,X   \ Set A to the yaw angle of the viewer's object
 
@@ -20503,8 +20506,9 @@
 
 .DrawTwoFaceTile
 
- STA L0034              \ Set L0034 to the tile shape, amended to use as an
-                        \ offset into the tileShapeColour table
+ STA tileShapeOffset    \ Set tileShapeOffset to the tile shape that's been
+                        \ amended to use as an offset into the tileShapeColour
+                        \ table
 
  TAX                    \ Set X to the tile shape so we can use it as an index
                         \ into the tileShapeColour table
@@ -20519,7 +20523,7 @@
 
  JSR DrawPolygon        \ Draw the first triangular face
 
- LDA L0034              \ Set polygonColours to the entry for this shape from
+ LDA tileShapeOffset    \ Set polygonColours to the entry for this shape from
  EOR #16                \ the other tileShapeColour table (so if the previous
  TAX                    \ colour was from tileShapeColour then we pick the next
  LDA tileShapeColour,X  \ colour from tileShapeColour+16)
@@ -20537,17 +20541,14 @@
 \       Name: DrawPolygon
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Draw a polygon
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   L0034               The tile shape, amended to use as an offset into the
-\                       tileShapeColour table
-\
 \   polygonType         Bits 6 and 7 determine the type of polygon to draw (the
-\                       calling subroutine is in brackets)
+\                       calling subroutine is in brackets):
 \
 \                         * %00xxxxxx = quadrilateral (DrawOneFaceTile)
 \
@@ -20612,22 +20613,37 @@
                         \     have just drawn into the right row buffer)
 
  CMP #1                 \ If A = 1 then we do not need to draw in the other row
- BEQ poly3              \ buffer, because:
+ BEQ poly3              \ buffer, because the polygon we just drew does not
+                        \ extend beyond the relevant edge of the buffer
                         \
-                        \   * We have just drawn into the left row buffer and
-                        \     polygonGoesRight = 1, so the polygon is fully to
-                        \     the right of the buffer
+                        \ More specifically:
                         \
-                        \ So jump to poly3 to return from the subroutine
+                        \   * If we have just drawn into the left row buffer and
+                        \     polygonGoesRight = 1, then the polygon does not
+                        \     extend right out of the left row buffer, so we
+                        \     don't need to draw anything into the right row
+                        \     buffer
+                        \
+                        \   * If we have just drawn into the right row buffer
+                        \     and polygonGoesLeft = 1, then the polygon does not
+                        \     extend left out of the right row buffer, so we
+                        \     don't need to draw anything into the left row
+                        \     buffer
+                        \
+                        \ In either case, jump to poly3 to return from the
+                        \ subroutine without drawing the polygon into the other
+                        \ row buffer
 
 .poly1
 
                         \ We have drawn the relevant parts of the polygon into
-                        \ the left row buffer, so now we draw relevant parts of
-                        \ the polygon into the right row buffer
+                        \ either the left row buffer or right row buffer and the
+                        \ polygon extends into the other row buffer, so now we
+                        \ draw the polygon into the other row buffer
 
- JSR FlipBufferType     \ Flip the buffer type between 0 and 1 and configure the
-                        \ buffer accordingly
+ JSR FlipBufferType     \ Flip the buffer type between 0 and 1 to swap between
+                        \ the left row buffer and right row buffer, and
+                        \ configure the new buffer accordingly
 
 .poly2
 
@@ -22395,13 +22411,17 @@
 
 .trianglePointAdd
 
- EQUB 1                 \ Add for first triangle when triangleStartPoint = 0
+ EQUB 1                 \ Add when triangleStartPoint = 0 and we are drawing the
+                        \ first of the two triangles
 
- EQUB 32 + 1            \ Add for first triangle when triangleStartPoint = 1
+ EQUB 32 + 1            \ Add when triangleStartPoint = 1 and we are drawing the
+                        \ first of the two triangles
 
- EQUB -1                \ Add for second triangle when triangleStartPoint = 0
+ EQUB -1                \ Add when triangleStartPoint = 0 and we are drawing the
+                        \ second of the two triangles
 
- EQUB 32 - 1            \ Add for second triangle when triangleStartPoint = 1
+ EQUB 32 - 1            \ Add when triangleStartPoint = 1 and we are drawing the
+                        \ second of the two triangles
 
 \ ******************************************************************************
 \
@@ -22562,7 +22582,14 @@
 
  CLC                    \ Set A = (A + 32 + 1) mod 64
  ADC #33                \
- AND #63                \ So ???
+ AND #63                \ So this moves diagonally from top-left to bottom-right
+                        \ or bottom-left to top-right:
+                        \
+                        \   offset x          offset x + 1
+                        \
+                        \   offset 32 + x     offset 32 + x + 1
+                        \
+                        \ ???
 
  INY                    \ Set Y = Y + 2
  INY                    \
@@ -22584,11 +22611,11 @@
  AND #63
  STA polygonPoint+2
 
- LDX #3                 \ Set X = 3 to set as the value of polygonPointCount as
-                        \ there are three edges in a triangle polygon
+ LDX #3                 \ Set X = 3 to set as the value of polygonSideCount as
+                        \ there are three sides in a triangle polygon
 
- BNE apol3              \ Jump to apol3 to set polygonPointCount = 3 and move on
-                        \ to part 2
+ BNE apol3              \ Jump to apol3 to set polygonSideCount = 3 and move on
+                        \ to part 3
 
 .AnalysePolygon
 
@@ -22645,8 +22672,8 @@
  BMI apol1              \ two-face tile as a pair of triangles, so jump to apol1
                         \ to do this
 
- BVS apol4              \ If bit 7 of polygonType is clear and bit 6 is set then
-                        \ we are drawing an object, so jump to part 2 as the
+ BVS apol7              \ If bit 7 of polygonType is clear and bit 6 is set then
+                        \ we are drawing an object, so jump to part 3 as the
                         \ point numbers in polygonPoint are already set up
                         \ correctly for the polygon
 
@@ -22683,31 +22710,31 @@
  EOR #32                \ Set the fourth quadrilateral point to the rear-right
  STA polygonPoint+3     \ tile corner
 
- LDX #4                 \ Set X = 4 to set as the value of polygonPointCount as
-                        \ there are four edges in a quadrilateral
+ LDX #4                 \ Set X = 4 to set as the value of polygonSideCount as
+                        \ there are four sides in a quadrilateral
 
 .apol3
 
- STX polygonPointCount  \ Set polygonPointCount to the value in X
+ STX polygonSideCount   \ Set polygonSideCount to the value in X
 
- JMP apol4              \ Jump to part 2 to continue analysing the polygon
+ JMP apol7              \ Jump to part 3 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: sub_C2D5D
+\       Name: AnalysePolygon (Part 2 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2D5D
+.apol4
 
  LDA #&C0
  STA L006C
- LDY polygonPointCount
+ LDY polygonSideCount
 
-.C2D63
+.apol5
 
  LDA (drawViewAngles),Y
  TAX
@@ -22728,44 +22755,63 @@
  ROL A
  AND #&07
  CMP #&04
- BCC C2D8A
+ BCC apol6
  ORA #&F8
 
-.C2D8A
+.apol6
 
  STA L0B40Hi,X
  DEY
- BPL C2D63
- JMP apol6
+ BPL apol5
+
+ JMP apol9              \ Jump to part 4 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: AnalysePolygon (Part 2 of ???)
+\       Name: AnalysePolygon (Part 3 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.apol4
+.apol7
 
- LDA #0
+                        \ By this point the point numbers in the polygon have
+                        \ been set up as follows:
+                        \
+                        \   * polygonPoint to polygonPoint+3 (when drawing a
+                        \     triangle)
+                        \
+                        \   * polygonPoint to polygonPoint+4 (when drawing a
+                        \     quadrilateral)
+                        \
+                        \ Each point number is given as an offset within the
+                        \ drawing tables
+
+ LDA #0                 \ Set L006C = 0 ???
  STA L006C
 
- LDY polygonPointCount
+ LDY polygonSideCount   \ We now loop through all the points in the polygon, so
+                        \ set Y to count through the number of sides in the
+                        \ polygon that we are drawing (as that's also the number
+                        \ of unique points in the polygon)
 
-.apol5
+.apol8
 
- LDA (drawViewAngles),Y
- TAX
- LDA drawViewYawLo,X
- CLC
- ADC L0011YawLo
+ LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
+ TAX                    \ Y-th point in the polygon
+
+ LDA drawViewYawLo,X    \ Set (A T) = drawViewYaw(Hi Lo) + L0011Yaw(Hi Lo)
+ CLC                    \
+ ADC L0011YawLo         \ for the Y-th polygon point
  STA T
  LDA drawViewYawHi,X
  ADC L0011YawHi
- CMP #&20
- BCS sub_C2D5D
+
+ CMP #32                \ If the high byte in A >= 32, jump to part 2 to ???
+ BCS apol4              \ and return back to apol9
+
  ASL T
  ROL A
  ASL T
@@ -22773,10 +22819,21 @@
  ASL T
  ROL A
  STA L0B40Lo,X
- DEY
- BPL apol5
 
-.apol6
+ DEY
+
+ BPL apol8
+
+\ ******************************************************************************
+\
+\       Name: AnalysePolygon (Part 4 of ???)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: ???
+\
+\ ******************************************************************************
+
+.apol9
 
  LDA #0
  STA yPolygonTop
@@ -22788,7 +22845,7 @@
  STA L007F
  LDY #0
 
-.apol7
+.apol10
 
  STY L004A
  LDA (drawViewAngles),Y
@@ -22804,7 +22861,7 @@
  STA L000C
  LDA drawViewPitchHi,Y
  SBC drawViewPitchHi,X
- BPL apol8
+ BPL apol11
  STA V
  INC L0002
  STX T
@@ -22818,36 +22875,36 @@
  LDA #0
  SBC V
 
-.apol8
+.apol11
 
  STA V
  BIT L006C
- BVC apol10
+ BVC apol13
  LDA L0B40Hi,Y
  ORA L0B40Hi,X
- BEQ apol10
+ BEQ apol13
  LDA V
- BNE apol9
+ BNE apol12
  LDA L000C
- BEQ apol12
+ BEQ apol15
 
-.apol9
+.apol12
 
  JMP sub_C2FCC
 
-.apol10
+.apol13
 
  LDA V
- BEQ apol11
+ BEQ apol14
  LDA #0
  STA L0B40Hi,Y
  STA L0B40Hi,X
  JMP sub_C2FCC
 
-.apol11
+.apol14
 
  LDA L000C
- BEQ apol16
+ BEQ apol19
  LDA drawViewPitchHi,Y
  STA vectorYawAngleHi
  LDA drawViewPitchLo,Y
@@ -22865,26 +22922,26 @@
  STA L0042
  JSR sub_C2EAE
 
-.apol12
+.apol15
 
  LDY L004A
  INY
- CPY polygonPointCount
- BEQ apol13
- JMP apol7
+ CPY polygonSideCount
+ BEQ apol16
+ JMP apol10
 
-.apol13
+.apol16
 
  LDA L001E
- CMP polygonPointCount
- BNE apol14
+ CMP polygonSideCount
+ BNE apol17
  LDA drawViewPitchHi,X
- BNE apol14
+ BNE apol17
  LDY drawViewPitchLo,X
  CPY minPitchAngle
- BCC apol14
+ BCC apol17
  CPY maxPitchAngle
- BCS apol14
+ BCS apol17
  STY yPolygonBottom
  STY yPolygonTop
  LDA yVectorLo
@@ -22894,44 +22951,44 @@
  LDA #0
  STA L007F
 
-.apol14
+.apol17
 
  LDA L007F
- BNE apol15
+ BNE apol18
  LDA yPolygonTop
  CMP yPolygonBottom
- BCC apol15
+ BCC apol18
  CLC
  RTS
 
-.apol15
+.apol18
 
  SEC
  RTS
 
-.apol16
+.apol19
 
  LDA L0B40Lo,X
  CMP zVectorLo
- BCC apol17
+ BCC apol20
  STA zVectorLo
 
-.apol17
+.apol20
 
  CMP yVectorLo
- BCS apol18
+ BCS apol21
  STA yVectorLo
 
-.apol18
+.apol21
 
  INC L001E
- JMP apol12
+ JMP apol15
 
-.apol19
+.apol22
 
  JMP sub_C3087
 
-.apol20
+.apol23
 
  RTS
 
@@ -22948,10 +23005,10 @@
 
  LDA vectorPitchAngleLo
  BMI C2EC2
- BNE apol20
+ BNE apol23
  LDA L0016
  CMP maxPitchAngle
- BCS apol20
+ BCS apol23
  CMP yPolygonBottom
  BCS C2EC6
  CMP minPitchAngle
@@ -22968,11 +23025,11 @@
 .C2EC6
 
  LDA vectorYawAngleHi
- BMI apol20
+ BMI apol23
  BNE C2EDA
  LDA L001A
  CMP minPitchAngle
- BCC apol20
+ BCC apol23
  CMP yPolygonTop
  BCC C2EE1
  CMP maxPitchAngle
@@ -22992,7 +23049,7 @@
 
  LDA L0041
  ORA L0042
- BNE apol19
+ BNE apol22
  LDA L0018
  SEC
  SBC L0039
@@ -23302,7 +23359,7 @@ L2F79 = C2F77+2
  SBC L0016
  STA L000C
  JSR sub_C2EAE
- JMP apol12
+ JMP apol15
 
 \ ******************************************************************************
 \
@@ -36933,13 +36990,10 @@ L314A = C3148+2
  AND #%00000011         \ Extract bits 0 to 1 from the polygon data byte to get
  CLC                    \ the number of sides in the polygon (where 0 means
  ADC #3                 \ three sides and 1 means four sides)
- STA polygonPointCount  \
-                        \ Then add 3 to get the number of points in the polygon
-                        \ point list, which will be four for a triangle or five
-                        \ for a quadrilateral, as the list includes the first
-                        \ point repeated at the end
-                        \
-                        \ And store the result in polygonPointCount
+ STA polygonSideCount   \
+                        \ Then add 3 to get the number of sides in the polygon,
+                        \ (three for a triangle or four for a quadrilateral)
+                        \ and store the result in polygonSideCount
 
  LDA objPolygonAddrLo,Y \ Set drawViewAngles(1 0) to the address of the list of
  STA drawViewAngles     \ object-relative point numbers for this polygon so the
@@ -36984,10 +37038,10 @@ L314A = C3148+2
 
 .drob8
 
- LDA #LO(polygonPoint)  \ Set drawViewAngles(1 0) = polygonPoint ???
+ LDA #LO(polygonPoint)  \ Set drawViewAngles(1 0) = polygonPoint
  STA drawViewAngles     \
  LDA #HI(polygonPoint)  \ This resets drawViewAngles(1 0) so DrawPolygon will
- STA drawViewAngles+1   \ return to the default setting of drawing using point
+ STA drawViewAngles+1   \ return to the default behaviour of drawing using point
                         \ data for tile faces rather than object polygons
 
  LSR blendPolygonEdges  \ Clear bit 7 of blendPolygonEdges so we return to the
