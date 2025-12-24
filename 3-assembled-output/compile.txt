@@ -136,8 +136,12 @@
      002E
 .xVectorLo
      002F
+.L0030
+     0030
 .yVectorLo
      0030
+.L0031
+     0031
 .zVectorLo
      0031
 .xTileViewLeft
@@ -6857,7 +6861,7 @@
      2986   85 28      STA &28
      2988   85 29      STA &29
      298A   60         RTS
-.L298B
+.buffersL011YawHi
      298B   0A
      298C   02
      298D   0C
@@ -7442,7 +7446,7 @@
      2D2F   8D 42 0C   STA &0C42
      2D32   A2 03      LDX #&03
      2D34   D0 22      BNE &2D58
-.AnalysePolygon
+.GetPolygonLines
      2D36   A5 25      LDA &25
      2D38   05 05      ORA &05
      2D3A   24 3B      BIT &3B
@@ -7641,9 +7645,9 @@
 .apol21
      2EA5   E6 1E      INC &1E
      2EA7   4C 56 2E   JMP &2E56
-.apol22
+.C2EAA
      2EAA   4C 87 30   JMP &3087
-.apol23
+.C2EAD
      2EAD   60         RTS
 .sub_C2EAE
      2EAE   A5 3F      LDA &3F
@@ -17320,7 +17324,7 @@
      59FF   FF
 .iconBuffer
      5A00
-.polygonYawLeft
+.xPolygonLeft
      5A00   00
      5A01   00
      5A02   00
@@ -17577,7 +17581,7 @@
      5AFD   00
      5AFE   00
      5AFF   00
-.polygonYawRight
+.xPolygonRight
      5B00   00
      5B01   00
      5B02   00

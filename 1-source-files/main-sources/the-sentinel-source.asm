@@ -537,12 +537,20 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
+.L0030
+
+ SKIP 0                 \ ???
+
 .yVectorLo
 
  SKIP 1                 \ The y-coordinate of a vector (low byte)
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+
+.L0031
+
+ SKIP 0                 \ ???
 
 .zVectorLo
 
@@ -15729,11 +15737,11 @@
  ROR A                  \ in the polygon
  TAX
 
- LDA polygonYawRight,X  \ If the yaw angle of the right edge is less than the
- CMP polygonYawLeft,X   \ yaw angle of the left edge for the middle line, then
- BCC dpol2              \ the polygon must be facing away from us, so jump to
-                        \ dpol2 to return from the subroutine without drawing
-                        \ the polygon
+ LDA xPolygonRight,X    \ If the pixel x-coordinate of the right edge is less
+ CMP xPolygonLeft,X     \ than the pixel x-coordinate of the left edge for the
+ BCC dpol2              \ middle line, then the polygon must be facing away from
+                        \ us, so jump to dpol2 to return from the subroutine
+                        \ without drawing the polygon
 
  LDA #240               \ Set T = 240 - yPolygonTop - 1
  CLC                    \
@@ -16139,16 +16147,16 @@
                         \ down the polygon one pixel line at a time until we
                         \ reach the bottom
 
- LDA polygonYawRight,Y  \ Set A to the yaw angle of the right edge for the line
-                        \ we are drawing
+ LDA xPolygonRight,Y    \ Set A to the pixel x-coordinate of the right edge for
+                        \ the line we are drawing
 
- CMP polygonYawLeft,Y   \ If the yaw angle of the right edge is less than the
- BCC dpol2              \ yaw angle of the left edge for the line we are
-                        \ drawing, then the polygon must be facing away from us,
-                        \ so jump to dpol2 to return from the subroutine without
-                        \ drawing the polygon
+ CMP xPolygonLeft,Y     \ If the pixel x-coordinate of the right edge is less
+ BCC dpol2              \ than the pixel x-coordinate of the left edge for the
+                        \ line we are drawing, then the polygon must be facing
+                        \ away from us, so jump to dpol2 to return from the
+                        \ subroutine without drawing the polygon
 
- TAX                    \ Set X to the yaw angle of the right edge
+ TAX                    \ Set X to the pixel x-coordinate of the right edge
 
  SBC bufferYawLeft      \ Set A = A - bufferYawLeft
                         \
@@ -16222,10 +16230,10 @@
 
 .dpol15
 
- LDY yPolygonLine       \ Set A to the yaw angle of the left edge for the line
- LDA polygonYawLeft,Y   \ we are drawing
+ LDY yPolygonLine       \ Set A to the pixel x-coordinate of the left edge for
+ LDA xPolygonLeft,Y     \ the line we are drawing
 
- TAX                    \ Set X to the yaw angle of the left edge
+ TAX                    \ Set X to the pixel x-coordinate of the left edge
 
  CMP bufferYawRight     \ If A >= bufferYawRight then the left edge of the
  BCS dpol6              \ polygon is beyond the right edge of the buffer, so
@@ -19946,15 +19954,15 @@
  EOR #%10000000         \                   = -118 or -124
  STA maxYawAngleHi      \ ???
 
- LDA L298B,Y            \ Set the high byte of L0011Yaw(Hi Lo) to 10, 2, or 12
- STA L0011YawHi         \ Gets added to drawViewYawHi in AnalysePolygon ???
+ LDA buffersL011YawHi,Y \ Set the high byte of L0011Yaw(Hi Lo) to 10, 2, or 12
+ STA L0011YawHi         \ Gets added to drawViewYawHi in GetPolygonLines ???
 
  LDA buffersYawWidth,Y  \ Set bufferYawWidth to 112, 112 or 64 ???
  STA bufferYawWidth     \ 112 = 14 * 8, 64 = 8 * 8
 
  LDA buffersYawLeft,Y   \ Set bufferYawLeft to 80, 64, 96 ???
- STA bufferYawLeft      \ Gets subtracted from values in polygonYawRight or
-                        \ polygonYawLeft ???
+ STA bufferYawLeft      \ Gets subtracted from values in xPolygonRight or
+                        \ xPolygonLeft, so this must be in pixel coordinates ???
 
  CLC                    \ Set bufferYawRight = bufferYawLeft + bufferYawWidth
  ADC bufferYawWidth     \
@@ -19971,14 +19979,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L298B
+\       Name: buffersL011YawHi
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L298B
+.buffersL011YawHi
 
  EQUB 10                \ Left row buffer ???
 
@@ -20595,11 +20603,12 @@
                         \ efficient as we don't need to manage the x-coordinate
                         \ as a 16-bit value
 
- JSR AnalysePolygon     \ Analyse the polygon and prepare it for drawing into
-                        \ the screen buffer ???
+ JSR GetPolygonLines    \ Calculate the horizontal lines that make up the filled
+                        \ polygon and prepare them for drawing into the screen
+                        \ buffer
 
- BCS poly1              \ If the call to AnalysePolygon set the C flag then ???,
-                        \ so jump to poly1 to skip the following
+ BCS poly1              \ If the call to GetPolygonLines set the C flag then
+                        \ ???, so jump to poly1 to skip the following
 
  JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
                         \ shape from top to bottom, horizontal and line by line
@@ -20647,11 +20656,12 @@
 
 .poly2
 
- JSR AnalysePolygon     \ Analyse the polygon and prepare it for drawing into
-                        \ the screen buffer ???
+ JSR GetPolygonLines    \ Calculate the horizontal lines that make up the filled
+                        \ polygon and prepare them for drawing into the screen
+                        \ buffer
 
- BCS poly3              \ If the call to AnalysePolygon set the C flag then ???,
-                        \ so jump to poly3 to return from the subroutine
+ BCS poly3              \ If the call to GetPolygonLines set the C flag then
+                        \ ???, so jump to poly3 to skip the following
 
  JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
                         \ shape from top to bottom, horizontal and line by line
@@ -22529,27 +22539,11 @@
 
 \ ******************************************************************************
 \
-\       Name: AnalysePolygon (Part 1 of ???)
+\       Name: GetPolygonLines (Part 1 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: Analyse a polygon and prepare it for drawing into the screen
-\             buffer
-\
-\ ------------------------------------------------------------------------------
-\
-\ Arguments:
-\
-\   polygonType         The polygon type
-\
-\ ------------------------------------------------------------------------------
-\
-\ Returns:
-\
-\   C flag              Status flag:
-\
-\                         * Clear if ???
-\
-\                         * Set if ???
+\    Summary: Calculate the points in a two-face tile polygon when it consists
+\             of a pair of triangles
 \
 \ ******************************************************************************
 
@@ -22614,10 +22608,36 @@
  LDX #3                 \ Set X = 3 to set as the value of polygonSideCount as
                         \ there are three sides in a triangle polygon
 
- BNE apol3              \ Jump to apol3 to set polygonSideCount = 3 and move on
-                        \ to part 3
+ BNE apol3              \ Jump to apol3 in part 1 to set polygonSideCount = 3
+                        \ and move on to part 4
 
-.AnalysePolygon
+\ ******************************************************************************
+\
+\       Name: GetPolygonLines (Part 2 of ???)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: The main entry point for the routine to calculate the horizontal
+\             lines in filled polygon and prepare them for drawing on-screen
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   polygonType         The polygon type
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   C flag              Status flag:
+\
+\                         * Clear if ???
+\
+\                         * Set if ???
+\
+\ ******************************************************************************
+
+.GetPolygonLines
 
  LDA xTileToDraw        \ Set A to the drawing table offset plus the column
  ORA drawingTableOffset \ number of the tile we are currently drawing, so if we
@@ -22673,7 +22693,7 @@
                         \ to do this
 
  BVS apol7              \ If bit 7 of polygonType is clear and bit 6 is set then
-                        \ we are drawing an object, so jump to part 3 as the
+                        \ we are drawing an object, so jump to part 4 as the
                         \ point numbers in polygonPoint are already set up
                         \ correctly for the polygon
 
@@ -22717,11 +22737,11 @@
 
  STX polygonSideCount   \ Set polygonSideCount to the value in X
 
- JMP apol7              \ Jump to part 3 to continue analysing the polygon
+ JMP apol7              \ Jump to part 4 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: AnalysePolygon (Part 2 of ???)
+\       Name: GetPolygonLines (Part 3 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -22764,11 +22784,11 @@
  DEY
  BPL apol5
 
- JMP apol9              \ Jump to part 4 to continue analysing the polygon
+ JMP apol9              \ Jump to part 5 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: AnalysePolygon (Part 3 of ???)
+\       Name: GetPolygonLines (Part 4 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -22809,24 +22829,25 @@
  LDA drawViewYawHi,X
  ADC L0011YawHi
 
- CMP #32                \ If the high byte in A >= 32, jump to part 2 to ???
+ CMP #32                \ If the high byte in A >= 32, jump to part 3 to ???
  BCS apol4              \ and return back to apol9
 
- ASL T
- ROL A
- ASL T
- ROL A
- ASL T
+ ASL T                  \ Set (A T) = (A T) * 8
+ ROL A                  \
+ ASL T                  \ To convert from yaw angles to PIXELS (160 per screen) ???
+ ROL A                  \
+ ASL T                  \ Screen width = 20 yaw angles, * 8 = 160 pixels wide
  ROL A
  STA L0B40Lo,X
 
- DEY
+ DEY                    \ Decrement the point counter in Y
 
- BPL apol8
+ BPL apol8              \ Loop back until we have converted all the point yaw
+                        \ angles into pixel y-coordinates
 
 \ ******************************************************************************
 \
-\       Name: AnalysePolygon (Part 4 of ???)
+\       Name: GetPolygonLines (Part 5 of ???)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -22837,11 +22858,11 @@
 
  LDA #0
  STA yPolygonTop
- STA zVectorLo
+ STA L0031
  STA L001E
  LDA #&FF
  STA yPolygonBottom
- STA yVectorLo
+ STA L0030
  STA L007F
  LDY #0
 
@@ -22944,10 +22965,10 @@
  BCS apol17
  STY yPolygonBottom
  STY yPolygonTop
- LDA yVectorLo
- STA polygonYawLeft,Y
- LDA zVectorLo
- STA polygonYawRight,Y
+ LDA L0030
+ STA xPolygonLeft,Y
+ LDA L0031
+ STA xPolygonRight,Y
  LDA #0
  STA L007F
 
@@ -22969,28 +22990,20 @@
 .apol19
 
  LDA L0B40Lo,X
- CMP zVectorLo
+ CMP L0031
  BCC apol20
- STA zVectorLo
+ STA L0031
 
 .apol20
 
- CMP yVectorLo
+ CMP L0030
  BCS apol21
- STA yVectorLo
+ STA L0030
 
 .apol21
 
  INC L001E
  JMP apol15
-
-.apol22
-
- JMP sub_C3087
-
-.apol23
-
- RTS
 
 \ ******************************************************************************
 \
@@ -23001,14 +23014,22 @@
 \
 \ ******************************************************************************
 
+.C2EAA
+
+ JMP sub_C3087
+
+.C2EAD
+
+ RTS
+
 .sub_C2EAE
 
  LDA vectorPitchAngleLo
  BMI C2EC2
- BNE apol23
+ BNE C2EAD
  LDA L0016
  CMP maxPitchAngle
- BCS apol23
+ BCS C2EAD
  CMP yPolygonBottom
  BCS C2EC6
  CMP minPitchAngle
@@ -23025,11 +23046,11 @@
 .C2EC6
 
  LDA vectorYawAngleHi
- BMI apol23
+ BMI C2EAD
  BNE C2EDA
  LDA L001A
  CMP minPitchAngle
- BCC apol23
+ BCC C2EAD
  CMP yPolygonTop
  BCC C2EE1
  CMP maxPitchAngle
@@ -23049,7 +23070,7 @@
 
  LDA L0041
  ORA L0042
- BNE apol22
+ BNE C2EAA
  LDA L0018
  SEC
  SBC L0039
@@ -23443,7 +23464,7 @@ L2F79 = C2F77+2
 L30EA = C30E9+1
 L30EB = C30E9+2
 
- STX polygonYawLeft
+ STX xPolygonLeft
  DEC L30EA
  BEQ C30F8
 
@@ -23516,7 +23537,7 @@ L30EB = C30E9+2
 L3149 = C3148+1
 L314A = C3148+2
 
- STX polygonYawLeft
+ STX xPolygonLeft
  DEC U
  BNE C3137
  JMP CRE26
@@ -25632,7 +25653,7 @@ L314A = C3148+2
 \       Name: ProcessMusic
 \       Type: Subroutine
 \   Category: Sound
-\    Summary: ???
+\    Summary: Play the configured music in the background
 \
 \ ******************************************************************************
 
@@ -35715,19 +35736,19 @@ L314A = C3148+2
 .iconBuffer
 
  SKIP 0                 \ The icon screen buffer shares memory with the
-                        \ polygonYawLeft variable
+                        \ xPolygonLeft variable
 
 \ ******************************************************************************
 \
-\       Name: polygonYawLeft
+\       Name: xPolygonLeft
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: The yaw angle of the left edge of each pixel line in the polygon
-\             being drawn
+\    Summary: The pixel x-coordinate of the left edge of each pixel line in the
+\             polygon being drawn
 \
 \ ******************************************************************************
 
-.polygonYawLeft
+.xPolygonLeft
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -35764,15 +35785,15 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: polygonYawRight
+\       Name: xPolygonRight
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: The yaw angle of the right edge of each pixel line in the polygon
-\             being drawn
+\    Summary: The pixel x-coordinate of the right edge of each pixel line in the
+\             polygon being drawn
 \
 \ ******************************************************************************
 
-.polygonYawRight
+.xPolygonRight
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
@@ -35823,12 +35844,12 @@ L314A = C3148+2
                         \ for storing tile data that can be discarded once the
                         \ landscape is generated
                         \
-                        \ During gameplay it is used to store the polygonYawLeft
-                        \ and polygonYawRight tables
+                        \ During gameplay it is used to store the xPolygonLeft
+                        \ and xPolygonRight tables
                         \
                         \ These lines rewind BeebAsm's assembly back to &5A00
                         \ and clear the block from that point to the end of the
-                        \ polygonYawLeft and polygonYawRight variables at &5C00,
+                        \ xPolygonLeft and xPolygonRight variables at &5C00,
                         \ so we can assemble the landscape variables
                         \
                         \ The game binary actually contains snippets of the
