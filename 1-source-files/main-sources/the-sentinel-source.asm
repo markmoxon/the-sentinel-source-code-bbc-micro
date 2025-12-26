@@ -842,8 +842,20 @@
 .considerObjects
 
  SKIP 0                 \ Controls whether the GetTileAltitude routine takes
-                        \ platforms and objects into consideration when
-                        \ calculating tile altitudes
+                        \ platform objects into consideration when calculating
+                        \ tile altitudes (bit 7) and returns details about the
+                        \ gaze vector (bit 6)
+                        \
+                        \   * Bit 7 set = if the tile contains a platform object
+                        \                 or a tree, include this in the tile
+                        \                 calculations
+                        \
+                        \   * Bit 6 set = tile contains a platform object and
+                        \                 the gaze vector is passing close by
+                        \                 the platform object but not hitting it
+                        \
+                        \ See the GetTileAltitude routine for details
+
 
 .secondAxis
 
