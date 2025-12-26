@@ -842,8 +842,8 @@
 .considerObjects
 
  SKIP 0                 \ Controls whether the GetTileAltitude routine takes
-                        \ objects into consideration when calculating tile
-                        \ altitudes
+                        \ platforms and objects into consideration when
+                        \ calculating tile altitudes
 
 .secondAxis
 
@@ -11935,7 +11935,8 @@
 \   C flag              Status flag:
 \
 \                         * Clear if the viewing object can see a tile along
-\                           the gaze vector
+\                           the gaze vector (or, if enemyCheckingRobot is set,
+\                           if the viewing object can see a robot)
 \
 \                         * Set if the viewing object can't see a tile along
 \                           the gaze vector
@@ -12030,8 +12031,8 @@
                         \ at a tile
 
  LDA #%10000000         \ Set bit 7 and clear bit 6 of considerObjects so the
- STA considerObjects    \ following call GetTileAltitude will include platform
-                        \ objects in its calculations
+ STA considerObjects    \ following call to GetTileAltitude will include trees
+                        \ and platform objects in its calculations
 
  STA L000C              \ Set L000C = 128 ???
 
@@ -12063,6 +12064,13 @@
                         \
                         \   * boulderOnTile has bit 7 set if the tile contains a
                         \     boulder
+                        \
+                        \   * considerObjects has bit 6 if the tile contains a
+                        \     boulder or the Sentinel's tower and the current
+                        \     position along the gaze vector is not within the
+                        \     platform object (so the gaze vector is passing
+                        \     close by the platform object but is not hitting
+                        \     it)
 
  BCS gaze5              \ If the tile is not flat, jump to gaze5 to calculate
                         \ the gaze vector's interaction with the tile slopes
@@ -12112,9 +12120,16 @@
  BCS gaze4              \ subroutine with the C flag set to indicate that the
                         \ viewer is not looking at a tile ???
 
- BIT considerObjects    \ If bit 6 of considerObjects is set then jump to gaze4
- BVS gaze4              \ to return from the subroutine with the C flag set to
-                        \ indicate that the viewer is not looking at a tile ???
+ BIT considerObjects    \ If bit 6 of considerObjects is set then the tile
+ BVS gaze4              \ contains a boulder or the Sentinel's tower and the
+                        \ current position along the gaze vector is not within
+                        \ the platform object (so the gaze vector is passing
+                        \ close by the platform object but is not hitting it),
+                        \ so jump to gaze4 to return from the subroutine with
+                        \ the C flag set to indicate that the viewer is not
+                        \ looking at a tile, as the platform will be at least
+                        \ partially obscuring any tiles that are visible to the
+                        \ sides of the boulder or tower
 
  LDA enemyCheckingRobot \ If bit 7 is set in either of enemyCheckingRobot and
  ORA boulderOnTile      \ boulderOnTile, skip the following test, as we do not
@@ -12841,7 +12856,7 @@
                         \
                         \ Multiplying these two therefore gives us the height of
                         \ the point along the edge that corresponds to the
-                        \ current position of the gaze vector
+                        \ current position along the gaze vector
                         \
                         \ This height is relative to the tile corner at the
                         \ start of the edge (i.e. corner X), so to get the
@@ -12862,7 +12877,7 @@
  LDA yCoordLo           \ Set (A *) = yCoord(Hi Lo) - (U T)
  SEC                    \
  SBC T                  \ So A contains the high byte of the difference in
- LDA yCoordHi           \ altitude between the current position of the gaze
+ LDA yCoordHi           \ altitude between the current position along the gaze
  SBC U                  \ vector and the point on the edge that corresponds to
                         \ the vector
 
@@ -12947,7 +12962,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Calculate the altitude of a tile, optionally including platform
-\             object and trees in the calculation
+\             objects and trees in the calculation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13020,6 +13035,13 @@
 \                         * Bit 7 set = tile contains a tree that can be seen by
 \                                       the gaze vector
 \
+\   considerObjects     If bit 7 of considerObjects is set then bit 6 will also
+\                       be set by the routine if the tile contains a platform
+\                       object (i.e. boulder or Sentinel's tower) and the
+\                       current position alonf the gaze vector is not within the
+\                       platform object (so the gaze vector is passing close by
+\                       the platform object but is not hitting it)
+\
 \ ******************************************************************************
 
 .GetTileAltitude
@@ -13089,8 +13111,8 @@
  BCS data6              \ the centre of the tile (i.e. more than 100/128 = 78%
                         \ of the distance from the centre to the tile edge,
                         \ which is outside the body of the tower), so jump to
-                        \ data6 to return the altitude of the tile rather than
-                        \ the tower
+                        \ data6 to set bit 6 of considerObjects and return the
+                        \ altitude of the tile
 
                         \ If we get here then the gaze vector is pointing at the
                         \ sides of the tower, so we return the altitude of the
@@ -13160,8 +13182,8 @@
  BCS data6              \ from the centre of the tile (i.e. more than 64/128 =
                         \ 50% of the distance from the centre to the tile edge,
                         \ which is outside the body of the tree or boulder), so
-                        \ jump to data6 to return the altitude of the tile
-                        \ rather than the tree or boulder
+                        \ jump to data6 to set bit 6 of considerObjects (if this
+                        \ is a boulder) and return the altitude of the tile
 
  LDA objectTypes,Y      \ If object #Y is a tree (an object of type 2), jump to
  CMP #2                 \ data5
@@ -13219,8 +13241,7 @@
 
  BMI data6              \ If A is negative then the current position along the
                         \ gaze vector is above the top of the tree, so jump to
-                        \ data6 to return the altitude of the tile rather than
-                        \ the tree
+                        \ data6 to return the altitude of the tile
 
  LSR A                  \ Set (A U) = (A U) / 2
  ROR U                  \
@@ -13234,7 +13255,7 @@
                         \
                         \ This means the gaze vector is too far below the tree
                         \ for it to be visible, so jump to data6 to return the
-                        \ altitude of the tile rather than the tree
+                        \ altitude of the tile
 
  LDA U                  \ If we get here then we know A >> 1 = 0, so we can
  ROR A                  \ halve (U A) again and discard the top byte, as it will
@@ -13252,7 +13273,7 @@
  CMP T                  \ If A < T then the gaze is further from the centre of
  BCC data6              \ the tile than the height difference to the tree top
                         \ divided by 4, so jump to data6 to return the altitude
-                        \ of the tile rather than the tree
+                        \ of the tile
                         \
                         \ The centre point of the tile is the tree trunk, so
                         \ this test means that gazes at the lower parts of the
@@ -13278,8 +13299,13 @@
  CMP #2                 \ If the tile contains a tree (an object of type 2),
  BEQ data7              \ jump to data7 to skip the following instruction
 
- LDA #%11000000         \ Set bits 6 and 7 of considerObjects ???
- STA considerObjects
+                        \ If we get here then the tile contains a boulder or the
+                        \ Sentinel's tower, and in either case the gaze vector
+                        \ is not close enough to the platform object to hit it
+
+ LDA #%11000000         \ Set bit 6 of considerObjects to denote that the gaze
+ STA considerObjects    \ vector is passing close by the platform object but is
+                        \ not hitting it, and set bit 7 so that it is unchanged
 
 .data7
 
