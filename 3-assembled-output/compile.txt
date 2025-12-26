@@ -28,6 +28,8 @@
      000B
 .L000C
      000C
+.yAccuracyLo
+     000C
 .zCounter
      000C
 .stashAddr
@@ -298,7 +300,7 @@
      0077
 .G
      0078
-.platformAltitudeLo
+.yPlatformLo
      0079
 .aLo
      007A

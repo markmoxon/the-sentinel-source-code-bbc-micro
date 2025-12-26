@@ -165,6 +165,22 @@
 
  SKIP 0                 \ ???
 
+.yAccuracyLo
+
+ SKIP 0                 \ The vertical accuracy for considering a tile as being
+                        \ seen by the viewer, as a fractional part
+                        \
+                        \ The default for tiles is 128, so the gaze vector has
+                        \ to be no more than 0.5 of a tile's height above the
+                        \ tile for us to consider it as potentially hitting the
+                        \ tile
+                        \
+                        \ For the Sentinel's tile the accuracy is only 16, so
+                        \ the gaze vector has to be more than 0.0625 of a tile's
+                        \ height above the top of the Sentinel's tower (this
+                        \ makes the player have to be much more accurate when
+                        \ trying to view the Sentinel's tile)
+
 .zCounter
 
  SKIP 0                 \ A counter to iterate along tiles in the z-axis
@@ -972,7 +988,7 @@
 
  SKIP 1                 \ Temporary storage, used in a number of places
 
-.platformAltitudeLo
+.yPlatformLo
 
  SKIP 1                 \ The low byte of the altitude of the Sentinel's tower
                         \ or boulder when returning tile data from the
@@ -12046,10 +12062,15 @@
  STA considerObjects    \ following call to GetTileAltitude will include trees
                         \ and platform objects in its calculations
 
- STA L000C              \ Set L000C = 128 ???
+ STA yAccuracyLo        \ Set yAccuracyLo = 128, so by default the gaze vector
+                        \ has to be no more than half a tile's height above a
+                        \ tile for us to consider it as potentially seeing the
+                        \ tile (this figure is changed for the Sentinel's tower
+                        \ to make the player have to be much more accurate when
+                        \ trying to view the Sentinel's tile)
 
- LDA #0                 \ Set platformAltitudeLo = 0, so if the tile doesn't
- STA platformAltitudeLo \ contain a platform, platformAltitudeLo will be zero
+ LDA #0                 \ Set yPlatformLo = 0, so if the tile doesn't contain
+ STA yPlatformLo        \ a platform, yPlatformLo will be zero
 
  STA boulderOnTile      \ Clear bit 7 of boulderOnTile to denote that the tile
                         \ does not contain a boulder, so GetTileAltitude can
@@ -12058,10 +12079,10 @@
  JSR GetTileAltitude    \ Call GetTileAltitude with bit 7 of considerObjects
                         \ set to extract the following tile data:
                         \
-                        \   * (A platformAltitudeLo) = if the tile contains a
-                        \     boulder or the Sentinel's tower, then this is set
-                        \     to the altitude of the platform object, +32 for
-                        \     the tower or +96 for the boulder
+                        \   * (A yPlatformLo) = if the tile contains a boulder
+                        \     or the Sentinel's tower, then this is set to the
+                        \     altitude of the platform object, plus 32 for the
+                        \     tower or plus 96 for the boulder
                         \
                         \   * A = if the tile contains a non-platform object
                         \         then this is set to the high byte of the
@@ -12083,6 +12104,10 @@
                         \     platform object (so the gaze vector is passing
                         \     close by the platform object but is not hitting
                         \     it)
+                        \
+                        \   * yAccuracyLo is changed from 128 to 16 if the tile
+                        \     contains the Sentinel's tower and the gaze vector
+                        \     is pointing at the sides of the tower
 
  BCS gaze5              \ If the tile is not flat, jump to gaze5 to calculate
                         \ the gaze vector's interaction with the tile slopes
@@ -12091,11 +12116,11 @@
                         \ an object
 
  TAX                    \ Set (X A) to the altitude of the platform (if there is
- LDA platformAltitudeLo \ one) or the altitude of the tile (is there isn't)
+ LDA yPlatformLo        \ one) or the altitude of the tile (is there isn't)
 
  SEC                    \ Set the following:
  SBC yCoordLo           \
- STA platformAltitudeLo \   (A platformAltitudeLo) = (X A) - yCoord(Hi Lo)
+ STA yPlatformLo        \   (A yPlatformLo) = (X A) - yCoord(Hi Lo)
  TXA                    \
  SBC yCoordHi           \ So this contains the relative altitude of the tile or
                         \ platform compared to our current position along the
@@ -12127,10 +12152,22 @@
                         \ If we get here then the gaze is currently sitting
                         \ within the "tile cube" above the tile
 
- LDA platformAltitudeLo \ If platformAltitudeLo >= L000C, then the platform is
- CMP L000C              \ too high, so jump to gaze4 to return from the
- BCS gaze4              \ subroutine with the C flag set to indicate that the
-                        \ viewer is not looking at a tile ???
+ LDA yPlatformLo        \ If yPlatformLo >= yAccuracyLo, then the vertical
+ CMP yAccuracyLo        \ distance between the gaze and the platform is greater
+ BCS gaze4              \ than the accuracy specified in yAccuracyLo, so jump to
+                        \ gaze4 to return from the subroutine with the C flag
+                        \ set to indicate that the viewer is not looking at a
+                        \ tile or object
+                        \
+                        \ Note that yAccuracyLo = 128 for all tiles (i.e. no
+                        \ more than 0.5 of a tile's height above the tile) apart
+                        \ from the tile containing the Sentinel's tower, when it
+                        \ is reduced to 16 if the gaze vector is pointing at the
+                        \ sides of the tower (i.e. no more than 0.025 of a
+                        \ tile's height above the tile)
+                        \
+                        \ This makes the player have to be much more accurate
+                        \ when trying to view the Sentinel's tile
 
  BIT considerObjects    \ If bit 6 of considerObjects is set then the tile
  BVS gaze4              \ contains a boulder or the Sentinel's tower and the
@@ -13008,7 +13045,7 @@
 \ Returns:
 \
 \   A                   The high byte of the tile's altitude (though if bit 7 of
-\                       considerObjects is set, see platformAltitudeLo below)
+\                       considerObjects is set, see yPlatformLo below)
 \
 \   C flag              The tile's shape:
 \
@@ -13016,10 +13053,10 @@
 \
 \                         * Set if the tile is not flat
 \
-\   platformAltitudeLo  If bit 7 of considerObjects is set and the tile contains
+\   yPlatformLo         If bit 7 of considerObjects is set and the tile contains
 \                       the Sentinel's tower or a boulder, the altitude of the
 \                       platform on the top of the tower or boulder is returned
-\                       in (A platformAltitudeLo)
+\                       in (A yPlatformLo)
 \
 \   boulderOnTile       If bit 7 of considerObjects is set, this records whether
 \                       the tile contains a boulder:
@@ -13053,6 +13090,9 @@
 \                       current position alonf the gaze vector is not within the
 \                       platform object (so the gaze vector is passing close by
 \                       the platform object but is not hitting it)
+\
+\   yAccuracyLo         Set to 16 if the tile contains the Sentinel's tower and
+\                       the gaze vector is pointing at the sides of the tower
 \
 \ ******************************************************************************
 
@@ -13130,13 +13170,17 @@
                         \ sides of the tower, so we return the altitude of the
                         \ platform on top of the tower
 
- LDA #16                \ Set L000C = 16 ???
- STA L000C
+ LDA #16                \ Set yAccuracyLo = 16, so the gaze vector has to be
+ STA yAccuracyLo        \ no more than 0.025 of a tile's height above the tile
+                        \ for us to consider it as potentially hitting the tile
+                        \ when we return to the FollowGazeVector routine (this
+                        \ makes the player have to be much more accurate when
+                        \ trying to view the Sentinel's tile)
 
  LDA yObjectLo,Y        \ Set the following:
  CLC                    \
- ADC #&20               \   (A platformAltitudeLo) = yObject(Hi Lo) + 32
- STA platformAltitudeLo \
+ ADC #&20               \   (A yPlatformLo) = yObject(Hi Lo) + 32
+ STA yPlatformLo        \
  LDA yObjectHi,Y        \ where yObject is the altitude of the Sentinel's tower
  ADC #&00               \
                         \ So we return the altitude of the top of the tower by
@@ -13209,8 +13253,8 @@
 
  LDA yObjectLo,Y        \ Set the following:
  SEC                    \
- SBC #&60               \   (A platformAltitudeLo) = yObject(Hi Lo) - 96
- STA platformAltitudeLo \
+ SBC #&60               \   (A yPlatformLo) = yObject(Hi Lo) - 96
+ STA yPlatformLo        \
  LDA yObjectHi,Y        \ where yObject is the altitude of the boulder
  SBC #&00
                         \ So we return the altitude of the top of the boulder by
