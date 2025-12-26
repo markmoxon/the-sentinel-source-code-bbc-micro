@@ -2225,7 +2225,7 @@
      0B3D   00
      0B3E   10
      0B3F   10
-.L0B40Hi
+.xPolygonPointHi
      0B40   10
      0B41   10
      0B42   10
@@ -5175,11 +5175,11 @@
      1DF3   4A         LSR A
      1DF4   C0 01      CPY #&01
      1DF6   60         RTS
-.data1
+.tile1
      1DF7   CC 58 0C   CPY &0C58
      1DFA   D0 03      BNE &1DFF
      1DFC   6E 56 0C   ROR &0C56
-.data2
+.tile2
      1DFF   B9 40 0A   LDA &0A40,Y
      1E02   C9 03      CMP #&03
      1E04   F0 2B      BEQ &1E31
@@ -5200,13 +5200,13 @@
      1E24   69 00      ADC #&00
      1E26   18         CLC
      1E27   60         RTS
-.data3
+.tile3
      1E28   29 3F      AND #&3F
      1E2A   A8         TAY
      1E2B   24 60      BIT &60
      1E2D   10 5E      BPL &1E8D
      1E2F   30 C6      BMI &1DF7
-.data4
+.tile4
      1E31   20 98 1E   JSR &1E98
      1E34   C9 40      CMP #&40
      1E36   B0 4A      BCS &1E82
@@ -5223,7 +5223,7 @@
      1E4E   E9 00      SBC #&00
      1E50   18         CLC
      1E51   60         RTS
-.data5
+.tile5
      1E52   B9 00 0A   LDA &0A00,Y
      1E55   38         SEC
      1E56   E5 38      SBC &38
@@ -5250,13 +5250,13 @@
      1E7C   30 04      BMI &1E82
      1E7E   38         SEC
      1E7F   6E DD 0C   ROR &0CDD
-.data6
+.tile6
      1E82   B9 40 0A   LDA &0A40,Y
      1E85   C9 02      CMP #&02
      1E87   F0 04      BEQ &1E8D
      1E89   A9 C0      LDA #&C0
      1E8B   85 60      STA &60
-.data7
+.tile7
      1E8D   B9 00 01   LDA &0100,Y
      1E90   C9 40      CMP #&40
      1E92   B0 94      BCS &1E28
@@ -16225,7 +16225,7 @@
      549D   50
      549E   4E
      549F   4F
-.L0B40Lo
+.xPolygonPointLo
      54A0   00
      54A1   00
      54A2   00

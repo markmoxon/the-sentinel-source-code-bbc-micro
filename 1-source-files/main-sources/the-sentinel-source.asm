@@ -1626,14 +1626,14 @@
 
 \ ******************************************************************************
 \
-\       Name: L0B40Hi
+\       Name: xPolygonPointHi
 \       Type: Variable
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L0B40Hi
+.xPolygonPointHi
 
  EQUB &10, &10, &10, &10, &10, &10, &10, &10    \ These values are workspace
  EQUB &10, &10, &10, &10, &10, &10, &10, &10    \ noise and have no meaning
@@ -13102,7 +13102,7 @@
                         \ (xTile, zTile), setting the C flag if the tile
                         \ contains an object
 
- BCS data3              \ If the tile contains an object then jump to data3
+ BCS tile3              \ If the tile contains an object then jump to tile3
 
  PHA                    \ Store the tile data on the stack
 
@@ -13122,30 +13122,30 @@
 
  RTS                    \ Return from the subroutine
 
-.data1
+.tile1
 
                         \ If we get here then the tile contains object #Y and
                         \ bit 7 of considerObjects is set, so we need to process
                         \ the objects on the stack
 
  CPY targetObject       \ If Y = targetObject then the target object is on the
- BNE data2              \ tile, so set bit 7 of targetOnTile to indicate this
+ BNE tile2              \ tile, so set bit 7 of targetOnTile to indicate this
  ROR targetOnTile
 
-.data2
+.tile2
 
  LDA objectTypes,Y      \ Set A to the type of object that's already on the tile
                         \ (i.e. the type of object #Y)
 
  CMP #3                 \ If the tile contains a boulder (an object of type 3),
- BEQ data4              \ jump to data4 to extract details about the boulder
+ BEQ tile4              \ jump to tile4 to extract details about the boulder
 
  CMP #2                 \ If the tile contains a tree (an object of type 2),
- BEQ data4              \ jump to data4 to extract details about the tree
+ BEQ tile4              \ jump to tile4 to extract details about the tree
 
  CMP #6                 \ If the tile doesn't contain the Sentinel's tower (type
- BNE data7              \ 6) then it must contain a robot, sentry, meanie or the
-                        \ Sentinel, so jump to data7 to return the altitude of
+ BNE tile7              \ 6) then it must contain a robot, sentry, meanie or the
+                        \ Sentinel, so jump to tile7 to return the altitude of
                         \ the tile rather than the object
 
                         \ If we get here then the tile contains the Sentinel's
@@ -13160,10 +13160,10 @@
                         \ of the x-coordinate and z-coordinate
 
  CMP #100               \ If A >= 100 then the gaze vector is a long way from
- BCS data6              \ the centre of the tile (i.e. more than 100/128 = 78%
+ BCS tile6              \ the centre of the tile (i.e. more than 100/128 = 78%
                         \ of the distance from the centre to the tile edge,
                         \ which is outside the body of the tower), so jump to
-                        \ data6 to set bit 6 of considerObjects and return the
+                        \ tile6 to set bit 6 of considerObjects and return the
                         \ altitude of the tile
 
                         \ If we get here then the gaze vector is pointing at the
@@ -13196,7 +13196,7 @@
 
  RTS                    \ Return from the subroutine
 
-.data3
+.tile3
 
                         \ If we get here then the tile contains an object
 
@@ -13205,8 +13205,8 @@
                         \ bits 0 to 5, so extract the object number into Y (so
                         \ the tile effectively contains object #Y)
 
- BIT considerObjects    \ If bit 7 of considerObjects is clear, jump to data7 to
- BPL data7              \ return the altitude of the bottom object on the tile,
+ BIT considerObjects    \ If bit 7 of considerObjects is clear, jump to tile7 to
+ BPL tile7              \ return the altitude of the bottom object on the tile,
                         \ iterating down through the stack of objects if there
                         \ is more than one object
                         \
@@ -13215,13 +13215,13 @@
                         \ return the tile's altitude from the subroutine, as per
                         \ bit 7 of considerObjects
 
- BMI data1              \ Otherwise bit 7 of considerObjects is set and we need
+ BMI tile1              \ Otherwise bit 7 of considerObjects is set and we need
                         \ to take any objects on the tile into consideration, so
-                        \ jump to data1 to process the objects on the stack
+                        \ jump to tile1 to process the objects on the stack
                         \ (this BMI is effectively a JMP as we just passed
                         \ through a BPL)
 
-.data4
+.tile4
 
                         \ If we get here then the tile contains a tree or a
                         \ boulder in object #Y
@@ -13235,15 +13235,15 @@
                         \ of the x-coordinate and z-coordinate
 
  CMP #64                \ If A >= 64 then the gaze vector is more than half way
- BCS data6              \ from the centre of the tile (i.e. more than 64/128 =
+ BCS tile6              \ from the centre of the tile (i.e. more than 64/128 =
                         \ 50% of the distance from the centre to the tile edge,
                         \ which is outside the body of the tree or boulder), so
-                        \ jump to data6 to set bit 6 of considerObjects (if this
+                        \ jump to tile6 to set bit 6 of considerObjects (if this
                         \ is a boulder) and return the altitude of the tile
 
  LDA objectTypes,Y      \ If object #Y is a tree (an object of type 2), jump to
- CMP #2                 \ data5
- BEQ data5
+ CMP #2                 \ tile5
+ BEQ tile5
 
                         \ If we get here then the tile contains a boulder in
                         \ object #Y
@@ -13270,7 +13270,7 @@
 
  RTS                    \ Return from the subroutine
 
-.data5
+.tile5
 
                         \ If we get here then the tile contains a tree in
                         \ object #Y
@@ -13295,9 +13295,9 @@
  PLA                    \ so it is effectively the height difference between the
  ADC #&00               \ gaze and the tree top
 
- BMI data6              \ If A is negative then the current position along the
+ BMI tile6              \ If A is negative then the current position along the
                         \ gaze vector is above the top of the tree, so jump to
-                        \ data6 to return the altitude of the tile
+                        \ tile6 to return the altitude of the tile
 
  LSR A                  \ Set (A U) = (A U) / 2
  ROR U                  \
@@ -13305,12 +13305,12 @@
                         \ gaze and tree top
 
  LSR A                  \ If any of bits 1 to 7 of A are set then A >> 1 will be
- BNE data6              \ non-zero and the original value of (A U) must have
+ BNE tile6              \ non-zero and the original value of (A U) must have
                         \ been at least %100, so that's a positive value with a
                         \ high byte of at least 4
                         \
                         \ This means the gaze vector is too far below the tree
-                        \ for it to be visible, so jump to data6 to return the
+                        \ for it to be visible, so jump to tile6 to return the
                         \ altitude of the tile
 
  LDA U                  \ If we get here then we know A >> 1 = 0, so we can
@@ -13327,8 +13327,8 @@
                         \ horizontal axes
 
  CMP T                  \ If A < T then the gaze is further from the centre of
- BCC data6              \ the tile than the height difference to the tree top
-                        \ divided by 4, so jump to data6 to return the altitude
+ BCC tile6              \ the tile than the height difference to the tree top
+                        \ divided by 4, so jump to tile6 to return the altitude
                         \ of the tile
                         \
                         \ The centre point of the tile is the tree trunk, so
@@ -13341,19 +13341,19 @@
                         \ detection code more accurate
 
  BIT targetOnTile       \ If bit 7 of targetOnTile is set then the tree is
- BMI data6              \ the targeted object, so skip the following so that we
+ BMI tile6              \ the targeted object, so skip the following so that we
                         \ only set bit 7 of gazeCanSeeTree if the tree is not
                         \ the target (i.e. if bit 7 of targetOnTile is clear)
 
  SEC                    \ Set bit 7 of gazeCanSeeTree to indicate that the tree
  ROR gazeCanSeeTree     \ can be seen by the gaze vector
 
-.data6
+.tile6
 
  LDA objectTypes,Y      \ Set A to the type of object #Y
 
  CMP #2                 \ If the tile contains a tree (an object of type 2),
- BEQ data7              \ jump to data7 to skip the following instruction
+ BEQ tile7              \ jump to tile7 to skip the following instruction
 
                         \ If we get here then the tile contains a boulder or the
                         \ Sentinel's tower, and in either case the gaze vector
@@ -13363,13 +13363,13 @@
  STA considerObjects    \ vector is passing close by the platform object but is
                         \ not hitting it, and set bit 7 so that it is unchanged
 
-.data7
+.tile7
 
  LDA objectFlags,Y      \ Set A to the object flags for object #Y
 
  CMP #%01000000         \ If bit 6 of the object flags for object #Y is set
- BCS data3              \ then object #Y is stacked on top of another object,
-                        \ so jump to data3 with the object number in bits 0 to
+ BCS tile3              \ then object #Y is stacked on top of another object,
+                        \ so jump to tile3 with the object number in bits 0 to
                         \ 5 of the object flags in A, so we can process that
                         \ object instead
 
@@ -15975,8 +15975,8 @@
 
  TYA                    \ Set A = Y mod 8
  AND #%00000111         \
-                        \ So A is the number of the polygon pixel line within the
-                        \ current character row
+                        \ So A is the number of the polygon pixel line within
+                        \ the current character row
 
  BNE dpol11             \ If A is is non-zero then the next polygon line (which
                         \ will be on polygon pixel row A - 1) will still be in
@@ -22852,7 +22852,7 @@
  ROL A
  ROL T
  ROL A
- STA L0B40Lo,X
+ STA xPolygonPointLo,X
  LDA T
  ROL A
  AND #&07
@@ -22862,7 +22862,7 @@
 
 .apol6
 
- STA L0B40Hi,X
+ STA xPolygonPointHi,X
  DEY
  BPL apol5
 
@@ -22916,11 +22916,12 @@
 
  ASL T                  \ Set (A T) = (A T) * 8
  ROL A                  \
- ASL T                  \ To convert from yaw angles to PIXELS (160 per screen) ???
- ROL A                  \
+ ASL T                  \ To convert from yaw angles to PIXELS (160 per screen)
+ ROL A                  \ ???
  ASL T                  \ Screen width = 20 yaw angles, * 8 = 160 pixels wide
  ROL A
- STA L0B40Lo,X
+
+ STA xPolygonPointLo,X  \ ???
 
  DEY                    \ Decrement the point counter in Y
 
@@ -22983,8 +22984,8 @@
  STA V
  BIT L006C
  BVC apol13
- LDA L0B40Hi,Y
- ORA L0B40Hi,X
+ LDA xPolygonPointHi,Y
+ ORA xPolygonPointHi,X
  BEQ apol13
  LDA V
  BNE apol12
@@ -23000,8 +23001,8 @@
  LDA V
  BEQ apol14
  LDA #0
- STA L0B40Hi,Y
- STA L0B40Hi,X
+ STA xPolygonPointHi,Y
+ STA xPolygonPointHi,X
  JMP sub_C2FCC
 
 .apol14
@@ -23016,9 +23017,9 @@
  STA vectorPitchAngleLo
  LDA drawViewPitchLo,X
  STA L0016
- LDA L0B40Lo,Y
+ LDA xPolygonPointLo,Y
  STA L0018
- LDA L0B40Lo,X
+ LDA xPolygonPointLo,X
  STA L0039
  LDA #0
  STA L0041
@@ -23071,7 +23072,7 @@
 
 .apol19
 
- LDA L0B40Lo,X
+ LDA xPolygonPointLo,X
  CMP L0031
  BCC apol20
  STA L0031
@@ -23091,7 +23092,7 @@
 \
 \       Name: sub_C2EAE
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -23362,12 +23363,12 @@ L2F79 = C2F77+2
  STX L000E
  LDA #0
  STA vectorPitchAngleHi
- LDA L0B40Lo,Y
+ LDA xPolygonPointLo,Y
  SEC
- SBC L0B40Lo,X
+ SBC xPolygonPointLo,X
  STA T
- LDA L0B40Hi,Y
- SBC L0B40Hi,X
+ LDA xPolygonPointHi,Y
+ SBC xPolygonPointHi,X
  STA L000A
 
  JSR Absolute16Bit      \ Set (A T) = |A T|
@@ -23403,9 +23404,9 @@ L2F79 = C2F77+2
  STA L0043
  LDA T
  STA xCoordHi
- LDA L0B40Lo,Y
+ LDA xPolygonPointLo,Y
  STA L0039
- LDA L0B40Hi,Y
+ LDA xPolygonPointHi,Y
  STA L0042
  LDA drawViewPitchHi,Y
  STA vectorPitchAngleLo
@@ -23453,9 +23454,9 @@ L2F79 = C2F77+2
  STA L0016
  LDA drawViewPitchHi,X
  STA vectorPitchAngleLo
- LDA L0B40Lo,X
+ LDA xPolygonPointLo,X
  STA L0039
- LDA L0B40Hi,X
+ LDA xPolygonPointHi,X
  STA L0042
  LDA L001A
  SEC
@@ -23468,7 +23469,7 @@ L2F79 = C2F77+2
 \
 \       Name: sub_C3087
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -23667,7 +23668,7 @@ L314A = C3148+2
 \
 \       Name: sub_C316E
 \       Type: Subroutine
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
@@ -27252,7 +27253,7 @@ L314A = C3148+2
                         \ screen buffer into screen memory
 
                         \ Otherwise we are panning left or right, and we are
-                        \ scrolling right or left or up, so fall through into
+                        \ scrolling right or left, so fall through into
                         \ ShowBufferColumn to update the player's scrolling
                         \ landscape view by copying a two-pixel wide column from
                         \ the screen buffer into screen memory
@@ -33850,14 +33851,14 @@ L314A = C3148+2
 
 \ ******************************************************************************
 \
-\       Name: L0B40Lo
+\       Name: xPolygonPointLo
 \       Type: Variable
-\   Category: ???
+\   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.L0B40Lo
+.xPolygonPointLo
 
  EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
  EQUB &00, &00, &00, &00, &00, &00, &00, &00    \ noise and have no meaning
