@@ -190,8 +190,12 @@
      003C
 .vectorYawAngleLo
      003D
+.L003E
+     003E
 .vectorYawAngleHi
      003E
+.L003F
+     003F
 .vectorPitchAngleLo
      003F
 .vectorPitchAngleHi
@@ -204,7 +208,7 @@
      0043
 .triangleStartPoint
      0045
-.L004A
+.polygonSide
      004A
 .viewingQuadrantOpp
      004B
@@ -272,7 +276,7 @@
      006A
 .QQ
      006B
-.L006C
+.xPolygonPointScale
      006C
 .screenAddrHi
      006D
@@ -7429,7 +7433,7 @@
      2D10   00
      2D11   01
      2D12   01
-.apol1
+.gpol1
      2D13   A4 45      LDY &45
      2D15   50 07      BVC &2D1E
      2D17   18         CLC
@@ -7437,7 +7441,7 @@
      2D1A   29 3F      AND #&3F
      2D1C   C8         INY
      2D1D   C8         INY
-.apol2
+.gpol2
      2D1E   8D 40 0C   STA &0C40
      2D21   8D 43 0C   STA &0C43
      2D24   49 20      EOR #&20
@@ -7464,14 +7468,14 @@
      2D51   49 20      EOR #&20
      2D53   8D 43 0C   STA &0C43
      2D56   A2 04      LDX #&04
-.apol3
+.gpol3
      2D58   86 17      STX &17
      2D5A   4C 93 2D   JMP &2D93
-.apol4
+.gpol4
      2D5D   A9 C0      LDA #&C0
      2D5F   85 6C      STA &6C
      2D61   A4 17      LDY &17
-.apol5
+.gpol5
      2D63   B1 3C      LDA (&3C),Y
      2D65   AA         TAX
      2D66   BD A0 0B   LDA &0BA0,X
@@ -7493,16 +7497,16 @@
      2D84   C9 04      CMP #&04
      2D86   90 02      BCC &2D8A
      2D88   09 F8      ORA #&F8
-.apol6
+.gpol6
      2D8A   9D 40 0B   STA &0B40,X
      2D8D   88         DEY
      2D8E   10 D3      BPL &2D63
      2D90   4C BC 2D   JMP &2DBC
-.apol7
+.gpol7
      2D93   A9 00      LDA #&00
      2D95   85 6C      STA &6C
      2D97   A4 17      LDY &17
-.apol8
+.gpol8
      2D99   B1 3C      LDA (&3C),Y
      2D9B   AA         TAX
      2D9C   BD A0 0B   LDA &0BA0,X
@@ -7522,7 +7526,7 @@
      2DB6   9D A0 54   STA &54A0,X
      2DB9   88         DEY
      2DBA   10 DD      BPL &2D99
-.apol9
+.gpol9
      2DBC   A9 00      LDA #&00
      2DBE   85 06      STA &06
      2DC0   85 31      STA &31
@@ -7532,7 +7536,7 @@
      2DC8   85 30      STA &30
      2DCA   85 7F      STA &7F
      2DCC   A0 00      LDY #&00
-.apol10
+.gpol10
      2DCE   84 4A      STY &4A
      2DD0   B1 3C      LDA (&3C),Y
      2DD2   AA         TAX
@@ -7560,7 +7564,7 @@
      2DFD   85 0C      STA &0C
      2DFF   A9 00      LDA #&00
      2E01   E5 76      SBC &76
-.apol11
+.gpol11
      2E03   85 76      STA &76
      2E05   24 6C      BIT &6C
      2E07   50 13      BVC &2E1C
@@ -7571,16 +7575,16 @@
      2E13   D0 04      BNE &2E19
      2E15   A5 0C      LDA &0C
      2E17   F0 3D      BEQ &2E56
-.apol12
+.gpol12
      2E19   4C CC 2F   JMP &2FCC
-.apol13
+.gpol13
      2E1C   A5 76      LDA &76
      2E1E   F0 0B      BEQ &2E2B
      2E20   A9 00      LDA #&00
      2E22   99 40 0B   STA &0B40,Y
      2E25   9D 40 0B   STA &0B40,X
      2E28   4C CC 2F   JMP &2FCC
-.apol14
+.gpol14
      2E2B   A5 0C      LDA &0C
      2E2D   F0 67      BEQ &2E96
      2E2F   B9 E0 0A   LDA &0AE0,Y
@@ -7599,13 +7603,13 @@
      2E4F   85 41      STA &41
      2E51   85 42      STA &42
      2E53   20 AE 2E   JSR &2EAE
-.apol15
+.gpol15
      2E56   A4 4A      LDY &4A
      2E58   C8         INY
      2E59   C4 17      CPY &17
      2E5B   F0 03      BEQ &2E60
      2E5D   4C CE 2D   JMP &2DCE
-.apol16
+.gpol16
      2E60   A5 1E      LDA &1E
      2E62   C5 17      CMP &17
      2E64   D0 22      BNE &2E88
@@ -7624,7 +7628,7 @@
      2E81   99 00 5B   STA &5B00,Y
      2E84   A9 00      LDA #&00
      2E86   85 7F      STA &7F
-.apol17
+.gpol17
      2E88   A5 7F      LDA &7F
      2E8A   D0 08      BNE &2E94
      2E8C   A5 06      LDA &06
@@ -7632,19 +7636,19 @@
      2E90   90 02      BCC &2E94
      2E92   18         CLC
      2E93   60         RTS
-.apol18
+.gpol18
      2E94   38         SEC
      2E95   60         RTS
-.apol19
+.gpol19
      2E96   BD A0 54   LDA &54A0,X
      2E99   C5 31      CMP &31
      2E9B   90 02      BCC &2E9F
      2E9D   85 31      STA &31
-.apol20
+.gpol20
      2E9F   C5 30      CMP &30
      2EA1   B0 02      BCS &2EA5
      2EA3   85 30      STA &30
-.apol21
+.gpol21
      2EA5   E6 1E      INC &1E
      2EA7   4C 56 2E   JMP &2E56
 .C2EAA
@@ -7821,7 +7825,7 @@
 .C2FC6
      2FC6   CE 78 2F   DEC &2F78
      2FC9   4C 7A 2F   JMP &2F7A
-.sub_C2FCC
+.gpol22
      2FCC   86 0E      STX &0E
      2FCE   A9 00      LDA #&00
      2FD0   85 40      STA &40
@@ -7836,7 +7840,7 @@
      2FE6   85 75      STA &75
      2FE8   05 76      ORA &76
      2FEA   F0 0E      BEQ &2FFA
-.C2FEC
+.gpol23
      2FEC   46 76      LSR &76
      2FEE   66 0C      ROR &0C
      2FF0   46 75      LSR &75
@@ -7845,7 +7849,7 @@
      2FF5   26 40      ROL &40
      2FF7   4A         LSR A
      2FF8   D0 F2      BNE &2FEC
-.C2FFA
+.gpol24
      2FFA   A6 0C      LDX &0C
      2FFC   E0 FF      CPX #&FF
      2FFE   F0 EC      BEQ &2FEC
@@ -7868,7 +7872,7 @@
      3025   85 16      STA &16
      3027   A5 40      LDA &40
      3029   F0 29      BEQ &3054
-.C302B
+.gpol25
      302B   A5 16      LDA &16
      302D   85 1A      STA &1A
      302F   38         SEC
@@ -7890,7 +7894,7 @@
      304D   20 AE 2E   JSR &2EAE
      3050   C6 40      DEC &40
      3052   D0 D7      BNE &302B
-.C3054
+.gpol26
      3054   A5 16      LDA &16
      3056   85 1A      STA &1A
      3058   A5 3F      LDA &3F
@@ -7914,7 +7918,7 @@
      307F   85 0C      STA &0C
      3081   20 AE 2E   JSR &2EAE
      3084   4C 56 2E   JMP &2E56
-.sub_C3087
+.gpol27
      3087   A5 18      LDA &18
      3089   38         SEC
      308A   E5 39      SBC &39
@@ -7930,11 +7934,11 @@
      309D   A9 00      LDA #&00
      309F   A0 E6      LDY #&E6
      30A1   4C AA 30   JMP &30AA
-.C30A4
+.gpol28
      30A4   A2 CA      LDX #&CA
      30A6   A9 FF      LDA #&FF
      30A8   A0 C6      LDY #&C6
-.C30AA
+.gpol29
      30AA   84 74      STY &74
      30AC   85 76      STA &76
      30AE   A4 0D      LDY &0D
@@ -7947,7 +7951,7 @@
      30BE   A5 3E      LDA &3E
      30C0   F0 01      BEQ &30C3
      30C2   C8         INY
-.C30C3
+.gpol30
      30C3   8C EA 30   STY &30EA
      30C6   A5 74      LDA &74
      30C8   8D 0A 31   STA &310A
@@ -7961,43 +7965,43 @@
      30D5   A6 18      LDX &18
      30D7   20 6E 31   JSR &316E
      30DA   4C E9 30   JMP &30E9
-.P30DD
+.gpol31
      30DD   65 0D      ADC &0D
      30DF   90 08      BCC &30E9
      30E1   E5 0C      SBC &0C
-.C30E3
+.gpol32
      30E3   E8         INX
      30E4   E4 76      CPX &76
      30E6   18         CLC
      30E7   F0 21      BEQ &310A
-.C30E9
+.gpol33
      30E9   8E 00 5A   STX &5A00
      30EC   CE EA 30   DEC &30EA
      30EF   F0 07      BEQ &30F8
-.C30F1
+.gpol34
      30F1   C6 75      DEC &75
      30F3   D0 E8      BNE &30DD
      30F5   4C 36 2F   JMP &2F36
-.C30F8
+.gpol35
      30F8   C6 3E      DEC &3E
      30FA   10 03      BPL &30FF
      30FC   4C 36 2F   JMP &2F36
-.C30FF
+.gpol36
      30FF   D0 F0      BNE &30F1
      3101   CE EA 30   DEC &30EA
      3104   20 6E 31   JSR &316E
      3107   4C F1 30   JMP &30F1
-.C310A
+.gpol37
      310A   E6 41      INC &41
      310C   20 6E 31   JSR &316E
      310F   4C E9 30   JMP &30E9
-.C3112
+.gpol38
      3112   8D 4A 31   STA &314A
      3115   8E 37 31   STX &3137
      3118   A5 3E      LDA &3E
      311A   F0 01      BEQ &311D
      311C   C8         INY
-.C311D
+.gpol39
      311D   8C 49 31   STY &3149
      3120   A5 74      LDA &74
      3122   8D 64 31   STA &3164
@@ -8011,32 +8015,32 @@
      312F   A6 18      LDX &18
      3131   20 6E 31   JSR &316E
      3134   4C 48 31   JMP &3148
-.C3137
+.gpol40
      3137   E8         INX
      3138   E4 76      CPX &76
      313A   18         CLC
      313B   F0 27      BEQ &3164
-.C313D
+.gpol41
      313D   65 0C      ADC &0C
      313F   90 07      BCC &3148
      3141   E5 0D      SBC &0D
      3143   CE 49 31   DEC &3149
      3146   F0 0A      BEQ &3152
-.C3148
+.gpol42
      3148   8E 00 5A   STX &5A00
      314B   C6 75      DEC &75
      314D   D0 E8      BNE &3137
      314F   4C 36 2F   JMP &2F36
-.C3152
+.gpol43
      3152   C6 3E      DEC &3E
      3154   10 03      BPL &3159
      3156   4C 36 2F   JMP &2F36
-.C3159
+.gpol44
      3159   D0 ED      BNE &3148
      315B   CE 49 31   DEC &3149
      315E   20 6E 31   JSR &316E
      3161   4C 48 31   JMP &3148
-.C3164
+.gpol45
      3164   E6 41      INC &41
      3166   20 6E 31   JSR &316E
      3169   4C 3D 31   JMP &313D

@@ -705,12 +705,20 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
+.L003E
+
+ SKIP 0                 \ ???
+
 .vectorYawAngleHi
 
  SKIP 1                 \ The yaw angle of a vector (high byte)
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+
+.L003F
+
+ SKIP 0                 \ ???
 
 .vectorPitchAngleLo
 
@@ -743,9 +751,10 @@
  SKIP 5                 \ The number of the starting point for the tile shape
                         \ being drawn
 
-.L004A
+.polygonSide
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The number the side of the polygon that we are
+                        \ currently processing
 
 .viewingQuadrantOpp
 
@@ -925,9 +934,17 @@
 
  SKIP 1                 \ Temporary storage, used in the maths routines
 
-.L006C
+.xPolygonPointScale
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A flag to record whether the pixel x-coordinate of the
+                        \ polygon point being processed fits into one or two
+                        \ bytes
+                        \
+                        \   * Bit 6 clear = x-coordinate fits into one byte at
+                        \                   xPolygonPointLo
+                        \
+                        \   * Bit 6 set = x-coordinate fits into two bytes at
+                        \                 xPolygonPoint(Hi Lo)
 
 .screenAddrHi
 
@@ -13882,9 +13899,9 @@
  ORA #%11000000         \ with bits 6 and 7 set to indicate that the tile now
  STA (tileDataPage),Y   \ contains an object
 
- LDA #245               \ Set the object's pitch angle to 245, or -11 pitch
- STA objectPitchAngle,X \ angles, so the object looks down slightly at a pitch
-                        \ angle of 360 * 11 / 256 = 15.5 degrees
+ LDA #&F5               \ Set the object's pitch angle to -11, so the object
+ STA objectPitchAngle,X \ looks down slightly at a pitch angle of 15.5 degrees
+                        \ (as 360 * 11 / 256 = 15.5)
 
                         \ We now calculate the object's yaw angle, which
                         \ determines the direction in which it is facing
@@ -22621,7 +22638,7 @@
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 1 of ???)
+\       Name: GetPolygonLines (Part 1 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Calculate the points in a two-face tile polygon when it consists
@@ -22629,7 +22646,7 @@
 \
 \ ******************************************************************************
 
-.apol1
+.gpol1
 
                         \ If we get here then we are drawing a two-face tile as
                         \ a pair of triangles and A contains the offset of the
@@ -22648,9 +22665,9 @@
  LDY triangleStartPoint \ Set Y to the number of the starting point for this
                         \ tile shape ???
 
- BVC apol2              \ If bit 6 of polygonType is clear then we are drawing
+ BVC gpol2              \ If bit 6 of polygonType is clear then we are drawing
                         \ the first triangle in a two-face tile, so jump to
-                        \ apol2 to do this
+                        \ gpol2 to do this
 
                         \ If we get here then bit 6 and 7 of polygonType are
                         \ both set, so we are drawing the second triangle in a
@@ -22671,7 +22688,7 @@
  INY                    \
                         \ to give 2 or 3 ???
 
-.apol2
+.gpol2
 
  STA polygonPoint       \ Set the first triangle point to A
 
@@ -22690,12 +22707,12 @@
  LDX #3                 \ Set X = 3 to set as the value of polygonSideCount as
                         \ there are three sides in a triangle polygon
 
- BNE apol3              \ Jump to apol3 in part 1 to set polygonSideCount = 3
+ BNE gpol3              \ Jump to gpol3 in part 1 to set polygonSideCount = 3
                         \ and move on to part 4
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 2 of ???)
+\       Name: GetPolygonLines (Part 2 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: The main entry point for the routine to calculate the horizontal
@@ -22771,10 +22788,10 @@
                         \ polygonPoint for use in the polygon-drawing process
 
  BIT polygonType        \ If bit 7 of polygonType is set then we are drawing a
- BMI apol1              \ two-face tile as a pair of triangles, so jump to apol1
+ BMI gpol1              \ two-face tile as a pair of triangles, so jump to gpol1
                         \ to do this
 
- BVS apol7              \ If bit 7 of polygonType is clear and bit 6 is set then
+ BVS gpol7              \ If bit 7 of polygonType is clear and bit 6 is set then
                         \ we are drawing an object, so jump to part 4 as the
                         \ point numbers in polygonPoint are already set up
                         \ correctly for the polygon
@@ -22815,69 +22832,112 @@
  LDX #4                 \ Set X = 4 to set as the value of polygonSideCount as
                         \ there are four sides in a quadrilateral
 
-.apol3
+.gpol3
 
  STX polygonSideCount   \ Set polygonSideCount to the value in X
 
- JMP apol7              \ Jump to part 4 to continue analysing the polygon
+ JMP gpol7              \ Jump to part 4 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 3 of ???)
+\       Name: GetPolygonLines (Part 3 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
+\             (for larger yaw angles that convert into a 16-bit x-coordinate)
 \
 \ ******************************************************************************
 
-.apol4
+.gpol4
 
- LDA #&C0
- STA L006C
- LDY polygonSideCount
+ LDA #%11000000         \ Set bit 6 of xPolygonPointScale to indicate that the
+ STA xPolygonPointScale \ pixel x-coordinate of this polygon point needs to be
+                        \ stored as a two-byte number
 
-.apol5
+ LDY polygonSideCount   \ We now loop through all the points in the polygon, so
+                        \ set Y to count through the number of sides in the
+                        \ polygon that we are drawing (as that's also the number
+                        \ of unique points in the polygon)
 
- LDA (drawViewAngles),Y
- TAX
- LDA drawViewYawLo,X
- CLC
- ADC L0011YawLo
- STA T
+.gpol5
+
+ LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
+ TAX                    \ Y-th point in the polygon
+
+ LDA drawViewYawLo,X    \ Set (A T) = drawViewYaw(Hi Lo) + L0011Yaw(Hi Lo)
+ CLC                    \
+ ADC L0011YawLo         \ for the Y-th polygon point, so this adds the yaw angle
+ STA T                  \ offset in L0011Yaw(Hi Lo) to the polygon point ???
  LDA drawViewYawHi,X
  ADC L0011YawHi
- ASL T
- ROL A
- ROL T
- ROL A
- ROL T
- ROL A
- STA xPolygonPointLo,X
- LDA T
- ROL A
- AND #&07
- CMP #&04
- BCC apol6
- ORA #&F8
 
-.apol6
+ ASL T                  \ Set (A T) = (A T) * 8
+ ROL A                  \
+ ROL T                  \ So (A T) contains the yaw angle in pixels, which is
+ ROL A                  \ the same as a pixel x-coordinate, with the integer
+ ROL T                  \ part in A and the fractional part in T
+ ROL A                  \
+                        \ Also, the top three bits of the original A are in the
+                        \ bottom two bits of T and the C flag, as all but the
+                        \ first instruction are rotations rather than shifts
 
- STA xPolygonPointHi,X
- DEY
- BPL apol5
+ STA xPolygonPointLo,X  \ Store the pixel x-coordinate for the Y-th point of the
+                        \ polygon in the xPolygonPointLo table, storing the
+                        \ result at the offset given in the drawViewAngles table
+                        \ (i.e. in the correct place for the polygon point
+                        \ number in Y)
+                        \
+                        \ This stores the low byte of the two-byte value in
+                        \ (A T) * 8, so now we calculate and store the high byte
 
- JMP apol9              \ Jump to part 5 to continue analysing the polygon
+ LDA T                  \ Rotate the C flag into bit 0 of T and put the result 
+ ROL A                  \ in A, so top three bits of the original A are now in
+                        \ the bottom three bits of A
+
+ AND #%00000111         \ Clear all the other bits in A, so A just contains the
+                        \ top three bits of the original A
+                        \
+                        \ In other words, A now contains the overflow from the
+                        \ left-shifted (A T), which spilled out into a third top
+                        \ byte when the multiplication was applied
+
+ CMP #%00000100         \ If bit 2 of A is set then bit 7 of the original A must
+ BCC gpol6              \ have been set so the original yaw angle must have been
+ ORA #%11111000         \ negative, so set bits 3 to 7 of the top byte
+
+.gpol6
+
+ STA xPolygonPointHi,X  \ Store the pixel x-coordinate for the Y-th point of the
+                        \ polygon in the xPolygonPointHi table, storing the
+                        \ result at the offset given in the drawViewAngles table
+                        \ (i.e. in the correct place for the polygon point
+                        \ number in Y)
+                        \
+                        \ This stores the high byte of the two-byte value in
+                        \ (A T) * 8
+                        \
+                        \ So this calculation is for polygon points that have a
+                        \ pixel x-coordinate greater than 255 (as recorded by
+                        \ the set bit 6 in xPolygonPointScale)
+
+ DEY                    \ Decrement the point counter in Y
+
+ BPL gpol5              \ Loop back until we have converted all the polygon
+                        \ point yaw angles into pixel x-coordinates
+
+ JMP gpol9              \ Jump to part 5 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 4 of ???)
+\       Name: GetPolygonLines (Part 4 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
+\             (for smaller yaw angles that convert into an 8-bit x-coordinate)
 \
 \ ******************************************************************************
 
-.apol7
+.gpol7
 
                         \ By this point the point numbers in the polygon have
                         \ been set up as follows:
@@ -22890,131 +22950,196 @@
                         \
                         \ Each point number is given as an offset within the
                         \ drawing tables
+                        \
+                        \ We now calculate the pixel x-coordinates for each of
+                        \ these points, storing the results in xPolygonPointLo
+                        \ or xPolygonPoint(Hi Lo), depending on whether the
+                        \ pixel x-coordinates fit into one byte (when they are
+                        \ all in the range 0 to 255) or two bytes (when at least
+                        \ one x-coordinate is 256 or more)
 
- LDA #0                 \ Set L006C = 0 ???
- STA L006C
+ LDA #0                 \ Clear bit 6 of xPolygonPointScale to indicate that the
+ STA xPolygonPointScale \ pixel x-coordinate of this polygon point fits into one
+                        \ byte (we will change this if the x-coordinate ends up
+                        \ being too large to fit into the range 0 to 255)
 
  LDY polygonSideCount   \ We now loop through all the points in the polygon, so
                         \ set Y to count through the number of sides in the
                         \ polygon that we are drawing (as that's also the number
                         \ of unique points in the polygon)
 
-.apol8
+.gpol8
 
  LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
  TAX                    \ Y-th point in the polygon
 
  LDA drawViewYawLo,X    \ Set (A T) = drawViewYaw(Hi Lo) + L0011Yaw(Hi Lo)
  CLC                    \
- ADC L0011YawLo         \ for the Y-th polygon point
- STA T
+ ADC L0011YawLo         \ for the Y-th polygon point, so this adds the yaw angle
+ STA T                  \ offset in L0011Yaw(Hi Lo) to the polygon point ???
  LDA drawViewYawHi,X
  ADC L0011YawHi
 
- CMP #32                \ If the high byte in A >= 32, jump to part 3 to ???
- BCS apol4              \ and return back to apol9
+                        \ We now convert the point's yaw angle in (A T) into a
+                        \ pixel x-coordinate by multiplying the yaw angle by 8,
+                        \ as there are 20 yaw angles in a screen width, the
+                        \ screen is 160 pixels across, and 20 * 8 = 160
+
+ CMP #%00100000         \ If the high byte in A is %00100000 or more then
+ BCS gpol4              \ multiplying by 8 will overflow (as three left shifts
+                        \ will spill out of the end of the high byte), so jump
+                        \ up to part 3 to redo the x-coordinate calculations for
+                        \ all the polygon points, but this time storing the
+                        \ results in 16-bit numbers
+                        \
+                        \ After the calculations in part 3 are done, we will
+                        \ then jump straight on to part 5
+
+                        \ If we get here then the high byte in A is less than
+                        \ %00100000, so we can multiply by 8 without risk of
+                        \ overflow
 
  ASL T                  \ Set (A T) = (A T) * 8
  ROL A                  \
- ASL T                  \ To convert from yaw angles to PIXELS (160 per screen)
- ROL A                  \ ???
- ASL T                  \ Screen width = 20 yaw angles, * 8 = 160 pixels wide
+ ASL T                  \ So (A T) contains the yaw angle in pixels, which is
+ ROL A                  \ the same as a pixel x-coordinate, with the integer
+ ASL T                  \ part in A and the fractional part in T
  ROL A
 
- STA xPolygonPointLo,X  \ ???
+ STA xPolygonPointLo,X  \ Store the pixel x-coordinate for the Y-th point of the
+                        \ polygon in the xPolygonPointLo table, storing the
+                        \ result at the offset given in the drawViewAngles table
+                        \ (i.e. in the correct place for the polygon point
+                        \ number in Y)
+                        \
+                        \ So this calculation is for polygon points that have a
+                        \ pixel x-coordinate in the range 0 to 255 (as recorded
+                        \ by the clear bit 6 in xPolygonPointScale)
 
  DEY                    \ Decrement the point counter in Y
 
- BPL apol8              \ Loop back until we have converted all the point yaw
-                        \ angles into pixel y-coordinates
+ BPL gpol8              \ Loop back until we have converted all the polygon
+                        \ point yaw angles into pixel x-coordinates
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 5 of ???)
+\       Name: GetPolygonLines (Part 5 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.apol9
+.gpol9
 
- LDA #0
- STA yPolygonTop
- STA L0031
- STA L001E
- LDA #&FF
- STA yPolygonBottom
- STA L0030
- STA L007F
- LDY #0
+ LDA #0                 \ Set yPolygonTop = 0 to record the y-coordinate of the
+ STA yPolygonTop        \ top of the polygon, where higher y-coordinates are up
+                        \ the screen (so this sets the top of the polygon to the
+                        \ bottom of the screen, so we can bump it up as we work
+                        \ through the polygon)
 
-.apol10
+ STA L0031              \ Set L0031 = 0 ???
 
- STY L004A
- LDA (drawViewAngles),Y
- TAX
- INY
- LDA (drawViewAngles),Y
+ STA L001E              \ Set L001E = 0 ???
+
+ LDA #255               \ Set yPolygonBottom = 255 to record the y-coordinate of
+ STA yPolygonBottom     \ the bottom of the polygon, where higher y-coordinates
+                        \ are up the screen (so this sets the bottom of the
+                        \ polygon to the top of the screen, so we can move it
+                        \ down as we work through the polygon)
+
+ STA L0030              \ Set L0030 = 255 ???
+
+ STA L007F              \ Set L007F = 255 ???
+
+ LDY #0                 \ We now loop through all the sides of the polygon, so
+                        \ set a loop counter in Y to work through all the sides
+                        \ of the polygon (three for a triangle, four for a
+                        \ quadrilateral)
+
+.gpol10
+
+ STY polygonSide        \ Store the polygon side number that we are about to
+                        \ process in polygonSide, so we can retrieve it at the
+                        \ end of the loop
+
+ LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
+ TAX                    \ Y-th point in the polygon
+
+ INY                    \ Set Y to the offset within the drawing tables of the
+ LDA (drawViewAngles),Y \ Y+1-st point in the polygon
  TAY
- LDA #&5A
+
+                        \ So X and Y are the offsets within the drawing tables
+                        \ of the start and end points for the polygon side that
+                        \ we are processing
+
+ LDA #&5A               \ Set L0002 = &5A ???
  STA L0002
- LDA drawViewPitchLo,Y
- SEC
- SBC drawViewPitchLo,X
- STA L000C
- LDA drawViewPitchHi,Y
+
+ LDA drawViewPitchLo,Y  \ Set (A L000C) =   drawViewPitch(Hi Lo) for point #X
+ SEC                    \                 - drawViewPitch(Hi Lo) for point #Y
+ SBC drawViewPitchLo,X  \
+ STA L000C              \ So (A L000C) contains the difference in pitch angle
+ LDA drawViewPitchHi,Y  \ between the two points, or the height difference
  SBC drawViewPitchHi,X
- BPL apol11
- STA V
- INC L0002
- STX T
+
+ BPL gpol11             \ If the result in (A L000C) is positive then point #X
+                        \ is higher than point #Y, so jump to gpol11 ???
+
+ STA V                  \ Set (V L000C) = (A L000C)
+
+ INC L0002              \ Set L0002 = &5B ???
+
+ STX T                  \ Swap X and Y around
  STY U
  LDX U
  LDY T
- LDA #0
+
+ LDA #0                 \ Set (A L000C) = -(V L000C)
  SEC
  SBC L000C
  STA L000C
  LDA #0
  SBC V
 
-.apol11
+.gpol11
 
- STA V
- BIT L006C
- BVC apol13
+ STA V                  \ Set (V L000C) = (A L000C)
+
+ BIT xPolygonPointScale
+ BVC gpol13
  LDA xPolygonPointHi,Y
  ORA xPolygonPointHi,X
- BEQ apol13
+ BEQ gpol13
  LDA V
- BNE apol12
+ BNE gpol12
  LDA L000C
- BEQ apol15
+ BEQ gpol15
 
-.apol12
+.gpol12
 
- JMP sub_C2FCC
+ JMP gpol22
 
-.apol13
+.gpol13
 
  LDA V
- BEQ apol14
+ BEQ gpol14
  LDA #0
  STA xPolygonPointHi,Y
  STA xPolygonPointHi,X
- JMP sub_C2FCC
+ JMP gpol22
 
-.apol14
+.gpol14
 
  LDA L000C
- BEQ apol19
+ BEQ gpol19
  LDA drawViewPitchHi,Y
- STA vectorYawAngleHi
+ STA L003E
  LDA drawViewPitchLo,Y
  STA L001A
  LDA drawViewPitchHi,X
- STA vectorPitchAngleLo
+ STA L003F
  LDA drawViewPitchLo,X
  STA L0016
  LDA xPolygonPointLo,Y
@@ -23026,26 +23151,31 @@
  STA L0042
  JSR sub_C2EAE
 
-.apol15
+.gpol15
 
- LDY L004A
- INY
- CPY polygonSideCount
- BEQ apol16
- JMP apol10
+ LDY polygonSide        \ Set Y to the number of the polygon side that we have
+                        \ been processing
 
-.apol16
+ INY                    \ Increment Y to move on to the next side in the polygon
+
+ CPY polygonSideCount   \ If we have processed all the sides in the polygon then
+ BEQ gpol16             \ jump to gpol16 to keep going
+
+ JMP gpol10             \ Otherwise loop back to gpol10 to process the next side
+                        \ in the polygon
+
+.gpol16
 
  LDA L001E
  CMP polygonSideCount
- BNE apol17
+ BNE gpol17
  LDA drawViewPitchHi,X
- BNE apol17
+ BNE gpol17
  LDY drawViewPitchLo,X
  CPY minPitchAngle
- BCC apol17
+ BCC gpol17
  CPY maxPitchAngle
- BCS apol17
+ BCS gpol17
  STY yPolygonBottom
  STY yPolygonTop
  LDA L0030
@@ -23055,38 +23185,38 @@
  LDA #0
  STA L007F
 
-.apol17
+.gpol17
 
  LDA L007F
- BNE apol18
+ BNE gpol18
  LDA yPolygonTop
  CMP yPolygonBottom
- BCC apol18
+ BCC gpol18
  CLC
  RTS
 
-.apol18
+.gpol18
 
  SEC
  RTS
 
-.apol19
+.gpol19
 
  LDA xPolygonPointLo,X
  CMP L0031
- BCC apol20
+ BCC gpol20
  STA L0031
 
-.apol20
+.gpol20
 
  CMP L0030
- BCS apol21
+ BCS gpol21
  STA L0030
 
-.apol21
+.gpol21
 
  INC L001E
- JMP apol15
+ JMP gpol15
 
 \ ******************************************************************************
 \
@@ -23099,7 +23229,7 @@
 
 .C2EAA
 
- JMP sub_C3087
+ JMP gpol27
 
 .C2EAD
 
@@ -23107,7 +23237,7 @@
 
 .sub_C2EAE
 
- LDA vectorPitchAngleLo
+ LDA L003F
  BMI C2EC2
  BNE C2EAD
  LDA L0016
@@ -23128,7 +23258,7 @@
 
 .C2EC6
 
- LDA vectorYawAngleHi
+ LDA L003E
  BMI C2EAD
  BNE C2EDA
  LDA L001A
@@ -23177,8 +23307,8 @@
  LDY L001A
  LDA L0002
  BCS C2F3B
- STA L2F2B
- STY L2F2A
+ STA C2F29+2
+ STY C2F29+1
  STX C2F28
  LDY L000C
  INY
@@ -23186,7 +23316,7 @@
  LSR A
  EOR #&FF
  CLC
- LDX vectorYawAngleHi
+ LDX L003E
  BNE C2F80
  LDX L0018
  JMP C2F29
@@ -23203,11 +23333,8 @@
 
 .C2F29
 
-L2F2A = C2F29+1
-L2F2B = C2F29+2
-
- STX xTileMaxAltitude+63
- DEC L2F2A
+ STX xTileMaxAltitude+63    \ Gets modified
+ DEC C2F29+1
  BEQ C2F37
 
 .C2F31
@@ -23230,8 +23357,8 @@ L2F2B = C2F29+2
 
 .C2F3B
 
- STA L2F79
- STY L2F78
+ STA C2F77+2
+ STY C2F77+1
  STX C2F6B
  LDY #&07
  CMP #&5A
@@ -23258,7 +23385,7 @@ L2F2B = C2F29+2
  LSR A
  EOR #&FF
  CLC
- LDX vectorYawAngleHi
+ LDX L003E
  BNE C2FA6
  LDX L0018
  JMP C2F77
@@ -23274,15 +23401,12 @@ L2F6F = C2F6E+1
 
  BCC C2F7A
  SBC L000D
- DEC L2F78
+ DEC C2F77+1
  BEQ C2F37
 
 .C2F77
 
-L2F78 = C2F77+1
-L2F79 = C2F77+2
-
- STX xTileMaxAltitude+62
+ STX xTileMaxAltitude+62    \ Gets modified
 
 .C2F7A
 
@@ -23292,7 +23416,7 @@ L2F79 = C2F77+2
 
 .C2F80
 
- INC L2F2A
+ INC C2F29+1
  LDX C2F28
  STX C2F94
  LDX L0018
@@ -23310,7 +23434,7 @@ L2F79 = C2F77+2
 
 .C2F95
 
- DEC L2F2A
+ DEC C2F29+1
  BEQ C2FA0
  DEY
  BNE P2F8E
@@ -23318,12 +23442,12 @@ L2F79 = C2F77+2
 
 .C2FA0
 
- DEC L2F2A
+ DEC C2F29+1
  JMP C2F31
 
 .C2FA6
 
- INC L2F78
+ INC C2F77+1
  LDX C2F6B
  STX C2FB4
  LDX L0018
@@ -23335,7 +23459,7 @@ L2F79 = C2F77+2
  ADC L000C
  BCC C2FC0
  SBC L000D
- DEC L2F78
+ DEC C2F77+1
  BEQ C2FC6
 
 .C2FC0
@@ -23346,19 +23470,19 @@ L2F79 = C2F77+2
 
 .C2FC6
 
- DEC L2F78
+ DEC C2F77+1
  JMP C2F7A
 
 \ ******************************************************************************
 \
-\       Name: sub_C2FCC
+\       Name: GetPolygonLines (Part 6 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C2FCC
+.gpol22
 
  STX L000E
  LDA #0
@@ -23375,9 +23499,9 @@ L2F79 = C2F77+2
 
  STA U
  ORA V
- BEQ C2FFA
+ BEQ gpol24
 
-.C2FEC
+.gpol23
 
  LSR V
  ROR L000C
@@ -23386,16 +23510,16 @@ L2F79 = C2F77+2
  SEC
  ROL vectorPitchAngleHi
  LSR A
- BNE C2FEC
+ BNE gpol23
 
-.C2FFA
+.gpol24
 
  LDX L000C
  CPX #&FF
- BEQ C2FEC
+ BEQ gpol23
  LDX T
  CPX #&FF
- BEQ C2FEC
+ BEQ gpol23
  LDA U
  BIT L000A
 
@@ -23409,23 +23533,23 @@ L2F79 = C2F77+2
  LDA xPolygonPointHi,Y
  STA L0042
  LDA drawViewPitchHi,Y
- STA vectorPitchAngleLo
+ STA L003F
  LDA drawViewPitchLo,Y
  STA L0016
  LDA vectorPitchAngleHi
- BEQ C3054
+ BEQ gpol26
 
-.C302B
+.gpol25
 
  LDA L0016
  STA L001A
  SEC
  SBC L000C
  STA L0016
- LDA vectorPitchAngleLo
- STA vectorYawAngleHi
+ LDA L003F
+ STA L003E
  SBC #&00
- STA vectorPitchAngleLo
+ STA L003F
  LDA L0039
  STA L0018
  SEC
@@ -23437,14 +23561,14 @@ L2F79 = C2F77+2
  STA L0042
  JSR sub_C2EAE
  DEC vectorPitchAngleHi
- BNE C302B
+ BNE gpol25
 
-.C3054
+.gpol26
 
  LDA L0016
  STA L001A
- LDA vectorPitchAngleLo
- STA vectorYawAngleHi
+ LDA L003F
+ STA L003E
  LDA L0039
  STA L0018
  LDA L0042
@@ -23453,7 +23577,7 @@ L2F79 = C2F77+2
  LDA drawViewPitchLo,X
  STA L0016
  LDA drawViewPitchHi,X
- STA vectorPitchAngleLo
+ STA L003F
  LDA xPolygonPointLo,X
  STA L0039
  LDA xPolygonPointHi,X
@@ -23463,18 +23587,18 @@ L2F79 = C2F77+2
  SBC L0016
  STA L000C
  JSR sub_C2EAE
- JMP apol15
+ JMP gpol15
 
 \ ******************************************************************************
 \
-\       Name: sub_C3087
+\       Name: GetPolygonLines (Part 7 of 7)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.sub_C3087
+.gpol27
 
  LDA L0018
  SEC
@@ -23482,7 +23606,7 @@ L2F79 = C2F77+2
  STA L000D
  LDA L0041
  SBC L0042
- BPL C30A4
+ BPL gpol28
  LDA #0
  SEC
  SBC L000D
@@ -23490,15 +23614,15 @@ L2F79 = C2F77+2
  LDX #&E8
  LDA #0
  LDY #&E6
- JMP C30AA
+ JMP gpol29
 
-.C30A4
+.gpol28
 
  LDX #&CA
  LDA #&FF
  LDY #&C6
 
-.C30AA
+.gpol29
 
  STY T
  STA V
@@ -23506,18 +23630,18 @@ L2F79 = C2F77+2
  CPY L000C
  LDY L001A
  LDA L0002
- BCS C3112
- STA L30EB
- STX C30E3
- LDA vectorYawAngleHi
- BEQ C30C3
+ BCS gpol38
+ STA gpol33+2
+ STX gpol32
+ LDA L003E
+ BEQ gpol30
  INY
 
-.C30C3
+.gpol30
 
- STY L30EA
+ STY gpol33+1
  LDA T
- STA C310A
+ STA gpol37
  LDY L000C
  TYA
  LSR A
@@ -23527,68 +23651,65 @@ L2F79 = C2F77+2
  STY U
  LDX L0018
  JSR sub_C316E
- JMP C30E9
+ JMP gpol33
 
-.P30DD
+.gpol31
 
  ADC L000D
- BCC C30E9
+ BCC gpol33
  SBC L000C
 
-.C30E3
+.gpol32
 
  INX
  CPX V
  CLC
- BEQ C310A
+ BEQ gpol37
 
-.C30E9
+.gpol33
 
-L30EA = C30E9+1
-L30EB = C30E9+2
+ STX xPolygonLeft       \ Gets modified
+ DEC gpol33+1
+ BEQ gpol35
 
- STX xPolygonLeft
- DEC L30EA
- BEQ C30F8
-
-.C30F1
+.gpol34
 
  DEC U
- BNE P30DD
+ BNE gpol31
  JMP CRE26
 
-.C30F8
+.gpol35
 
- DEC vectorYawAngleHi
- BPL C30FF
+ DEC L003E
+ BPL gpol36
  JMP CRE26
 
-.C30FF
+.gpol36
 
- BNE C30F1
- DEC L30EA
+ BNE gpol34
+ DEC gpol33+1
  JSR sub_C316E
- JMP C30F1
+ JMP gpol34
 
-.C310A
+.gpol37
 
  INC L0041
  JSR sub_C316E
- JMP C30E9
+ JMP gpol33
 
-.C3112
+.gpol38
 
- STA L314A
- STX C3137
- LDA vectorYawAngleHi
- BEQ C311D
+ STA gpol42+2
+ STX gpol40
+ LDA L003E
+ BEQ gpol39
  INY
 
-.C311D
+.gpol39
 
- STY L3149
+ STY gpol42+1
  LDA T
- STA C3164
+ STA gpol45
  LDY L000D
  TYA
  LSR A
@@ -23598,51 +23719,48 @@ L30EB = C30E9+2
  STY U
  LDX L0018
  JSR sub_C316E
- JMP C3148
+ JMP gpol42
 
-.C3137
+.gpol40
 
  INX
  CPX V
  CLC
- BEQ C3164
+ BEQ gpol45
 
-.C313D
+.gpol41
 
  ADC L000C
- BCC C3148
+ BCC gpol42
  SBC L000D
- DEC L3149
- BEQ C3152
+ DEC gpol42+1
+ BEQ gpol43
 
-.C3148
+.gpol42
 
-L3149 = C3148+1
-L314A = C3148+2
-
- STX xPolygonLeft
+ STX xPolygonLeft       \ Gets modified
  DEC U
- BNE C3137
+ BNE gpol40
  JMP CRE26
 
-.C3152
+.gpol43
 
- DEC vectorYawAngleHi
- BPL C3159
+ DEC L003E
+ BPL gpol44
  JMP CRE26
 
-.C3159
+.gpol44
 
- BNE C3148
- DEC L3149
+ BNE gpol42
+ DEC gpol42+1
  JSR sub_C316E
- JMP C3148
+ JMP gpol42
 
-.C3164
+.gpol45
 
  INC L0041
  JSR sub_C316E
- JMP C313D
+ JMP gpol41
 
 \ ******************************************************************************
 \
@@ -23676,7 +23794,7 @@ L314A = C3148+2
 .sub_C316E
 
  PHA
- LDA vectorYawAngleHi
+ LDA L003E
  BEQ C3177
  LDA #&2C
  BNE C318C
@@ -23705,8 +23823,8 @@ L314A = C3148+2
 
 .C318C
 
- STA C30E9
- STA C3148
+ STA gpol33
+ STA gpol42
  PLA
  RTS
 
@@ -34297,7 +34415,7 @@ L314A = C3148+2
 \
 \ Returns:
 \
-\   pitchDelta(Hi Lo)   The pitch angle delta
+\   pitchDelta(Hi Lo)   The pitch angle delta (divided by 16)
 \
 \   angle(Hi Lo)        The angle of the right-angled triangle with adjacent
 \                       side hypotenuse(Hi Lo) and opposite side (A xDeltaLo)
@@ -34366,7 +34484,7 @@ L314A = C3148+2
 
  PHP                    \ Store the status flags from the calculation
 
- LSR A                  \ Set (A pitchDeltaLo) = (A pitchDeltaLo) >> 4
+ LSR A                  \ Set (A pitchDeltaLo) = (A pitchDeltaLo) / 16
  ROR pitchDeltaLo
  LSR A
  ROR pitchDeltaLo
