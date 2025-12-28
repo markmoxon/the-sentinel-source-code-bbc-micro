@@ -123,7 +123,7 @@
 
  SKIP 1                 \ Used to store a tile altitude
 
-.minYawAngleHi
+.bufferMinYawHi
 
  SKIP 1                 \ ???
 
@@ -234,11 +234,11 @@
                         \
                         \   * 2 = column buffer (for left/right pan)
 
-.L0011YawHi
+.bufferYawOffsetHi
 
  SKIP 1                 \ ???
 
-.maxYawAngleHi
+.bufferMaxYawHi
 
  SKIP 1                 \ ???
 
@@ -475,11 +475,11 @@
                         \ routine that has a matching number of leading zeroes
                         \ as the number of tile blocks at a specific altitude
 
-.minYawAngleLo
+.bufferMinYawLo
 
  SKIP 1                 \ ???
 
-.L0011YawLo
+.bufferYawOffsetLo
 
  SKIP 1                 \ ???
 
@@ -19877,12 +19877,10 @@
                         \
                         \ We now set the following bits if applicable:
                         \
-                        \   * Set bit 7 when tileViewYaw >= minYawAngle
+                        \   * Set bit 7 when
+                        \              drawViewYaw(Hi Lo) >= bufferMinYaw(Hi Lo)
                         \
-                        \   * Set bit 0 when drawViewYawHi >= maxYawAngleHi
-                        \
-                        \ where tileViewYaw is drawViewYaw(Hi Lo) and
-                        \ minYawAngle is minYawAngle(Hi Lo)
+                        \   * Set bit 0 when drawViewYawHi >= bufferMaxYawHi
                         \
                         \ So bit 7 is set when the tile corner is inside the
                         \ minimum yaw limit, and bit 0 is set when the tile
@@ -19891,23 +19889,23 @@
                         \ If the yaw limit is the screen size, then the two bits
                         \ determine whether the tile is on-screen
 
- LDA drawViewYawHi,Y    \ If drawViewYawHi < minYawAngleHi, jump to tang11 to
- CMP minYawAngleHi      \ return with tileIsOnScreen = 0, as the tile is off the
+ LDA drawViewYawHi,Y    \ If drawViewYawHi < bufferMinYawHi, jump to tang11 to
+ CMP bufferMinYawHi     \ return with tileIsOnScreen = 0, as the tile is off the
  BCC tang11             \ left of the screen edge
 
- BNE tang10             \ If drawViewYawHi > minYawAngleHi, jump to tang10 with
+ BNE tang10             \ If drawViewYawHi > bufferMinYawHi, jump to tang10 with
                         \ the C flag set to set bit 7 of tileIsOnScreen
 
-                        \ If we get here then drawViewYawHi = minYawAngleHi, so
+                        \ If we get here then drawViewYawHi = bufferMinYawHi, so
                         \ we now check the low bytes
 
- LDA drawViewYawLo,Y    \ If drawViewYawLo < minYawAngleLo, jump to tang11 to
- CMP minYawAngleLo      \ return with tileIsOnScreen = 0
+ LDA drawViewYawLo,Y    \ If drawViewYawLo < bufferMinYawLo, jump to tang11 to
+ CMP bufferMinYawLo     \ return with tileIsOnScreen = 0
  BCC tang11
 
- LDA drawViewYawHi,Y    \ If we get here then drawViewYawLo >= minYawAngleLo, so
-                        \ the C flag is set, and we set A to drawViewYawHi for
-                        \ the comparison below
+ LDA drawViewYawHi,Y    \ If we get here then drawViewYawLo >= bufferMinYawLo,
+                        \ so the C flag is set, and we set A to drawViewYawHi
+                        \ for the comparison below
 
 .tang10
 
@@ -19918,11 +19916,11 @@
                         \ tile is on or to the right of the minimum yaw limit,
                         \ i.e. to the right of the left edge of the screen
 
- CMP maxYawAngleHi      \ If drawViewYawHi < maxYawAngleHi, jump to tang11 to
+ CMP bufferMaxYawHi     \ If drawViewYawHi < bufferMaxYawHi, jump to tang11 to
  BCC tang11             \ return from the routine with bit 0 of tileIsOnScreen
                         \ clear
 
-                        \ If we get here then drawViewYawHi >= maxYawAngleHi,
+                        \ If we get here then drawViewYawHi >= bufferMaxYawHi,
                         \ so the tile is off-screen to the right
 
  INC tileIsOnScreen     \ Set bit 0 of tileIsOnScreen to indicate that the tile
@@ -20062,15 +20060,16 @@
  TAY                    \ Copy the buffer type into Y so we can use it as an
                         \ index into the various buffer configuration tables
 
- LDA buffersYawMin,Y    \ Set the high byte of minYawAngle(Hi Lo) to 20 or 8 ???
- STA minYawAngleHi
+ LDA buffersYawMin,Y    \ Set the high byte of bufferMinYaw(Hi Lo) to 20 or 8
+ STA bufferMinYawHi     \ ???
 
- LSR A                  \ Set maxYawAngleHi = 138 or 132
- EOR #%10000000         \                   = -118 or -124
- STA maxYawAngleHi      \ ???
+ LSR A                  \ Set bufferMaxYawHi = 138 or 132
+ EOR #%10000000         \                    = -118 or -124
+ STA bufferMaxYawHi     \ ???
 
- LDA buffersL011YawHi,Y \ Set the high byte of L0011Yaw(Hi Lo) to 10, 2, or 12
- STA L0011YawHi         \ Gets added to drawViewYawHi in GetPolygonLines ???
+ LDA buffersL011YawHi,Y \ Set the high byte of bufferYawOffset(Hi Lo) to 10, 2,
+ STA bufferYawOffsetHi  \ or 12, gets added to drawViewYawHi in GetPolygonLines
+                        \ ???
 
  LDA buffersYawWidth,Y  \ Set bufferYawWidth to 112, 112 or 64 ???
  STA bufferYawWidth     \ 112 = 14 * 8, 64 = 8 * 8
@@ -20085,10 +20084,10 @@
                         \      64 + 112
                         \      96 + 64 ???
 
- LDA #0                 \ Zero the low byte of minYawAngle(Hi Lo)
- STA minYawAngleLo
+ LDA #0                 \ Zero the low byte of bufferMinYaw(Hi Lo)
+ STA bufferMinYawLo
 
- STA L0011YawLo         \ Zero the low byte of L0011Yaw(Hi Lo) ???
+ STA bufferYawOffsetLo  \ Zero the low byte of bufferYawOffset(Hi Lo) ???
 
  RTS                    \ Return from the subroutine
 
@@ -20197,20 +20196,20 @@
                         \ So we can simply double the character column count in
                         \ A to convert it into a yaw angle
 
- STA minYawAngleHi      \ Set minYawAngle(Hi Lo) = 256 * A
- LDA #0                 \                        = 256 * T / 2
+ STA bufferMinYawHi     \ Set bufferMinYaw(Hi Lo) = 256 * A
+ LDA #0                 \                         = 256 * T / 2
  ROR A                  \
- STA minYawAngleLo      \ So this stores the character column count  as a yaw
-                        \ angle in minYawAngle(Hi Lo), where the low byte is
+ STA bufferMinYawLo     \ So this stores the character column count  as a yaw
+                        \ angle in bufferMinYaw(Hi Lo), where the low byte is
                         \ effectively a fractional part
                         \
                         \ This gives us the yaw angle of the left edge of the
                         \ screen buffer ???
 
- LDA minYawAngleHi      \ Set maxYawAngleHi = (minYawAngleHi / 2)
+ LDA bufferMinYawHi     \ Set bufferMaxYawHi = (bufferMinYawHi / 2)
  LSR A                  \
  EOR #%10000000         \ and with bit 7 flipped ???
- STA maxYawAngleHi
+ STA bufferMaxYawHi
 
  LDA T                  \ Set bufferYawWidth = T * 4
  ASL A
@@ -20226,14 +20225,14 @@
  SBC bufferYawWidth
  STA bufferYawLeft
 
- LSR A                  \ Set the high byte of L0011Yaw(Hi Lo) to
+ LSR A                  \ Set the high byte of bufferYawOffset(Hi Lo) to
  LSR A                  \ bufferYawLeft / 8
  LSR A
- STA L0011YawHi
+ STA bufferYawOffsetHi
 
- LDA #0                 \ Set L0011Yaw(Hi Lo) = 256 * (bufferYawLeft / 8)
+ LDA #0                 \ Set bufferYawOffset(Hi Lo) = 256 * (bufferYawLeft / 8)
  ROR A
- STA L0011YawLo
+ STA bufferYawOffsetLo
 
  LDA #2                 \ Configure the screen buffer as a column buffer
  STA screenBufferType
@@ -22890,12 +22889,13 @@
  LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
  TAX                    \ Y-th point in the polygon
 
- LDA drawViewYawLo,X    \ Set (A T) = drawViewYaw(Hi Lo) + L0011Yaw(Hi Lo)
- CLC                    \
- ADC L0011YawLo         \ for the Y-th polygon point, so this adds the yaw angle
- STA T                  \ offset in L0011Yaw(Hi Lo) to the polygon point ???
- LDA drawViewYawHi,X
- ADC L0011YawHi
+ LDA drawViewYawLo,X    \ Set the following:
+ CLC                    \             
+ ADC bufferYawOffsetLo  \   (A T) = drawViewYaw(Hi Lo) + bufferYawOffset(Hi Lo)
+ STA T                  \
+ LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
+ ADC bufferYawOffsetHi  \ offset in bufferYawOffset(Hi Lo) to the polygon point
+                        \ ???
 
  ASL T                  \ Set (A T) = (A T) * 8
  ROL A                  \
@@ -22999,12 +22999,13 @@
  LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
  TAX                    \ Y-th point in the polygon
 
- LDA drawViewYawLo,X    \ Set (A T) = drawViewYaw(Hi Lo) + L0011Yaw(Hi Lo)
- CLC                    \
- ADC L0011YawLo         \ for the Y-th polygon point, so this adds the yaw angle
- STA T                  \ offset in L0011Yaw(Hi Lo) to the polygon point ???
- LDA drawViewYawHi,X
- ADC L0011YawHi
+ LDA drawViewYawLo,X    \ Set the following:
+ CLC                    \             
+ ADC bufferYawOffsetLo  \   (A T) = drawViewYaw(Hi Lo) + bufferYawOffset(Hi Lo)
+ STA T                  \
+ LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
+ ADC bufferYawOffsetHi  \ offset in bufferYawOffset(Hi Lo) to the polygon point
+                        \ ???
 
                         \ We now convert the point's yaw angle in (A T) into a
                         \ pixel x-coordinate by multiplying the yaw angle by 8,
@@ -28214,24 +28215,24 @@
 
 .rbuf1
 
- LDA maxBufferPitch,Y   \ Set maxPitchAngle to the maximum pitch angle allowed
+ LDA bufferMaxPitch,Y   \ Set maxPitchAngle to the maximum pitch angle allowed
  STA maxPitchAngle      \ in the buffer specified in Y
 
- LDA minBufferPitch,Y   \ Set minPitchAngle to the minimum pitch angle allowed
+ LDA bufferMinPitch,Y   \ Set minPitchAngle to the minimum pitch angle allowed
  STA minPitchAngle      \ in the buffer specified in Y
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: maxBufferPitch
+\       Name: bufferMaxPitch
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Maximum allowed pitch angles for points in the screen buffer
 \
 \ ******************************************************************************
 
-.maxBufferPitch
+.bufferMaxPitch
 
  EQUB 240               \ Row buffer contains pitch angles from 176 to 240
 
@@ -28239,14 +28240,14 @@
 
 \ ******************************************************************************
 \
-\       Name: minBufferPitch
+\       Name: bufferMinPitch
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Minimum allowed pitch angles for points in the screen buffer
 \
 \ ******************************************************************************
 
-.minBufferPitch
+.bufferMinPitch
 
  EQUB 176               \ Row buffer contains pitch angles from 176 to 240
 

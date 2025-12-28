@@ -16,7 +16,7 @@
      0006
 .tileAltitude
      0006
-.minYawAngleHi
+.bufferMinYawHi
      0007
 .lastPanKeyPressed
      0008
@@ -46,9 +46,9 @@
      000F
 .screenBufferType
      0010
-.L0011YawHi
+.bufferYawOffsetHi
      0011
-.maxYawAngleHi
+.bufferMaxYawHi
      0012
 .ditherStore
      0013
@@ -118,9 +118,9 @@
      0026
 .bitMask
      0027
-.minYawAngleLo
+.bufferMinYawLo
      0028
-.L0011YawLo
+.bufferYawOffsetLo
      0029
 .randomPixel
      002A
@@ -9172,10 +9172,10 @@
      3914   B9 1C 39   LDA &391C,Y
      3917   85 52      STA &52
      3919   60         RTS
-.maxBufferPitch
+.bufferMaxPitch
      391A   F0
      391B   F0
-.minBufferPitch
+.bufferMinPitch
      391C   B0
      391D   30
 .UseColumnBuffer
