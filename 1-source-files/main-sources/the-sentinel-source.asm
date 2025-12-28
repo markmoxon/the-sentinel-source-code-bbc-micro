@@ -108,7 +108,8 @@
 
 .yPolygonBottom
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The y-coordinate of the bottom of the polygon being
+                        \ drawn (where higher y-coordinates are up the screen)
 
 .drawingTableOffset
 
@@ -117,7 +118,8 @@
 
 .yPolygonTop
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of the top of the polygon being drawn
+                        \ (where higher y-coordinates are up the screen)
 
 .tileAltitude
 
@@ -166,7 +168,8 @@
 
 .yEdgeDeltaLo
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The difference in pitch angle between two polygon
+                        \ points, i.e. the delta along the y-axis (low byte)
 
 .yAccuracyLo
 
@@ -234,7 +237,7 @@
                         \
                         \   * 2 = column buffer (for left/right pan)
 
-.bufferYawOffsetHi
+.bufferYawHi
 
  SKIP 1                 \ ???
 
@@ -265,7 +268,8 @@
 
 .yEdgeEndLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The y-coordinate of the end point in the polygon edge
+                        \ being processed (low byte)
 
 .traceStepCounter
 
@@ -285,7 +289,8 @@
 
 .xEdgeStartLo
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The x-coordinate of the start point in the polygon
+                        \ edge being processed (low byte)
 
 .xTileRow
 
@@ -313,7 +318,8 @@
 
 .yEdgeStartLo
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of the start point in the polygon
+                        \ edge being processed (low byte)
 
 .yPolygonLine
 
@@ -387,7 +393,8 @@
 
 .horizontalEdges
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A counter to keep track of how many polygon edges are
+                        \ horizontal in the polygon we are drawing
 
 .yawAdjustmentLo
 
@@ -479,7 +486,7 @@
 
  SKIP 1                 \ ???
 
-.bufferYawOffsetLo
+.bufferYawLo
 
  SKIP 1                 \ ???
 
@@ -558,7 +565,9 @@
 
 .xMinHorizontal
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A variable to keep track of the minimum x-coordinates
+                        \ of any polygon edges that are horizontal in the
+                        \ polygon we are drawing
 
 .yVectorLo
 
@@ -569,7 +578,9 @@
 
 .xMaxHorizontal
 
- SKIP 0                 \ ???
+ SKIP 0                 \ A variable to keep track of the maximum x-coordinates
+                        \ of any polygon edges that are horizontal in the
+                        \ polygon we are drawing
 
 .zVectorLo
 
@@ -661,7 +672,8 @@
 
 .xEdgeEndLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The x-coordinate of the end point in the polygon
+                        \ edge being processed (low byte)
 
 .xCoordHi
 
@@ -710,7 +722,8 @@
 
 .yEdgeStartHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of the start point in the polygon
+                        \ edge being processed (high byte)
 
 .vectorYawAngleHi
 
@@ -721,7 +734,8 @@
 
 .yEdgeEndHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The y-coordinate of the end point in the polygon edge
+                        \ being processed (high byte)
 
 .vectorPitchAngleLo
 
@@ -743,11 +757,13 @@
 
 .xEdgeStartHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The x-coordinate of the start point in the polygon
+                        \ edge being processed (high byte)
 
 .xEdgeEndHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The x-coordinate of the end point in the polygon
+                        \ edge being processed (high byte)
 
 .L0043
 
@@ -1007,7 +1023,8 @@
 
 .yEdgeDeltaHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The difference in pitch angle between two polygon
+                        \ points, i.e. the delta along the y-axis (high byte)
 
 .V
 
@@ -1662,7 +1679,8 @@
 \       Name: xPolygonPointHi
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Pixel x-coordinates for all the points in the polygon that we are
+\             currently drawing (high bytes)
 \
 \ ******************************************************************************
 
@@ -20067,9 +20085,8 @@
  EOR #%10000000         \                    = -118 or -124
  STA bufferMaxYawHi     \ ???
 
- LDA buffersL011YawHi,Y \ Set the high byte of bufferYawOffset(Hi Lo) to 10, 2,
- STA bufferYawOffsetHi  \ or 12, gets added to drawViewYawHi in GetPolygonLines
-                        \ ???
+ LDA buffersYawHi,Y     \ Set the high byte of bufferYaw(Hi Lo) to 10, 2 or 12,
+ STA bufferYawHi        \ gets added to drawViewYawHi in GetPolygonLines ???
 
  LDA buffersYawWidth,Y  \ Set bufferYawWidth to 112, 112 or 64 ???
  STA bufferYawWidth     \ 112 = 14 * 8, 64 = 8 * 8
@@ -20087,26 +20104,26 @@
  LDA #0                 \ Zero the low byte of bufferMinYaw(Hi Lo)
  STA bufferMinYawLo
 
- STA bufferYawOffsetLo  \ Zero the low byte of bufferYawOffset(Hi Lo) ???
+ STA bufferYawLo        \ Zero the low byte of bufferYaw(Hi Lo) ???
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: buffersL011YawHi
+\       Name: buffersYawHi
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.buffersL011YawHi
+.buffersYawHi
 
- EQUB 10                \ Left row buffer ???
+ EQUB 10                \ Left row buffer
 
- EQUB 2                 \ Right row buffer ???
+ EQUB 2                 \ Right row buffer
 
- EQUB 12                \ Column buffer ???
+ EQUB 12                \ Column buffer
 
 \ ******************************************************************************
 \
@@ -20119,11 +20136,11 @@
 
 .buffersYawLeft
 
- EQUB 80                \ Left row buffer ???
+ EQUB 80                \ Left row buffer
 
- EQUB 64                \ Right row buffer ???
+ EQUB 64                \ Right row buffer
 
- EQUB 96                \ Column buffer ???
+ EQUB 96                \ Column buffer
 
 \ ******************************************************************************
 \
@@ -20136,28 +20153,28 @@
 
 .buffersYawWidth
 
- EQUB 112               \ Left row buffer ???
+ EQUB 112               \ Left row buffer
 
- EQUB 112               \ Right row buffer ???
+ EQUB 112               \ Right row buffer
 
- EQUB 64                \ Column buffer ???
+ EQUB 64                \ Column buffer
 
 \ ******************************************************************************
 \
 \       Name: buffersYawMin
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: Minimum allowed yaw angles for points in the screen buffer
+\    Summary: Minimum allowed yaw angles for points in the screen buffer ???
 \
 \ ******************************************************************************
 
 .buffersYawMin
 
- EQUB 20                \ Left row buffer contains yaw angles up to 20
+ EQUB 20                \ Left row buffer
 
- EQUB 20                \ Right row buffer contains yaw angles up to 20
+ EQUB 20                \ Right row buffer
 
- EQUB 8                 \ Column buffer contains yaw angles up to 8
+ EQUB 8                 \ Column buffer
 
 \ ******************************************************************************
 \
@@ -20225,14 +20242,14 @@
  SBC bufferYawWidth
  STA bufferYawLeft
 
- LSR A                  \ Set the high byte of bufferYawOffset(Hi Lo) to
+ LSR A                  \ Set the high byte of bufferYaw(Hi Lo) to
  LSR A                  \ bufferYawLeft / 8
  LSR A
- STA bufferYawOffsetHi
+ STA bufferYawHi
 
- LDA #0                 \ Set bufferYawOffset(Hi Lo) = 256 * (bufferYawLeft / 8)
+ LDA #0                 \ Set bufferYaw(Hi Lo) = 256 * (bufferYawLeft / 8)
  ROR A
- STA bufferYawOffsetLo
+ STA bufferYawLo
 
  LDA #2                 \ Configure the screen buffer as a column buffer
  STA screenBufferType
@@ -22891,11 +22908,10 @@
 
  LDA drawViewYawLo,X    \ Set the following:
  CLC                    \             
- ADC bufferYawOffsetLo  \   (A T) = drawViewYaw(Hi Lo) + bufferYawOffset(Hi Lo)
+ ADC bufferYawLo        \   (A T) = drawViewYaw(Hi Lo) + bufferYaw(Hi Lo)
  STA T                  \
  LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
- ADC bufferYawOffsetHi  \ offset in bufferYawOffset(Hi Lo) to the polygon point
-                        \ ???
+ ADC bufferYawHi        \ offset in bufferYaw(Hi Lo) to the polygon point ???
 
  ASL T                  \ Set (A T) = (A T) * 8
  ROL A                  \
@@ -23001,11 +23017,10 @@
 
  LDA drawViewYawLo,X    \ Set the following:
  CLC                    \             
- ADC bufferYawOffsetLo  \   (A T) = drawViewYaw(Hi Lo) + bufferYawOffset(Hi Lo)
+ ADC bufferYawLo        \   (A T) = drawViewYaw(Hi Lo) + bufferYaw(Hi Lo)
  STA T                  \
  LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
- ADC bufferYawOffsetHi  \ offset in bufferYawOffset(Hi Lo) to the polygon point
-                        \ ???
+ ADC bufferYawHi        \ offset in bufferYaw(Hi Lo) to the polygon point ???
 
                         \ We now convert the point's yaw angle in (A T) into a
                         \ pixel x-coordinate by multiplying the yaw angle by 8,
@@ -23245,7 +23260,7 @@
  LDA drawViewPitchLo,Y  \ So this sets the y-coordinate of the start point in
  STA yEdgeStartLo       \ point #Y (the lower point)
 
- LDA drawViewPitchHi,X  \ Set yEdgeStart(Hi Lo) = drawViewPitch(Hi Lo)
+ LDA drawViewPitchHi,X  \ Set yEdgeEnd(Hi Lo) = drawViewPitch(Hi Lo)
  STA yEdgeEndHi         \
  LDA drawViewPitchLo,X  \ So this sets the y-coordinate of the end point in
  STA yEdgeEndLo         \ point #X (the higher point)
@@ -34152,7 +34167,8 @@
 \       Name: xPolygonPointLo
 \       Type: Variable
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Pixel x-coordinates for all the points in the polygon that we are
+\             currently drawing (low bytes)
 \
 \ ******************************************************************************
 
