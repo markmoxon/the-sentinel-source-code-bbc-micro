@@ -38,7 +38,7 @@
      000D
 .xCounter
      000D
-.L000E
+.pointX
      000E
 .yStoreTileView
      000F

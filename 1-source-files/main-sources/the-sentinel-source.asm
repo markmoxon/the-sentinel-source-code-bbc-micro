@@ -204,9 +204,10 @@
 
  SKIP 1                 \ A counter to iterate along tiles in the x-axis
 
-.L000E
+.pointX
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage for the number of point #X while
+                        \ processing polygon lines
 
 .yStoreTileView
 
@@ -23131,7 +23132,7 @@
                         \ The default is therefore to store the x-coordinate of
                         \ the left end of the polygon line at xPolygonLeft
 
- LDA drawViewPitchLo,Y  \ Set (A yEdgeDeltaLo) to the following:   
+ LDA drawViewPitchLo,Y  \ Set (A yEdgeDeltaLo) to the following:
  SEC                    \
  SBC drawViewPitchLo,X  \       drawViewPitch(Hi Lo) for point #X
  STA yEdgeDeltaLo       \                 - drawViewPitch(Hi Lo) for point #Y
@@ -23674,16 +23675,22 @@
                         \   * The y-axis delta in yEdgeDelta(Hi Lo) is non-zero
                         \     and a two-byte number
 
- STX L000E
- LDA #0
+ STX pointX             \ Store the number of point #X in pointX so we can
+                        \ retrieve it below
+
+ LDA #0                 \ Set L0040 = 0 ???
  STA L0040
- LDA xPolygonPointLo,Y
- SEC
- SBC xPolygonPointLo,X
- STA T
- LDA xPolygonPointHi,Y
- SBC xPolygonPointHi,X
- STA L000A
+
+ LDA xPolygonPointLo,Y  \ Set (A T) to the following:
+ SEC                    \
+ SBC xPolygonPointLo,X  \   xPolygonPoint(Hi Lo) for point #Y
+ STA T                  \                 - xPolygonPoint(Hi Lo) for point #X
+ LDA xPolygonPointHi,Y  \
+ SBC xPolygonPointHi,X  \ So (A T) contains the difference in the x-axis between
+                        \ the two polygon points
+
+ STA L000A              \ Store the high byte in L000A so we can test the sign
+                        \ below
 
  JSR Absolute16Bit      \ Set (A T) = |A T|
 
@@ -23765,7 +23772,10 @@
  STA xEdgeStartLo
  LDA xEdgeEndHi
  STA xEdgeStartHi
- LDX L000E
+
+ LDX pointX             \ Set X to the number of point #X, which we stored at
+                        \ the start of this part
+
  LDA drawViewPitchLo,X
  STA yEdgeEndLo
  LDA drawViewPitchHi,X
