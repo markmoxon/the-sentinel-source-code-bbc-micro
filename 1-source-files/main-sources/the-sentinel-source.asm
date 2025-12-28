@@ -87,9 +87,12 @@
  SKIP 1                 \ Used to store the number of the object we are
                         \ currently processing
 
-.L0002
+.xPolygonAddrHi
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The high byte of the address of the table where we
+                        \ store the x-coordinate of the polygon line being
+                        \ processed, so this is either HI(xPolygonLeft) or
+                        \ HI(xPolygonRight)
 
 .edgeGazeDistance
 
@@ -161,7 +164,7 @@
 
  SKIP 1                 \ The number of the player object
 
-.L000C
+.yEdgeDeltaLo
 
  SKIP 0                 \ ???
 
@@ -382,7 +385,7 @@
  SKIP 0                 \ A counter for the number of checks that are performed
                         \ when following an enemy's gaze in CheckEnemyGaze
 
-.L001E
+.horizontalEdges
 
  SKIP 1                 \ ???
 
@@ -553,7 +556,7 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L0030
+.xMinHorizontal
 
  SKIP 0                 \ ???
 
@@ -564,7 +567,7 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L0031
+.xMaxHorizontal
 
  SKIP 0                 \ ???
 
@@ -941,14 +944,19 @@
 .xPolygonPointScale
 
  SKIP 1                 \ A flag to record whether the pixel x-coordinate of the
-                        \ polygon point being processed fits into one or two
+                        \ polygon points being processed fit into one or two
                         \ bytes
                         \
-                        \   * Bit 6 clear = x-coordinate fits into one byte at
+                        \   * Bit 6 clear = x-coordinates fit into one byte at
                         \                   xPolygonPointLo
                         \
-                        \   * Bit 6 set = x-coordinate fits into two bytes at
+                        \   * Bit 6 set = x-coordinates fit into two bytes at
                         \                 xPolygonPoint(Hi Lo)
+                        \
+                        \ The same number of bytes is used to store all of the
+                        \ points in a polygon, so two bytes will be used for the
+                        \ x-coordinates if any one of the coordinates needs the
+                        \ extra byte, even if it's only one point
 
 .screenAddrHi
 
@@ -996,6 +1004,10 @@
 .U
 
  SKIP 1                 \ Temporary storage, used in a number of places
+
+.yEdgeDeltaHi
+
+ SKIP 0                 \ ???
 
 .V
 
@@ -22734,9 +22746,19 @@
 \
 \   C flag              Status flag:
 \
-\                         * Clear if ???
+\                         * Clear if the polygon is visible in the current
+\                           screen buffer and should be drawn
 \
-\                         * Set if ???
+\                         * Set if the polygon is not visible in the current
+\                           screen buffer and should not be drawn
+\
+\   yPolygonTop         ???
+\
+\   yPolygonBottom      ???
+\
+\   xPolygonLeft        ???
+\
+\   xPolygonRight       ???
 \
 \ ******************************************************************************
 
@@ -23030,7 +23052,8 @@
 \       Name: GetPolygonLines (Part 5 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Loop through all the edges in the polygon and call the correct
+\             routines to process one-byte, two-byte or horizontal edges
 \
 \ ******************************************************************************
 
@@ -23042,9 +23065,12 @@
                         \ bottom of the screen, so we can bump it up as we work
                         \ through the polygon)
 
- STA L0031              \ Set L0031 = 0 ???
+ STA xMaxHorizontal     \ Set xMaxHorizontal = 0 so we can use it to keep track
+                        \ of the maximum x-coordinates of any polygon edges that
+                        \ are horizontal
 
- STA L001E              \ Set L001E = 0 ???
+ STA horizontalEdges    \ Set horizontalEdges = 0 so we can use it to keep track
+                        \ of how many polygon edges are horizontal
 
  LDA #255               \ Set yPolygonBottom = 255 to record the y-coordinate of
  STA yPolygonBottom     \ the bottom of the polygon, where higher y-coordinates
@@ -23052,9 +23078,12 @@
                         \ polygon to the top of the screen, so we can move it
                         \ down as we work through the polygon)
 
- STA L0030              \ Set L0030 = 255 ???
+ STA xMinHorizontal     \ Set xMinHorizontal = 255 so we can use it to keep
+                        \ track of the minimum x-coordinates of any polygon
+                        \ edges that are horizontal
 
- STA L007F              \ Set L007F = 255 ???
+ STA L007F              \ Set L007F = 255, which we will set to zero if there
+                        \ are any polygon lines to draw ???
 
  LDY #0                 \ We now loop through all the edges of the polygon, so
                         \ set a loop counter in Y to work through all the edges
@@ -23074,94 +23103,171 @@
  LDA (drawViewAngles),Y \ Y+1-st point in the polygon
  TAY
 
-                        \ So X and Y are the offsets within the drawing tables
+                        \ So Y and X are the offsets within the drawing tables
                         \ of the start and end points for the polygon edge that
                         \ we are processing
 
- LDA #&5A               \ Set L0002 = &5A ???
- STA L0002
+ LDA #HI(xPolygonLeft)  \ Set xPolygonAddrHi to the high byte of the address of
+ STA xPolygonAddrHi     \ the xPolygonLeft table, so this value can be used to
+                        \ modify the instructions for storing the polygon line
+                        \ x-coordinates as we process them
+                        \
+                        \ The default is therefore to store the x-coordinate of
+                        \ the left end of the polygon line at xPolygonLeft
 
- LDA drawViewPitchLo,Y  \ Set (A L000C) =   drawViewPitch(Hi Lo) for point #X
- SEC                    \                 - drawViewPitch(Hi Lo) for point #Y
- SBC drawViewPitchLo,X  \
- STA L000C              \ So (A L000C) contains the difference in pitch angle
- LDA drawViewPitchHi,Y  \ between the two points, or the height difference
- SBC drawViewPitchHi,X
+ LDA drawViewPitchLo,Y  \ Set (A yEdgeDeltaLo) to the following:   
+ SEC                    \
+ SBC drawViewPitchLo,X  \       drawViewPitch(Hi Lo) for point #X
+ STA yEdgeDeltaLo       \                 - drawViewPitch(Hi Lo) for point #Y
+ LDA drawViewPitchHi,Y  \
+ SBC drawViewPitchHi,X  \ So (A yEdgeDeltaLo) contains the difference in pitch
+                        \ angle between the two points, or the delta along the
+                        \ y-axis
 
- BPL gpol11             \ If the result in (A L000C) is positive then point #X
-                        \ is higher than point #Y, so jump to gpol11 ???
+ BPL gpol11             \ If the result in (A yEdgeDeltaLo) is positive then
+                        \ point #X is higher than point #Y and (A yEdgeDeltaLo)
+                        \ already has the correct sign for the absolute value,
+                        \ so jump to gpol11 to skip the following
 
- STA V                  \ Set (V L000C) = (A L000C)
+                        \ If we get here then point #Y is higher than point #X,
+                        \ so we swap them around
 
- INC L0002              \ Set L0002 = &5B ???
+ STA yEdgeDeltaHi       \ Set yEdgeDelta(Hi Lo) = (A yEdgeDeltaLo)
 
- STX T                  \ Swap X and Y around
- STY U
+ INC xPolygonAddrHi     \ Increment xPolygonAddrHi to HI(xPolygonRight), so when
+                        \ we modify the instructions for storing the polygon
+                        \ line x-coordinates, they are stored in the table for
+                        \ the right end of the polygon line at xPolygonRight ???
+
+ STX T                  \ Swap X and Y around, so point #X is now higher than
+ STY U                  \ point #Y
  LDX U
  LDY T
 
- LDA #0                 \ Set (A L000C) = -(V L000C)
- SEC
- SBC L000C
- STA L000C
+ LDA #0                 \ Set (A yEdgeDeltaLo) = -yEdgeDelta(Hi Lo)
+ SEC                    \
+ SBC yEdgeDeltaLo       \ So yEdgeDelta(Hi Lo) is now positive
+ STA yEdgeDeltaLo
  LDA #0
- SBC V
+ SBC yEdgeDeltaHi
 
 .gpol11
 
- STA V                  \ Set (V L000C) = (A L000C)
+ STA yEdgeDeltaHi       \ Set yEdgeDelta(Hi Lo) = (A yEdgeDeltaLo)
+                        \
+                        \ So point #X is higher than point #Y, and we have a
+                        \ positive value in yEdgeDelta(Hi Lo) that contains the
+                        \ y-axis delta between the two points
+                        \
+                        \ xPolygonAddrHi will also point to the correct table
+                        \ for storing the polygon line (left or right) ???
 
- BIT xPolygonPointScale
- BVC gpol13
- LDA xPolygonPointHi,Y
- ORA xPolygonPointHi,X
- BEQ gpol13
- LDA V
- BNE gpol12
- LDA L000C
- BEQ gpol15
+ BIT xPolygonPointScale \ If bit 6 of xPolygonPointScale is clear then the pixel
+ BVC gpol13             \ x-coordinates of all the polygon points fit into
+                        \ single-byte numbers, so jump to gpol13 to process the
+                        \ edge accordingly
+
+ LDA xPolygonPointHi,Y  \ If both of the high bytes for point #X and point #Y
+ ORA xPolygonPointHi,X  \ are zero then the x-coordinates for these particular
+ BEQ gpol13             \ points happen to fit into single-byte numbers, so
+                        \ jump to gpol13 to process the edge accordingly
+
+ LDA yEdgeDeltaHi       \ If yEdgeDeltaHi is non-zero then the y-axis delta is
+ BNE gpol12             \ non-zero, so jump to part 6 via gpol12 to process the
+                        \ edge accordingly
+
+ LDA yEdgeDeltaLo       \ If yEdgeDeltaLo = 0 then we know yEdgeDelta(Hi Lo)
+ BEQ gpol15             \ must be zero as we passed through the BNE above, so
+                        \ the polygon edge is horizontal and we jump to gpol15
+                        \ to move on to the next polygon edge ???
 
 .gpol12
 
- JMP gpol22             \ Jump to part 6 to ????
+ JMP gpol22             \ If we get here then:
+                        \
+                        \   * The x-coordinates for points #X and #Y are both
+                        \     two-byte numbers
+                        \
+                        \   * The y-axis delta in yEdgeDelta(Hi Lo) is non-zero
+                        \
+                        \ So we jump to part 6 to process this edge accordingly
 
 .gpol13
 
- LDA V
- BEQ gpol14
- LDA #0
- STA xPolygonPointHi,Y
- STA xPolygonPointHi,X
+                        \ If we get here then the x-coordinates for points #X
+                        \ and #Y fit into single-byte numbers
 
- JMP gpol22             \ Jump to part 6 to ????
+ LDA yEdgeDeltaHi       \ If yEdgeDeltaHi is zero then the y-axis delta also
+ BEQ gpol14             \ fits into a single-byte number, so jump to gpol14
+
+ LDA #0                 \ Zero the high bytes for both points' x-coordinates,
+ STA xPolygonPointHi,Y  \ because we are about to process the edge using
+ STA xPolygonPointHi,X  \ two-byte calculations, and the high bytes don't get
+                        \ written when the x-coordinates of all the polygon
+                        \ points fit into single-byte numbers
+                        \
+                        \ So this just ensures that the high bytes are correctly
+                        \ set up so we can use the value of xPolygonPoint(Hi Lo)
+                        \ in the calculations and get the correct x-coordinate
+                        \ values
+
+ JMP gpol22             \ If we get here then:
+                        \
+                        \   * The x-coordinates for points #X and #Y are both
+                        \     single-byte numbers
+                        \
+                        \   * The x-coordinates for points #X and #Y have had
+                        \     their high bytes zeroed so they can be used as
+                        \     two-byte numbers
+                        \
+                        \   * The y-axis delta in yEdgeDelta(Hi Lo) is a
+                        \     two-byte number
+                        \
+                        \ So we jump to part 6 to process this edge accordingly
 
 .gpol14
 
- LDA L000C
- BEQ gpol19
+                        \ If we get here then:
+                        \
+                        \   * The x-coordinates for points #X and #Y are both
+                        \     single-byte numbers
+                        \
+                        \   * The y-axis delta in yEdgeDelta(Hi Lo) is a
+                        \     single-byte number and is therefore equal to
+                        \     yEdgeDeltaLo
 
- LDA drawViewPitchHi,Y
- STA yEdgeStartHi
- LDA drawViewPitchLo,Y
- STA yEdgeStartLo
+ LDA yEdgeDeltaLo       \ If yEdgeDeltaLo = 0 then yEdgeDelta(Hi Lo) = 0, so
+ BEQ gpol19             \ jump to gpol19 to process this
 
- LDA drawViewPitchHi,X
- STA yEdgeEndHi
- LDA drawViewPitchLo,X
- STA yEdgeEndLo
+ LDA drawViewPitchHi,Y  \ Set yEdgeStart(Hi Lo) = drawViewPitch(Hi Lo)
+ STA yEdgeStartHi       \
+ LDA drawViewPitchLo,Y  \ So this sets the y-coordinate of the start point in
+ STA yEdgeStartLo       \ point #Y (the lower point)
 
- LDA xPolygonPointLo,Y
- STA xEdgeStartLo
+ LDA drawViewPitchHi,X  \ Set yEdgeStart(Hi Lo) = drawViewPitch(Hi Lo)
+ STA yEdgeEndHi         \
+ LDA drawViewPitchLo,X  \ So this sets the y-coordinate of the end point in
+ STA yEdgeEndLo         \ point #X (the higher point)
 
- LDA xPolygonPointLo,X
- STA xEdgeEndLo
+ LDA xPolygonPointLo,Y  \ Set xEdgeStart(Hi Lo) = (0 xPolygonPointLo)
+ STA xEdgeStartLo       \
+                        \ So this sets the x-coordinate of the start point in
+                        \ point #Y (the lower point), starting with the low bytes
 
- LDA #0
- STA xEdgeStartHi
+ LDA xPolygonPointLo,X  \ Set xEdgeEnd(Hi Lo) = (0 xPolygonPointLo)
+ STA xEdgeEndLo         \
+                        \ So this sets the x-coordinate of the start point in
+                        \ point #Y (the lower point), starting with the low bytes
+
+ LDA #0                 \ Zero the high bytes of xEdgeStart(Hi Lo) and
+ STA xEdgeStartHi       \ xEdgeEnd(Hi Lo)
  STA xEdgeEndHi
- JSR sub_C2EAE
+
+ JSR ProcessPolygonEdge \ Process the polygon edge ???
 
 .gpol15
+
+                        \ We now move on to the next edge in the polygon
 
  LDY polygonEdge        \ Set Y to the number of the polygon edge that we have
                         \ been processing
@@ -23176,219 +23282,270 @@
 
 .gpol16
 
- LDA L001E
- CMP polygonEdgeCount
- BNE gpol17
- LDA drawViewPitchHi,X
- BNE gpol17
- LDY drawViewPitchLo,X
- CPY minPitchAngle
- BCC gpol17
- CPY maxPitchAngle
- BCS gpol17
- STY yPolygonBottom
- STY yPolygonTop
- LDA L0030
- STA xPolygonLeft,Y
- LDA L0031
- STA xPolygonRight,Y
- LDA #0
- STA L007F
+                        \ We have processed all the edges in the polygon, so now
+                        \ we work out whether the polygon is visible in the
+                        \ current screen buffer
+
+ LDA horizontalEdges    \ If horizontalEdges does not match polygonEdgeCount
+ CMP polygonEdgeCount   \ then not every edge in the polygon was horizontal, so
+ BNE gpol17             \ jump to gpol17 to skip the following
+
+                        \ If we get here then every edge in the polygon is
+                        \ horizontal, so the entire polygon appears within a
+                        \ single horizontal line
+
+ LDA drawViewPitchHi,X  \ If the high byte of the view-relative pitch angle for
+ BNE gpol17             \ point #X is non-zero then point #X is definitely not
+                        \ on-screen, and so neither is the horizontal line, so
+                        \ jump to gpol17 to skip the following
+
+ LDY drawViewPitchLo,X  \ Set Y to the low byte of the view-relative pitch angle
+                        \ for point #X (and therefore the pitch angle for the
+                        \ horizontal line)
+
+ CPY minPitchAngle      \ If Y < minPitchAngle then the line is not within the
+ BCC gpol17             \ screen buffer as the pitch angle is below the minimum
+                        \ value in the buffer, so jump to gpol17 to skip the
+                        \ following
+
+ CPY maxPitchAngle      \ If Y >= maxPitchAngle hen the line is not within the
+ BCS gpol17             \ screen buffer as the pitch angle is above the maximum
+                        \ value in the buffer, so jump to gpol17 to skip the
+                        \ following
+
+                        \ If we get here then the polygon is a single horizontal
+                        \ line and it appears within the screen buffer, so we
+                        \ configure the result to return a single polygon line
+                        \ with the y-coordinate of single horizontal line, and
+                        \ with the maximum and minimum x-coordinates that we
+                        \ have been calculating in xMinHorizontal and
+                        \ xMaxHorizontal
+
+ STY yPolygonBottom     \ Set both the top and bottom polygon y-coordinates to
+ STY yPolygonTop        \ the low byte of the view-relative pitch angle for
+                        \ point #X
+
+ LDA xMinHorizontal     \ Set the left edge of the polygon line to the
+ STA xPolygonLeft,Y     \ x-coordinate in xMinHorizontal
+
+ LDA xMaxHorizontal     \ Set the right edge of the polygon line to the
+ STA xPolygonRight,Y    \ x-coordinate in xMaxHorizontal
+
+ LDA #0                 \ Set L007F = 0 so we pass through both checks below and
+ STA L007F              \ return the polygon line as being on-screen
 
 .gpol17
 
- LDA L007F
- BNE gpol18
- LDA yPolygonTop
- CMP yPolygonBottom
- BCC gpol18
- CLC
- RTS
+ LDA L007F              \ If L007F is non-zero then there is nothing to draw, so
+ BNE gpol18             \ jump to gpol18 to return from the subroutine with the
+                        \ C flag set ???
+
+ LDA yPolygonTop        \ If yPolygonTop < yPolygonBottom then there are no
+ CMP yPolygonBottom     \ visible lines to draw in the polygon, so jump to
+ BCC gpol18             \ gpol18 to return from the subroutine with the C flag
+                        \ set
+
+ CLC                    \ Clear the C flag to indicate that the polygon is
+                        \ visible in the current screen buffer and should be
+                        \ drawn
+
+ RTS                    \ Return from the subroutine
 
 .gpol18
 
- SEC
- RTS
+ SEC                    \ Set the C flag to indicate that the polygon is not
+                        \ visible in the current screen buffer and should not be
+                        \ drawn
+
+ RTS                    \ Return from the subroutine
 
 .gpol19
 
- LDA xPolygonPointLo,X
- CMP L0031
- BCC gpol20
- STA L0031
+                        \ If we get here then yEdgeDelta(Hi Lo) = 0, so this
+                        \ polygon edge is horizontal
+
+ LDA xPolygonPointLo,X  \ Set A = xPolygonPointLo for point #X
+
+ CMP xMaxHorizontal     \ Set xMaxHorizontal = max(xMaxHorizontal, A)
+ BCC gpol20             \
+ STA xMaxHorizontal     \ So xMaxHorizontal keeps track of the maximum
+                        \ x-coordinate of all the horizontal polygon edges
 
 .gpol20
 
- CMP L0030
- BCS gpol21
- STA L0030
+ CMP xMinHorizontal     \ Set xMinHorizontal = min(xMinHorizontal, A)
+ BCS gpol21             \
+ STA xMinHorizontal     \ So xMinHorizontal keeps track of the minimum
+                        \ x-coordinate of all the horizontal polygon edges
 
 .gpol21
 
- INC L001E
- JMP gpol15
+ INC horizontalEdges    \ Increment horizontalEdges so we keep a count of all
+                        \ the horizontal polygon edges
+
+ JMP gpol15             \ Jump to gpol15 to move on to the next polygon edge
 
 \ ******************************************************************************
 \
-\       Name: sub_C2EAE (Part 1 of 2)
+\       Name: ProcessPolygonEdge (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.C2EAA
+.pedg1
 
- JMP C3087
+ JMP pedg35
 
-.C2EAD
+.pedg2
 
  RTS
 
-.sub_C2EAE
+.ProcessPolygonEdge
 
  LDA yEdgeEndHi
- BMI C2EC2
- BNE C2EAD
+ BMI pedg3
+ BNE pedg2
  LDA yEdgeEndLo
  CMP maxPitchAngle
- BCS C2EAD
+ BCS pedg2
  CMP yPolygonBottom
- BCS C2EC6
+ BCS pedg5
  CMP minPitchAngle
- BCS C2EC4
+ BCS pedg4
 
-.C2EC2
+.pedg3
 
  LDA minPitchAngle
 
-.C2EC4
+.pedg4
 
  STA yPolygonBottom
 
-.C2EC6
+.pedg5
 
  LDA yEdgeStartHi
- BMI C2EAD
- BNE C2EDA
+ BMI pedg2
+ BNE pedg6
  LDA yEdgeStartLo
  CMP minPitchAngle
- BCC C2EAD
+ BCC pedg2
  CMP yPolygonTop
- BCC C2EE1
+ BCC pedg8
  CMP maxPitchAngle
- BCC C2EDF
+ BCC pedg7
 
-.C2EDA
+.pedg6
 
  LDA maxPitchAngle
  SEC
  SBC #&01
 
-.C2EDF
+.pedg7
 
  STA yPolygonTop
 
-.C2EE1
+.pedg8
 
  LDA xEdgeStartHi
  ORA xEdgeEndHi
- BNE C2EAA
+ BNE pedg1
  LDA xEdgeStartLo
  SEC
  SBC xEdgeEndLo
- BCS C2EF9
+ BCS pedg9
  EOR #&FF
  CLC
  ADC #&01
  STA L000D
  LDX #&E8
- BNE C2EFD
+ BNE pedg10
 
-.C2EF9
+.pedg9
 
  STA L000D
  LDX #&CA
 
-.C2EFD
+.pedg10
 
  LDY L000D
- CPY L000C
+ CPY yEdgeDeltaLo
  LDY yEdgeStartLo
- LDA L0002
- BCS C2F3B
- STA C2F29+2
- STY C2F29+1
- STX C2F28
- LDY L000C
+ LDA xPolygonAddrHi
+ BCS pedg18
+ STA pedg13+2
+ STY pedg13+1
+ STX pedg12
+ LDY yEdgeDeltaLo
  INY
- LDA L000C
+ LDA yEdgeDeltaLo
  LSR A
  EOR #&FF
  CLC
  LDX yEdgeStartHi
- BNE C2F80
+ BNE pedg26
  LDX xEdgeStartLo
- JMP C2F29
+ JMP pedg13
 
-.P2F22
+.pedg11
 
  ADC L000D
- BCC C2F29
- SBC L000C
+ BCC pedg13
+ SBC yEdgeDeltaLo
 
-.C2F28
+.pedg12
 
  INX
 
-.C2F29
+.pedg13
 
  STX xTileMaxAltitude+63    \ Gets modified
- DEC C2F29+1
- BEQ C2F37
+ DEC pedg13+1
+ BEQ pedg17
 
-.C2F31
+.pedg14
 
  DEY
- BNE P2F22
+ BNE pedg11
 
-.C2F34
+.pedg15
 
  STY L007F
 
-.CRE26
+.pedg16
 
  RTS
 
-.C2F37
+.pedg17
 
  LDY #0
- BEQ C2F34
+ BEQ pedg15
 
-.C2F3B
+.pedg18
 
- STA C2F77+2
- STY C2F77+1
- STX C2F6B
+ STA pedg24+2
+ STY pedg24+1
+ STX pedg22
  LDY #&07
  CMP #&5A
- BEQ C2F50
+ BEQ pedg19
  CPX #&CA
- BEQ C2F54
- BNE C2F56
+ BEQ pedg20
+ BNE pedg21
 
-.C2F50
+.pedg19
 
  CPX #&CA
- BEQ C2F56
+ BEQ pedg21
 
-.C2F54
+.pedg20
 
  LDY #&0A
 
-.C2F56
+.pedg21
 
- STY L2F6F
+ STY pedg23+1
  LDY L000D
  INY
  LDA L000D
@@ -23396,103 +23553,110 @@
  EOR #&FF
  CLC
  LDX yEdgeStartHi
- BNE C2FA6
+ BNE pedg31
  LDX xEdgeStartLo
- JMP C2F77
+ JMP pedg24
 
-.C2F6B
+.pedg22
 
  DEX
- ADC L000C
+ ADC yEdgeDeltaLo
 
-.C2F6E
+.pedg23
 
-L2F6F = C2F6E+1
-
- BCC C2F7A
+ BCC pedg25              \ Gets modified
  SBC L000D
- DEC C2F77+1
- BEQ C2F37
+ DEC pedg24+1
+ BEQ pedg17
 
-.C2F77
+.pedg24
 
  STX xTileMaxAltitude+62    \ Gets modified
 
-.C2F7A
+.pedg25
 
  DEY
- BNE C2F6B
- JMP C2F34
+ BNE pedg22
+ JMP pedg15
 
-.C2F80
+.pedg26
 
- INC C2F29+1
- LDX C2F28
- STX C2F94
+ INC pedg13+1
+ LDX pedg12
+ STX pedg28
  LDX xEdgeStartLo
- JMP C2F95
+ JMP pedg29
 
-.P2F8E
+.pedg27
 
  ADC L000D
- BCC C2F95
- SBC L000C
+ BCC pedg29
+ SBC yEdgeDeltaLo
 
-.C2F94
+.pedg28
 
  INX
 
-.C2F95
+.pedg29
 
- DEC C2F29+1
- BEQ C2FA0
+ DEC pedg13+1
+ BEQ pedg30
  DEY
- BNE P2F8E
- JMP CRE26
+ BNE pedg27
+ JMP pedg16
 
-.C2FA0
+.pedg30
 
- DEC C2F29+1
- JMP C2F31
+ DEC pedg13+1
+ JMP pedg14
 
-.C2FA6
+.pedg31
 
- INC C2F77+1
- LDX C2F6B
- STX C2FB4
+ INC pedg24+1
+ LDX pedg22
+ STX pedg32
  LDX xEdgeStartLo
- JMP C2FC0
+ JMP pedg33
 
-.C2FB4
+.pedg32
 
  INX
- ADC L000C
- BCC C2FC0
+ ADC yEdgeDeltaLo
+ BCC pedg33
  SBC L000D
- DEC C2F77+1
- BEQ C2FC6
+ DEC pedg24+1
+ BEQ pedg34
 
-.C2FC0
+.pedg33
 
  DEY
- BNE C2FB4
- JMP CRE26
+ BNE pedg32
+ JMP pedg16
 
-.C2FC6
+.pedg34
 
- DEC C2F77+1
- JMP C2F7A
+ DEC pedg24+1
+ JMP pedg25
 
 \ ******************************************************************************
 \
 \       Name: GetPolygonLines (Part 6 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Split polygon edges whose coordinates are stored in two-byte
+\             numbers into smaller sections for processing
 \
 \ ******************************************************************************
 
 .gpol22
+
+                        \ If we get here then:
+                        \
+                        \   * The x-coordinates for points #X and #Y are both
+                        \     two-byte numbers
+                        \
+                        \   * The y-axis delta in yEdgeDelta(Hi Lo) is non-zero
+                        \     and a two-byte number
 
  STX L000E
  LDA #0
@@ -23508,13 +23672,13 @@ L2F6F = C2F6E+1
  JSR Absolute16Bit      \ Set (A T) = |A T|
 
  STA U
- ORA V
+ ORA yEdgeDeltaHi
  BEQ gpol24
 
 .gpol23
 
- LSR V
- ROR L000C
+ LSR yEdgeDeltaHi
+ ROR yEdgeDeltaLo
  LSR U
  ROR T
  SEC
@@ -23524,7 +23688,7 @@ L2F6F = C2F6E+1
 
 .gpol24
 
- LDX L000C
+ LDX yEdgeDeltaLo
  CPX #&FF
  BEQ gpol23
  LDX T
@@ -23554,7 +23718,7 @@ L2F6F = C2F6E+1
  LDA yEdgeEndLo
  STA yEdgeStartLo
  SEC
- SBC L000C
+ SBC yEdgeDeltaLo
  STA yEdgeEndLo
  LDA yEdgeEndHi
  STA yEdgeStartHi
@@ -23569,7 +23733,9 @@ L2F6F = C2F6E+1
  STA xEdgeStartHi
  SBC L0043
  STA xEdgeEndHi
- JSR sub_C2EAE
+
+ JSR ProcessPolygonEdge \ Process the polygon edge ???
+
  DEC L0040
  BNE gpol25
 
@@ -23595,20 +23761,23 @@ L2F6F = C2F6E+1
  LDA yEdgeStartLo
  SEC
  SBC yEdgeEndLo
- STA L000C
- JSR sub_C2EAE
- JMP gpol15
+ STA yEdgeDeltaLo
+
+ JSR ProcessPolygonEdge \ Process the polygon edge ???
+
+ JMP gpol15             \ Jump back to part 5 to move on to the next polygon
+                        \ edge
 
 \ ******************************************************************************
 \
-\       Name: sub_C2EAE (Part 2 of 2)
+\       Name: ProcessPolygonEdge (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.C3087
+.pedg35
 
  LDA xEdgeStartLo
  SEC
@@ -23616,7 +23785,7 @@ L2F6F = C2F6E+1
  STA L000D
  LDA xEdgeStartHi
  SBC xEdgeEndHi
- BPL C30A4
+ BPL pedg36
  LDA #0
  SEC
  SBC L000D
@@ -23624,35 +23793,35 @@ L2F6F = C2F6E+1
  LDX #&E8
  LDA #0
  LDY #&E6
- JMP C30AA
+ JMP pedg37
 
-.C30A4
+.pedg36
 
  LDX #&CA
  LDA #&FF
  LDY #&C6
 
-.C30AA
+.pedg37
 
  STY T
- STA V
+ STA yEdgeDeltaHi
  LDY L000D
- CPY L000C
+ CPY yEdgeDeltaLo
  LDY yEdgeStartLo
- LDA L0002
- BCS C3112
- STA C30E9+2
- STX C30E3
+ LDA xPolygonAddrHi
+ BCS pedg46
+ STA pedg41+2
+ STX pedg40
  LDA yEdgeStartHi
- BEQ C30C3
+ BEQ pedg38
  INY
 
-.C30C3
+.pedg38
 
- STY C30E9+1
+ STY pedg41+1
  LDA T
- STA C310A
- LDY L000C
+ STA pedg45
+ LDY yEdgeDeltaLo
  TYA
  LSR A
  EOR #&FF
@@ -23661,65 +23830,65 @@ L2F6F = C2F6E+1
  STY U
  LDX xEdgeStartLo
  JSR sub_C316E
- JMP C30E9
+ JMP pedg41
 
-.C30DD
+.pedg39
 
  ADC L000D
- BCC C30E9
- SBC L000C
+ BCC pedg41
+ SBC yEdgeDeltaLo
 
-.C30E3
+.pedg40
 
  INX
- CPX V
+ CPX yEdgeDeltaHi
  CLC
- BEQ C310A
+ BEQ pedg45
 
-.C30E9
+.pedg41
 
  STX xPolygonLeft       \ Gets modified
- DEC C30E9+1
- BEQ C30F8
+ DEC pedg41+1
+ BEQ pedg43
 
-.C30F1
+.pedg42
 
  DEC U
- BNE C30DD
- JMP CRE26
+ BNE pedg39
+ JMP pedg16
 
-.C30F8
+.pedg43
 
  DEC yEdgeStartHi
- BPL C30FF
- JMP CRE26
+ BPL pedg44
+ JMP pedg16
 
-.C30FF
+.pedg44
 
- BNE C30F1
- DEC C30E9+1
+ BNE pedg42
+ DEC pedg41+1
  JSR sub_C316E
- JMP C30F1
+ JMP pedg42
 
-.C310A
+.pedg45
 
  INC xEdgeStartHi
  JSR sub_C316E
- JMP C30E9
+ JMP pedg41
 
-.C3112
+.pedg46
 
- STA C3148+2
- STX C3137
+ STA pedg50+2
+ STX pedg48
  LDA yEdgeStartHi
- BEQ C311D
+ BEQ pedg47
  INY
 
-.C311D
+.pedg47
 
- STY C3148+1
+ STY pedg50+1
  LDA T
- STA C3164
+ STA pedg53
  LDY L000D
  TYA
  LSR A
@@ -23729,48 +23898,48 @@ L2F6F = C2F6E+1
  STY U
  LDX xEdgeStartLo
  JSR sub_C316E
- JMP C3148
+ JMP pedg50
 
-.C3137
+.pedg48
 
  INX
- CPX V
+ CPX yEdgeDeltaHi
  CLC
- BEQ C3164
+ BEQ pedg53
 
-.C313D
+.pedg49
 
- ADC L000C
- BCC C3148
+ ADC yEdgeDeltaLo
+ BCC pedg50
  SBC L000D
- DEC C3148+1
- BEQ C3152
+ DEC pedg50+1
+ BEQ pedg51
 
-.C3148
+.pedg50
 
  STX xPolygonLeft       \ Gets modified
  DEC U
- BNE C3137
- JMP CRE26
+ BNE pedg48
+ JMP pedg16
 
-.C3152
+.pedg51
 
  DEC yEdgeStartHi
- BPL C3159
- JMP CRE26
+ BPL pedg52
+ JMP pedg16
 
-.C3159
+.pedg52
 
- BNE C3148
- DEC C3148+1
+ BNE pedg50
+ DEC pedg50+1
  JSR sub_C316E
- JMP C3148
+ JMP pedg50
 
-.C3164
+.pedg53
 
  INC xEdgeStartHi
  JSR sub_C316E
- JMP C313D
+ JMP pedg49
 
 \ ******************************************************************************
 \
@@ -23833,8 +24002,8 @@ L2F6F = C2F6E+1
 
 .C318C
 
- STA C30E9
- STA C3148
+ STA pedg41
+ STA pedg50
  PLA
  RTS
 
