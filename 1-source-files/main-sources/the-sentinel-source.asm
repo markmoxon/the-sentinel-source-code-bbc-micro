@@ -260,7 +260,7 @@
 
  SKIP 1                 \ Used to store a loop counter
 
-.L0016
+.yEdgeEndLo
 
  SKIP 1                 \ ???
 
@@ -270,7 +270,7 @@
                         \ calculating tile visibility in the GetRowVisibility
                         \ routine
 
-.polygonSideCount
+.polygonEdgeCount
 
  SKIP 1                 \ The number of sides in the polygon we are drawing,
                         \ which is one less than the number of points in the
@@ -280,7 +280,7 @@
                         \ This will be three for a triangle or four for a
                         \ quadrilateral
 
-.L0018
+.xEdgeStartLo
 
  SKIP 0                 \ ???
 
@@ -308,7 +308,7 @@
                         \
                         \   * Bits 24-5 = edge colour
 
-.L001A
+.yEdgeStartLo
 
  SKIP 0                 \ ???
 
@@ -656,7 +656,7 @@
                         \
                         \ Stored as a 24-bit value zCoord(Hi Lo Bot)
 
-.L0039
+.xEdgeEndLo
 
  SKIP 1                 \ ???
 
@@ -705,7 +705,7 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L003E
+.yEdgeStartHi
 
  SKIP 0                 \ ???
 
@@ -716,7 +716,7 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L003F
+.yEdgeEndHi
 
  SKIP 0                 \ ???
 
@@ -727,6 +727,10 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
+.L0040
+
+ SKIP 0                 \ ???
+
 .vectorPitchAngleHi
 
  SKIP 1                 \ The pitch angle of a vector (high byte)
@@ -734,11 +738,11 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L0041
+.xEdgeStartHi
 
  SKIP 1                 \ ???
 
-.L0042
+.xEdgeEndHi
 
  SKIP 1                 \ ???
 
@@ -751,7 +755,7 @@
  SKIP 5                 \ The number of the starting point for the tile shape
                         \ being drawn
 
-.polygonSide
+.polygonEdge
 
  SKIP 1                 \ The number the side of the polygon that we are
                         \ currently processing
@@ -22638,7 +22642,7 @@
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 1 of 7)
+\       Name: GetPolygonLines (Part 1 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Calculate the points in a two-face tile polygon when it consists
@@ -22704,15 +22708,15 @@
  AND #63
  STA polygonPoint+2
 
- LDX #3                 \ Set X = 3 to set as the value of polygonSideCount as
-                        \ there are three sides in a triangle polygon
+ LDX #3                 \ Set X = 3 to set as the value of polygonEdgeCount as
+                        \ there are three edges in a triangle polygon
 
- BNE gpol3              \ Jump to gpol3 in part 1 to set polygonSideCount = 3
+ BNE gpol3              \ Jump to gpol3 in part 1 to set polygonEdgeCount = 3
                         \ and move on to part 4
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 2 of 7)
+\       Name: GetPolygonLines (Part 2 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: The main entry point for the routine to calculate the horizontal
@@ -22829,18 +22833,18 @@
  EOR #32                \ Set the fourth quadrilateral point to the rear-right
  STA polygonPoint+3     \ tile corner
 
- LDX #4                 \ Set X = 4 to set as the value of polygonSideCount as
-                        \ there are four sides in a quadrilateral
+ LDX #4                 \ Set X = 4 to set as the value of polygonEdgeCount as
+                        \ there are four edges in a quadrilateral
 
 .gpol3
 
- STX polygonSideCount   \ Set polygonSideCount to the value in X
+ STX polygonEdgeCount   \ Set polygonEdgeCount to the value in X
 
  JMP gpol7              \ Jump to part 4 to continue analysing the polygon
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 3 of 7)
+\       Name: GetPolygonLines (Part 3 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
@@ -22854,8 +22858,8 @@
  STA xPolygonPointScale \ pixel x-coordinate of this polygon point needs to be
                         \ stored as a two-byte number
 
- LDY polygonSideCount   \ We now loop through all the points in the polygon, so
-                        \ set Y to count through the number of sides in the
+ LDY polygonEdgeCount   \ We now loop through all the points in the polygon, so
+                        \ set Y to count through the number of edges in the
                         \ polygon that we are drawing (as that's also the number
                         \ of unique points in the polygon)
 
@@ -22929,7 +22933,7 @@
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 4 of 7)
+\       Name: GetPolygonLines (Part 4 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
@@ -22963,8 +22967,8 @@
                         \ byte (we will change this if the x-coordinate ends up
                         \ being too large to fit into the range 0 to 255)
 
- LDY polygonSideCount   \ We now loop through all the points in the polygon, so
-                        \ set Y to count through the number of sides in the
+ LDY polygonEdgeCount   \ We now loop through all the points in the polygon, so
+                        \ set Y to count through the number of edges in the
                         \ polygon that we are drawing (as that's also the number
                         \ of unique points in the polygon)
 
@@ -23023,7 +23027,7 @@
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 5 of 7)
+\       Name: GetPolygonLines (Part 5 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -23052,15 +23056,15 @@
 
  STA L007F              \ Set L007F = 255 ???
 
- LDY #0                 \ We now loop through all the sides of the polygon, so
-                        \ set a loop counter in Y to work through all the sides
+ LDY #0                 \ We now loop through all the edges of the polygon, so
+                        \ set a loop counter in Y to work through all the edges
                         \ of the polygon (three for a triangle, four for a
                         \ quadrilateral)
 
 .gpol10
 
- STY polygonSide        \ Store the polygon side number that we are about to
-                        \ process in polygonSide, so we can retrieve it at the
+ STY polygonEdge        \ Store the polygon edge number that we are about to
+                        \ process in polygonEdge, so we can retrieve it at the
                         \ end of the loop
 
  LDA (drawViewAngles),Y \ Set X to the offset within the drawing tables of the
@@ -23071,7 +23075,7 @@
  TAY
 
                         \ So X and Y are the offsets within the drawing tables
-                        \ of the start and end points for the polygon side that
+                        \ of the start and end points for the polygon edge that
                         \ we are processing
 
  LDA #&5A               \ Set L0002 = &5A ???
@@ -23119,7 +23123,7 @@
 
 .gpol12
 
- JMP gpol22
+ JMP gpol22             \ Jump to part 6 to ????
 
 .gpol13
 
@@ -23128,46 +23132,52 @@
  LDA #0
  STA xPolygonPointHi,Y
  STA xPolygonPointHi,X
- JMP gpol22
+
+ JMP gpol22             \ Jump to part 6 to ????
 
 .gpol14
 
  LDA L000C
  BEQ gpol19
+
  LDA drawViewPitchHi,Y
- STA L003E
+ STA yEdgeStartHi
  LDA drawViewPitchLo,Y
- STA L001A
+ STA yEdgeStartLo
+
  LDA drawViewPitchHi,X
- STA L003F
+ STA yEdgeEndHi
  LDA drawViewPitchLo,X
- STA L0016
+ STA yEdgeEndLo
+
  LDA xPolygonPointLo,Y
- STA L0018
+ STA xEdgeStartLo
+
  LDA xPolygonPointLo,X
- STA L0039
+ STA xEdgeEndLo
+
  LDA #0
- STA L0041
- STA L0042
+ STA xEdgeStartHi
+ STA xEdgeEndHi
  JSR sub_C2EAE
 
 .gpol15
 
- LDY polygonSide        \ Set Y to the number of the polygon side that we have
+ LDY polygonEdge        \ Set Y to the number of the polygon edge that we have
                         \ been processing
 
- INY                    \ Increment Y to move on to the next side in the polygon
+ INY                    \ Increment Y to move on to the next edge in the polygon
 
- CPY polygonSideCount   \ If we have processed all the sides in the polygon then
+ CPY polygonEdgeCount   \ If we have processed all the edges in the polygon then
  BEQ gpol16             \ jump to gpol16 to keep going
 
- JMP gpol10             \ Otherwise loop back to gpol10 to process the next side
+ JMP gpol10             \ Otherwise loop back to gpol10 to process the next edge
                         \ in the polygon
 
 .gpol16
 
  LDA L001E
- CMP polygonSideCount
+ CMP polygonEdgeCount
  BNE gpol17
  LDA drawViewPitchHi,X
  BNE gpol17
@@ -23220,7 +23230,7 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C2EAE
+\       Name: sub_C2EAE (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -23229,7 +23239,7 @@
 
 .C2EAA
 
- JMP gpol27
+ JMP C3087
 
 .C2EAD
 
@@ -23237,10 +23247,10 @@
 
 .sub_C2EAE
 
- LDA L003F
+ LDA yEdgeEndHi
  BMI C2EC2
  BNE C2EAD
- LDA L0016
+ LDA yEdgeEndLo
  CMP maxPitchAngle
  BCS C2EAD
  CMP yPolygonBottom
@@ -23258,10 +23268,10 @@
 
 .C2EC6
 
- LDA L003E
+ LDA yEdgeStartHi
  BMI C2EAD
  BNE C2EDA
- LDA L001A
+ LDA yEdgeStartLo
  CMP minPitchAngle
  BCC C2EAD
  CMP yPolygonTop
@@ -23281,12 +23291,12 @@
 
 .C2EE1
 
- LDA L0041
- ORA L0042
+ LDA xEdgeStartHi
+ ORA xEdgeEndHi
  BNE C2EAA
- LDA L0018
+ LDA xEdgeStartLo
  SEC
- SBC L0039
+ SBC xEdgeEndLo
  BCS C2EF9
  EOR #&FF
  CLC
@@ -23304,7 +23314,7 @@
 
  LDY L000D
  CPY L000C
- LDY L001A
+ LDY yEdgeStartLo
  LDA L0002
  BCS C2F3B
  STA C2F29+2
@@ -23316,9 +23326,9 @@
  LSR A
  EOR #&FF
  CLC
- LDX L003E
+ LDX yEdgeStartHi
  BNE C2F80
- LDX L0018
+ LDX xEdgeStartLo
  JMP C2F29
 
 .P2F22
@@ -23385,9 +23395,9 @@
  LSR A
  EOR #&FF
  CLC
- LDX L003E
+ LDX yEdgeStartHi
  BNE C2FA6
- LDX L0018
+ LDX xEdgeStartLo
  JMP C2F77
 
 .C2F6B
@@ -23419,7 +23429,7 @@ L2F6F = C2F6E+1
  INC C2F29+1
  LDX C2F28
  STX C2F94
- LDX L0018
+ LDX xEdgeStartLo
  JMP C2F95
 
 .P2F8E
@@ -23450,7 +23460,7 @@ L2F6F = C2F6E+1
  INC C2F77+1
  LDX C2F6B
  STX C2FB4
- LDX L0018
+ LDX xEdgeStartLo
  JMP C2FC0
 
 .C2FB4
@@ -23475,7 +23485,7 @@ L2F6F = C2F6E+1
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 6 of 7)
+\       Name: GetPolygonLines (Part 6 of 6)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
@@ -23486,7 +23496,7 @@ L2F6F = C2F6E+1
 
  STX L000E
  LDA #0
- STA vectorPitchAngleHi
+ STA L0040
  LDA xPolygonPointLo,Y
  SEC
  SBC xPolygonPointLo,X
@@ -23508,7 +23518,7 @@ L2F6F = C2F6E+1
  LSR U
  ROR T
  SEC
- ROL vectorPitchAngleHi
+ ROL L0040
  LSR A
  BNE gpol23
 
@@ -23529,84 +23539,84 @@ L2F6F = C2F6E+1
  LDA T
  STA xCoordHi
  LDA xPolygonPointLo,Y
- STA L0039
+ STA xEdgeEndLo
  LDA xPolygonPointHi,Y
- STA L0042
+ STA xEdgeEndHi
  LDA drawViewPitchHi,Y
- STA L003F
+ STA yEdgeEndHi
  LDA drawViewPitchLo,Y
- STA L0016
- LDA vectorPitchAngleHi
+ STA yEdgeEndLo
+ LDA L0040
  BEQ gpol26
 
 .gpol25
 
- LDA L0016
- STA L001A
+ LDA yEdgeEndLo
+ STA yEdgeStartLo
  SEC
  SBC L000C
- STA L0016
- LDA L003F
- STA L003E
+ STA yEdgeEndLo
+ LDA yEdgeEndHi
+ STA yEdgeStartHi
  SBC #&00
- STA L003F
- LDA L0039
- STA L0018
+ STA yEdgeEndHi
+ LDA xEdgeEndLo
+ STA xEdgeStartLo
  SEC
  SBC xCoordHi
- STA L0039
- LDA L0042
- STA L0041
+ STA xEdgeEndLo
+ LDA xEdgeEndHi
+ STA xEdgeStartHi
  SBC L0043
- STA L0042
+ STA xEdgeEndHi
  JSR sub_C2EAE
- DEC vectorPitchAngleHi
+ DEC L0040
  BNE gpol25
 
 .gpol26
 
- LDA L0016
- STA L001A
- LDA L003F
- STA L003E
- LDA L0039
- STA L0018
- LDA L0042
- STA L0041
+ LDA yEdgeEndLo
+ STA yEdgeStartLo
+ LDA yEdgeEndHi
+ STA yEdgeStartHi
+ LDA xEdgeEndLo
+ STA xEdgeStartLo
+ LDA xEdgeEndHi
+ STA xEdgeStartHi
  LDX L000E
  LDA drawViewPitchLo,X
- STA L0016
+ STA yEdgeEndLo
  LDA drawViewPitchHi,X
- STA L003F
+ STA yEdgeEndHi
  LDA xPolygonPointLo,X
- STA L0039
+ STA xEdgeEndLo
  LDA xPolygonPointHi,X
- STA L0042
- LDA L001A
+ STA xEdgeEndHi
+ LDA yEdgeStartLo
  SEC
- SBC L0016
+ SBC yEdgeEndLo
  STA L000C
  JSR sub_C2EAE
  JMP gpol15
 
 \ ******************************************************************************
 \
-\       Name: GetPolygonLines (Part 7 of 7)
+\       Name: sub_C2EAE (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.gpol27
+.C3087
 
- LDA L0018
+ LDA xEdgeStartLo
  SEC
- SBC L0039
+ SBC xEdgeEndLo
  STA L000D
- LDA L0041
- SBC L0042
- BPL gpol28
+ LDA xEdgeStartHi
+ SBC xEdgeEndHi
+ BPL C30A4
  LDA #0
  SEC
  SBC L000D
@@ -23614,34 +23624,34 @@ L2F6F = C2F6E+1
  LDX #&E8
  LDA #0
  LDY #&E6
- JMP gpol29
+ JMP C30AA
 
-.gpol28
+.C30A4
 
  LDX #&CA
  LDA #&FF
  LDY #&C6
 
-.gpol29
+.C30AA
 
  STY T
  STA V
  LDY L000D
  CPY L000C
- LDY L001A
+ LDY yEdgeStartLo
  LDA L0002
- BCS gpol38
- STA gpol33+2
- STX gpol32
- LDA L003E
- BEQ gpol30
+ BCS C3112
+ STA C30E9+2
+ STX C30E3
+ LDA yEdgeStartHi
+ BEQ C30C3
  INY
 
-.gpol30
+.C30C3
 
- STY gpol33+1
+ STY C30E9+1
  LDA T
- STA gpol37
+ STA C310A
  LDY L000C
  TYA
  LSR A
@@ -23649,67 +23659,67 @@ L2F6F = C2F6E+1
  CLC
  INY
  STY U
- LDX L0018
+ LDX xEdgeStartLo
  JSR sub_C316E
- JMP gpol33
+ JMP C30E9
 
-.gpol31
+.C30DD
 
  ADC L000D
- BCC gpol33
+ BCC C30E9
  SBC L000C
 
-.gpol32
+.C30E3
 
  INX
  CPX V
  CLC
- BEQ gpol37
+ BEQ C310A
 
-.gpol33
+.C30E9
 
  STX xPolygonLeft       \ Gets modified
- DEC gpol33+1
- BEQ gpol35
+ DEC C30E9+1
+ BEQ C30F8
 
-.gpol34
+.C30F1
 
  DEC U
- BNE gpol31
+ BNE C30DD
  JMP CRE26
 
-.gpol35
+.C30F8
 
- DEC L003E
- BPL gpol36
+ DEC yEdgeStartHi
+ BPL C30FF
  JMP CRE26
 
-.gpol36
+.C30FF
 
- BNE gpol34
- DEC gpol33+1
+ BNE C30F1
+ DEC C30E9+1
  JSR sub_C316E
- JMP gpol34
+ JMP C30F1
 
-.gpol37
+.C310A
 
- INC L0041
+ INC xEdgeStartHi
  JSR sub_C316E
- JMP gpol33
+ JMP C30E9
 
-.gpol38
+.C3112
 
- STA gpol42+2
- STX gpol40
- LDA L003E
- BEQ gpol39
+ STA C3148+2
+ STX C3137
+ LDA yEdgeStartHi
+ BEQ C311D
  INY
 
-.gpol39
+.C311D
 
- STY gpol42+1
+ STY C3148+1
  LDA T
- STA gpol45
+ STA C3164
  LDY L000D
  TYA
  LSR A
@@ -23717,50 +23727,50 @@ L2F6F = C2F6E+1
  CLC
  INY
  STY U
- LDX L0018
+ LDX xEdgeStartLo
  JSR sub_C316E
- JMP gpol42
+ JMP C3148
 
-.gpol40
+.C3137
 
  INX
  CPX V
  CLC
- BEQ gpol45
+ BEQ C3164
 
-.gpol41
+.C313D
 
  ADC L000C
- BCC gpol42
+ BCC C3148
  SBC L000D
- DEC gpol42+1
- BEQ gpol43
+ DEC C3148+1
+ BEQ C3152
 
-.gpol42
+.C3148
 
  STX xPolygonLeft       \ Gets modified
  DEC U
- BNE gpol40
+ BNE C3137
  JMP CRE26
 
-.gpol43
+.C3152
 
- DEC L003E
- BPL gpol44
+ DEC yEdgeStartHi
+ BPL C3159
  JMP CRE26
 
-.gpol44
+.C3159
 
- BNE gpol42
- DEC gpol42+1
+ BNE C3148
+ DEC C3148+1
  JSR sub_C316E
- JMP gpol42
+ JMP C3148
 
-.gpol45
+.C3164
 
- INC L0041
+ INC xEdgeStartHi
  JSR sub_C316E
- JMP gpol41
+ JMP C313D
 
 \ ******************************************************************************
 \
@@ -23794,7 +23804,7 @@ L2F6F = C2F6E+1
 .sub_C316E
 
  PHA
- LDA L003E
+ LDA yEdgeStartHi
  BEQ C3177
  LDA #&2C
  BNE C318C
@@ -23802,7 +23812,7 @@ L2F6F = C2F6E+1
 .C3177
 
  STA L007F
- LDA L0041
+ LDA xEdgeStartHi
  BNE C3181
  LDA #&8E
  BNE C318C
@@ -23823,8 +23833,8 @@ L2F6F = C2F6E+1
 
 .C318C
 
- STA gpol33
- STA gpol42
+ STA C30E9
+ STA C3148
  PLA
  RTS
 
@@ -37212,10 +37222,10 @@ L2F6F = C2F6E+1
  AND #%00000011         \ Extract bits 0 to 1 from the polygon data byte to get
  CLC                    \ the number of sides in the polygon (where 0 means
  ADC #3                 \ three sides and 1 means four sides)
- STA polygonSideCount   \
+ STA polygonEdgeCount   \
                         \ Then add 3 to get the number of sides in the polygon,
                         \ (three for a triangle or four for a quadrilateral)
-                        \ and store the result in polygonSideCount
+                        \ and store the result in polygonEdgeCount
 
  LDA objPolygonAddrLo,Y \ Set drawViewAngles(1 0) to the address of the list of
  STA drawViewAngles     \ object-relative point numbers for this polygon so the

@@ -56,13 +56,13 @@
      0014
 .loopCounter
      0015
-.L0016
+.yEdgeEndLo
      0016
 .traceStepCounter
      0017
-.polygonSideCount
+.polygonEdgeCount
      0017
-.L0018
+.xEdgeStartLo
      0018
 .xTileRow
      0018
@@ -72,7 +72,7 @@
      0019
 .polygonColours
      0019
-.L001A
+.yEdgeStartLo
      001A
 .yPolygonLine
      001A
@@ -176,7 +176,7 @@
      0038
 .zCoordLo
      0039
-.L0039
+.xEdgeEndLo
      0039
 .xCoordHi
      003A
@@ -190,25 +190,27 @@
      003C
 .vectorYawAngleLo
      003D
-.L003E
+.yEdgeStartHi
      003E
 .vectorYawAngleHi
      003E
-.L003F
+.yEdgeEndHi
      003F
 .vectorPitchAngleLo
      003F
+.L0040
+     0040
 .vectorPitchAngleHi
      0040
-.L0041
+.xEdgeStartHi
      0041
-.L0042
+.xEdgeEndHi
      0042
 .L0043
      0043
 .triangleStartPoint
      0045
-.polygonSide
+.polygonEdge
      004A
 .viewingQuadrantOpp
      004B
@@ -7918,7 +7920,7 @@
      307F   85 0C      STA &0C
      3081   20 AE 2E   JSR &2EAE
      3084   4C 56 2E   JMP &2E56
-.gpol27
+.C3087
      3087   A5 18      LDA &18
      3089   38         SEC
      308A   E5 39      SBC &39
@@ -7934,11 +7936,11 @@
      309D   A9 00      LDA #&00
      309F   A0 E6      LDY #&E6
      30A1   4C AA 30   JMP &30AA
-.gpol28
+.C30A4
      30A4   A2 CA      LDX #&CA
      30A6   A9 FF      LDA #&FF
      30A8   A0 C6      LDY #&C6
-.gpol29
+.C30AA
      30AA   84 74      STY &74
      30AC   85 76      STA &76
      30AE   A4 0D      LDY &0D
@@ -7951,7 +7953,7 @@
      30BE   A5 3E      LDA &3E
      30C0   F0 01      BEQ &30C3
      30C2   C8         INY
-.gpol30
+.C30C3
      30C3   8C EA 30   STY &30EA
      30C6   A5 74      LDA &74
      30C8   8D 0A 31   STA &310A
@@ -7965,43 +7967,43 @@
      30D5   A6 18      LDX &18
      30D7   20 6E 31   JSR &316E
      30DA   4C E9 30   JMP &30E9
-.gpol31
+.C30DD
      30DD   65 0D      ADC &0D
      30DF   90 08      BCC &30E9
      30E1   E5 0C      SBC &0C
-.gpol32
+.C30E3
      30E3   E8         INX
      30E4   E4 76      CPX &76
      30E6   18         CLC
      30E7   F0 21      BEQ &310A
-.gpol33
+.C30E9
      30E9   8E 00 5A   STX &5A00
      30EC   CE EA 30   DEC &30EA
      30EF   F0 07      BEQ &30F8
-.gpol34
+.C30F1
      30F1   C6 75      DEC &75
      30F3   D0 E8      BNE &30DD
      30F5   4C 36 2F   JMP &2F36
-.gpol35
+.C30F8
      30F8   C6 3E      DEC &3E
      30FA   10 03      BPL &30FF
      30FC   4C 36 2F   JMP &2F36
-.gpol36
+.C30FF
      30FF   D0 F0      BNE &30F1
      3101   CE EA 30   DEC &30EA
      3104   20 6E 31   JSR &316E
      3107   4C F1 30   JMP &30F1
-.gpol37
+.C310A
      310A   E6 41      INC &41
      310C   20 6E 31   JSR &316E
      310F   4C E9 30   JMP &30E9
-.gpol38
+.C3112
      3112   8D 4A 31   STA &314A
      3115   8E 37 31   STX &3137
      3118   A5 3E      LDA &3E
      311A   F0 01      BEQ &311D
      311C   C8         INY
-.gpol39
+.C311D
      311D   8C 49 31   STY &3149
      3120   A5 74      LDA &74
      3122   8D 64 31   STA &3164
@@ -8015,32 +8017,32 @@
      312F   A6 18      LDX &18
      3131   20 6E 31   JSR &316E
      3134   4C 48 31   JMP &3148
-.gpol40
+.C3137
      3137   E8         INX
      3138   E4 76      CPX &76
      313A   18         CLC
      313B   F0 27      BEQ &3164
-.gpol41
+.C313D
      313D   65 0C      ADC &0C
      313F   90 07      BCC &3148
      3141   E5 0D      SBC &0D
      3143   CE 49 31   DEC &3149
      3146   F0 0A      BEQ &3152
-.gpol42
+.C3148
      3148   8E 00 5A   STX &5A00
      314B   C6 75      DEC &75
      314D   D0 E8      BNE &3137
      314F   4C 36 2F   JMP &2F36
-.gpol43
+.C3152
      3152   C6 3E      DEC &3E
      3154   10 03      BPL &3159
      3156   4C 36 2F   JMP &2F36
-.gpol44
+.C3159
      3159   D0 ED      BNE &3148
      315B   CE 49 31   DEC &3149
      315E   20 6E 31   JSR &316E
      3161   4C 48 31   JMP &3148
-.gpol45
+.C3164
      3164   E6 41      INC &41
      3166   20 6E 31   JSR &316E
      3169   4C 3D 31   JMP &313D
