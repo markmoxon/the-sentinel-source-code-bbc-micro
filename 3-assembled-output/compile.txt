@@ -22,7 +22,7 @@
      0008
 .panKeyBeingPressed
      0009
-.L000A
+.xPointDeltaHi
      000A
 .playerObject
      000B
@@ -178,6 +178,8 @@
      0039
 .xEdgeEndLo
      0039
+.xEdgeDeltaLo
+     003A
 .xCoordHi
      003A
 .yCoordHi
@@ -198,7 +200,7 @@
      003F
 .vectorPitchAngleLo
      003F
-.L0040
+.scaleFactor
      0040
 .vectorPitchAngleHi
      0040
@@ -206,8 +208,9 @@
      0041
 .xEdgeEndHi
      0042
-.L0043
+.xEdgeDeltaHi
      0043
+     0044
 .triangleStartPoint
      0045
 .polygonEdge
@@ -7655,11 +7658,11 @@
 .gpol21
      2EA5   E6 1E      INC &1E
      2EA7   4C 56 2E   JMP &2E56
-.pedg1
+.tred1
      2EAA   4C 87 30   JMP &3087
-.pedg2
+.tred2
      2EAD   60         RTS
-.ProcessPolygonEdge
+.TracePolygonEdge
      2EAE   A5 3F      LDA &3F
      2EB0   30 10      BMI &2EC2
      2EB2   D0 F9      BNE &2EAD
@@ -7670,11 +7673,11 @@
      2EBC   B0 08      BCS &2EC6
      2EBE   C5 52      CMP &52
      2EC0   B0 02      BCS &2EC4
-.pedg3
+.tred3
      2EC2   A5 52      LDA &52
-.pedg4
+.tred4
      2EC4   85 04      STA &04
-.pedg5
+.tred5
      2EC6   A5 3E      LDA &3E
      2EC8   30 E3      BMI &2EAD
      2ECA   D0 0E      BNE &2EDA
@@ -7685,13 +7688,13 @@
      2ED4   90 0B      BCC &2EE1
      2ED6   C5 51      CMP &51
      2ED8   90 05      BCC &2EDF
-.pedg6
+.tred6
      2EDA   A5 51      LDA &51
      2EDC   38         SEC
      2EDD   E9 01      SBC #&01
-.pedg7
+.tred7
      2EDF   85 06      STA &06
-.pedg8
+.tred8
      2EE1   A5 41      LDA &41
      2EE3   05 42      ORA &42
      2EE5   D0 C3      BNE &2EAA
@@ -7705,10 +7708,10 @@
      2EF3   85 0D      STA &0D
      2EF5   A2 E8      LDX #&E8
      2EF7   D0 04      BNE &2EFD
-.pedg9
+.tred9
      2EF9   85 0D      STA &0D
      2EFB   A2 CA      LDX #&CA
-.pedg10
+.tred10
      2EFD   A4 0D      LDY &0D
      2EFF   C4 0C      CPY &0C
      2F01   A4 1A      LDY &1A
@@ -7727,27 +7730,27 @@
      2F1B   D0 63      BNE &2F80
      2F1D   A6 18      LDX &18
      2F1F   4C 29 2F   JMP &2F29
-.pedg11
+.tred11
      2F22   65 0D      ADC &0D
      2F24   90 03      BCC &2F29
      2F26   E5 0C      SBC &0C
-.pedg12
+.tred12
      2F28   E8         INX
-.pedg13
+.tred13
      2F29   8E 9F 5B   STX &5B9F
      2F2C   CE 2A 2F   DEC &2F2A
      2F2F   F0 06      BEQ &2F37
-.pedg14
+.tred14
      2F31   88         DEY
      2F32   D0 EE      BNE &2F22
-.pedg15
+.tred15
      2F34   84 7F      STY &7F
-.pedg16
+.tred16
      2F36   60         RTS
-.pedg17
+.tred17
      2F37   A0 00      LDY #&00
      2F39   F0 F9      BEQ &2F34
-.pedg18
+.tred18
      2F3B   8D 79 2F   STA &2F79
      2F3E   8C 78 2F   STY &2F78
      2F41   8E 6B 2F   STX &2F6B
@@ -7757,12 +7760,12 @@
      2F4A   E0 CA      CPX #&CA
      2F4C   F0 06      BEQ &2F54
      2F4E   D0 06      BNE &2F56
-.pedg19
+.tred19
      2F50   E0 CA      CPX #&CA
      2F52   F0 02      BEQ &2F56
-.pedg20
+.tred20
      2F54   A0 0A      LDY #&0A
-.pedg21
+.tred21
      2F56   8C 6F 2F   STY &2F6F
      2F59   A4 0D      LDY &0D
      2F5B   C8         INY
@@ -7774,59 +7777,59 @@
      2F64   D0 40      BNE &2FA6
      2F66   A6 18      LDX &18
      2F68   4C 77 2F   JMP &2F77
-.pedg22
+.tred22
      2F6B   CA         DEX
      2F6C   65 0C      ADC &0C
-.pedg23
+.tred23
      2F6E   90 0A      BCC &2F7A
      2F70   E5 0D      SBC &0D
      2F72   CE 78 2F   DEC &2F78
      2F75   F0 C0      BEQ &2F37
-.pedg24
+.tred24
      2F77   8E 9E 5B   STX &5B9E
-.pedg25
+.tred25
      2F7A   88         DEY
      2F7B   D0 EE      BNE &2F6B
      2F7D   4C 34 2F   JMP &2F34
-.pedg26
+.tred26
      2F80   EE 2A 2F   INC &2F2A
      2F83   AE 28 2F   LDX &2F28
      2F86   8E 94 2F   STX &2F94
      2F89   A6 18      LDX &18
      2F8B   4C 95 2F   JMP &2F95
-.pedg27
+.tred27
      2F8E   65 0D      ADC &0D
      2F90   90 03      BCC &2F95
      2F92   E5 0C      SBC &0C
-.pedg28
+.tred28
      2F94   E8         INX
-.pedg29
+.tred29
      2F95   CE 2A 2F   DEC &2F2A
      2F98   F0 06      BEQ &2FA0
      2F9A   88         DEY
      2F9B   D0 F1      BNE &2F8E
      2F9D   4C 36 2F   JMP &2F36
-.pedg30
+.tred30
      2FA0   CE 2A 2F   DEC &2F2A
      2FA3   4C 31 2F   JMP &2F31
-.pedg31
+.tred31
      2FA6   EE 78 2F   INC &2F78
      2FA9   AE 6B 2F   LDX &2F6B
      2FAC   8E B4 2F   STX &2FB4
      2FAF   A6 18      LDX &18
      2FB1   4C C0 2F   JMP &2FC0
-.pedg32
+.tred32
      2FB4   E8         INX
      2FB5   65 0C      ADC &0C
      2FB7   90 07      BCC &2FC0
      2FB9   E5 0D      SBC &0D
      2FBB   CE 78 2F   DEC &2F78
      2FBE   F0 06      BEQ &2FC6
-.pedg33
+.tred33
      2FC0   88         DEY
      2FC1   D0 F1      BNE &2FB4
      2FC3   4C 36 2F   JMP &2F36
-.pedg34
+.tred34
      2FC6   CE 78 2F   DEC &2F78
      2FC9   4C 7A 2F   JMP &2F7A
 .gpol22
@@ -7922,7 +7925,7 @@
      307F   85 0C      STA &0C
      3081   20 AE 2E   JSR &2EAE
      3084   4C 56 2E   JMP &2E56
-.pedg35
+.tred35
      3087   A5 18      LDA &18
      3089   38         SEC
      308A   E5 39      SBC &39
@@ -7938,11 +7941,11 @@
      309D   A9 00      LDA #&00
      309F   A0 E6      LDY #&E6
      30A1   4C AA 30   JMP &30AA
-.pedg36
+.tred36
      30A4   A2 CA      LDX #&CA
      30A6   A9 FF      LDA #&FF
      30A8   A0 C6      LDY #&C6
-.pedg37
+.tred37
      30AA   84 74      STY &74
      30AC   85 76      STA &76
      30AE   A4 0D      LDY &0D
@@ -7955,7 +7958,7 @@
      30BE   A5 3E      LDA &3E
      30C0   F0 01      BEQ &30C3
      30C2   C8         INY
-.pedg38
+.tred38
      30C3   8C EA 30   STY &30EA
      30C6   A5 74      LDA &74
      30C8   8D 0A 31   STA &310A
@@ -7969,43 +7972,43 @@
      30D5   A6 18      LDX &18
      30D7   20 6E 31   JSR &316E
      30DA   4C E9 30   JMP &30E9
-.pedg39
+.tred39
      30DD   65 0D      ADC &0D
      30DF   90 08      BCC &30E9
      30E1   E5 0C      SBC &0C
-.pedg40
+.tred40
      30E3   E8         INX
      30E4   E4 76      CPX &76
      30E6   18         CLC
      30E7   F0 21      BEQ &310A
-.pedg41
+.tred41
      30E9   8E 00 5A   STX &5A00
      30EC   CE EA 30   DEC &30EA
      30EF   F0 07      BEQ &30F8
-.pedg42
+.tred42
      30F1   C6 75      DEC &75
      30F3   D0 E8      BNE &30DD
      30F5   4C 36 2F   JMP &2F36
-.pedg43
+.tred43
      30F8   C6 3E      DEC &3E
      30FA   10 03      BPL &30FF
      30FC   4C 36 2F   JMP &2F36
-.pedg44
+.tred44
      30FF   D0 F0      BNE &30F1
      3101   CE EA 30   DEC &30EA
      3104   20 6E 31   JSR &316E
      3107   4C F1 30   JMP &30F1
-.pedg45
+.tred45
      310A   E6 41      INC &41
      310C   20 6E 31   JSR &316E
      310F   4C E9 30   JMP &30E9
-.pedg46
+.tred46
      3112   8D 4A 31   STA &314A
      3115   8E 37 31   STX &3137
      3118   A5 3E      LDA &3E
      311A   F0 01      BEQ &311D
      311C   C8         INY
-.pedg47
+.tred47
      311D   8C 49 31   STY &3149
      3120   A5 74      LDA &74
      3122   8D 64 31   STA &3164
@@ -8019,32 +8022,32 @@
      312F   A6 18      LDX &18
      3131   20 6E 31   JSR &316E
      3134   4C 48 31   JMP &3148
-.pedg48
+.tred48
      3137   E8         INX
      3138   E4 76      CPX &76
      313A   18         CLC
      313B   F0 27      BEQ &3164
-.pedg49
+.tred49
      313D   65 0C      ADC &0C
      313F   90 07      BCC &3148
      3141   E5 0D      SBC &0D
      3143   CE 49 31   DEC &3149
      3146   F0 0A      BEQ &3152
-.pedg50
+.tred50
      3148   8E 00 5A   STX &5A00
      314B   C6 75      DEC &75
      314D   D0 E8      BNE &3137
      314F   4C 36 2F   JMP &2F36
-.pedg51
+.tred51
      3152   C6 3E      DEC &3E
      3154   10 03      BPL &3159
      3156   4C 36 2F   JMP &2F36
-.pedg52
+.tred52
      3159   D0 ED      BNE &3148
      315B   CE 49 31   DEC &3149
      315E   20 6E 31   JSR &316E
      3161   4C 48 31   JMP &3148
-.pedg53
+.tred53
      3164   E6 41      INC &41
      3166   20 6E 31   JSR &316E
      3169   4C 3D 31   JMP &313D

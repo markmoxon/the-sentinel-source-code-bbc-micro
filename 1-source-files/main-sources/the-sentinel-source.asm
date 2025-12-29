@@ -158,9 +158,10 @@
                         \
                         \   * 3 = pan down
 
-.L000A
+.xPointDeltaHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ Temporary storage for the high byte of the x-axis
+                        \ delta between two polygon points
 
 .playerObject
 
@@ -676,6 +677,12 @@
  SKIP 1                 \ The x-coordinate of the end point in the polygon
                         \ edge being processed (low byte)
 
+.xEdgeDeltaLo
+
+ SKIP 0                 \ The low byte of the scaled and signed x-axis delta
+                        \ between two polygon points when tracing the polygon
+                        \ edges
+
 .xCoordHi
 
  SKIP 1                 \ The x-coordinate of an object or point (high byte)
@@ -745,9 +752,11 @@
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
 
-.L0040
+.scaleFactor
 
- SKIP 0                 \ ???
+ SKIP 0                 \ Used to store a scale factor for the x-axis and y-axis
+                        \ deltas when fitting them into single-byte numbers when
+                        \ tracing the polygon edges
 
 .vectorPitchAngleHi
 
@@ -766,9 +775,13 @@
  SKIP 1                 \ The x-coordinate of the end point in the polygon
                         \ edge being processed (high byte)
 
-.L0043
+.xEdgeDeltaHi
 
- SKIP 2                 \ ???
+ SKIP 1                 \ The high byte of the scaled and signed x-axis delta
+                        \ between two polygon points when tracing the polygon
+                        \ edges
+
+ SKIP 1                 \ This byte appears to be unused
 
 .triangleStartPoint
 
@@ -23217,6 +23230,7 @@
                         \     two-byte numbers
                         \
                         \   * The y-axis delta in yEdgeDelta(Hi Lo) is non-zero
+                        \     and positive
                         \
                         \ So we jump to part 6 to process this edge accordingly
 
@@ -23249,7 +23263,7 @@
                         \     two-byte numbers
                         \
                         \   * The y-axis delta in yEdgeDelta(Hi Lo) is a
-                        \     two-byte number
+                        \     two-byte number that is non-zero and positive
                         \
                         \ So we jump to part 6 to process this edge accordingly
 
@@ -23291,7 +23305,9 @@
  STA xEdgeStartHi       \ xEdgeEnd(Hi Lo)
  STA xEdgeEndHi
 
- JSR ProcessPolygonEdge \ Process the polygon edge ???
+ JSR TracePolygonEdge   \ Trace the polygon edge, populating the xPolygonRight
+                        \ or xPolygonLeft table with the x-coordinate of the
+                        \ edge for each y-coordinate
 
 .gpol15
 
@@ -23415,96 +23431,97 @@
 
 \ ******************************************************************************
 \
-\       Name: ProcessPolygonEdge (Part 1 of 2)
+\       Name: TracePolygonEdge (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Trace the polygon edge, populating xPolygonRight or xPolygonLeft
+\             with the x-coordinate of the edge for each y-coordinate
 \
 \ ******************************************************************************
 
-.pedg1
+.tred1
 
- JMP pedg35
+ JMP tred35
 
-.pedg2
+.tred2
 
  RTS
 
-.ProcessPolygonEdge
+.TracePolygonEdge
 
  LDA yEdgeEndHi
- BMI pedg3
- BNE pedg2
+ BMI tred3
+ BNE tred2
  LDA yEdgeEndLo
  CMP maxPitchAngle
- BCS pedg2
+ BCS tred2
  CMP yPolygonBottom
- BCS pedg5
+ BCS tred5
  CMP minPitchAngle
- BCS pedg4
+ BCS tred4
 
-.pedg3
+.tred3
 
  LDA minPitchAngle
 
-.pedg4
+.tred4
 
  STA yPolygonBottom
 
-.pedg5
+.tred5
 
  LDA yEdgeStartHi
- BMI pedg2
- BNE pedg6
+ BMI tred2
+ BNE tred6
  LDA yEdgeStartLo
  CMP minPitchAngle
- BCC pedg2
+ BCC tred2
  CMP yPolygonTop
- BCC pedg8
+ BCC tred8
  CMP maxPitchAngle
- BCC pedg7
+ BCC tred7
 
-.pedg6
+.tred6
 
  LDA maxPitchAngle
  SEC
  SBC #&01
 
-.pedg7
+.tred7
 
  STA yPolygonTop
 
-.pedg8
+.tred8
 
  LDA xEdgeStartHi
  ORA xEdgeEndHi
- BNE pedg1
+ BNE tred1
  LDA xEdgeStartLo
  SEC
  SBC xEdgeEndLo
- BCS pedg9
+ BCS tred9
  EOR #&FF
  CLC
  ADC #&01
  STA L000D
  LDX #&E8
- BNE pedg10
+ BNE tred10
 
-.pedg9
+.tred9
 
  STA L000D
  LDX #&CA
 
-.pedg10
+.tred10
 
  LDY L000D
  CPY yEdgeDeltaLo
  LDY yEdgeStartLo
  LDA xPolygonAddrHi
- BCS pedg18
- STA pedg13+2
- STY pedg13+1
- STX pedg12
+ BCS tred18
+ STA tred13+2
+ STY tred13+1
+ STX tred12
  LDY yEdgeDeltaLo
  INY
  LDA yEdgeDeltaLo
@@ -23512,68 +23529,68 @@
  EOR #&FF
  CLC
  LDX yEdgeStartHi
- BNE pedg26
+ BNE tred26
  LDX xEdgeStartLo
- JMP pedg13
+ JMP tred13
 
-.pedg11
+.tred11
 
  ADC L000D
- BCC pedg13
+ BCC tred13
  SBC yEdgeDeltaLo
 
-.pedg12
+.tred12
 
  INX
 
-.pedg13
+.tred13
 
  STX xPolygonRight+&9F  \ Gets modified
- DEC pedg13+1
- BEQ pedg17
+ DEC tred13+1
+ BEQ tred17
 
-.pedg14
+.tred14
 
  DEY
- BNE pedg11
+ BNE tred11
 
-.pedg15
+.tred15
 
  STY drawPolygon        \ Set drawPolygon = 0 so the polygon gets drawn
 
-.pedg16
+.tred16
 
  RTS
 
-.pedg17
+.tred17
 
  LDY #0
- BEQ pedg15
+ BEQ tred15
 
-.pedg18
+.tred18
 
- STA pedg24+2
- STY pedg24+1
- STX pedg22
+ STA tred24+2
+ STY tred24+1
+ STX tred22
  LDY #&07
  CMP #&5A
- BEQ pedg19
+ BEQ tred19
  CPX #&CA
- BEQ pedg20
- BNE pedg21
+ BEQ tred20
+ BNE tred21
 
-.pedg19
+.tred19
 
  CPX #&CA
- BEQ pedg21
+ BEQ tred21
 
-.pedg20
+.tred20
 
  LDY #&0A
 
-.pedg21
+.tred21
 
- STY pedg23+1
+ STY tred23+1
  LDY L000D
  INY
  LDA L000D
@@ -23581,90 +23598,90 @@
  EOR #&FF
  CLC
  LDX yEdgeStartHi
- BNE pedg31
+ BNE tred31
  LDX xEdgeStartLo
- JMP pedg24
+ JMP tred24
 
-.pedg22
+.tred22
 
  DEX
  ADC yEdgeDeltaLo
 
-.pedg23
+.tred23
 
- BCC pedg25             \ Gets modified
+ BCC tred25             \ Gets modified
  SBC L000D
- DEC pedg24+1
- BEQ pedg17
+ DEC tred24+1
+ BEQ tred17
 
-.pedg24
+.tred24
 
  STX xPolygonRight+&9E  \ Gets modified
 
-.pedg25
+.tred25
 
  DEY
- BNE pedg22
- JMP pedg15
+ BNE tred22
+ JMP tred15
 
-.pedg26
+.tred26
 
- INC pedg13+1
- LDX pedg12
- STX pedg28
+ INC tred13+1
+ LDX tred12
+ STX tred28
  LDX xEdgeStartLo
- JMP pedg29
+ JMP tred29
 
-.pedg27
+.tred27
 
  ADC L000D
- BCC pedg29
+ BCC tred29
  SBC yEdgeDeltaLo
 
-.pedg28
+.tred28
 
  INX
 
-.pedg29
+.tred29
 
- DEC pedg13+1
- BEQ pedg30
+ DEC tred13+1
+ BEQ tred30
  DEY
- BNE pedg27
- JMP pedg16
+ BNE tred27
+ JMP tred16
 
-.pedg30
+.tred30
 
- DEC pedg13+1
- JMP pedg14
+ DEC tred13+1
+ JMP tred14
 
-.pedg31
+.tred31
 
- INC pedg24+1
- LDX pedg22
- STX pedg32
+ INC tred24+1
+ LDX tred22
+ STX tred32
  LDX xEdgeStartLo
- JMP pedg33
+ JMP tred33
 
-.pedg32
+.tred32
 
  INX
  ADC yEdgeDeltaLo
- BCC pedg33
+ BCC tred33
  SBC L000D
- DEC pedg24+1
- BEQ pedg34
+ DEC tred24+1
+ BEQ tred34
 
-.pedg33
+.tred33
 
  DEY
- BNE pedg32
- JMP pedg16
+ BNE tred32
+ JMP tred16
 
-.pedg34
+.tred34
 
- DEC pedg24+1
- JMP pedg25
+ DEC tred24+1
+ JMP tred25
 
 \ ******************************************************************************
 \
@@ -23684,13 +23701,14 @@
                         \     two-byte numbers
                         \
                         \   * The y-axis delta in yEdgeDelta(Hi Lo) is non-zero
-                        \     and a two-byte number
+                        \     and a two-byte number, and it is also positive
 
  STX pointX             \ Store the number of point #X in pointX so we can
                         \ retrieve it below
 
- LDA #0                 \ Set L0040 = 0 ???
- STA L0040
+ LDA #0                 \ Set scaleFactor = 0 so we can use it to record the
+ STA scaleFactor        \ scale factor we apply to the x-axis and y-axis deltas
+                        \ below when fitting them into single-byte numbers
 
  LDA xPolygonPointLo,Y  \ Set (A T) to the following:
  SEC                    \
@@ -23700,121 +23718,258 @@
  SBC xPolygonPointHi,X  \ So (A T) contains the difference in the x-axis between
                         \ the two polygon points
 
- STA L000A              \ Store the high byte in L000A so we can test the sign
-                        \ below
+ STA xPointDeltaHi      \ Store the high byte in xPointDeltaHi so we can test
+                        \ the sign below
 
- JSR Absolute16Bit      \ Set (A T) = |A T|
+ JSR Absolute16Bit      \ Set (U T) = |A T|
+ STA U                  \
+                        \ So by this point we have:
+                        \
+                        \   * The absolute x-axis delta in (U T)
+                        \
+                        \   * The positive y-axis delta in yEdgeDelta(Hi Lo)
 
- STA U
- ORA yEdgeDeltaHi
- BEQ gpol24
+ ORA yEdgeDeltaHi       \ Set A = U OR yEdgeDeltaHi
+                        \
+                        \ So the highest set bit in A matches the position of
+                        \ the highest set bit across the two high bytes of the
+                        \ two deltas
+
+ BEQ gpol24             \ If both U and yEdgeDeltaHi are zero then both deltas
+                        \ fit into one byte (the low byte), so jump to gpol24
+
+                        \ If we get here then at least one of the deltas does
+                        \ not fit into a single byte, so we now scale both of
+                        \ the deltas down
+                        \
+                        \ We do this by shifting both deltas to the right, and
+                        \ at the same time we shift A to the right, repeating
+                        \ the process until there are no more set bits in A, by
+                        \ which time we will have shifted the deltas by the
+                        \ minimum number of shifts required to zero both high
+                        \ bytes
+                        \
+                        \ We also record the number of shifts in scaleFactor in
+                        \ the form of one set bit for each shift
 
 .gpol23
 
- LSR yEdgeDeltaHi
- ROR yEdgeDeltaLo
- LSR U
- ROR T
- SEC
- ROL L0040
- LSR A
- BNE gpol23
+ LSR yEdgeDeltaHi       \ Shift the y-axis delta in yEdgeDelta(Hi Lo) to the
+ ROR yEdgeDeltaLo       \ right by one place to scale it down by half
+
+ LSR U                  \ Shift the x-axis delta in (U T) to the right by one
+ ROR T                  \ place to scale it down by half
+
+ SEC                    \ Rotate a set bit into bit 0 of scaleFactor, so we
+ ROL scaleFactor        \ build up a sequence of set bits in the bottom part
+                        \ of scaleFactor that matches the number of shifts,
+                        \ effectively giving us the total cumulative scale
+                        \ factor of the shifts (in fact scaleFactor will end
+                        \ up being the cumulative scale factor minus 1, but
+                        \ that's good enough for our needs)
+
+ LSR A                  \ Shift A to the right to move the highest set bit
+                        \ towards bit 0
+
+ BNE gpol23             \ If there is still a set bit in A then at least one of
+                        \ the high bytes in the deltas is non-zero, so loop back
+                        \ to perform another shift until both high bytes are
+                        \ zero
 
 .gpol24
 
- LDX yEdgeDeltaLo
- CPX #&FF
- BEQ gpol23
- LDX T
- CPX #&FF
- BEQ gpol23
- LDA U
- BIT L000A
+                        \ By this point we have:
+                        \
+                        \   * The scaled absolute x-axis delta in T
+                        \
+                        \   * The scaled positive y-axis delta in yEdgeDeltaLo
+                        \
+                        \   * The scale factor in scaleFactor
+                        \
+                        \ We now ensure that bit 7 is clear in both low bytes,
+                        \ to make sure the single-byte values are both positive
 
- JSR Absolute16Bit      \ Set (A T) = |A T|
+ LDX yEdgeDeltaLo       \ If yEdgeDeltaLo = 255 then jump back to gpol23 to
+ CPX #255               \ scale both deltas down by one more shift
+ BEQ gpol23
 
- STA L0043
- LDA T
- STA xCoordHi
- LDA xPolygonPointLo,Y
- STA xEdgeEndLo
- LDA xPolygonPointHi,Y
+ LDX T                  \ If T = 255 then jump back to gpol23 to scale both
+ CPX #255               \ deltas down by one more shift
+ BEQ gpol23
+
+ LDA U                  \ Set (A T) = (U T)
+                        \
+                        \ This effectively sets (A T) to the two-byte value of
+                        \ the x-axis delta, though by this point U will always
+                        \ be zero
+
+ BIT xPointDeltaHi      \ We set xPointDeltaHi to the high byte of the original
+                        \ x-axis delta subtraction, so this sets the N flag
+                        \ according to the sign of that calculation
+
+ JSR Absolute16Bit      \ Set the sign of (A T) to that of the N flag argument,
+                        \ so (A T) now has the correct sign of the x-axis delta
+
+ STA xEdgeDeltaHi       \ Set xEdgeDelta(Hi Lo) = (A T)
+ LDA T                  \
+ STA xEdgeDeltaLo       \ So xEdgeDelta(Hi Lo) contains the signed x-axis delta
+
+                        \ By this point we have:
+                        \
+                        \   * The scaled signed x-axis delta across the polygon
+                        \     edge in xEdgeDelta(Hi Lo)
+                        \
+                        \   * The scaled signed y-axis delta across the polygon
+                        \     edge in (0 yEdgeDeltaLo), which also happens to be
+                        \     positive
+                        \
+                        \   * The scale factor in scaleFactor
+
+                        \ We now trace the polygon edge from the starting point
+                        \ in point #Y to the end point in point #X
+                        \
+                        \ To kick this process off, we set the coordinates in
+                        \ xEdgeEnd and yEdgeEnd to those of point #Y, as these
+                        \ variables are used to store the "end of the previous
+                        \ part of the line" and are therefore used as the "start
+                        \ of the next part of the line" in the tracing process
+
+ LDA xPolygonPointLo,Y  \ Set xEdgeEnd(Hi Lo) to the x-coordinate of point #Y,
+ STA xEdgeEndLo         \ from the x-coordinate tables we populated in parts 3
+ LDA xPolygonPointHi,Y  \ and 4
  STA xEdgeEndHi
- LDA drawViewPitchHi,Y
- STA yEdgeEndHi
- LDA drawViewPitchLo,Y
+
+ LDA drawViewPitchHi,Y  \ Set yEdgeEnd(Hi Lo) to the y-coordinate of point #Y,
+ STA yEdgeEndHi         \ taken from the pitch angles of the points in the
+ LDA drawViewPitchLo,Y  \ drawing tables
  STA yEdgeEndLo
- LDA L0040
- BEQ gpol26
+
+ LDA scaleFactor        \ If scaleFactor is zero then we didn't need to do any
+ BEQ gpol26             \ scaling on the deltas, so jump to gpol26 to skip the
+                        \ following and process the polygon edge in one step
+
+                        \ If we get here then we have scaled the deltas down by
+                        \ a factor of scaleFactor
+                        \
+                        \ Because of the way we fed a set bit into scaleFactor
+                        \ for each shift, the scale factor is scaleFactor+1, so
+                        \ this is the same as splitting the polygon edge into
+                        \ scaleFactor+1 parts, each of which is a step along the
+                        \ the edge of the size given in the scaled-down deltas
+                        \
+                        \ So we now process each of these small steps in a loop
+                        \ that we perform scaleFactor times in the first part
+                        \ and one more time at gpol26
+                        \
+                        \ For each step we move the start point to the end point
+                        \ from the previous step, and we move the end point
+                        \ along the line by the delta
+                        \
+                        \ We set up the "end point from the previous step" to
+                        \ point #Y above, so this process starts from point #Y
+                        \ and steps toward point #X
 
 .gpol25
 
- LDA yEdgeEndLo
- STA yEdgeStartLo
- SEC
- SBC yEdgeDeltaLo
- STA yEdgeEndLo
- LDA yEdgeEndHi
- STA yEdgeStartHi
- SBC #&00
+ LDA yEdgeEndLo         \ Set the following, in sequence:
+ STA yEdgeStartLo       \   
+ SEC                    \   yEdgeStart(Hi Lo) = yEdgeEnd(Hi Lo)
+ SBC yEdgeDeltaLo       \
+ STA yEdgeEndLo         \   yEdgeEnd(Hi Lo) -= yEdgeDelta(Hi Lo)
+ LDA yEdgeEndHi         \
+ STA yEdgeStartHi       \ So we step along the y-axis by one more delta
+ SBC #0
  STA yEdgeEndHi
- LDA xEdgeEndLo
- STA xEdgeStartLo
- SEC
- SBC xCoordHi
- STA xEdgeEndLo
- LDA xEdgeEndHi
- STA xEdgeStartHi
- SBC L0043
+
+ LDA xEdgeEndLo         \ Set the following, in sequence:
+ STA xEdgeStartLo       \
+ SEC                    \   xEdgeStart(Hi Lo) = xEdgeEnd(Hi Lo)
+ SBC xEdgeDeltaLo       \
+ STA xEdgeEndLo         \   xEdgeEnd(Hi Lo) -= xEdgeDelta(Hi Lo)
+ LDA xEdgeEndHi         \
+ STA xEdgeStartHi       \ So we step along the x-axis by one more delta
+ SBC xEdgeDeltaHi
  STA xEdgeEndHi
 
- JSR ProcessPolygonEdge \ Process the polygon edge ???
+ JSR TracePolygonEdge   \ Trace the small step of polygon edge that we just made
+                        \ along the edge, populating the xPolygonRight or
+                        \ xPolygonLeft table with the x-coordinate of the edge
+                        \ for each y-coordinate
 
- DEC L0040
- BNE gpol25
+ DEC scaleFactor        \ Decrement the scale factor in scaleFactor
+
+ BNE gpol25             \ Loop back to repeat the tracing process scaleFactor
+                        \ times
+                        \
+                        \ As there are actually scaleFactor+1 steps, we now fall
+                        \ into the following to do one more step
 
 .gpol26
 
- LDA yEdgeEndLo
- STA yEdgeStartLo
- LDA yEdgeEndHi
- STA yEdgeStartHi
- LDA xEdgeEndLo
- STA xEdgeStartLo
- LDA xEdgeEndHi
- STA xEdgeStartHi
+                        \ If we get here then we are either tracing the entire
+                        \ edge in one step, or we are performing the last step
+                        \ in a set of scaled steps
+                        \
+                        \ If we are tracing the entire edge in one step, then we
+                        \ already set up the coordinates of the "end point from
+                        \ the previous step" in xEdgeEnd and yEdgeEnd to that of
+                        \ point #Y, so this process starts from point #Y and
+                        \ traces the edge to point #X
+                        \
+                        \ If we are performing the last step in a set of scaled
+                        \ steps, then xEdgeEnd and yEdgeEnd are set to the end
+                        \ of the last step to be traced, so this process traces
+                        \ the last step towards point #X
+                        \
+                        \ In either case, we start by setting the starting point
+                        \ for this tracing process to the values in xEdgeEnd and
+                        \ yEdgeEnd
+
+ LDA yEdgeEndLo         \ Set yEdgeStart(Hi Lo) = yEdgeEnd(Hi Lo)
+ STA yEdgeStartLo       \
+ LDA yEdgeEndHi         \ So this is either the y-coordinate of point #Y or the
+ STA yEdgeStartHi       \ end of the last step in a multi-step trace
+
+ LDA xEdgeEndLo         \ Set xEdgeStart(Hi Lo) = xEdgeEnd(Hi Lo)
+ STA xEdgeStartLo       \
+ LDA xEdgeEndHi         \ So this is either the x-coordinate of point #Y or the
+ STA xEdgeStartHi       \ end of the last step in a multi-step trace
 
  LDX pointX             \ Set X to the number of point #X, which we stored at
                         \ the start of this part
 
- LDA drawViewPitchLo,X
- STA yEdgeEndLo
- LDA drawViewPitchHi,X
+ LDA drawViewPitchLo,X  \ Set yEdgeEnd(Hi Lo) to the y-coordinate of point #X,
+ STA yEdgeEndLo         \ from the x-coordinate tables we populated in parts 3
+ LDA drawViewPitchHi,X  \ and 4
  STA yEdgeEndHi
- LDA xPolygonPointLo,X
- STA xEdgeEndLo
- LDA xPolygonPointHi,X
- STA xEdgeEndHi
- LDA yEdgeStartLo
- SEC
- SBC yEdgeEndLo
- STA yEdgeDeltaLo
 
- JSR ProcessPolygonEdge \ Process the polygon edge ???
+ LDA xPolygonPointLo,X  \ Set xEdgeEnd(Hi Lo) to the x-coordinate of point #X
+ STA xEdgeEndLo         \ from the x-coordinate tables we populated in parts 3
+ LDA xPolygonPointHi,X  \ and 4
+ STA xEdgeEndHi
+
+ LDA yEdgeStartLo       \ Set yEdgeDeltaLo = yEdgeStartLo - yEdgeEndLo
+ SEC                    \
+ SBC yEdgeEndLo         \ This calculates the y-axis delta along the edge, which
+ STA yEdgeDeltaLo       \ we know we can do in one byte by this point
+
+ JSR TracePolygonEdge   \ Trace the polygon edge, populating the xPolygonRight
+                        \ or xPolygonLeft table with the x-coordinate of the
+                        \ edge for each y-coordinate
 
  JMP gpol15             \ Jump back to part 5 to move on to the next polygon
                         \ edge
 
 \ ******************************************************************************
 \
-\       Name: ProcessPolygonEdge (Part 2 of 2)
+\       Name: TracePolygonEdge (Part 2 of 2)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: ???
 \
 \ ******************************************************************************
 
-.pedg35
+.tred35
 
  LDA xEdgeStartLo
  SEC
@@ -23822,7 +23977,7 @@
  STA L000D
  LDA xEdgeStartHi
  SBC xEdgeEndHi
- BPL pedg36
+ BPL tred36
  LDA #0
  SEC
  SBC L000D
@@ -23830,15 +23985,15 @@
  LDX #&E8
  LDA #0
  LDY #&E6
- JMP pedg37
+ JMP tred37
 
-.pedg36
+.tred36
 
  LDX #&CA
  LDA #&FF
  LDY #&C6
 
-.pedg37
+.tred37
 
  STY T
  STA yEdgeDeltaHi
@@ -23846,18 +24001,18 @@
  CPY yEdgeDeltaLo
  LDY yEdgeStartLo
  LDA xPolygonAddrHi
- BCS pedg46
- STA pedg41+2
- STX pedg40
+ BCS tred46
+ STA tred41+2
+ STX tred40
  LDA yEdgeStartHi
- BEQ pedg38
+ BEQ tred38
  INY
 
-.pedg38
+.tred38
 
- STY pedg41+1
+ STY tred41+1
  LDA T
- STA pedg45
+ STA tred45
  LDY yEdgeDeltaLo
  TYA
  LSR A
@@ -23867,71 +24022,71 @@
  STY U
  LDX xEdgeStartLo
 
- JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+ JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
 
- JMP pedg41
+ JMP tred41
 
-.pedg39
+.tred39
 
  ADC L000D
- BCC pedg41
+ BCC tred41
  SBC yEdgeDeltaLo
 
-.pedg40
+.tred40
 
  INX
  CPX yEdgeDeltaHi
  CLC
- BEQ pedg45
+ BEQ tred45
 
-.pedg41
+.tred41
 
  STX xPolygonLeft       \ Gets modified
- DEC pedg41+1
- BEQ pedg43
+ DEC tred41+1
+ BEQ tred43
 
-.pedg42
+.tred42
 
  DEC U
- BNE pedg39
- JMP pedg16
+ BNE tred39
+ JMP tred16
 
-.pedg43
+.tred43
 
  DEC yEdgeStartHi
- BPL pedg44
- JMP pedg16
+ BPL tred44
+ JMP tred16
 
-.pedg44
+.tred44
 
- BNE pedg42
- DEC pedg41+1
+ BNE tred42
+ DEC tred41+1
 
- JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+ JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
 
- JMP pedg42
+ JMP tred42
 
-.pedg45
+.tred45
 
  INC xEdgeStartHi
 
- JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+ JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
 
- JMP pedg41
+ JMP tred41
 
-.pedg46
+.tred46
 
- STA pedg50+2
- STX pedg48
+ STA tred50+2
+ STX tred48
  LDA yEdgeStartHi
- BEQ pedg47
+ BEQ tred47
  INY
 
-.pedg47
+.tred47
 
- STY pedg50+1
+ STY tred50+1
  LDA T
- STA pedg53
+ STA tred53
  LDY L000D
  TYA
  LSR A
@@ -23941,54 +24096,54 @@
  STY U
  LDX xEdgeStartLo
 
- JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+ JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
 
- JMP pedg50
+ JMP tred50
 
-.pedg48
+.tred48
 
  INX
  CPX yEdgeDeltaHi
  CLC
- BEQ pedg53
+ BEQ tred53
 
-.pedg49
+.tred49
 
  ADC yEdgeDeltaLo
- BCC pedg50
+ BCC tred50
  SBC L000D
- DEC pedg50+1
- BEQ pedg51
+ DEC tred50+1
+ BEQ tred51
 
-.pedg50
+.tred50
 
  STX xPolygonLeft       \ Gets modified
  DEC U
- BNE pedg48
- JMP pedg16
+ BNE tred48
+ JMP tred16
 
-.pedg51
+.tred51
 
  DEC yEdgeStartHi
- BPL pedg52
- JMP pedg16
+ BPL tred52
+ JMP tred16
 
-.pedg52
+.tred52
 
- BNE pedg50
- DEC pedg50+1
+ BNE tred50
+ DEC tred50+1
 
- JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+ JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
 
- JMP pedg50
+ JMP tred50
 
-.pedg53
+.tred53
 
  INC xEdgeStartHi
 
- JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+ JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
 
- JMP pedg49
+ JMP tred49
 
 \ ******************************************************************************
 \
@@ -24015,12 +24170,12 @@
 \       Name: ModifyStoringCode
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: Modify the code in ProcessPolygonEdge that stores the coordinates
-\             of the polygon edge that is being traced
+\    Summary: Modify the code in TracePolygonEdge that stores the coordinates of
+\             the polygon edge that is being traced
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine modifies the code in part 2 of ProcessPolygonEdge that stores the
+\ This routine modifies the code in part 2 of TracePolygonEdge that stores the
 \ x-coordinates of the polygon line, and sets the values of drawPolygon and Y as
 \ follows:
 \
@@ -24052,13 +24207,13 @@
                         \   * yEdgeStartHi <> 0
 
  LDA #&2C               \ Set A to the opcode for the BIT addr instruction, so
-                        \ the ProcessPolygonEdge routine does not store anything
+                        \ the TracePolygonEdge routine does not store anything
                         \ in the xPolygonLeft or xPolygonRight table (as the BIT
                         \ instruction has no effect beyond setting the status
                         \ flags)
 
- BNE stor5              \ Jump to stor5 to modify the instructions at pedg41 and
-                        \ pedg50 (this BNE is effectively a JMP as A is never
+ BNE stor5              \ Jump to stor5 to modify the instructions at tred41 and
+                        \ tred50 (this BNE is effectively a JMP as A is never
                         \ zero)
 
 .stor1
@@ -24081,11 +24236,11 @@
                         \   * yEdgeStartHi = 0
 
  LDA #&8E               \ Set A to the opcode for the STX addr instruction, so
-                        \ the ProcessPolygonEdge routine stores the value of X
+                        \ the TracePolygonEdge routine stores the value of X
                         \ into the xPolygonLeft or xPolygonRight table
 
- BNE stor5              \ Jump to stor5 to modify the instructions at pedg41 and
-                        \ pedg50 (this BNE is effectively a JMP as A is never
+ BNE stor5              \ Jump to stor5 to modify the instructions at tred41 and
+                        \ tred50 (this BNE is effectively a JMP as A is never
                         \ zero)
 
 .stor2
@@ -24124,15 +24279,15 @@
 .stor4
 
  LDA #&8C               \ Set A to the opcode for the STY addr instruction, so
-                        \ the ProcessPolygonEdge routine stores the value of Y
+                        \ the TracePolygonEdge routine stores the value of Y
                         \ into the xPolygonLeft or xPolygonRight table
 
 .stor5
 
- STA pedg41             \ Modify the instruction at pedg41 to use the opcode
+ STA tred41             \ Modify the instruction at tred41 to use the opcode
                         \ specified in A
 
- STA pedg50             \ Modify the instruction at pedg50 to use the opcode
+ STA tred50             \ Modify the instruction at tred50 to use the opcode
                         \ specified in A
 
  PLA                    \ Restore the value of A that we stored on the stack
