@@ -34,7 +34,7 @@
      000C
 .stashAddr
      000C
-.L000D
+.xEdgeDelta
      000D
 .xCounter
      000D

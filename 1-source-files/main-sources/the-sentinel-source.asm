@@ -197,9 +197,10 @@
  SKIP 1                 \ The address of the four bytes in the secretCodeStash
                         \ that correspond to the landscape's secret code
 
-.L000D
+.xEdgeDelta
 
- SKIP 0                 \ ???
+ SKIP 0                 \ The scaled and signed x-axis delta between two polygon
+                        \ points when tracing the polygon edges (single byte)
 
 .xCounter
 
@@ -23437,91 +23438,233 @@
 \    Summary: Trace the polygon edge, populating xPolygonRight or xPolygonLeft
 \             with the x-coordinate of the edge for each y-coordinate
 \
+\ ------------------------------------------------------------------------------
+\
+\ This routine traces a polygon edge. The start point (point #Y) has a smaller
+\ y-coordinate than the end point (point #X), so the edge is either horizontal
+\ or it slopes upwards when moving from the start to the end. ???
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   xEdgeStart(Hi Lo)   The x-coordinate of the start of the edge to trace
+\
+\   yEdgeStart(Hi Lo)   The y-coordinate of the start of the edge to trace
+\
+\   xEdgeEnd(Hi Lo)     The x-coordinate of the end of the edge to trace
+\
+\   yEdgeEnd(Hi Lo)     The y-coordinate of the start of the edge to trace
+\
+\   yEdgeDeltaLo        The y-axis delta along the edge
+\
+\   yPolygonTop         The y-coordinate of the top of the polygon (where higher
+\                       y-coordinates are up the screen)
+\
+\   yPolygonBottom      The y-coordinate of the bottom of the polygon (where
+\                       higher y-coordinates are up the screen)
+\
+\   xPolygonAddrHi      The high byte of either xPolygonLeft or xPolygonRight
+\                       to determine which of the resulting tables is written to
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   xPolygonLeft        The pixel x-coordinates of the left edges of each pixel
+\                       line in the polygon (when xPolygonAddrHi is the high
+\                       byte of xPolygonLeft)
+\
+\   xPolygonRight       The pixel x-coordinates of the right edges of each pixel
+\                       line in the polygon (when xPolygonAddrHi is the high
+\                       byte of xPolygonRight)
+\
 \ ******************************************************************************
 
 .tred1
 
- JMP tred35
+ JMP tred35             \ Jump to part 2 to trace a line with two-byte start or
+                        \ end point x-coordinates
 
 .tred2
 
- RTS
+ RTS                    \ Return from the subroutine
 
 .TracePolygonEdge
 
- LDA yEdgeEndHi
- BMI tred3
- BNE tred2
- LDA yEdgeEndLo
- CMP maxPitchAngle
- BCS tred2
- CMP yPolygonBottom
- BCS tred5
- CMP minPitchAngle
- BCS tred4
+                        \ We start by updating yPolygonBottom so it covers the
+                        \ y-coordinate of the end point of the edge, as the end
+                        \ point has the higher y-coordinate ???
+
+ LDA yEdgeEndHi         \ If yEdgeEnd(Hi Lo) is negative then the end point is
+ BMI tred3              \ in the lower half of the screen, so jump to tred3 to
+                        \ set yPolygonBottom to the lowest point in the screen
+                        \ buffer, i.e. minPitchAngle
+
+ BNE tred2              \ If yEdgeEndHi > 0 then the end point is off the top of
+                        \ the screen, so jump to tred2 to return from the
+                        \ subroutine
+
+                        \ If we get here then yEdgeEndHi = 0, so now we analyse
+                        \ the low byte of yEdgeEnd(Hi Lo)
+
+ LDA yEdgeEndLo         \ If yEdgeEndLo >= maxPitchAngle then the line ends
+ CMP maxPitchAngle      \ beyond the top of the screen buffer, so jump to tred2
+ BCS tred2              \ to return from the subroutine
+
+ CMP yPolygonBottom     \ If yEdgeEndLo >= yPolygonBottom then yPolygonBottom
+ BCS tred5              \ already covers the y-coordinate, so jump to tred5 to
+                        \ move on to the next calculation
+
+                        \ If we get here then yEdgeEndLo < yPolygonBottom, so we
+                        \ need to reduce yPolygonBottom to cater for this new
+                        \ y-coordinate
+
+ CMP minPitchAngle      \ If yEdgeEndLo >= minPitchAngle, then the y-coordinate
+ BCS tred4              \ in yEdgeEndLo is inside the screen buffer, so jump
+                        \ to tred4 to store this as the new value of
+                        \ yPolygonBottom
+
+                        \ Otherwise yEdgeEndLo is below the bottom of the screen
+                        \ buffer, so we need to clip yPolygonBottom to the
+                        \ y-coordinate of the bottom of the screen buffer
 
 .tred3
 
- LDA minPitchAngle
+ LDA minPitchAngle      \ Set A = minPitchAngle, so A is clipped to the bottom
+                        \ of the screen buffer
 
 .tred4
 
- STA yPolygonBottom
+ STA yPolygonBottom     \ Set yPolygonBottom to the clipped value of yEdgeEndLo
+                        \ as this is the lowest y-coordinate we have found yet
 
 .tred5
 
- LDA yEdgeStartHi
- BMI tred2
- BNE tred6
- LDA yEdgeStartLo
- CMP minPitchAngle
- BCC tred2
- CMP yPolygonTop
- BCC tred8
- CMP maxPitchAngle
- BCC tred7
+                        \ Next we update yPolygonTop so it covers the
+                        \ y-coordinate of the start point of the edge
+
+ LDA yEdgeStartHi       \ If yEdgeStart(Hi Lo) is negative then the start point
+ BMI tred2              \ is off the bottom of the screen, so jump to tred2 to
+                        \ return from the subroutine
+
+ BNE tred6              \ If 0 < yEdgeStartHi < 128 then the start point is
+                        \ beyond the top of the screen, so jump to tred6 to set
+                        \ yPolygonTop to the highest point in the screen buffer,
+                        \ i.e. maxPitchAngle
+
+                        \ If we get here then yEdgeStartHi = 0, so now we
+                        \ analyse the low byte of yEdgeStart(Hi Lo)
+
+ LDA yEdgeStartLo       \ If yEdgeStartLo < minPitchAngle then the line starts
+ CMP minPitchAngle      \ below the bottom of the screen buffer, so jump to
+ BCC tred2              \ tred2 to return from the subroutine
+
+ CMP yPolygonTop        \ If yEdgeStartLo < yPolygonTop then yPolygonTop already
+ BCC tred8              \ caters for the y-coordinate, so jump to tred8 to move
+                        \ on to the next calculation
+
+                        \ If we get here then yEdgeStartLo >= yPolygonTop, so we
+                        \ need to bump up yPolygonTop to cater for this new
+                        \ y-coordinate
+
+ CMP maxPitchAngle      \ If yEdgeStartLo < maxPitchAngle, then the y-coordinate
+ BCC tred7              \ in yEdgeStartLo is inside the screen buffer, so jump
+                        \ to tred7 to store this as the new value of yPolygonTop
+
+                        \ Otherwise yEdgeStartLo is beyond the top of the screen
+                        \ buffer, so we need to clip yPolygonTop to the
+                        \ y-coordinate of the top of the screen buffer
 
 .tred6
 
- LDA maxPitchAngle
- SEC
- SBC #&01
+ LDA maxPitchAngle      \ Set A = maxPitchAngle - 1, so A is clipped to the top
+ SEC                    \ of the screen buffer
+ SBC #1
 
 .tred7
 
- STA yPolygonTop
+ STA yPolygonTop        \ Set yPolygonTop to the clipped value of yEdgeStartLo
+                        \ as this is the highest y-coordinate we have found yet
 
 .tred8
 
- LDA xEdgeStartHi
- ORA xEdgeEndHi
- BNE tred1
- LDA xEdgeStartLo
- SEC
- SBC xEdgeEndLo
- BCS tred9
- EOR #&FF
- CLC
- ADC #&01
- STA L000D
- LDX #&E8
- BNE tred10
+ LDA xEdgeStartHi       \ If either of the start or end points have a non-zero
+ ORA xEdgeEndHi         \ high byte in their x-coordinates, jump to part 2 via
+ BNE tred1              \ tred1 to trace the polygon edge accordingly
+
+                        \ If we get here then both xEdgeStartHi and xEdgeEndHi
+                        \ are zero, so the x-coordinates for the polygon edge
+                        \ are all in the range 0 to 255
+
+ LDA xEdgeStartLo       \ Set A = xEdgeStartLo - xEdgeEndLo
+ SEC                    \
+ SBC xEdgeEndLo         \ So A contains the x-axis delta along the edge we are
+                        \ tracing
+
+ BCS tred9              \ If the subtraction didn't underflow, jump to tred9 to
+                        \ store the result in xEdgeDelta, as it is already the
+                        \ correct sign for the absolute value
+
+ EOR #&FF               \ Negate A using two's complement, so that A is now
+ CLC                    \ positive and contains the absolute value of the
+ ADC #1                 \ distance in the x-axis between the two points
+
+ STA xEdgeDelta         \ Store the result in xEdgeDelta, so xEdgeDelta is the
+                        \ positive absolute of the x-axis delta, as follows:
+                        \
+                        \   xEdgeDelta = |xEdgeStartLo - xEdgeEndLo|
+
+ LDX #&E8               \ Set A to the opcode for the INX instruction, so we
+                        \ trace along the line by incrementing X
+
+ BNE tred10             \ Jump to tred10 to keep going (this BNE is effectively
+                        \ a JMP as X is never zero)
 
 .tred9
 
- STA L000D
- LDX #&CA
+ STA xEdgeDelta         \ Set xEdgeDelta to the positive x-axis delta, so this
+                        \ is the case:
+                        \
+                        \   xEdgeDelta = |xEdgeStartLo - xEdgeEndLo|
+
+ LDX #&CA               \ Set A to the opcode for the DEX instruction, so we
+                        \ trace along the line by decrementing X
 
 .tred10
 
- LDY L000D
+                        \ By this point we have the following:
+                        \
+                        \   * xEdgeDelta = |xEdgeStartLo - xEdgeEndLo|
+                        \
+                        \   * X is the correct opcode for tred12 (DEX or INX)
+
+ LDY xEdgeDelta         \ Set the status flags on xEdgeDelta and yEdgeDeltaLo
  CPY yEdgeDeltaLo
- LDY yEdgeStartLo
- LDA xPolygonAddrHi
- BCS tred18
- STA tred13+2
- STY tred13+1
- STX tred12
+
+ LDY yEdgeStartLo       \ Set (A Y) = (xPolygonAddrHi yEdgeStartLo) to use as
+ LDA xPolygonAddrHi     \ the storage address in the modification below
+
+ BCS tred18             \ If xEdgeDelta >= yEdgeDeltaLo, jump to tred18
+
+ STA tred13+2           \ Modify the instruction at tred13 to use the address
+ STY tred13+1           \ in (A Y), so it becomes:
+                        \
+                        \   STX (xPolygonAddrHi yEdgeStartLo)
+                        \
+                        \ xPolygonAddrHi is set to the high byte of either
+                        \ xPolygonLeft or xPolygonRight, and both of these
+                        \ tables start on a page boundary, so this sets the
+                        \ address to offset yEdgeStartLo within the table
+                        \ specified by xPolygonAddrHi
+
+ STX tred12             \ Modify the instruction at tred12 to use the opcode
+                        \ specified in X, so we have:
+                        \
+                        \   * DEX when xEdgeStartLo - xEdgeEndLo is positive
+                        \
+                        \   * INX when xEdgeStartLo - xEdgeEndLo is negative
+
  LDY yEdgeDeltaLo
  INY
  LDA yEdgeDeltaLo
@@ -23535,7 +23678,7 @@
 
 .tred11
 
- ADC L000D
+ ADC xEdgeDelta
  BCC tred13
  SBC yEdgeDeltaLo
 
@@ -23591,9 +23734,9 @@
 .tred21
 
  STY tred23+1
- LDY L000D
+ LDY xEdgeDelta
  INY
- LDA L000D
+ LDA xEdgeDelta
  LSR A
  EOR #&FF
  CLC
@@ -23610,7 +23753,7 @@
 .tred23
 
  BCC tred25             \ Gets modified
- SBC L000D
+ SBC xEdgeDelta
  DEC tred24+1
  BEQ tred17
 
@@ -23634,7 +23777,7 @@
 
 .tred27
 
- ADC L000D
+ ADC xEdgeDelta
  BCC tred29
  SBC yEdgeDeltaLo
 
@@ -23668,7 +23811,7 @@
  INX
  ADC yEdgeDeltaLo
  BCC tred33
- SBC L000D
+ SBC xEdgeDelta
  DEC tred24+1
  BEQ tred34
 
@@ -23971,17 +24114,20 @@
 
 .tred35
 
+                        \ If we get here then at least one of xEdgeStartHi and
+                        \ xEdgeEndHi is non-zero
+
  LDA xEdgeStartLo
  SEC
  SBC xEdgeEndLo
- STA L000D
+ STA xEdgeDelta
  LDA xEdgeStartHi
  SBC xEdgeEndHi
  BPL tred36
  LDA #0
  SEC
- SBC L000D
- STA L000D
+ SBC xEdgeDelta
+ STA xEdgeDelta
  LDX #&E8
  LDA #0
  LDY #&E6
@@ -23997,7 +24143,7 @@
 
  STY T
  STA yEdgeDeltaHi
- LDY L000D
+ LDY xEdgeDelta
  CPY yEdgeDeltaLo
  LDY yEdgeStartLo
  LDA xPolygonAddrHi
@@ -24028,7 +24174,7 @@
 
 .tred39
 
- ADC L000D
+ ADC xEdgeDelta
  BCC tred41
  SBC yEdgeDeltaLo
 
@@ -24087,7 +24233,7 @@
  STY tred50+1
  LDA T
  STA tred53
- LDY L000D
+ LDY xEdgeDelta
  TYA
  LSR A
  EOR #&FF
@@ -24111,7 +24257,7 @@
 
  ADC yEdgeDeltaLo
  BCC tred50
- SBC L000D
+ SBC xEdgeDelta
  DEC tred50+1
  BEQ tred51
 
