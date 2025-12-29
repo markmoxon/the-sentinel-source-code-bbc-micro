@@ -322,7 +322,7 @@
      007E
 .tileIsOnScreen
      007F
-.L007F
+.drawPolygon
      007F
 .xDeltaLo
      0080
@@ -8050,27 +8050,27 @@
      3169   4C 3D 31   JMP &313D
 .CorruptSecretCode
      316C   90 26      BCC &3194
-.sub_C316E
+.ModifyStoringCode
      316E   48         PHA
      316F   A5 3E      LDA &3E
      3171   F0 04      BEQ &3177
      3173   A9 2C      LDA #&2C
      3175   D0 15      BNE &318C
-.C3177
+.stor1
      3177   85 7F      STA &7F
      3179   A5 41      LDA &41
      317B   D0 04      BNE &3181
      317D   A9 8E      LDA #&8E
      317F   D0 0B      BNE &318C
-.C3181
+.stor2
      3181   10 05      BPL &3188
      3183   A0 00      LDY #&00
      3185   4C 8A 31   JMP &318A
-.C3188
+.stor3
      3188   A0 FF      LDY #&FF
-.C318A
+.stor4
      318A   A9 8C      LDA #&8C
-.C318C
+.stor5
      318C   8D E9 30   STA &30E9
      318F   8D 48 31   STA &3148
      3192   68         PLA

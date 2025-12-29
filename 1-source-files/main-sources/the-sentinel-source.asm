@@ -1072,9 +1072,15 @@
  SKIP 0                 \ Information on whether a tile is fully on-screen,
                         \ partially on-screen or fully off-screen
 
-.L007F
+.drawPolygon
 
- SKIP 1                 \ ???
+ SKIP 1                 \ A flag to record whether the polygon we are currently
+                        \ processing contains any visible pixels, so it can be
+                        \ used to control whether we actually draw the polygon
+                        \
+                        \   * Non-zero = do not draw the polygon
+                        \
+                        \   * Zero = do draw the polygon
 
 .xDeltaLo
 
@@ -22769,13 +22775,17 @@
 \                         * Set if the polygon is not visible in the current
 \                           screen buffer and should not be drawn
 \
-\   yPolygonTop         ???
+\   yPolygonTop         The y-coordinate of the top of the polygon (where higher
+\                       y-coordinates are up the screen)
 \
-\   yPolygonBottom      ???
+\   yPolygonBottom      The y-coordinate of the bottom of the polygon (where
+\                       higher y-coordinates are up the screen)
 \
-\   xPolygonLeft        ???
+\   xPolygonLeft        The pixel x-coordinates of the left edges of each pixel
+\                       line in the polygon
 \
-\   xPolygonRight       ???
+\   xPolygonRight       The pixel x-coordinates of the right edges of each pixel
+\                       line in the polygon
 \
 \ ******************************************************************************
 
@@ -23099,8 +23109,9 @@
                         \ track of the minimum x-coordinates of any polygon
                         \ edges that are horizontal
 
- STA L007F              \ Set L007F = 255, which we will set to zero if there
-                        \ are any polygon lines to draw ???
+ STA drawPolygon        \ Set drawPolygon to a non-zero value, so by default the
+                        \ polygon will not be drawn, though we will set this to
+                        \ zero later if the polygon should be drawn
 
  LDY #0                 \ We now loop through all the edges of the polygon, so
                         \ set a loop counter in Y to work through all the edges
@@ -23348,14 +23359,14 @@
  LDA xMaxHorizontal     \ Set the right edge of the polygon line to the
  STA xPolygonRight,Y    \ x-coordinate in xMaxHorizontal
 
- LDA #0                 \ Set L007F = 0 so we pass through both checks below and
- STA L007F              \ return the polygon line as being on-screen
+ LDA #0                 \ Set drawPolygon = 0 so the polygon gets drawn
+ STA drawPolygon
 
 .gpol17
 
- LDA L007F              \ If L007F is non-zero then there is nothing to draw, so
- BNE gpol18             \ jump to gpol18 to return from the subroutine with the
-                        \ C flag set ???
+ LDA drawPolygon        \ If drawPolygon is non-zero then the polygon should not
+ BNE gpol18             \ be drawn, so jump to gpol18 to return from the
+                        \ subroutine with the C flag set
 
  LDA yPolygonTop        \ If yPolygonTop < yPolygonBottom then there are no
  CMP yPolygonBottom     \ visible lines to draw in the polygon, so jump to
@@ -23517,7 +23528,7 @@
 
 .pedg13
 
- STX xTileMaxAltitude+63    \ Gets modified
+ STX xPolygonRight+&9F  \ Gets modified
  DEC pedg13+1
  BEQ pedg17
 
@@ -23528,7 +23539,7 @@
 
 .pedg15
 
- STY L007F
+ STY drawPolygon        \ Set drawPolygon = 0 so the polygon gets drawn
 
 .pedg16
 
@@ -23581,14 +23592,14 @@
 
 .pedg23
 
- BCC pedg25              \ Gets modified
+ BCC pedg25             \ Gets modified
  SBC L000D
  DEC pedg24+1
  BEQ pedg17
 
 .pedg24
 
- STX xTileMaxAltitude+62    \ Gets modified
+ STX xPolygonRight+&9E  \ Gets modified
 
 .pedg25
 
@@ -23855,7 +23866,9 @@
  INY
  STY U
  LDX xEdgeStartLo
- JSR sub_C316E
+
+ JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+
  JMP pedg41
 
 .pedg39
@@ -23893,13 +23906,17 @@
 
  BNE pedg42
  DEC pedg41+1
- JSR sub_C316E
+
+ JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+
  JMP pedg42
 
 .pedg45
 
  INC xEdgeStartHi
- JSR sub_C316E
+
+ JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+
  JMP pedg41
 
 .pedg46
@@ -23923,7 +23940,9 @@
  INY
  STY U
  LDX xEdgeStartLo
- JSR sub_C316E
+
+ JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+
  JMP pedg50
 
 .pedg48
@@ -23958,13 +23977,17 @@
 
  BNE pedg50
  DEC pedg50+1
- JSR sub_C316E
+
+ JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+
  JMP pedg50
 
 .pedg53
 
  INC xEdgeStartHi
- JSR sub_C316E
+
+ JSR ModifyStoringCode  \ Modify the instructions at pedg41 and pedg50 ???
+
  JMP pedg49
 
 \ ******************************************************************************
@@ -23989,49 +24012,133 @@
 
 \ ******************************************************************************
 \
-\       Name: sub_C316E
+\       Name: ModifyStoringCode
 \       Type: Subroutine
 \   Category: Drawing polygons
-\    Summary: ???
+\    Summary: Modify the code in ProcessPolygonEdge that stores the coordinates
+\             of the polygon edge that is being traced
+\
+\ ------------------------------------------------------------------------------
+\
+\ This routine modifies the code in part 2 of ProcessPolygonEdge that stores the
+\ x-coordinates of the polygon line, and sets the values of drawPolygon and Y as
+\ follows:
+\
+\                                yEdgeStartHi = 0             yEdgeStartHi <> 0
+\
+\   xEdgeStartHi < 0       STY, drawPolygon = 0, Y = 0              BIT
+\
+\   xEdgeStartHi = 0       STX, drawPolygon = 0                     BIT
+\
+\   xEdgeStartHi > 0       STY, drawPolygon = 0, Y = 255            BIT
+\
+\ ------------------------------------------------------------------------------
+\
+\ Returns:
+\
+\   A                   A is preserved
 \
 \ ******************************************************************************
 
-.sub_C316E
+.ModifyStoringCode
 
- PHA
- LDA yEdgeStartHi
- BEQ C3177
- LDA #&2C
- BNE C318C
+ PHA                    \ Store A on the stack so we can preserve it
 
-.C3177
+ LDA yEdgeStartHi       \ If yEdgeStartHi = 0 then jump to stor1
+ BEQ stor1
 
- STA L007F
- LDA xEdgeStartHi
- BNE C3181
- LDA #&8E
- BNE C318C
+                        \ If we get here then:
+                        \
+                        \   * yEdgeStartHi <> 0
 
-.C3181
+ LDA #&2C               \ Set A to the opcode for the BIT addr instruction, so
+                        \ the ProcessPolygonEdge routine does not store anything
+                        \ in the xPolygonLeft or xPolygonRight table (as the BIT
+                        \ instruction has no effect beyond setting the status
+                        \ flags)
 
- BPL C3188
- LDY #0
- JMP C318A
+ BNE stor5              \ Jump to stor5 to modify the instructions at pedg41 and
+                        \ pedg50 (this BNE is effectively a JMP as A is never
+                        \ zero)
 
-.C3188
+.stor1
 
- LDY #&FF
+                        \ If we get here then:
+                        \
+                        \   * yEdgeStartHi = 0
+                        \
+                        \ and A = 0
 
-.C318A
+ STA drawPolygon        \ Set drawPolygon = 0 so the polygon gets drawn
 
- LDA #&8C
+ LDA xEdgeStartHi       \ If xEdgeStartHi <> 0 then jump to stor2
+ BNE stor2
 
-.C318C
+                        \ If we get here then:
+                        \
+                        \   * xEdgeStartHi = 0
+                        \
+                        \   * yEdgeStartHi = 0
 
- STA pedg41
- STA pedg50
- PLA
- RTS
+ LDA #&8E               \ Set A to the opcode for the STX addr instruction, so
+                        \ the ProcessPolygonEdge routine stores the value of X
+                        \ into the xPolygonLeft or xPolygonRight table
+
+ BNE stor5              \ Jump to stor5 to modify the instructions at pedg41 and
+                        \ pedg50 (this BNE is effectively a JMP as A is never
+                        \ zero)
+
+.stor2
+
+                        \ If we get here then:
+                        \
+                        \   * xEdgeStartHi <> 0
+                        \
+                        \   * yEdgeStartHi = 0
+                        \
+                        \ and the flags are set according to the value of
+                        \ xEdgeStartHi
+
+ BPL stor3              \ If xEdgeStartHi is positive, jump to stor3
+
+                        \ If we get here then:
+                        \
+                        \   * xEdgeStartHi < 0
+                        \
+                        \   * yEdgeStartHi = 0
+
+ LDY #0                 \ Set Y = 0
+
+ JMP stor4              \ Jump to stor4 to modifiy the code to use STY
+
+.stor3
+
+                        \ If we get here then:
+                        \
+                        \   * xEdgeStartHi > 0
+                        \
+                        \   * yEdgeStartHi = 0
+
+ LDY #255               \ Set Y = 255
+
+.stor4
+
+ LDA #&8C               \ Set A to the opcode for the STY addr instruction, so
+                        \ the ProcessPolygonEdge routine stores the value of Y
+                        \ into the xPolygonLeft or xPolygonRight table
+
+.stor5
+
+ STA pedg41             \ Modify the instruction at pedg41 to use the opcode
+                        \ specified in A
+
+ STA pedg50             \ Modify the instruction at pedg50 to use the opcode
+                        \ specified in A
+
+ PLA                    \ Restore the value of A that we stored on the stack
+                        \ above
+
+ RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
