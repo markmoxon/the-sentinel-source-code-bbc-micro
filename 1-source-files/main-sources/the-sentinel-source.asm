@@ -22932,7 +22932,7 @@
  TAX                    \ Y-th point in the polygon
 
  LDA drawViewYawLo,X    \ Set the following:
- CLC                    \             
+ CLC                    \
  ADC bufferYawLo        \   (A T) = drawViewYaw(Hi Lo) + bufferYaw(Hi Lo)
  STA T                  \
  LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
@@ -22957,7 +22957,7 @@
                         \ This stores the low byte of the two-byte value in
                         \ (A T) * 8, so now we calculate and store the high byte
 
- LDA T                  \ Rotate the C flag into bit 0 of T and put the result 
+ LDA T                  \ Rotate the C flag into bit 0 of T and put the result
  ROL A                  \ in A, so top three bits of the original A are now in
                         \ the bottom three bits of A
 
@@ -23041,7 +23041,7 @@
  TAX                    \ Y-th point in the polygon
 
  LDA drawViewYawLo,X    \ Set the following:
- CLC                    \             
+ CLC                    \
  ADC bufferYawLo        \   (A T) = drawViewYaw(Hi Lo) + bufferYaw(Hi Lo)
  STA T                  \
  LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
@@ -23432,7 +23432,7 @@
 
 \ ******************************************************************************
 \
-\       Name: TracePolygonEdge (Part 1 of 6)
+\       Name: TracePolygonEdge (Part 1 of 8)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge, populating xPolygonRight or xPolygonLeft
@@ -23658,7 +23658,7 @@
 
 \ ******************************************************************************
 \
-\       Name: TracePolygonEdge (Part 2 of 6)
+\       Name: TracePolygonEdge (Part 2 of 8)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge with a steep gradient by stepping along the
@@ -23674,8 +23674,8 @@
                         \ and cumulatively add the gradient to calculate the
                         \ x-coordinate at each step
 
- STA tred13+2           \ Modify the instruction at tred13 to use the address
- STY tred13+1           \ in (A Y), so it becomes:
+ STA tred13+2           \ Modify the instruction at tred13 to use the address in
+ STY tred13+1           \ (A Y), so it becomes:
                         \
                         \   STX into address (xPolygonAddrHi yEdgeStartLo)
                         \
@@ -23830,7 +23830,7 @@
 
 \ ******************************************************************************
 \
-\       Name: TracePolygonEdge (Part 3 of 6)
+\       Name: TracePolygonEdge (Part 3 of 8)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge with a shallow gradient by stepping along the
@@ -23848,8 +23848,8 @@
                         \ and cumulatively add the gradient to calculate the
                         \ y-coordinate at each step
 
- STA tred24+2           \ Modify the instruction at tred24 to use the address
- STY tred24+1           \ in (A Y), so it becomes:
+ STA tred24+2           \ Modify the instruction at tred24 to use the address in
+ STY tred24+1           \ (A Y), so it becomes:
                         \
                         \   STX into address (xPolygonAddrHi yEdgeStartLo)
                         \
@@ -24065,7 +24065,7 @@
 
 \ ******************************************************************************
 \
-\       Name: TracePolygonEdge (Part 4 of 6)
+\       Name: TracePolygonEdge (Part 4 of 8)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Trace a steep edge that starts off-screen, without storing the
@@ -24092,7 +24092,7 @@
 
  LDX xEdgeStartLo       \ Set X to the x-coordinate of the starting point, so we
                         \ can start tracing from the start of the edge
-                        
+
                         \ The loop below has the same structure as the loop in
                         \ part 2 between tred11 and tred15, and which we enter
                         \ via tred13, but in this version of the loop we do not
@@ -24174,7 +24174,7 @@
 
 \ ******************************************************************************
 \
-\       Name: TracePolygonEdge (Part 5 of 6)
+\       Name: TracePolygonEdge (Part 5 of 8)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Trace a shallow edge that starts off-screen, without storing the
@@ -24463,7 +24463,7 @@
 .gpol25
 
  LDA yEdgeEndLo         \ Set the following, in sequence:
- STA yEdgeStartLo       \   
+ STA yEdgeStartLo       \
  SEC                    \   yEdgeStart(Hi Lo) = yEdgeEnd(Hi Lo)
  SBC yEdgeDeltaLo       \
  STA yEdgeEndLo         \   yEdgeEnd(Hi Lo) -= yEdgeDelta(Hi Lo)
@@ -24553,7 +24553,7 @@
 
 \ ******************************************************************************
 \
-\       Name: TracePolygonEdge (Part 6 of 6)
+\       Name: TracePolygonEdge (Part 6 of 8)
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge where the start or end point x-coordinates
@@ -24566,108 +24566,379 @@
                         \ If we get here then at least one of xEdgeStartHi and
                         \ xEdgeEndHi is non-zero
 
- LDA xEdgeStartLo
- SEC
- SBC xEdgeEndLo
- STA xEdgeDelta
- LDA xEdgeStartHi
+ LDA xEdgeStartLo       \ Set xEdgeDelta = xEdgeStart(Hi Lo) - xEdgeEnd(Hi Lo)
+ SEC                    \
+ SBC xEdgeEndLo         \ So xEdgeDelta contains the x-axis delta along the edge
+ STA xEdgeDelta         \ we are tracing (we can discard the high byte as we
+ LDA xEdgeStartHi       \ know it will be zero)
  SBC xEdgeEndHi
- BPL tred36
- LDA #0
- SEC
- SBC xEdgeDelta
- STA xEdgeDelta
- LDX #&E8
- LDA #0
- LDY #&E6
- JMP tred37
+
+ BPL tred36             \ If the result is positive, jump to tred36 to skip the
+                        \ following, as the delta is already the correct sign
+                        \ for the absolute value
+
+                        \ If we get here then xEdgeDelta is negative and the
+                        \ start point is to the left of the end point
+
+ LDA #0                 \ Negate xEdgeDelta as follows:
+ SEC                    \
+ SBC xEdgeDelta         \   xEdgeDelta = 0 - xEdgeDelta
+ STA xEdgeDelta         \
+                        \ So xEdgeDelta is positive and contains the absolute
+                        \ value of the x-axis delta
+
+ LDX #&E8               \ Set A to the opcode for the INX instruction, so we
+                        \ trace along the edge by incrementing X
+
+ LDA #%00000000         \ Set A to use as the high byte in yEdgeDeltaHi for a
+                        \ positive 16-bit number
+
+ LDY #&E6               \ Set Y to the opcode for the INC zp instruction, so we
+                        \ trace along the edge by incrementing Y
+
+ JMP tred37             \ Jump to tred37 to kepp going
 
 .tred36
 
- LDX #&CA
- LDA #&FF
- LDY #&C6
+                        \ If we get here then xEdgeDelta is positive and the
+                        \ start point is to the right of the end point
+
+ LDX #&CA               \ Set A to the opcode for the DEX instruction, so we
+                        \ trace along the edge by decrementing X
+
+ LDA #%11111111         \ Set A to use as the high byte in yEdgeDeltaHi for a
+                        \ negative 16-bit number
+
+ LDY #&C6               \ Set Y to the opcode for the DEC zp instruction, so we
+                        \ trace along the edge by decrementing Y
 
 .tred37
 
- STY T
- STA yEdgeDeltaHi
- LDY xEdgeDelta
- CPY yEdgeDeltaLo
- LDY yEdgeStartLo
- LDA xPolygonAddrHi
- BCS tred46
- STA tred41+2
- STX tred40
- LDA yEdgeStartHi
- BEQ tred38
- INY
+ STY T                  \ Store the INC/DEC opcode in T so we can retrieve it
+                        \ in parts 7 and 8
+
+ STA yEdgeDeltaHi       \ Set the high byte of yEdgeDelta(Hi Lo) to be negative
+                        \ when we are moving along the x-axis from right to left
+                        \ and positive when we are moving along the x-axis from
+                        \ left to right
+
+ LDY xEdgeDelta         \ Set the status flags on the comparison of xEdgeDelta
+ CPY yEdgeDeltaLo       \ and yEdgeDeltaLo, so we can decide which axis has the
+                        \ longer side along the polygon edge (and therefore
+                        \ which axis we should step along when tracing the edge)
+
+ LDY yEdgeStartLo       \ Set (A Y) = (xPolygonAddrHi yEdgeStartLo) to use as
+ LDA xPolygonAddrHi     \ the storage address in the modification below
+
+ BCS tred46             \ If xEdgeDelta >= yEdgeDeltaLo then the x-axis delta is
+                        \ the biggest and the edge has a shallow gradient, so
+                        \ jump to part 8 to trace the edge by stepping along the
+                        \ x-axis
+
+                        \ Otherwise the edge has a steep gradient, so fall
+                        \ through into part 7 to trace the edge by stepping
+                        \ along the y-axis
+
+\ ******************************************************************************
+\
+\       Name: TracePolygonEdge (Part 7 of 8)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: Trace a polygon edge with a steep gradient by stepping along the
+\             y-axis (for two-byte x-coordinates)
+\
+\ ******************************************************************************
+
+                        \ If we get here then xEdgeDelta < yEdgeDelta, so the
+                        \ y-axis delta is the biggest and the polygon edge has a
+                        \ steep gradient
+                        \
+                        \ We therefore step along the y-axis one pixel at a time
+                        \ and cumulatively add the gradient to calculate the
+                        \ x-coordinate at each step
+                        \
+                        \ We get here with the following:
+                        \
+                        \   * (A Y) = (xPolygonAddrHi yEdgeStartLo)
+                        \
+                        \   * X = the opcode for DEX or INX
+                        \
+                        \   * T = the opcode for DEC zp or INC zp
+
+ STA tred41+2           \ Modify the instruction at tred41 to use the address in
+                        \ (A Y), starting with the high byte
+
+ STX tred40             \ Modify the instruction at tred40 to use the opcode
+                        \ specified in X, so we have:
+                        \
+                        \   * DEX when xEdgeStart - xEdgeEnd is positive
+                        \
+                        \   * INX when xEdgeStart - xEdgeEnd is negative
+                        \
+                        \ We store the x-coordinate in X, so this ensures that:
+                        \
+                        \   * We step left when required with DEX, for when the
+                        \     start point is to the right of the end point
+                        \
+                        \   * We step right when required with INX, for when the
+                        \     start point is to the left of the end point
+                        \
+                        \ We will run this instruction when we need to step
+                        \ along the x-axis, according to the cumulative value of
+                        \ the slope error
+
+ LDA yEdgeStartHi       \ If yEdgeStartHi = 0 then the start point is below the
+ BEQ tred38             \ top edge of the screen, so skip the following
+                        \ instruction
+
+ INY                    \ The start point is above the top edge of the screen,
+                        \ so increment the low byte of (A Y) ???
 
 .tred38
 
- STY tred41+1
- LDA T
- STA tred45
- LDY yEdgeDeltaLo
- TYA
- LSR A
+ STY tred41+1           \ Modify the instruction at tred41 to use the address in
+                        \ (A Y), so it becomes:
+                        \
+                        \   STX into address (xPolygonAddrHi yEdgeStartLo)
+                        \
+                        \ with the low byte incremented by 1 when yEdgeStartHi
+                        \ is non-zero
+                        \
+                        \ xPolygonAddrHi is set to the high byte of either
+                        \ xPolygonLeft or xPolygonRight, and both of these
+                        \ tables start on a page boundary, so this sets the
+                        \ address to offset yEdgeStartLo within the table
+                        \ specified by xPolygonAddrHi
+                        \
+                        \ We will decrement this address for each step along the
+                        \ edge, so we step along the y-axis as we trace the edge
+
+ LDA T                  \ Modify the instruction at tred45 to use the opcode
+ STA tred45             \ specified in T, so we have:
+                        \
+                        \   * DEC xEdgeStartHi when xEdgeStart - xEdgeEnd is
+                        \     positive
+                        \
+                        \   * INC xEdgeStartHi when xEdgeStart - xEdgeEnd is
+                        \     negative
+                        \
+                        \ We store the x-coordinate in X, so this ensures that:
+                        \
+                        \   * We step left when required with DEC, for when the
+                        \     start point is to the right of the end point
+                        \
+                        \   * We step right when required with INC, for when the
+                        \     start point is to the left of the end point
+                        \
+                        \ We will run this instruction when we need to step
+                        \ along the x-axis and update the high byte of the
+                        \ address in the process
+
+ LDY yEdgeDeltaLo       \ Set A = ~(yEdgeDeltaLo / 2)
+ TYA                    \
+ LSR A                  \ We use A to keep track of the slope error ???
  EOR #&FF
- CLC
- INY
- STY U
- LDX xEdgeStartLo
 
- JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
+ CLC                    \ Clear the C flag so the first addition we do in the
+                        \ following loop will work correctly
 
- JMP tred41
+ INY                    \ Set U = yEdgeDeltaLo + 1
+ STY U                  \
+                        \ We can use this as a pixel counter when stepping along
+                        \ the polygon edge's y-axis delta one pixel at a time,
+                        \ as there are yEdgeDeltaLo + 1 pixels along the edge
+                        \ (the additional one ensures we include the pixels at
+                        \ both ends)
+
+ LDX xEdgeStartLo       \ Set X to the x-coordinate of the starting point, so we
+                        \ can start tracing from the start of the edge
+
+ JSR ModifyStoringCode  \ Modify the instruction at tred41 and set drawPolygon
+                        \ and Y according to the values of xEdgeStartHi and
+                        \ yEdgeStartHi
+                        \
+                        \ The instruction at tred41 is modified as follows:
+                        \
+                        \   * BIT when yEdgeStartHi <> 0
+                        \
+                        \   * STY when yEdgeStartHi = 0 and xEdgeStartHi <> 0
+                        \
+                        \   * STX when yEdgeStartHi = 0 and xEdgeStartHi = 0
+                        \
+                        \ The drawPolygon flag is set as follows:
+                        \
+                        \   * drawPolygon = 0 when yEdgeStartHi = 0
+
+ JMP tred41             \ Jump into the middle of the loop at tred41
 
 .tred39
 
- ADC xEdgeDelta
- BCC tred41
- SBC yEdgeDeltaLo
+ ADC xEdgeDelta         \ Add the x-axis delta to the slope error in A, so we
+                        \ keep track of the slope error as we move along the
+                        \ y-axis
+
+ BCC tred41             \ If the addition didn't overflow then we have not moved
+                        \ into a new x-coordinate with this step along the
+                        \ y-axis, so jump to tred41 so we do not move along the
+                        \ x-axis
+
+                        \ If we get here then the addition overflowed and the
+                        \ cumulative slope error along the x-axis has added up
+                        \ to a whole pixel, so we now need to step along the
+                        \ x-axis by a pixel
+
+ SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
+                        \
+                        \ This subtraction works as we just passed though a BCC,
+                        \ so we know the C flag is set
 
 .tred40
 
- INX
- CPX yEdgeDeltaHi
- CLC
- BEQ tred45
+ INX                    \ This instruction is modified above to:
+                        \
+                        \   * INX (if we are stepping right along the edge)
+                        \
+                        \   * DEX (if we are stepping left along the edge)
+                        \
+                        \ So in either case this steps us along the x-axis by
+                        \ one pixel
+
+ CPX yEdgeDeltaHi       \ Set the status flags on the comparison of X and
+                        \ yEdgeDeltaHi
+
+ CLC                    \ Clear the C flag so the comparison won't affect the
+                        \ arithmetic in this loop
+
+ BEQ tred45             \ If X = yEdgeDeltaHi, jump to tred45 to step along the
+                        \ x-axis by updating the high byte in xEdgeStartHi
 
 .tred41
 
- STX xPolygonLeft       \ Gets modified
- DEC tred41+1
- BEQ tred43
+                        \ This is the entry point for the tracing loop and the
+                        \ point where we record the current pixel in the edge
+                        \ that we are tracing
+
+ STX xPolygonLeft       \ This instruction is modified above to the following
+                        \ address:
+                        \
+                        \   Store into address (xPolygonAddrHi yEdgeStartLo)
+                        \
+                        \ with the low byte incremented by 1 when yEdgeStartHi
+                        \ is non-zero
+                        \
+                        \ So this stores the current x-coordinate as we step
+                        \ along the edge, storing the coordinate in either the
+                        \ xPolygonRight or xPolygonLeft table, and storing the
+                        \ coordinate in the offset given by the y-coordinate
+                        \ of the current position along the edge we are tracing
+                        \
+                        \ The ModifyStoringCode routine modifies the instruction
+                        \ further, as follows:
+                        \
+                        \   * BIT when yEdgeStartHi <> 0
+                        \
+                        \   * STY when yEdgeStartHi = 0 and xEdgeStartHi <> 0
+                        \
+                        \   * STX when yEdgeStartHi = 0 and xEdgeStartHi = 0
+
+ DEC tred41+1           \ Decrement the low byte of the address in the
+                        \ instruction above so that it points to the table
+                        \ entry for the next y-coordinate down
+
+ BEQ tred43             \ If we just decremented the low byte of the address to
+                        \ zero then we have finished stepping along the y-axis,
+                        \ so jump to tred43 to finish off
 
 .tred42
 
- DEC U
- BNE tred39
- JMP tred16
+ DEC U                  \ Decrement the pixel counter in U
+
+ BNE tred39             \ Loop back to keep tracing the polygon edge until we
+                        \ have worked our way through all the pixels along the
+                        \ y-axis
+
+ JMP tred16             \ Jump to tred16 to return from the subroutine and stop
+                        \ the trace
 
 .tred43
 
- DEC yEdgeStartHi
- BPL tred44
- JMP tred16
+ DEC yEdgeStartHi       \ Decrement the high byte of the current y-coordinate
+                        \ to keep moving along the y-axis
+
+ BPL tred44             \ If yEdgeStartHi is positive then we haven't gone off
+                        \ the left edge of the screen, so jump to tred44 to
+                        \ keep going
+
+ JMP tred16             \ Jump to tred16 to return from the subroutine and stop
+                        \ the trace
 
 .tred44
 
- BNE tred42
- DEC tred41+1
+ BNE tred42             \ If yEdgeStartHi is non-zero, jump to tred42 to keep
+                        \ working along the edge with the same y-coordinate ???
 
- JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
+ DEC tred41+1           \ Decrement the low byte of the address in the
+                        \ instruction above so that it points to the table
+                        \ entry for the next y-coordinate down
 
- JMP tred42
+ JSR ModifyStoringCode  \ Modify the instruction at tred41 and set drawPolygon
+                        \ and Y according to the values of xEdgeStartHi and
+                        \ yEdgeStartHi
+                        \
+                        \ The instruction at tred41 is modified as follows:
+                        \
+                        \   * BIT when yEdgeStartHi <> 0
+                        \
+                        \   * STY when yEdgeStartHi = 0 and xEdgeStartHi <> 0
+                        \
+                        \   * STX when yEdgeStartHi = 0 and xEdgeStartHi = 0
+                        \
+                        \ The drawPolygon flag is set as follows:
+                        \
+                        \   * drawPolygon = 0 when yEdgeStartHi = 0
+
+ JMP tred42             \ Jump to tred42 to keep working along the edge
 
 .tred45
 
- INC xEdgeStartHi
+ INC xEdgeStartHi       \ This instruction is modified above to:
+                        \
+                        \   * DEC xEdgeStartHi when xEdgeStart - xEdgeEnd is
+                        \     positive
+                        \
+                        \   * INC xEdgeStartHi when xEdgeStart - xEdgeEnd is
+                        \     negative
+                        \
+                        \ So in either case this steps us along the x-axis and
+                        \ updates the high byte in xEdgeStartHi accordingly
 
- JSR ModifyStoringCode  \ Modify the instructions at tred41 and tred50 ???
+ JSR ModifyStoringCode  \ Modify the instruction at tred41 and set drawPolygon
+                        \ and Y according to the values of xEdgeStartHi and
+                        \ yEdgeStartHi
+                        \
+                        \ The instruction at tred41 is modified as follows:
+                        \
+                        \   * BIT when yEdgeStartHi <> 0
+                        \
+                        \   * STY when yEdgeStartHi = 0 and xEdgeStartHi <> 0
+                        \
+                        \   * STX when yEdgeStartHi = 0 and xEdgeStartHi = 0
+                        \
+                        \ The drawPolygon flag is set as follows:
+                        \
+                        \   * drawPolygon = 0 when yEdgeStartHi = 0
 
- JMP tred41
+ JMP tred41             \ Jump to tred41 to restart the loop
+
+\ ******************************************************************************
+\
+\       Name: TracePolygonEdge (Part 8 of 8)
+\       Type: Subroutine
+\   Category: Drawing polygons
+\    Summary: Trace a polygon edge with a shallow gradient by stepping along the
+\             x-axis (for two-byte x-coordinates)
+\
+\ ******************************************************************************
 
 .tred46
 
@@ -24715,13 +24986,17 @@
  STX xPolygonLeft       \ Gets modified
  DEC U
  BNE tred48
- JMP tred16
+
+ JMP tred16             \ Jump to tred16 to return from the subroutine and stop
+                        \ the trace
 
 .tred51
 
  DEC yEdgeStartHi
  BPL tred52
- JMP tred16
+
+ JMP tred16             \ Jump to tred16 to return from the subroutine and stop
+                        \ the trace
 
 .tred52
 
@@ -24781,6 +25056,8 @@
 \   xEdgeStartHi = 0       STX, drawPolygon = 0                     BIT
 \
 \   xEdgeStartHi > 0       STY, drawPolygon = 0, Y = 255            BIT
+\
+\ Note that the value of Y doesn't appear to be used anywhere.
 \
 \ ------------------------------------------------------------------------------
 \
