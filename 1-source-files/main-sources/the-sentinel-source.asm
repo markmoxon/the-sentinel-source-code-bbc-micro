@@ -13,9 +13,6 @@
 \ The terminology and notations used in this commentary are explained at
 \ https://thesentinel.bbcelite.com/terminology
 \
-\ The deep dive articles referred to in this commentary can be found at
-\ https://thesentinel.bbcelite.com/deep_dives
-\
 \ ------------------------------------------------------------------------------
 \
 \ This source file contains the main game code for The Sentinel on the BBC
@@ -84,8 +81,7 @@
 
 .currentObject
 
- SKIP 1                 \ Used to store the number of the object we are
-                        \ currently processing
+ SKIP 1                 \ The number of the object we are currently processing
 
 .xPolygonAddrHi
 
@@ -93,11 +89,17 @@
                         \ store the x-coordinate of the polygon line being
                         \ processed, so this is either HI(xPolygonLeft) or
                         \ HI(xPolygonRight)
+                        \
+                        \ This variable shares the same memory location as
+                        \ edgeGazeDistance
 
 .edgeGazeDistance
 
  SKIP 1                 \ The fractional distance along a tile edge that matches
                         \ the current position along the gaze vector
+                        \
+                        \ This variable shares the same memory location as
+                        \ xPolygonAddrHi
 
 .xTileViewer
 
@@ -120,10 +122,17 @@
 
  SKIP 0                 \ The y-coordinate of the top of the polygon being drawn
                         \ (where higher y-coordinates are up the screen)
+                        \
+                        \ This variable shares the same memory location as
+                        \ tileAltitude
 
 .tileAltitude
 
- SKIP 1                 \ Used to store a tile altitude
+ SKIP 1                 \ The altitude of the tile that we are currently
+                        \ processing
+                        \
+                        \ This variable shares the same memory location as
+                        \ yPolygonTop
 
 .bufferMinYawHi
 
@@ -171,6 +180,9 @@
 
  SKIP 0                 \ The difference in pitch angle between two polygon
                         \ points, i.e. the delta along the y-axis (low byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ yAccuracyLo, zCounter and stashAddr
 
 .yAccuracyLo
 
@@ -187,24 +199,40 @@
                         \ height above the top of the Sentinel's tower (this
                         \ makes the player have to be much more accurate when
                         \ trying to view the Sentinel's tile)
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeDeltaLo, zCounter and stashAddr
 
 .zCounter
 
  SKIP 0                 \ A counter to iterate along tiles in the z-axis
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeDeltaLo, yAccuracyLo and stashAddr
 
 .stashAddr
 
  SKIP 1                 \ The address of the four bytes in the secretCodeStash
                         \ that correspond to the landscape's secret code
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeDeltaLo, yAccuracyLo, zCounter, xEdgeDelta and
+                        \ xCounter
 
 .xEdgeDelta
 
  SKIP 0                 \ The scaled and signed x-axis delta between two polygon
                         \ points when tracing the polygon edges (single byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xCounter and stashAddr+1
 
 .xCounter
 
  SKIP 1                 \ A counter to iterate along tiles in the x-axis
+                        \
+                        \ This variable shares the same memory location as
+                        \ xEdgeDelta and stashAddr+1
 
 .pointX
 
@@ -215,6 +243,9 @@
 
  SKIP 0                 \ Temporary storage for Y so it can be preserved through
                         \ calls to GetTileViewAngles
+                        \
+                        \ This variable shares the same memory location as
+                        \ playerTileObscured
 
 .playerTileObscured
 
@@ -227,6 +258,9 @@
                         \                   can't see the tile that the player
                         \                   is on, player object number is in
                         \                   bits 0 to 6
+                        \
+                        \ This variable shares the same memory location as
+                        \ yStoreTileView
 
 .screenBufferType
 
@@ -267,7 +301,7 @@
 
 .loopCounter
 
- SKIP 1                 \ Used to store a loop counter
+ SKIP 1                 \ A general-purpose loop counter
 
 .yEdgeEndLo
 
@@ -279,6 +313,9 @@
  SKIP 0                 \ The number of steps in the ray-tracing process when
                         \ calculating tile visibility in the GetRowVisibility
                         \ routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ polygonEdgeCount
 
 .polygonEdgeCount
 
@@ -289,26 +326,42 @@
                         \
                         \ This will be three for a triangle or four for a
                         \ quadrilateral
+                        \
+                        \ This variable shares the same memory location as
+                        \ traceStepCounter
 
 .xEdgeStartLo
 
  SKIP 0                 \ The x-coordinate of the start point in the polygon
                         \ edge being processed (low byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xTileRow and xBlock
 
 .xTileRow
 
- SKIP 0                 \ Used to store the tile x-coordinate of the tile we are
-                        \ analysing in the GetRowVisibility routine
+ SKIP 0                 \ The tile x-coordinate of the tile we are analysing in
+                        \ the GetRowVisibility routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ xEdgeStartLo and xBlock
 
 .xBlock
 
- SKIP 1                 \ Used to store the tile x-coordinate of the tile we are
-                        \ analysing when calculating the highest tile in a block
+ SKIP 1                 \ The tile x-coordinate of the tile we are analysing
+                        \ when calculating the highest tile in a block
+                        \
+                        \ This variable shares the same memory location as
+                        \ xEdgeStartLo and xBlock
 
 .yTileRow
 
- SKIP 0                 \ Used to store the tile y-coordinate of the tile we are
-                        \ analysing in the GetRowVisibility routine
+ SKIP 0                 \ The tile y-coordinate of the tile we are analysing in
+                        \ the GetRowVisibility routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ polygonColours
+
 
 .polygonColours
 
@@ -318,26 +371,41 @@
                         \   * Bits 2-3 = fill colour
                         \
                         \   * Bits 24-5 = edge colour
+                        \
+                        \ This variable shares the same memory location as
+                        \ yTileRow
 
 .yEdgeStartLo
 
  SKIP 0                 \ The y-coordinate of the start point in the polygon
                         \ edge being processed (low byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ yPolygonLine, zTileRow and zBlock
 
 .yPolygonLine
 
  SKIP 0                 \ The polygon y-coordinate of the pixel line being drawn
                         \ in the DrawPolygonLines routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeStartLo, zTileRow and zBlock
 
 .zTileRow
 
- SKIP 0                 \ Used to store the tile z-coordinate of the tile row we
-                        \ are analysing in the GetRowVisibility routine
+ SKIP 0                 \ The tile z-coordinate of the tile we are analysing in
+                        \ the GetRowVisibility routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeStartLo, yPolygonLine and zBlock
 
 .zBlock
 
- SKIP 1                 \ Used to store the tile z-coordinate of the tile we are
-                        \ analysing when calculating the highest tile in a block
+ SKIP 1                 \ The tile z-coordinate of the tile we are analysing
+                        \ when calculating the highest tile in a block
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeStartLo, yPolygonLine and zTileRow
 
 .quadrantOffset
 
@@ -347,6 +415,9 @@
 
  SKIP 0                 \ The yaw angle of the right edge of the viewing arc,
                         \ where the arc is 90 degrees wide
+                        \
+                        \ This variable shares the same memory location as
+                        \ processAction
 
 .processAction
 
@@ -360,6 +431,9 @@
                         \
                         \ See the ProcessTileData and SmoothTileData routines
                         \ for details
+                        \
+                        \ This variable shares the same memory location as
+                        \ viewingArcRightYaw
 
 .zTileViewer
 
@@ -378,26 +452,46 @@
                         \   * Bit 7 clear = contains the number of extra columns
                         \                   that we need to fill beyond the 32
                         \                   columns already filled
+                        \
+                        \ This variable shares the same memory location as
+                        \ blackDotCounter, treeCounter, gazeCheckCounter and
+                        \ horizontalEdges
 
 .blackDotCounter
 
  SKIP 0                 \ A counter for black dots that are drawn in the screen
                         \ decaying routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ moreColumnsToFill, treeCounter, gazeCheckCounter and
+                        \ horizontalEdges
 
 .treeCounter
 
  SKIP 0                 \ A counter for the number of trees that are added to
                         \ the landscape in the SpawnTrees routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ moreColumnsToFill, blackDotCounter, gazeCheckCounter
+                        \ and horizontalEdges
 
 .gazeCheckCounter
 
  SKIP 0                 \ A counter for the number of checks that are performed
                         \ when following an enemy's gaze in CheckEnemyGaze
+                        \
+                        \ This variable shares the same memory location as
+                        \ moreColumnsToFill, blackDotCounter, treeCounter and
+                        \ horizontalEdges
 
 .horizontalEdges
 
  SKIP 1                 \ A counter to keep track of how many polygon edges are
                         \ horizontal in the polygon we are drawing
+                        \
+                        \ This variable shares the same memory location as
+                        \ moreColumnsToFill, blackDotCounter, treeCounter and
+                        \ gazeCheckCounter
 
 .yawAdjustmentLo
 
@@ -444,11 +538,17 @@
 .xTileToDraw
 
  SKIP 0                 \ The column number of the tile we are currently drawing
+                        \
+                        \ This variable shares the same memory location as
+                        \ columnCounter
 
 .columnCounter
 
  SKIP 1                 \ A counter for the number of columns to fill in the
                         \ FillScreen routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ xTileToDraw
 
 .fillRowNumber
 
@@ -461,6 +561,9 @@
                         \   * 25 to 49 = we are filling this row number in the
                         \                screen buffer (subtract 25 to get the
                         \                actual row number)
+                        \
+                        \ This variable shares the same memory location as
+                        \ zTile
 
 .zTile
 
@@ -478,6 +581,9 @@
                         \
                         \ As a result we tend to use the terms "tile" and "tile
                         \ corner" interchangeably, depending on the context
+                        \
+                        \ This variable shares the same memory location as
+                        \ fillRowNumber
 
 .bitMask
 
@@ -498,6 +604,9 @@
  SKIP 0                 \ Storage for a random value in the DrawRandomDots
                         \ routine to use as a random pixel number when drawing
                         \ dots
+                        \
+                        \ This variable shares the same memory location as
+                        \ sightsByteAddr
 
 .sightsByteAddr
 
@@ -505,6 +614,9 @@
                         \ bytes in screen memory where the sights appear, so the
                         \ sights can be drawn and removed using the contents of
                         \ the sights pixel byte stash
+                        \
+                        \ This variable shares the same memory location as
+                        \ randomPixel
 
 .polygonGoesRight
 
@@ -521,6 +633,9 @@
                         \ If we are drawing a polygon into the left row buffer
                         \ then a value of 1 prevents the DrawPolygon routine
                         \ from also drawing into the right row buffer
+                        \
+                        \ This variable shares the same memory location as
+                        \ xVectorBot
 
 .xVectorBot
 
@@ -528,6 +643,9 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ polygonGoesRight
 
 .polygonGoesLeft
 
@@ -544,6 +662,9 @@
                         \ If we are drawing a polygon into the right row buffer
                         \ then a value of 1 prevents the DrawPolygon routine
                         \ from also drawing into the left row buffer
+                        \
+                        \ This variable shares the same memory location as
+                        \ yVectorBot
 
 .yVectorBot
 
@@ -551,6 +672,9 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ polygonGoesLeft
 
 .zVectorBot
 
@@ -571,6 +695,9 @@
  SKIP 0                 \ A variable to keep track of the minimum x-coordinates
                         \ of any polygon edges that are horizontal in the
                         \ polygon we are drawing
+                        \
+                        \ This variable shares the same memory location as
+                        \ yVectorLo
 
 .yVectorLo
 
@@ -578,12 +705,18 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ xMinHorizontal
 
 .xMaxHorizontal
 
  SKIP 0                 \ A variable to keep track of the maximum x-coordinates
                         \ of any polygon edges that are horizontal in the
                         \ polygon we are drawing
+                        \
+                        \ This variable shares the same memory location as
+                        \ zVectorLo
 
 .zVectorLo
 
@@ -591,110 +724,170 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ xMaxHorizontal
 
 .xTileViewLeft
 
  SKIP 0                 \ The tile number at the left edge of the tile row we
                         \ are currently processing when drawing the landscape
+                        \
+                        \ This variable shares the same memory location as
+                        \ cosVectorPitchLo
 
 .cosVectorPitchLo
 
  SKIP 1                 \ The low byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
+                        \
+                        \ This variable shares the same memory location as
+                        \ xTileViewLeft
 
 .xTileViewRight
 
  SKIP 0                 \ The tile number at the right edge of the tile row we
                         \ are currently processing when drawing the landscape
+                        \
+                        \ This variable shares the same memory location as
+                        \ cosVectorPitchHi
 
 .cosVectorPitchHi
 
  SKIP 1                 \ The high byte of cos(vectorPitchAngle) when converting
                         \ pitch and yaw angles to cartesian vectors
+                        \
+                        \ This variable shares the same memory location as
+                        \ xTileViewRight
 
 .xCoordBot
 
  SKIP 0                 \ The x-coordinate of an object or point (bottom byte)
                         \
                         \ Stored as a 24-bit value xCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ tileShapeOffset
 
 .tileShapeOffset
 
  SKIP 1                 \ The tile shape we are drawing, amended to use as an
                         \ offset into the tileShapeColour table
+                        \
+                        \ This variable shares the same memory location as
+                        \ xCoordBot
 
 .yCoordBot
 
  SKIP 0                 \ The y-coordinate of an object or point (bottom byte)
                         \
                         \ Stored as a 24-bit value yCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ bufferYawLeft
 
 .bufferYawLeft
 
  SKIP 1                 \ The yaw angle of the left edge of the screen buffer
+                        \
+                        \ This variable shares the same memory location as
+                        \ yCoordBot
 
 .zCoordBot
 
  SKIP 0                 \ The z-coordinate of an object or point (bottom byte)
                         \
                         \ Stored as a 24-bit value zCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ bufferYawRight
 
 .bufferYawRight
 
  SKIP 1                 \ The yaw angle of the right edge of the screen buffer
+                        \
+                        \ This variable shares the same memory location as
+                        \ zCoordBot
 
 .xCoordLo
 
  SKIP 0                 \ The x-coordinate of an object or point (low byte)
                         \
                         \ Stored as a 24-bit value xCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xTileViewLeftEdge
 
 .xTileViewLeftEdge
 
  SKIP 1                 \ The tile number at the left edge of the visible
                         \ portion of the row we are currently processing when
                         \ drawing the landscape
+                        \
+                        \ This variable shares the same memory location as
+                        \ xCoordLo
 
 .yCoordLo
 
  SKIP 0                 \ The y-coordinate of an object or point (low byte)
                         \
                         \ Stored as a 24-bit value yCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xTileViewRightEdge
 
 .xTileViewRightEdge
 
  SKIP 1                 \ The tile number at the right edge of the visible
                         \ portion of the row we are currently processing when
                         \ drawing the landscape
+                        \
+                        \ This variable shares the same memory location as
+                        \ yCoordLo
 
 .zCoordLo
 
  SKIP 0                 \ The z-coordinate of an object or point (low byte)
                         \
                         \ Stored as a 24-bit value zCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xEdgeEndLo
 
 .xEdgeEndLo
 
  SKIP 1                 \ The x-coordinate of the end point in the polygon
                         \ edge being processed (low byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ zCoordLo
 
 .xEdgeDeltaLo
 
  SKIP 0                 \ The low byte of the scaled and signed x-axis delta
                         \ between two polygon points when tracing the polygon
                         \ edges
+                        \
+                        \ This variable shares the same memory location as
+                        \ xCoordHi
 
 .xCoordHi
 
  SKIP 1                 \ The x-coordinate of an object or point (high byte)
                         \
                         \ Stored as a 24-bit value xCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xEdgeDeltaLo
 
 .yCoordHi
 
  SKIP 0                 \ The y-coordinate of an object or point (high byte)
                         \
                         \ Stored as a 24-bit value yCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ polygonType
 
 .polygonType
 
@@ -709,18 +902,27 @@
                         \   * %10xxxxxx = first triangle (DrawTwoFaceTile)
                         \
                         \   * %11xxxxxx = second triangle (DrawTwoFaceTile)
+                        \
+                        \ This variable shares the same memory location as
+                        \ yCoordHi
 
 .zCoordHi
 
  SKIP 0                 \ The z-coordinate of an object or point (high byte)
                         \
                         \ Stored as a 24-bit value zCoord(Hi Lo Bot)
+                        \
+                        \ This variable shares the same memory location as
+                        \ drawViewAngles
 
 .drawViewAngles
 
  SKIP 1                 \ The address in drawViewAngles(1 0) of the pitch and
                         \ yaw angles of the tile and polygon points that we are
                         \ drawing in the landscape view
+                        \
+                        \ This variable shares the same memory location as
+                        \ zCoordHi
 
 .vectorYawAngleLo
 
@@ -728,11 +930,17 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ drawViewAngles+1
 
 .yEdgeStartHi
 
  SKIP 0                 \ The y-coordinate of the start point in the polygon
                         \ edge being processed (high byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ vectorYawAngleHi
 
 .vectorYawAngleHi
 
@@ -740,11 +948,17 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeStartHi
 
 .yEdgeEndHi
 
  SKIP 0                 \ The y-coordinate of the end point in the polygon edge
                         \ being processed (high byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ vectorPitchAngleLo
 
 .vectorPitchAngleLo
 
@@ -752,12 +966,18 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeEndHi
 
 .scaleFactor
 
- SKIP 0                 \ Used to store a scale factor for the x-axis and y-axis
-                        \ deltas when fitting them into single-byte numbers when
-                        \ tracing the polygon edges
+ SKIP 0                 \ The scale factor for the x-axis and y-axis deltas when
+                        \ fitting them into single-byte numbers during the
+                        \ tracing of polygon edges
+                        \
+                        \ This variable shares the same memory location as
+                        \ vectorPitchAngleHi
 
 .vectorPitchAngleHi
 
@@ -765,6 +985,9 @@
                         \
                         \ For example, this is used to store the vector from the
                         \ player's eyes to the sights within the 3D world
+                        \
+                        \ This variable shares the same memory location as
+                        \ scaleFactor
 
 .xEdgeStartHi
 
@@ -809,21 +1032,33 @@
 
  SKIP 0                 \ A counter for the polygon number as we work through
                         \ the polygons in an object when drawing the object
+                        \
+                        \ This variable shares the same memory location as
+                        \ pointNumber
 
 .pointNumber
 
  SKIP 1                 \ A counter for the point number as we work through the
                         \ points in an object when calculating the point's
                         \ angles
+                        \
+                        \ This variable shares the same memory location as
+                        \ polygonNumber
 
 .objectLastPolygon
 
  SKIP 0                 \ The number of the last polygon in the object being
                         \ drawn
+                        \
+                        \ This variable shares the same memory location as
+                        \ objectLastPoint
 
 .objectLastPoint
 
  SKIP 1                 \ The number of the last point in the object being drawn
+                        \
+                        \ This variable shares the same memory location as
+                        \ objectLastPolygon
 
 .pitchDeltaLo
 
@@ -918,12 +1153,17 @@
                         \                 the platform object but not hitting it
                         \
                         \ See the GetTileAltitude routine for details
-
+                        \
+                        \ This variable shares the same memory location as
+                        \ secondAxis
 
 .secondAxis
 
  SKIP 1                 \ The number of the second axis to calculate in the
                         \ GetRotationMatrix routine
+                        \
+                        \ This variable shares the same memory location as
+                        \ considerObjects
 
 .bufferYawWidth
 
@@ -944,6 +1184,9 @@
  SKIP 0                 \ The quadrant number containing the right edge of the
                         \ viewing arc, multiplied by 4, for use when calculating
                         \ the number of faces in a tile in DrawSlopingTile
+                        \
+                        \ This variable shares the same memory location as
+                        \ smoothingAction
 
 .smoothingAction
 
@@ -951,6 +1194,9 @@
                         \ SmoothTileData routine
                         \
                         \ See the SmoothTileData routine for details
+                        \
+                        \ This variable shares the same memory location as
+                        \ viewingQuadrantx4
 
 .H
 
@@ -991,8 +1237,8 @@
 
 .screenAddrHi
 
- SKIP 1                 \ Storage for the high byte of the screen memory address
-                        \ in the ScrollPlayerView routine
+ SKIP 1                 \ The high byte of the screen memory address in the
+                        \ ScrollPlayerView routine
 
 .viewingObject
 
@@ -1001,11 +1247,17 @@
                         \ This can be the object that is viewing the landscape,
                         \ the enemy object scanning for targets, the viewer of
                         \ the title screen or the game over screen, and so on
+                        \
+                        \ This variable shares the same memory location as
+                        \ enemyCounter
 
 .enemyCounter
 
  SKIP 1                 \ Used as a loop counter when adding enemies to the
                         \ landscape
+                        \
+                        \ This variable shares the same memory location as
+                        \ viewingObject
 
 .objectToAnalyse
 
@@ -1040,10 +1292,15 @@
 
  SKIP 0                 \ The difference in pitch angle between two polygon
                         \ points, i.e. the delta along the y-axis (high byte)
+                        \
+                        \ This variable shares the same memory location as V
 
 .V
 
  SKIP 1                 \ Temporary storage, used in a number of places
+                        \
+                        \ This variable shares the same memory location as
+                        \ yEdgeDeltaHi
 
 .W
 
@@ -1079,12 +1336,15 @@
 
 .angleTangent
 
- SKIP 1                 \ Used to store a tangent angle
+ SKIP 1                 \ The tangent of an angle in a right-angled triangle
 
 .tileIsOnScreen
 
  SKIP 0                 \ Information on whether a tile is fully on-screen,
                         \ partially on-screen or fully off-screen
+                        \
+                        \ This variable shares the same memory location as
+                        \ drawPolygon
 
 .drawPolygon
 
@@ -1095,6 +1355,9 @@
                         \   * Non-zero = do not draw the polygon
                         \
                         \   * Zero = do draw the polygon
+                        \
+                        \ This variable shares the same memory location as
+                        \ tileIsOnScreen
 
 .xDeltaLo
 
@@ -1125,6 +1388,9 @@
 .xDeltaHi
 
  SKIP 0                 \ The difference between two x-coordinates (high byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ xVectorHi
 
 .xVectorHi
 
@@ -1132,6 +1398,9 @@
                         \
                         \ For example, this is used to when ray-tracing from the
                         \ player to tile corners in GetRowVisibility
+                        \
+                        \ This variable shares the same memory location as
+                        \ xDeltaHi
 
 .yVectorHi
 
@@ -1146,10 +1415,16 @@
                         \
                         \ For example, this is used to when ray-tracing from the
                         \ player to tile corners in GetRowVisibility
+                        \
+                        \ This variable shares the same memory location as
+                        \ zDeltaHi
 
 .zDeltaHi
 
  SKIP 1                 \ The difference between two z-coordinates (high byte)
+                        \
+                        \ This variable shares the same memory location as
+                        \ zVectorHi
 
  SKIP 1                 \ This byte appears to be unused
 
@@ -1220,31 +1495,34 @@
 
 .tileViewData
 
- SKIP 0                 \ Storage for the tile data of tiles in the current
-                        \ landscape view
+ SKIP 0                 \ The tile data for tiles in the current landscape view
                         \
-                        \ This shares the same memory location as oddVisibility
-                        \ and evenVisibility
+                        \ This variable shares the same memory location as
+                        \ oddVisibility and evenVisibility
 
 .oddVisibility
 
- SKIP 32                \ Storage for the visibility of tiles corners in odd
-                        \ rows as they are processed by the GetRowVisibility
-                        \ routine
+ SKIP 32                \ The visibility of tiles corners in odd rows as they
+                        \ are processed by the GetRowVisibility routine
                         \
                         \   * 0 = tile corner is not visible
                         \
                         \   * &FF = tile corner is visible
+                        \
+                        \ This variable shares the same memory location as
+                        \ tileViewData
 
 .evenVisibility
 
- SKIP 32                \ Storage for the visibility of tiles corners in even
-                        \ rows as they are processed by the GetRowVisibility
-                        \ routine
+ SKIP 32                \ The visibility of tiles corners in even rows as they
+                        \ are processed by the GetRowVisibility routine
                         \
                         \   * 0 = tile corner is not visible
                         \
                         \   * &FF = tile corner is visible
+                        \
+                        \ This variable shares the same memory location as
+                        \ tileViewData
 
 \ ******************************************************************************
 \
@@ -1840,7 +2118,7 @@
 
 .gameplayStack
 
- EQUB 0                 \ Storage for the stack pointer at the start of the
+ EQUB 0                 \ The value of the stack pointer at the start of the
                         \ ApplyEnemyTactics routine, so we can return back to
                         \ the ProcessGameplay routine from deep within the
                         \ tactics routines if required
@@ -1962,7 +2240,7 @@
 
 .xTileLeftPrevious
 
- EQUB 2                 \ Storage for the previous value of xTileViewLeft
+ EQUB 2                 \ The previous value of xTileViewLeft
                         \
                         \ This makes the search for edges more efficient in the
                         \ DrawLandscapeView routine as the edges in neighbouring
@@ -2173,15 +2451,17 @@
 
 .objectType
 
- SKIP 0                 \ Storage for the type of object that we are spawning
+ SKIP 0                 \ The type of object that we are spawning
                         \
-                        \ This shares the same memory location as keyPress
+                        \ This variable shares the same memory location as
+                        \ keyPress
 
 .keyPress
 
- EQUB 0                 \ Storage for the key logger value for a key press
+ EQUB 0                 \ The key logger value for a key press
                         \
-                        \ This shares the same memory location as objectType
+                        \ This variable shares the same memory location as
+                        \ objectType
                         \
                         \ This means that if the player presses one of the
                         \ "create" keys, then the value in the key logger (as
@@ -2291,8 +2571,8 @@
 
 .noteCounter
 
- EQUB 0                 \ Storage for the sound counter for an individual note
-                        \ while playing chords in the music player
+ EQUB 0                 \ The sound counter for an individual note while playing
+                        \ chords in the music player
 
 .doNotPlayLandscape
 
@@ -2551,9 +2831,9 @@
 
 .bitMaskDither
 
- EQUB 0                 \ Used to store a bit mask in the DitherScreenBuffer
-                        \ routine that has a matching number of leading zeroes
-                        \ as the size of the screen buffer in bytes
+ EQUB 0                 \ A bit mask for use in the DitherScreenBuffer routine
+                        \ that has a matching number of leading zeroes as the
+                        \ size of the screen buffer in bytes
 
 .ditherRandom
 
@@ -2602,11 +2882,10 @@
 
 .previousFocus
 
- EQUB 0                 \ Storage for the previous setting of focusOnKeyAction,
-                        \ so we can detect (in the ProcessGameplay routine)
-                        \ whether the player is still holding down a pan key
-                        \ after we finish scrolling the screen for the previous
-                        \ pan
+ EQUB 0                 \ The previous setting of focusOnKeyAction, so we can
+                        \ detect (in the ProcessGameplay routine) whether the
+                        \ player is still holding down a pan key after we finish
+                        \ scrolling the screen for the previous pan
 
 .gazeCanSeeTree
 
@@ -15807,8 +16086,8 @@
 \       Name: buffersOffsetLo
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: An offset to add to the screen address of the right column screen
-\             buffer (low byte)
+\    Summary: An offset to add to the address of the right column screen buffer
+\             (low byte)
 \
 \ ******************************************************************************
 
@@ -15823,8 +16102,8 @@
 \       Name: buffersOffsetHi
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: An offset to add to the screen address of the right column screen
-\             buffer (low byte)
+\    Summary: An offset to add to the address of the right column screen buffer
+\             (low byte)
 \
 \ ******************************************************************************
 
@@ -19489,7 +19768,7 @@
  LDA angleLo            \ Set drawViewYaw(Hi Lo) for this tile to:
  SEC                    \
  SBC yawAdjustmentLo    \   angle(Hi Lo) - (screenLeftYawHi 0)
- STA drawViewYawLo,Y    \                     - (0 yawAdjustmentLo)
+ STA drawViewYawLo,Y    \                - (0 yawAdjustmentLo)
                         \
                         \ starting with the low bytes
 
@@ -20237,7 +20516,7 @@
  STA bufferMinYawHi     \ Set bufferMinYaw(Hi Lo) = 256 * A
  LDA #0                 \                         = 256 * T / 2
  ROR A                  \
- STA bufferMinYawLo     \ So this stores the character column count  as a yaw
+ STA bufferMinYawLo     \ So this stores the character column count as a yaw
                         \ angle in bufferMinYaw(Hi Lo), where the low byte is
                         \ effectively a fractional part
                         \
@@ -23295,12 +23574,14 @@
  LDA xPolygonPointLo,Y  \ Set xEdgeStart(Hi Lo) = (0 xPolygonPointLo)
  STA xEdgeStartLo       \
                         \ So this sets the x-coordinate of the start point in
-                        \ point #Y (the lower point), starting with the low bytes
+                        \ point #Y (the lower point), starting with the low
+                        \ bytes
 
  LDA xPolygonPointLo,X  \ Set xEdgeEnd(Hi Lo) = (0 xPolygonPointLo)
  STA xEdgeEndLo         \
                         \ So this sets the x-coordinate of the start point in
-                        \ point #Y (the lower point), starting with the low bytes
+                        \ point #Y (the lower point), starting with the low
+                        \ bytes
 
  LDA #0                 \ Zero the high bytes of xEdgeStart(Hi Lo) and
  STA xEdgeStartHi       \ xEdgeEnd(Hi Lo)
@@ -31003,8 +31284,8 @@
 
 .secretCodeStash
 
- SKIP 0                 \ The secret code stash shares memory with the first
-                        \ part of the screen buffer at screenBufferRow0
+ SKIP 0                 \ This variable shares the same memory location as
+                        \ screenBufferRow0
 
 \ ******************************************************************************
 \
@@ -37276,8 +37557,8 @@
 
 .iconBuffer
 
- SKIP 0                 \ The icon screen buffer shares memory with the
-                        \ xPolygonLeft variable
+ SKIP 0                 \ This variable shares the same memory location as
+                        \ xPolygonLeft
 
 \ ******************************************************************************
 \
