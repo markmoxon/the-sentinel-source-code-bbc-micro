@@ -136,7 +136,8 @@
 
 .bufferMinYawHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The minimum allowed yaw angle for points in the
+                        \ current screen buffer (high byte)
 
 .lastPanKeyPressed
 
@@ -283,7 +284,8 @@
 
 .bufferMaxYawHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The maximum allowed yaw angle for points in the
+                        \ current screen buffer (high byte)
 
 .ditherStore
 
@@ -412,7 +414,8 @@
 
 .quadrantOffset
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The offset into the drawing tables for the quadrant
+                        \ containing the right edge of the viewing arc ???
 
 .viewingArcRightYaw
 
@@ -596,7 +599,8 @@
 
 .bufferMinYawLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The minimum allowed yaw angle for points in the
+                        \ current screen buffer (low byte)
 
 .bufferOriginLo
 
@@ -1025,7 +1029,8 @@
 
 .viewingQuadrantOpp
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The opposite quadrant number to that containing the
+                        \ right edge of the viewing arc ???
 
 .objTypeToAnalyse
 
@@ -16451,8 +16456,8 @@
  ASL A                  \
  STA xPolygonRightEdge  \ This sets the screen x-coordinate of the right end of
                         \ the polygon line we are drawing to the right edge of
-                        \ the screen buffer (we double the yaw angle to get the
-                        \ x-coordinate) ???
+                        \ the screen buffer (we double the value in xBufferWidth
+                        \ to get the x-coordinate because ???)
 
  STA polygonGoesRight   \ Set polygonGoesRight to the value of A, which is at
                         \ least 2 because xBufferWidth is non-zero and we just
