@@ -4416,7 +4416,7 @@
 \       Name: GetSineAndCosine
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Calculate the absolute sine and the cosine of an angle
+\    Summary: Calculate the sine and the cosine of an angle
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4434,7 +4434,13 @@
 \
 \   cosA                The value of |cos(A)|
 \
-\   H                   The quadrant of the angle in bits 6 and 7 ???
+\   H                   The sign of each of the results:
+\
+\                         * Bit 7 is the sign of sin(A), with 0 = positive and
+\                           1 = negative
+\
+\                         * Bit 6 is the sign of cos(A), with 0 = positive and
+\                           1 = negative
 \
 \ ******************************************************************************
 
@@ -4712,6 +4718,30 @@
                         \ either both clear or both set, and we need to swap the
                         \ sine and cosine results if one is set and the other is
                         \ clear
+                        \
+                        \ Also, this means that the signs of the results are
+                        \ captured in H as follows, as the quadrant defines the
+                        \ sign of sin(A) and cos(A):
+                        \
+                        \   * Top-right quadrant = both clear
+                        \                          sin(A) is positive
+                        \                          cos(A) is positive
+                        \
+                        \   * Bottom-right quadrant = bit 7 clear, bit 6 set
+                        \                             sin(A) is positive
+                        \                             cos(A) is negative
+                        \
+                        \   * Bottom-left quadrant = both set
+                        \                            sin(A) is negative
+                        \                            cos(A) is negative
+                        \
+                        \   * Top-left quadrant = bit 7 set, bit 6 clear
+                        \                         sin(A) is negative
+                        \                         cos(A) is positive
+                        \
+                        \ We now return the sign in H along with the absolute
+                        \ values in sinA and cosA, making sure that they are the
+                        \ correct way around
 
  BIT H                  \ If bit 7 of H is set, jump to scos4
  BMI scos4
@@ -21038,8 +21068,9 @@
                         \ polygon and prepare them for drawing into the screen
                         \ buffer
 
- BCS poly1              \ If the call to GetPolygonLines set the C flag then
-                        \ ???, so jump to poly1 to skip the following
+ BCS poly1              \ If the call to GetPolygonLines set the C flag then the
+                        \ polygon is not visible in the screen buffer and should
+                        \ not be drawn, so jump to poly1 to skip the following
 
  JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
                         \ shape from top to bottom, horizontal and line by line
@@ -21091,8 +21122,9 @@
                         \ polygon and prepare them for drawing into the screen
                         \ buffer
 
- BCS poly3              \ If the call to GetPolygonLines set the C flag then
-                        \ ???, so jump to poly3 to skip the following
+ BCS poly3              \ If the call to GetPolygonLines set the C flag then the
+                        \ polygon is not visible in the screen buffer and should
+                        \ not be drawn, so jump to poly3 to skip the following
 
  JSR DrawPolygonLines   \ Draw the polygon into the screen buffer, drawing the
                         \ shape from top to bottom, horizontal and line by line
@@ -36147,7 +36179,16 @@
  LDA xDeltaHi           \ If xDeltaHi and zDeltaHi have the same sign bits in
  EOR zDeltaHi           \ bit 7, then EOR'ing them will produce a 0, so jump to
  BPL ghyp10             \ ghyp10 to skip the following, as the sign of the angle
-                        \ is already correct ???
+                        \ is already correct
+                        \
+                        \ This is because (z-axis / x-axis) will be positive as
+                        \ both sides of the division have the same sign, and as
+                        \ the arctangent of a positive value is also positive,
+                        \ we know we have the correct sign
+                        \
+                        \ If each side of the division has a different sign then
+                        \ (z-axis / x-axis) will be negative, and so will the
+                        \ arctangent, so we need to negate the result
 
  LDA #0                 \ Negate angle(Hi Lo) to give it the correct sign
  SEC
@@ -36159,10 +36200,16 @@
 
 .ghyp10
 
- LDA #%00000000         \ If bit 7 of zDeltaHi is clear then set A = %00000000
- BIT zDeltaHi           \ otherwise set A = %10000000
- BPL ghyp11
- LDA #%10000000
+                        \ Finally, if the z-axis value is negative, then the
+                        \ hypotenuse will be pointing in the opposite direction
+                        \ to the z-axis (i.e. out of the screen rather than into
+                        \ it), so we need to add 180 degrees to the angle, which
+                        \ we can do by adding 128
+
+ LDA #0                 \ If bit 7 of zDeltaHi is set then set A = 128 to add to
+ BIT zDeltaHi           \ the final result below, otherwise set A = 0 to the
+ BPL ghyp11             \ result is unchanged
+ LDA #128
 
 .ghyp11
 
@@ -38463,38 +38510,46 @@
 
  JSR GetSineAndCosine   \ Calculate the following:
                         \
-                        \   sinA = |sin(A)|
+                        \   sinA = |sin(A T)|
                         \
-                        \   cosA = |cos(A)|
+                        \   cosA = |cos(A T)|
                         \
-                        \ where A is the yaw angle of the object point
+                        \ where (A T) is the yaw angle of the object point
                         \
-                        \ This also returns the quadrant of the angle in bits 6
-                        \ and 7 of H ???
+                        \ This also returns the sign of the result in H, as
+                        \ follows:
+                        \     
+                        \   * Bit 7 of H is the sign of sin(A)
+                        \
+                        \   * Bit 6 of H is the sign of cos(A)
+                        \
+                        \ where 0 = positive and 1 = negative
 
  LDY pointNumber        \ Set U to the polar distance of the object point
  LDA objPointDistance,Y
  STA U
 
  LDA cosA               \ Set (A T) = A * U
- JSR Multiply8x8        \           = distance * cos(A)
+ JSR Multiply8x8        \           = distance * cos(A T)
 
- STA T                  \ Set (A T) = distance * cos(A) / 256
+ STA T                  \ Set (A T) = distance * cos(A T) / 256
  LDA #0                 \
                         \ This discards the fractional part of the result
 
- BIT H                  \ If bit 6 of H is clear then the result already has the
- BVC obpt2              \ correct sign, so jump to obpt2 to skip the following
-                        \ ???
+ BIT H                  \ If bit 6 of H is clear then cos(A T) is positive and
+ BVC obpt2              \ the result already has the correct sign, so jump to
+                        \ obpt2 to skip the following
 
- JSR Negate16Bit        \ Set (A T) = -(A T)
+ JSR Negate16Bit        \ Otherwise cos(A T) needs to be negative, so set:
+                        \
+                        \   (A T) = -(A T)
                         \
                         \ So the result now has the correct sign
 
 .obpt2
 
  STA U                  \ Set (U T) = (A T)
-                        \           = distance * cos(A)
+                        \           = distance * cos(A T)
                         \
                         \ So this is the length of the adjacent side in the
                         \ triangle with the polar distance as the hypotenuse
@@ -38552,9 +38607,11 @@
  STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = 0 so it is correctly set to the
                         \ high byte of (A xDeltaLo), as A is 0
 
- LDA H                  \ Set xDeltaHi to the quadrant of the angle so that
- STA xDeltaHi           \ xDelta(Hi Lo) is the correctly signed length of the
-                        \ opposite side ???
+ LDA H                  \ Set xDeltaHi to the sign of sin(A T) from above, so
+ STA xDeltaHi           \ the calculation in GetHypotenuseAngle uses the correct
+                        \ sign for opposite side (only the sign bit from
+                        \ xDeltaHi is used in GetHypotenuseAngle, so this will
+                        \ work as bits 0 to 6 of xDeltaHi will be ignored)
 
                         \ So we now have the x- and z-coordinates of the object
                         \ point within the object itself (i.e. relative to the
