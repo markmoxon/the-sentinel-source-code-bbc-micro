@@ -28078,7 +28078,7 @@
  STA sightsAreVisible   \ Clear bit 7 of sightsAreVisible to indicate that the
                         \ sights are not visible
 
- JSR SetScannerUpdate   \ Set scannerUpdate to zero to prevent scanner updates
+ JSR SetScannerAndPause \ Set scannerUpdate to zero to prevent scanner updates
                         \
                         \ This routine also performs a delay of 40 empty loops
                         \ of 256 iterations each (i.e. 10,240 loops)
@@ -36734,9 +36734,9 @@
 
 \ ******************************************************************************
 \
-\       Name: SetScannerUpdate
+\       Name: SetScannerAndPause
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Main loop
 \    Summary: Set the scanner update status and delay for 40 empty loops of 256
 \             iterations each (i.e. 10,240 loops)
 \
@@ -36750,7 +36750,7 @@
 \
 \ ******************************************************************************
 
-.SetScannerUpdate
+.SetScannerAndPause
 
  STA scannerUpdate      \ Set scannerUpdate to the new value in A
 
