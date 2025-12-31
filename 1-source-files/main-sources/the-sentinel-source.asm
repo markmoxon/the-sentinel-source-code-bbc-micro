@@ -274,9 +274,12 @@
                         \
                         \   * 2 = column buffer (for left/right pan)
 
-.bufferYawHi
+.bufferOriginHi
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The offset to add to yaw angles for the current screen
+                        \ buffer to convert them from having the origin in the
+                        \ buffer centre to having the origin on the left edge of
+                        \ the buffer (high byte)
 
 .bufferMaxYawHi
 
@@ -595,9 +598,12 @@
 
  SKIP 1                 \ ???
 
-.bufferYawLo
+.bufferOriginLo
 
- SKIP 1                 \ ???
+ SKIP 1                 \ The offset to add to yaw angles for the current screen
+                        \ buffer to convert them from having the origin in the
+                        \ buffer centre to having the origin on the left edge of
+                        \ the buffer (low byte)
 
 .randomPixel
 
@@ -784,11 +790,11 @@
                         \ Stored as a 24-bit value yCoord(Hi Lo Bot)
                         \
                         \ This variable shares the same memory location as
-                        \ bufferYawLeft
+                        \ xBufferLeft
 
-.bufferYawLeft
+.xBufferLeft
 
- SKIP 1                 \ The yaw angle of the left edge of the screen buffer
+ SKIP 1                 \ The left edge of the screen buffer in pixels
                         \
                         \ This variable shares the same memory location as
                         \ yCoordBot
@@ -800,11 +806,11 @@
                         \ Stored as a 24-bit value zCoord(Hi Lo Bot)
                         \
                         \ This variable shares the same memory location as
-                        \ bufferYawRight
+                        \ xBufferRight
 
-.bufferYawRight
+.xBufferRight
 
- SKIP 1                 \ The yaw angle of the right edge of the screen buffer
+ SKIP 1                 \ The right edge of the screen buffer in pixels
                         \
                         \ This variable shares the same memory location as
                         \ zCoordBot
@@ -1165,9 +1171,9 @@
                         \ This variable shares the same memory location as
                         \ considerObjects
 
-.bufferYawWidth
+.xBufferWidth
 
- SKIP 1                 \ The width in yaw angles of the screen buffer
+ SKIP 1                 \ The width in pixels of the screen buffer
 
 .fromAddr
 
@@ -11719,8 +11725,9 @@
 \ object's yaw angle makes it to the left edge of the screen, and then we add
 \ the x-coordinate of the sights on-screen to get the vector's yaw angle.
 \
-\ The -5 in the pitch angle calculation caters for the energy icon and scanner
-\ row at the top of the screen, and the (3 32) element represents ???
+\ The -5 in the pitch angle calculation caters for the distance between the top
+\ of the sights and the centre of the sights, and the (3 32) element represents
+\ ???.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11734,12 +11741,12 @@
 
 .GetSightsVector
 
- LDA xSights            \ Set (U A) = xSights * 256
+ LDA xSights            \ Set (U A) = xSights
  STA U
  LDA #0
 
  LSR U                  \ Set (U A) = (U A) / 8
- ROR A                  \           = xSights * 32
+ ROR A                  \           = xSights / 8
  LSR U
  ROR A
  LSR U
@@ -11765,16 +11772,16 @@
                         \ So vectorYawAngle(Hi Lo) is now equal to the
                         \ following:
                         \
-                        \   (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+                        \   (xSights / 8) + (objectYawAngle,X 0) - (10 0)
 
- LDA ySights            \ Set (U A) = (ySights - 5) * 256
+ LDA ySights            \ Set (U A) = ySights - 5
  SEC
  SBC #5
  STA U
  LDA #0
 
  LSR U                  \ Set (U A) = (U A) / 16
- ROR A                  \           = (ySights - 5) * 16
+ ROR A                  \           = (ySights - 5) / 16
  LSR U
  ROR A
  LSR U
@@ -11803,10 +11810,10 @@
                         \ So by this point we have the following:
                         \
                         \   vectorYawAngle(Hi Lo)
-                        \   = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+                        \   = (xSights / 8) + (objectYawAngle,X 0) - (10 0)
                         \
                         \   vectorPitchAngle(Hi Lo)
-                        \   = (ySights-5) * 16 + (objectPitchAngle,X 0) + (3 32)
+                        \   = (ySights-5) / 16 + (objectPitchAngle,X 0) + (3 32)
                         \
                         \ We now fall through into GetVectorForAngles to convert
                         \ these two angles into a cartesian vector:
@@ -16440,7 +16447,7 @@
                         \ we are drawing extends past the right edge of the
                         \ screen buffer
 
- LDA bufferYawWidth     \ Set xPolygonRightEdge = bufferYawWidth * 2
+ LDA xBufferWidth       \ Set xPolygonRightEdge = xBufferWidth * 2
  ASL A                  \
  STA xPolygonRightEdge  \ This sets the screen x-coordinate of the right end of
                         \ the polygon line we are drawing to the right edge of
@@ -16448,7 +16455,7 @@
                         \ x-coordinate) ???
 
  STA polygonGoesRight   \ Set polygonGoesRight to the value of A, which is at
-                        \ least 2 because bufferYawWidth is non-zero and we just
+                        \ least 2 because xBufferWidth is non-zero and we just
                         \ doubled it, so this has the same effect in the
                         \ DrawPolygon routine as setting polygonGoesRight to 0
                         \
@@ -16621,7 +16628,7 @@
 
  TAX                    \ Set X to the pixel x-coordinate of the right edge
 
- SBC bufferYawLeft      \ Set A = A - bufferYawLeft
+ SBC xBufferLeft        \ Set A = A - xBufferLeft
                         \
                         \ So A is the distance between the right edge of the
                         \ polygon and the left edge of the buffer
@@ -16633,7 +16640,7 @@
                         \ the polygon is before the left edge of the buffer, so
                         \ jump to dpol5 in part 2 to process this
 
- CMP bufferYawWidth     \ If A >= bufferYawWidth then the right edge of the
+ CMP xBufferWidth       \ If A >= xBufferWidth then the right edge of the
  BCS dpol7              \ polygon is beyond the right edge of the buffer, so
                         \ jump to dpol7 in part 2 to process this
 
@@ -16698,12 +16705,12 @@
 
  TAX                    \ Set X to the pixel x-coordinate of the left edge
 
- CMP bufferYawRight     \ If A >= bufferYawRight then the left edge of the
+ CMP xBufferRight       \ If A >= xBufferRight then the left edge of the
  BCS dpol6              \ polygon is beyond the right edge of the buffer, so
                         \ jump to dpol6 in part 2 to process this
 
- SEC                    \ Set A = A - bufferYawLeft
- SBC bufferYawLeft      \
+ SEC                    \ Set A = A - xBufferLeft
+ SBC xBufferLeft        \
                         \ So A is the distance between the left edge of the
                         \ polygon and the left edge of the buffer
 
@@ -20408,46 +20415,44 @@
  TAY                    \ Copy the buffer type into Y so we can use it as an
                         \ index into the various buffer configuration tables
 
- LDA buffersYawMin,Y    \ Set the high byte of bufferMinYaw(Hi Lo) to 20 or 8
- STA bufferMinYawHi     \ ???
+ LDA buffersMinYaw,Y    \ Set the high byte of bufferMinYaw(Hi Lo) to the value
+ STA bufferMinYawHi     \ from the buffersMinYaw table for this screen buffer
 
- LSR A                  \ Set bufferMaxYawHi = 138 or 132
- EOR #%10000000         \                    = -118 or -124
- STA bufferMaxYawHi     \ ???
+ LSR A                  \ Set bufferMaxYawHi = bufferMinYawHi / 2
+ EOR #%10000000         \
+ STA bufferMaxYawHi     \ and with bit 7 flipped ???
 
- LDA buffersYawHi,Y     \ Set the high byte of bufferYaw(Hi Lo) to 10, 2 or 12,
- STA bufferYawHi        \ gets added to drawViewYawHi in GetPolygonLines ???
+ LDA buffersOrigin,Y    \ Set the high byte of bufferOrigin(Hi Lo) to the value
+ STA bufferOriginHi     \ from the buffersOrigin table for this screen buffer
 
- LDA buffersYawWidth,Y  \ Set bufferYawWidth to 112, 112 or 64 ???
- STA bufferYawWidth     \ 112 = 14 * 8, 64 = 8 * 8
+ LDA xBuffersWidth,Y    \ Set xBufferWidth to the value from the xBuffersWidth
+ STA xBufferWidth       \ table for this screen buffer
 
- LDA buffersYawLeft,Y   \ Set bufferYawLeft to 80, 64, 96 ???
- STA bufferYawLeft      \ Gets subtracted from values in xPolygonRight or
-                        \ xPolygonLeft, so this must be in pixel coordinates ???
+ LDA xBuffersLeft,Y     \ Set xBufferLeft to the value rom the xBuffersLeft
+ STA xBufferLeft        \ table for this screen buffer
 
- CLC                    \ Set bufferYawRight = bufferYawLeft + bufferYawWidth
- ADC bufferYawWidth     \
- STA bufferYawRight     \ i.e. 80 + 112
-                        \      64 + 112
-                        \      96 + 64 ???
+ CLC                    \ Set xBufferRight = xBufferLeft + xBufferWidth
+ ADC xBufferWidth       \
+ STA xBufferRight       \ So this sets the right edge of the screen buffer
 
  LDA #0                 \ Zero the low byte of bufferMinYaw(Hi Lo)
  STA bufferMinYawLo
 
- STA bufferYawLo        \ Zero the low byte of bufferYaw(Hi Lo) ???
+ STA bufferOriginLo     \ Zero the low byte of bufferOrigin(Hi Lo)
 
  RTS                    \ Return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: buffersYawHi
+\       Name: buffersOrigin
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: ???
+\    Summary: The offset to add to yaw angles for each screen buffer to convert
+\             from the origin in the buffer centre to the origin on the left
 \
 \ ******************************************************************************
 
-.buffersYawHi
+.buffersOrigin
 
  EQUB 10                \ Left row buffer
 
@@ -20457,14 +20462,14 @@
 
 \ ******************************************************************************
 \
-\       Name: buffersYawLeft
+\       Name: xBuffersLeft
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: ???
+\    Summary: The left edge of each screen buffer in pixels
 \
 \ ******************************************************************************
 
-.buffersYawLeft
+.xBuffersLeft
 
  EQUB 80                \ Left row buffer
 
@@ -20474,14 +20479,14 @@
 
 \ ******************************************************************************
 \
-\       Name: buffersYawWidth
+\       Name: xBuffersWidth
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: ???
+\    Summary: The width of each screen buffer in pixels
 \
 \ ******************************************************************************
 
-.buffersYawWidth
+.xBuffersWidth
 
  EQUB 112               \ Left row buffer
 
@@ -20491,14 +20496,14 @@
 
 \ ******************************************************************************
 \
-\       Name: buffersYawMin
+\       Name: buffersMinYaw
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Minimum allowed yaw angles for points in the screen buffer ???
 \
 \ ******************************************************************************
 
-.buffersYawMin
+.buffersMinYaw
 
  EQUB 20                \ Left row buffer
 
@@ -20543,8 +20548,8 @@
                         \ So we can simply double the character column count in
                         \ A to convert it into a yaw angle
 
- STA bufferMinYawHi     \ Set bufferMinYaw(Hi Lo) = 256 * A
- LDA #0                 \                         = 256 * T / 2
+ STA bufferMinYawHi     \ Set bufferMinYaw(Hi Lo) = A
+ LDA #0                 \                         = T / 2
  ROR A                  \
  STA bufferMinYawLo     \ So this stores the character column count as a yaw
                         \ angle in bufferMinYaw(Hi Lo), where the low byte is
@@ -20553,33 +20558,33 @@
                         \ This gives us the yaw angle of the left edge of the
                         \ screen buffer ???
 
- LDA bufferMinYawHi     \ Set bufferMaxYawHi = (bufferMinYawHi / 2)
+ LDA bufferMinYawHi     \ Set bufferMaxYawHi = bufferMinYawHi / 2
  LSR A                  \
  EOR #%10000000         \ and with bit 7 flipped ???
  STA bufferMaxYawHi
 
- LDA T                  \ Set bufferYawWidth = T * 4
- ASL A
- ASL A
- STA bufferYawWidth
+ LDA T                  \ Set xBufferWidth = T * 4
+ ASL A                  \
+ ASL A                  \ This gives us the width of the buffer in pixels
+ STA xBufferWidth
 
- LSR A                  \ Set bufferYawRight = T * 2
+ LSR A                  \ Set xBufferRight = 128 + T * 2
  AND #%11111100         \
- ORA #%10000000         \ reduced to a multiple of 4 and bit 7 set ???
- STA bufferYawRight
+ ORA #%10000000         \ rounded down to a multiple of 4 ???
+ STA xBufferRight
 
- SEC                    \ Set bufferYawLeft = bufferYawRight - bufferYawWidth
- SBC bufferYawWidth
- STA bufferYawLeft
+ SEC                    \ Set xBufferLeft = xBufferRight - xBufferWidth
+ SBC xBufferWidth
+ STA xBufferLeft
 
- LSR A                  \ Set the high byte of bufferYaw(Hi Lo) to
- LSR A                  \ bufferYawLeft / 8
- LSR A
- STA bufferYawHi
+ LSR A                  \ Set bufferOrigin(Hi Lo) = xBufferLeft / 8
+ LSR A                  \
+ LSR A                  \ starting with the high byte
+ STA bufferOriginHi
 
- LDA #0                 \ Set bufferYaw(Hi Lo) = 256 * (bufferYawLeft / 8)
+ LDA #0                 \ And then the low byte
  ROR A
- STA bufferYawLo
+ STA bufferOriginLo
 
  LDA #2                 \ Configure the screen buffer as a column buffer
  STA screenBufferType
@@ -23244,10 +23249,16 @@
 
  LDA drawViewYawLo,X    \ Set the following:
  CLC                    \
- ADC bufferYawLo        \   (A T) = drawViewYaw(Hi Lo) + bufferYaw(Hi Lo)
+ ADC bufferOriginLo     \   (A T) = drawViewYaw(Hi Lo) + bufferOrigin(Hi Lo)
  STA T                  \
  LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
- ADC bufferYawHi        \ offset in bufferYaw(Hi Lo) to the polygon point ???
+ ADC bufferOriginHi     \ offset in bufferOrigin(Hi Lo) to the polygon point
+                        \
+                        \ The yaw angles in drawViewYaw(Hi Lo) are relative to
+                        \ the origin in the centre of the screen (i.e. the
+                        \ direction of the viewer's gaze), so this converts the
+                        \ yaw angle from having the origin in the centre to
+                        \ having the origin on the left edge of the buffer
 
  ASL T                  \ Set (A T) = (A T) * 8
  ROL A                  \
@@ -23353,10 +23364,16 @@
 
  LDA drawViewYawLo,X    \ Set the following:
  CLC                    \
- ADC bufferYawLo        \   (A T) = drawViewYaw(Hi Lo) + bufferYaw(Hi Lo)
+ ADC bufferOriginLo     \   (A T) = drawViewYaw(Hi Lo) + bufferOrigin(Hi Lo)
  STA T                  \
  LDA drawViewYawHi,X    \ for the Y-th polygon point, so this adds the yaw angle
- ADC bufferYawHi        \ offset in bufferYaw(Hi Lo) to the polygon point ???
+ ADC bufferOriginHi     \ offset in bufferOrigin(Hi Lo) to the polygon point
+                        \
+                        \ The yaw angles in drawViewYaw(Hi Lo) are relative to
+                        \ the origin in the centre of the screen (i.e. the
+                        \ direction of the viewer's gaze), so this converts the
+                        \ yaw angle from having the origin in the centre to
+                        \ having the origin on the left edge of the buffer
 
                         \ We now convert the point's yaw angle in (A T) into a
                         \ pixel x-coordinate by multiplying the yaw angle by 8,

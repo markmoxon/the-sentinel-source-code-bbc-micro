@@ -46,7 +46,7 @@
      000F
 .screenBufferType
      0010
-.bufferYawHi
+.bufferOriginHi
      0011
 .bufferMaxYawHi
      0012
@@ -120,7 +120,7 @@
      0027
 .bufferMinYawLo
      0028
-.bufferYawLo
+.bufferOriginLo
      0029
 .randomPixel
      002A
@@ -160,11 +160,11 @@
      0034
 .yCoordBot
      0035
-.bufferYawLeft
+.xBufferLeft
      0035
 .zCoordBot
      0036
-.bufferYawRight
+.xBufferRight
      0036
 .xCoordLo
      0037
@@ -261,7 +261,7 @@
      0060
 .secondAxis
      0060
-.bufferYawWidth
+.xBufferWidth
      0061
 .fromAddr
      0062
@@ -6874,19 +6874,19 @@
      2986   85 28      STA &28
      2988   85 29      STA &29
      298A   60         RTS
-.buffersYawHi
+.buffersOrigin
      298B   0A
      298C   02
      298D   0C
-.buffersYawLeft
+.xBuffersLeft
      298E   50
      298F   40
      2990   60
-.buffersYawWidth
+.xBuffersWidth
      2991   70
      2992   70
      2993   40
-.buffersYawMin
+.buffersMinYaw
      2994   14
      2995   14
      2996   08
