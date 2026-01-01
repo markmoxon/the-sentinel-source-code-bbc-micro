@@ -36,13 +36,13 @@ See the [introduction](#introduction) for more information.
 
 This repository contains source code for The Sentinel on the BBC Micro, with every single line documented and (for the most part) explained.
 
-You can build the fully functioning game from this source. One release is currently supported: the version from the Superior Software Play it Again Sam 6 compilation.
+You can build the fully functioning game from this source. One release is currently supported: the version from the Play it Again Sam 6 compilation.
 
 <!--It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com), which contains all the code from this repository, but laid out in a much more human-friendly fashion.
 
 * If you want to browse the source and read about how The Sentinel works under the hood, you will probably find [the website](https://thesentinel.bbcelite.com) is a better place to start than this repository.-->
 
-* If you would rather explore the source code in your favourite IDE, then the [annotated source](1-source-files/main-sources/the-sentinel-source.asm) is what you're looking for. It contains the exact same content as the website, so you won't be missing out (the website is generated from the source files, so they are guaranteed to be identical). You might also like to read the section on [browsing the source in an IDE](#browsing-the-source-in-an-ide) for some tips.
+* If you would <!--rather--> like to explore the source code in your favourite IDE, then the [annotated source](1-source-files/main-sources/the-sentinel-source.asm) is what you're looking for. <!--It contains the exact same content as the website, so you won't be missing out (the website is generated from the source files, so they are guaranteed to be identical).--> You might also like to read the section on [browsing the source in an IDE](#browsing-the-source-in-an-ide) for some tips.
 
 * If you want to build The Sentinel from the source on a modern computer, to produce a working game disc that can be loaded into a BBC Micro or an emulator, then you want the section on [building The Sentinel from the source](#building-the-sentinel-from-the-source).
 
@@ -52,7 +52,7 @@ My hope is that this repository will be useful for those who want to learn more 
 
 The Sentinel was written by Geoff Crammond and is copyright &copy; Firebird 1985.
 
-The code on this site has been reconstructed from a disassembly of the version released on the [Complete BBC Micro Games Archive at bbcmicro.co.uk](http://bbcmicro.co.uk/game.php?id=39).
+The code on this site has been reconstructed from a disassembly of the version released on the [Play It Again Sam 6 compilation](https://bbcmicro.co.uk/game.php?id=2457).
 
 The commentary is copyright &copy; Mark Moxon. Any misunderstandings or mistakes in the documentation are entirely my fault.
 
@@ -62,21 +62,17 @@ This repository is _not_ provided with a licence, and there is intentionally no 
 
 According to [GitHub's licensing documentation](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/licensing-a-repository), this means that "the default copyright laws apply, meaning that you retain all rights to your source code and no one may reproduce, distribute, or create derivative works from your work".
 
-The reason for this is that my commentary is intertwined with the original The Sentinel game code, and the original game is copyright. The whole site is therefore covered by default copyright law, to ensure that this copyright is respected.
+The reason for this is that my commentary is intertwined with the original game code for The Sentinel, and the original game is copyright. The whole site is therefore covered by default copyright law, to ensure that this copyright is respected.
 
 Under GitHub's rules, you have the right to read and fork this repository... but that's it. No other use is permitted, I'm afraid.
 
-My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation.  I do hope, though, that along with the various other disassemblies and commentaries of Acornsoft's games for the BBC Micro, it will remain viable.
+My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation.  I do hope, though, that along with the various other disassemblies and commentaries of Firebird's games for the BBC Micro, it will remain viable.
 
 ## Browsing the source in an IDE
 
 If you want to browse the source in an IDE, you might find the following useful.
 
-* The most interesting files are in the [main-sources](1-source-files/main-sources) folder:
-
-  * The main game's source code is in the [the-sentinel-source.asm](1-source-files/main-sources/the-sentinel-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `AVIA?` that contains the entire game.
-
-  * The game's loader programs are in the [basic-programs](1-source-files/basic-programs) folder - they are, however, completely optional, and it is possible to skip these and run the game using `*RUN AVIA?` or just plain `*AVIA?`.
+* The main game's source code is in the [the-sentinel-source.asm](1-source-files/main-sources/the-sentinel-source.asm) file - this is the motherlode and probably contains all the stuff you're interested in. It produces a file called `SENTNEL` that contains the entire game.
 
 * It's probably worth skimming through the [notes on terminology and notations](https://thesentinel.bbcelite.com/terminology/) on the accompanying website, as this explains a number of terms used in the commentary, without which it might be a bit tricky to follow at times (in particular, you should understand the terminology I use for multi-byte numbers).
 
@@ -126,7 +122,7 @@ All being well, entering the following into a command window:
 make.bat
 ```
 
-will produce a file called `the-sentinel-sam6.ssd` in the `5-compiled-game-discs` folder that contains the version of the game from bbcmicro.co.uk, which you can then load into an emulator, or into a real BBC Micro using a device like a Gotek.
+will produce a file called `the-sentinel-sam6.ssd` in the `5-compiled-game-discs` folder that contains the version of the game from the Play it Again Sam 6 compilation, which you can then load into an emulator, or into a real BBC Micro using a device like a Gotek.
 
 ### Mac and Linux
 
@@ -138,11 +134,11 @@ All being well, entering the following into a terminal window:
 make
 ```
 
-will produce a file called `the-sentinel-sam6.ssd` in the `5-compiled-game-discs` folder that contains the version of the game from bbcmicro.co.uk, which you can then load into an emulator, or into a real BBC Micro using a device like a Gotek.
+will produce a file called `the-sentinel-sam6.ssd` in the `5-compiled-game-discs` folder that contains the version of the game from the Play it Again Sam 6 compilation, which you can then load into an emulator, or into a real BBC Micro using a device like a Gotek.
 
 ### Build options
 
-By default the build process will create The Sentinel game from the Play it Again Sam 6 compilation disc with verified binaries. There is one argument you can pass to the build to change how it works. It is:
+By default the build process will create the variant of the game from the Play it Again Sam 6 compilation disc with verified binaries. There is one argument you can pass to the build to change how it works. It is:
 
 * `verify=no` - Disable crc32 verification of the game binaries
 
@@ -163,7 +159,7 @@ The Python script `crc32.py` in the `2-build-files` folder does the actual verif
 The binaries in the `4-reference-binaries` folder are those extracted from the released version of the game, while those in the `3-assembled-output` folder are produced by the build process. For example, if you don't make any changes to the code and build the project with `make`, then this is the output of the verification process:
 
 ```
-Results for release: bbcmicro-co-uk
+Results for release: sam6
 [--originals--]  [---output----]
 Checksum   Size  Checksum   Size  Match  Filename
 -----------------------------------------------------------
