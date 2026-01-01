@@ -6,6 +6,8 @@
 
 **Other classics:** [Aviator (BBC Micro)](https://github.com/markmoxon/aviator-source-code-bbc-micro) | [Revs (BBC Micro)](https://github.com/markmoxon/revs-source-code-bbc-micro) | The Sentinel (BBC Micro) | [Lander (Archimedes)](https://github.com/markmoxon/lander-source-code-acorn-archimedes)
 
+See [my profile](https://github.com/markmoxon) for more repositories to explore.
+
 ![Screenshot of The Sentinel on the BBC Micro](https://thesentinel.bbcelite.com/images/github/TheSentinel.png)
 
 This repository contains source code for The Sentinel on the BBC Micro, with every single line documented and (for the most part) explained. It has been reconstructed by hand from a disassembly of the original game binaries.
