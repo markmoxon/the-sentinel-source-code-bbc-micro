@@ -367,7 +367,6 @@
                         \ This variable shares the same memory location as
                         \ polygonColours
 
-
 .polygonColours
 
  SKIP 1                 \ The colours of the polygon that's being drawn in the
@@ -13480,7 +13479,7 @@
 \   considerObjects     If bit 7 of considerObjects is set then bit 6 will also
 \                       be set by the routine if the tile contains a platform
 \                       object (i.e. boulder or Sentinel's tower) and the
-\                       current position alonf the gaze vector is not within the
+\                       current position along the gaze vector is not within the
 \                       platform object (so the gaze vector is passing close by
 \                       the platform object but is not hitting it)
 \
@@ -16383,7 +16382,7 @@
                         \ So A is the number of the polygon pixel line within
                         \ the current character row
 
- BNE dpol11             \ If A is is non-zero then the next polygon line (which
+ BNE dpol11             \ If A is non-zero then the next polygon line (which
                         \ will be on polygon pixel row A - 1) will still be in
                         \ the same character row, so jump to dpol11 to move down
                         \ one pixel line
@@ -20445,7 +20444,7 @@
  LDA xBuffersWidth,Y    \ Set xBufferWidth to the value from the xBuffersWidth
  STA xBufferWidth       \ table for this screen buffer
 
- LDA xBuffersLeft,Y     \ Set xBufferLeft to the value rom the xBuffersLeft
+ LDA xBuffersLeft,Y     \ Set xBufferLeft to the value from the xBuffersLeft
  STA xBufferLeft        \ table for this screen buffer
 
  CLC                    \ Set xBufferRight = xBufferLeft + xBufferWidth
@@ -24105,8 +24104,8 @@
 
  SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
                         \
-                        \ This subtraction works as we just passed though a BCC,
-                        \ so we know the C flag is set
+                        \ This subtraction works as we just passed through a
+                        \ BCC, so we know the C flag is set
 
 .tred12
 
@@ -24243,11 +24242,10 @@
  BEQ tred20             \ DEX instruction (opcode &DA), jump to tred20 so we can
                         \ modify the instruction at tred23 to BCC tred25
 
- BNE tred21             \ Otherwise we are are going to be stepping along the
-                        \ x-axis with an INX instruction, so jump to tred21 to
-                        \ modify the instruction at tred23 to BCC tred24 (this
-                        \ BNE is effectively a JMP as we just passed through a
-                        \ BEQ)
+ BNE tred21             \ Otherwise we are going to be stepping along the x-axis
+                        \ with an INX instruction, so jump to tred21 to modify
+                        \ the instruction at tred23 to BCC tred24 (this BNE is
+                        \ effectively a JMP as we just passed through a BEQ)
 
 .tred19
 
@@ -24367,8 +24365,8 @@
 
  SBC xEdgeDelta         \ Set A = A - xEdgeDelta ???
                         \
-                        \ This subtraction works as we just passed though a BCC,
-                        \ so we know the C flag is set
+                        \ This subtraction works as we just passed through a
+                        \ BCC, so we know the C flag is set
 
  DEC tred24+1           \ Decrement the low byte of the address in the
                         \ instruction below so that it points to the table
@@ -24467,8 +24465,8 @@
 
  SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
                         \
-                        \ This subtraction works as we just passed though a BCC,
-                        \ so we know the C flag is set
+                        \ This subtraction works as we just passed through a
+                        \ BCC, so we know the C flag is set
 
 .tred28
 
@@ -24580,8 +24578,8 @@
 
  SBC xEdgeDelta         \ Set A = A - xEdgeDelta ???
                         \
-                        \ This subtraction works as we just passed though a BCC,
-                        \ so we know the C flag is set
+                        \ This subtraction works as we just passed through a
+                        \ BCC, so we know the C flag is set
 
  DEC tred24+1           \ Decrement the low byte of the address in the STX
                         \ instruction at tred24 so that it points to the table
@@ -24943,7 +24941,7 @@
  LDY #&E6               \ Set Y to the opcode for the INC zp instruction, so we
                         \ trace along the edge by incrementing Y
 
- JMP tred37             \ Jump to tred37 to kepp going
+ JMP tred37             \ Jump to tred37 to keep going
 
 .tred36
 
@@ -25131,8 +25129,8 @@
 
  SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
                         \
-                        \ This subtraction works as we just passed though a BCC,
-                        \ so we know the C flag is set
+                        \ This subtraction works as we just passed through a
+                        \ BCC, so we know the C flag is set
 
 .tred40
 
@@ -25439,8 +25437,8 @@
 
  SBC xEdgeDelta         \ Set A = A - xEdgeDelta ???
                         \
-                        \ This subtraction works as we just passed though a BCC,
-                        \ so we know the C flag is set
+                        \ This subtraction works as we just passed through a
+                        \ BCC, so we know the C flag is set
 
  DEC tred50+1           \ Decrement the low byte of the address in the
                         \ instruction below so that it points to the table
@@ -25679,7 +25677,7 @@
 
  LDY #0                 \ Set Y = 0
 
- JMP stor4              \ Jump to stor4 to modifiy the code to use STY
+ JMP stor4              \ Jump to stor4 to modify the code to use STY
 
 .stor3
 
@@ -38581,7 +38579,7 @@
                         \
                         \ This also returns the sign of the result in H, as
                         \ follows:
-                        \     
+                        \
                         \   * Bit 7 of H is the sign of sin(A)
                         \
                         \   * Bit 6 of H is the sign of cos(A)
