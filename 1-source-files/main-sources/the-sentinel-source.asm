@@ -2,7 +2,7 @@
 \
 \ THE SENTINEL SOURCE
 \
-\ The Sentinel was written by Geoff Crammond and is copyright Firebird 1985
+\ The Sentinel was written by Geoff Crammond and is copyright Firebird 1986
 \
 \ The code on this site has been reconstructed from a disassembly of the
 \ original game binaries

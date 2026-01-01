@@ -62,7 +62,7 @@ My hope is that this repository will be useful for those who want to learn more 
 
 ## Acknowledgements
 
-The Sentinel was written by Geoff Crammond and is copyright &copy; Firebird 1985.
+The Sentinel was written by Geoff Crammond and is copyright &copy; Firebird 1986.
 
 The code on this site has been reconstructed from a disassembly of the version released on the [Play It Again Sam 6 compilation](https://bbcmicro.co.uk/game.php?id=2457).
 
