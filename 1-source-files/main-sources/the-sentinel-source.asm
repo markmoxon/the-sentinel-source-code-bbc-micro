@@ -5211,8 +5211,8 @@
                         \
                         \ Calling this subroutine puts a return address of
                         \ SecretCodeError on the stack (as that's the routine
-                        \ that follows directly after this JSR instruction, so
-                        \ performing a normal RTS at the end of the
+                        \ that follows directly after this JSR instruction), so
+                        \ running a normal RTS instruction at the end of the
                         \ GenerateLandscape routine will return to the following
                         \ code, which is what happens if the secret code entered
                         \ doesn't match the landscape's secret code
@@ -5224,12 +5224,12 @@
                         \ end of the GenerateLandscape routine actually takes us
                         \ to the PreviewLandscape routine
                         \
-                        \ Because we reset the stack with a YSX instruction at
-                        \ the start of the MainTitleLoop routine, we know that
-                        \ the JSR GenerateLandscape instruction will put its
-                        \ return address onto the top of the stack, so we can
-                        \ manipulate the return address in the SmoothTileData
-                        \ routine by modifying (&01FE &01FF)
+                        \ Because we reset the position of the stack pointer
+                        \ with a TSX instruction at the start of this routine,
+                        \ we know that the JSR GenerateLandscape instruction
+                        \ will put its return address onto the top of the stack,
+                        \ so we can manipulate the return address in the
+                        \ SmoothTileData routine by modifying (&01FE &01FF)
                         \
                         \ See the SmoothTileData routine for more details
 
@@ -15165,11 +15165,17 @@
 .objectHalfWidth
 
  EQUB 62                \ Object type 0: Robot                       0.242 tiles
+
  EQUB 70                \ Object type 1: Sentry                      0.273 tiles
+
  EQUB 114               \ Object type 2: Tree                        0.445 tiles
+
  EQUB 122               \ Object type 3: Boulder                     0.477 tiles
+
  EQUB 74                \ Object type 4: Meanie                      0.289 tiles
+
  EQUB 78                \ Object type 5: The Sentinel                0.305 tiles
+
  EQUB 193               \ Object type 6: Sentinel's tower            0.754 tiles
 
 \ ******************************************************************************
@@ -15390,11 +15396,17 @@
 .objectTypeEnergy
 
  EQUB 3                 \ Object type 0: Robot                    3 energy units
+
  EQUB 3                 \ Object type 1: Sentry                   3 energy units
+
  EQUB 1                 \ Object type 2: Tree                      1 energy unit
+
  EQUB 2                 \ Object type 3: Boulder                  2 energy units
+
  EQUB 1                 \ Object type 4: Meanie                    1 energy unit
+
  EQUB 4                 \ Object type 5: The Sentinel             4 energy units
+
  EQUB 0                 \ Object type 6: Sentinel's tower         0 energy units
 
 \ ******************************************************************************
@@ -32216,14 +32228,23 @@
 .objPointRange
 
  EQUB 0                 \ Object type 0: Robot                 Points   0 to  28
+
  EQUB 29                \ Object type 1: Sentry                Points  29 to  50
+
  EQUB 51                \ Object type 2: Tree                  Points  51 to  67
+
  EQUB 68                \ Object type 3: Boulder               Points  68 to  75
+
  EQUB 76                \ Object type 4: Meanie                Points  76 to  93
+
  EQUB 94                \ Object type 5: The Sentinel          Points  94 to 123
+
  EQUB 124               \ Object type 6: Sentinel's tower      Points 124 to 135
+
  EQUB 136               \ Object type 7: 3D text block 1       Points 136 to 143
+
  EQUB 144               \ Object type 8: 3D text block 2       Points 144 to 151
+
  EQUB 152               \ Object type 9: 3D text block 3       Points 152 to 159
  EQUB 160
 
@@ -32239,14 +32260,23 @@
 .objPolygonRange
 
  EQUB 0                 \ Object type 0: Robot               Polygons   0 to  26
+
  EQUB 27                \ Object type 1: Sentry              Polygons  27 to  51
+
  EQUB 52                \ Object type 2: Tree                Polygons  52 to  66
+
  EQUB 67                \ Object type 3: Boulder             Polygons  67 to  76
+
  EQUB 77                \ Object type 4: Meanie              Polygons  77 to 101
+
  EQUB 102               \ Object type 5: The Sentinel        Polygons 102 to 136
+
  EQUB 137               \ Object type 6: Sentinel's tower    Polygons 137 to 147
+
  EQUB 148               \ Object type 7: 3D text block 1     Polygons 148 to 151
+
  EQUB 152               \ Object type 8: 3D text block 2     Polygons 152 to 155
+
  EQUB 156               \ Object type 9: 3D text block 3     Polygons 156 to 159
  EQUB 160
 
@@ -32271,14 +32301,23 @@
 .objPolygonPhases
 
  EQUB %11               \ Object type 0: Robot               Depends on altitude
+
  EQUB %11               \ Object type 1: Sentry              Depends on altitude
+
  EQUB %00               \ Object type 2: Tree                          One phase
+
  EQUB %00               \ Object type 3: Boulder                       One phase
+
  EQUB %10               \ Object type 4: Meanie                   Depends on yaw
+
  EQUB %11               \ Object type 5: The Sentinel        Depends on altitude
+
  EQUB %00               \ Object type 6: Sentinel's tower              One phase
+
  EQUB %00               \ Object type 7: 3D text block 1               One phase
+
  EQUB %00               \ Object type 8: 3D text block 2               One phase
+
  EQUB %00               \ Object type 9: 3D text block 3               One phase
 
  EQUB &00               \ This byte appears to be unused
@@ -36063,7 +36102,8 @@
  BCC ghyp4              \ If we just shifted a zero out of bit 7 of (A xDeltaLo)
                         \ then jump back to ghyp4 to scale the x-axis length and
                         \ keep scaling until we shift a 1 out of bit 7, at which
-                        \ point we have scaled (A xDeltaLo) as far as we can
+                        \ point we will have scaled (A xDeltaLo) as far as we
+                        \ can
 
  ROR A                  \ Shift the 1 back into bit 7 of (A xDeltaLo) to undo
  ROR xDeltaLo           \ the last left-shift, so (A xDeltaLo) is now as large
@@ -36166,7 +36206,8 @@
  BCC ghyp8              \ If we just shifted a zero out of bit 7 of (A zDeltaLo)
                         \ then jump back to ghyp8 to scale the z-axis length and
                         \ keep scaling until we shift a 1 out of bit 7, at which
-                        \ point we have scaled (A zDeltaLo) as far as we can
+                        \ point we will have scaled (A zDeltaLo) as far as we
+                        \ can
 
  ROR A                  \ Shift the 1 back into bit 7 of (A zDeltaLo) to undo
  ROR zDeltaLo           \ the last left-shift, so (A zDeltaLo) is now as large
@@ -39217,14 +39258,14 @@
                         \
                         \ We want to calculate the deltas in 16-bit accuracy,
                         \ where the low byte is effectively a fractional part,
-                        \ so we can convert these x-coordinates into 16-bit
-                        \ numbers like this:
+                        \ so we convert these x-coordinates into 16-bit numbers
+                        \ like this:
                         \
                         \   * x-coordinate for object #X = (xObject+X 0)
                         \
                         \   * x-coordinate for object #Y = (xObject+Y 0)
                         \
-                        \ and we can then do a multi-byte subtraction to get the
+                        \ and we then do a multi-byte subtraction to get the
                         \ delta, with the title offset included in the
                         \ calculation as (xTitleOffset 0)
 
