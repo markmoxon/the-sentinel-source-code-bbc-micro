@@ -1018,8 +1018,10 @@
 
 .triangleStartPoint
 
- SKIP 5                 \ The number of the starting point for the tile shape
+ SKIP 1                 \ The number of the starting point for the tile shape
                         \ being drawn
+
+ SKIP 4                 \ These bytes appear to be unused
 
 .polygonEdge
 
@@ -20982,7 +20984,8 @@
 \
 \                         * viewingQuadrantOpp = 1, shape = 2, 3, 10, 11
 \
-\   triangleStartPoint  Set to 0 or 1 ???
+\   triangleStartPoint  The starting point to use when drawing the two triangles
+\                       (0 or 1)
 \
 \                         * For shapes 4 or 12 = bit 0 of viewingQuadrantOpp
 \
@@ -21064,6 +21067,10 @@
 \
 \                         * When drawing object polygons, this points to a list
 \                           of object-relative numbers of polygon points
+\
+\
+\   triangleStartPoint  When drawing a two-face tile as a pair of triangles,
+\                       this is the number of the starting point to use (0 or 1)
 \
 \ ******************************************************************************
 
@@ -23109,6 +23116,9 @@
 \
 \   polygonType         The polygon type
 \
+\   triangleStartPoint  When drawing a two-face tile as a pair of triangles,
+\                       this is the number of the starting point to use (0 or 1)
+\
 \ ------------------------------------------------------------------------------
 \
 \ Returns:
@@ -23503,19 +23513,19 @@
 
  LDA drawViewPitchLo,Y  \ Set (A yEdgeDeltaLo) to the following:
  SEC                    \
- SBC drawViewPitchLo,X  \       drawViewPitch(Hi Lo) for point #X
- STA yEdgeDeltaLo       \                 - drawViewPitch(Hi Lo) for point #Y
+ SBC drawViewPitchLo,X  \       drawViewPitch(Hi Lo) for point #Y
+ STA yEdgeDeltaLo       \                 - drawViewPitch(Hi Lo) for point #X
  LDA drawViewPitchHi,Y  \
  SBC drawViewPitchHi,X  \ So (A yEdgeDeltaLo) contains the difference in pitch
                         \ angle between the two points, or the delta along the
                         \ y-axis
 
  BPL gpol11             \ If the result in (A yEdgeDeltaLo) is positive then
-                        \ point #X is higher than point #Y and (A yEdgeDeltaLo)
+                        \ point #Y is higher than point #X and (A yEdgeDeltaLo)
                         \ already has the correct sign for the absolute value,
                         \ so jump to gpol11 to skip the following
 
-                        \ If we get here then point #Y is higher than point #X,
+                        \ If we get here then point #X is higher than point #Y,
                         \ so we swap them around
 
  STA yEdgeDeltaHi       \ Set yEdgeDelta(Hi Lo) = (A yEdgeDeltaLo)
@@ -23525,8 +23535,8 @@
                         \ line x-coordinates, they are stored in the table for
                         \ the right end of the polygon line at xPolygonRight ???
 
- STX T                  \ Swap X and Y around, so point #X is now higher than
- STY U                  \ point #Y
+ STX T                  \ Swap X and Y around, so point #Y is now higher than
+ STY U                  \ point #X
  LDX U
  LDY T
 
@@ -23541,7 +23551,7 @@
 
  STA yEdgeDeltaHi       \ Set yEdgeDelta(Hi Lo) = (A yEdgeDeltaLo)
                         \
-                        \ So point #X is higher than point #Y, and we have a
+                        \ So point #Y is higher than point #X, and we have a
                         \ positive value in yEdgeDelta(Hi Lo) that contains the
                         \ y-axis delta between the two points
                         \
@@ -23625,6 +23635,15 @@
 
  LDA yEdgeDeltaLo       \ If yEdgeDeltaLo = 0 then yEdgeDelta(Hi Lo) = 0, so
  BEQ gpol19             \ jump to gpol19 to process this
+
+                        \ We now set up the start and end points so that the
+                        \ edge is either horizontal or slopes downwards when
+                        \ moving from the start to the end, as that's what the
+                        \ TracePolygonEdge routine expects
+                        \
+                        \ We know that point #Y is higher than point #X as we
+                        \ set that up above, so we trace along the line from
+                        \ the start at point #Y to the end at point #X
 
  LDA drawViewPitchHi,Y  \ Set yEdgeStart(Hi Lo) = drawViewPitch(Hi Lo)
  STA yEdgeStartHi       \
@@ -23786,9 +23805,11 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine traces a polygon edge. The start point (point #Y) has a smaller
-\ y-coordinate than the end point (point #X), so the edge is either horizontal
-\ or it slopes upwards when moving from the start to the end. ???
+\ This routine traces a polygon edge.
+\
+\ For this to work the start point must have a bigger y-coordinate than the end
+\ point, so the edge is either horizontal or slopes downwards when tracing the
+\ edge from start to end.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23840,7 +23861,7 @@
 
                         \ We start by updating yPolygonBottom so it covers the
                         \ y-coordinate of the end point of the edge, as the end
-                        \ point has the higher y-coordinate ???
+                        \ point has the lower y-coordinate
 
  LDA yEdgeEndHi         \ If yEdgeEnd(Hi Lo) is negative then the end point is
  BMI tred3              \ in the lower half of the screen, so jump to tred3 to
@@ -24804,6 +24825,15 @@
                         \ We set up the "end point from the previous step" to
                         \ point #Y above, so this process starts from point #Y
                         \ and steps toward point #X
+                        \
+                        \ Note that we set up the start and end points so the
+                        \ edge is either horizontal or slopes downwards when
+                        \ moving from the start to the end, as that's what the
+                        \ TracePolygonEdge routine expects
+                        \
+                        \ We know that point #Y is higher than point #X as we
+                        \ set that up in part 5, so we trace along the line from
+                        \ the start at point #Y to the end at point #X
 
 .gpol25
 
@@ -24860,6 +24890,15 @@
                         \ In either case, we start by setting the starting point
                         \ for this tracing process to the values in xEdgeEnd and
                         \ yEdgeEnd
+                        \
+                        \ Note that we set up the start and end points so the
+                        \ edge is either horizontal or slopes downwards when
+                        \ moving from the start to the end, as that's what the
+                        \ TracePolygonEdge routine expects
+                        \
+                        \ We know that point #Y is higher than point #X as we
+                        \ set that up in part 5, so we trace along the line from
+                        \ the start at point #Y to the end at point #X
 
  LDA yEdgeEndLo         \ Set yEdgeStart(Hi Lo) = yEdgeEnd(Hi Lo)
  STA yEdgeStartLo       \

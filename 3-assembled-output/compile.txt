@@ -213,6 +213,7 @@
      0044
 .triangleStartPoint
      0045
+     0046
 .polygonEdge
      004A
 .viewingQuadrantOpp
