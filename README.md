@@ -8,7 +8,7 @@
 
 **Elite Compendium:** [BBC Master](https://github.com/markmoxon/elite-compendium-bbc-master) | [BBC Micro](https://github.com/markmoxon/elite-compendium-bbc-micro) | [BBC Micro B+](https://github.com/markmoxon/elite-compendium-bbc-micro-b-plus) | [Acorn Electron](https://github.com/markmoxon/elite-compendium-acorn-electron)
 
-**Other classics:** [Aviator (BBC Micro)](https://github.com/markmoxon/aviator-source-code-bbc-micro) | [Revs (BBC Micro)](https://github.com/markmoxon/revs-source-code-bbc-micro) | The Sentinel (BBC Micro) | [Lander (Acorn Archimedes)](https://github.com/markmoxon/lander-source-code-acorn-archimedes)
+**Other classics:** [Aviator (BBC Micro)](https://github.com/markmoxon/aviator-source-code-bbc-micro) | [Revs (BBC Micro)](https://github.com/markmoxon/revs-source-code-bbc-micro) | [The Sentinel (BBC Micro)](https://github.com/markmoxon/the-sentinel-source-code-bbc-micro) | [Lander (Acorn Archimedes)](https://github.com/markmoxon/lander-source-code-acorn-archimedes)
 
 See [my profile](https://github.com/markmoxon) for more repositories to explore.
 <hr>
@@ -48,7 +48,7 @@ See the [introduction](#introduction) for more information.
 
 This repository contains source code for The Sentinel on the BBC Micro, with every single line documented and (for the most part) explained.
 
-You can build the fully functioning game from this source. One release is currently supported: the version from the Play it Again Sam 6 compilation.
+You can build the fully functioning game from this source. One variant is currently supported: the version from the Play it Again Sam 6 compilation.
 
 <!--It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com), which contains all the code from this repository, but laid out in a much more human-friendly fashion.
 
@@ -78,7 +78,7 @@ The reason for this is that my commentary is intertwined with the original game 
 
 Under GitHub's rules, you have the right to read and fork this repository... but that's it. No other use is permitted, I'm afraid.
 
-My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation.  I do hope, though, that along with the various other disassemblies and commentaries of this source, it will remain viable.
+My hope is that the educational and non-profit intentions of this repository will enable it to stay hosted and available, but the original copyright holders do have the right to ask for it to be taken down, in which case I will comply without hesitation.  I do hope, though, that along with the various other disassemblies and commentaries of Firebird's games for the BBC Micro, it will remain viable.
 
 ## Browsing the source in an IDE
 
