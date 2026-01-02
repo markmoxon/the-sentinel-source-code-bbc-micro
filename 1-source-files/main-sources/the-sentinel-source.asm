@@ -19258,6 +19258,13 @@
 
 .GetTileViewEdges
 
+                        \ This routine may need clarifying, as the algorithm
+                        \ doesn't seem to make sense - it's possible that I've
+                        \ misinterpreted how GetTileViewAngles sets the bits in
+                        \ tileIsOnScreen, as that uses bufferMinYaw(Hi Lo) for
+                        \ the calculation and those values are not completely
+                        \ understood ??? 
+
  LDY xTileViewLeft      \ Set Y to the tile column so we can pass it to the
                         \ GetTileViewAngles routine
 
@@ -20483,7 +20490,7 @@
 \       Name: xBuffersLeft
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: The left edge of each screen buffer in pixels
+\    Summary: The left edge of each screen buffer in pixels ???
 \
 \ ******************************************************************************
 
@@ -20500,7 +20507,7 @@
 \       Name: xBuffersWidth
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: The width of each screen buffer in pixels
+\    Summary: The width of each screen buffer in pixels ???
 \
 \ ******************************************************************************
 
