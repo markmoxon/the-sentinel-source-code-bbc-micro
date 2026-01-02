@@ -37,7 +37,6 @@ See the [introduction](#introduction) for more information.
 * [Building The Sentinel from the source](#building-the-sentinel-from-the-source)
 
   * [Requirements](#requirements)
-  * [Build targets](#build-targets)
   * [Windows](#windows)
   * [Mac and Linux](#mac-and-linux)
   * [Build options](#build-options)
