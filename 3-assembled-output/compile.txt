@@ -6279,6 +6279,7 @@
      2578   F0 5D      BEQ &25D7
      257A   38         SEC
      257B   6E CE 0C   ROR &0CCE
+.stas2
 .rvis6
      257E   A2 02      LDX #&02
      2580   18         CLC
@@ -8144,6 +8145,7 @@
      31FC   DD 36 0F   CMP &0F36,X
      31FF   B0 03      BCS &3204
      3201   20 6C 31   JSR &316C
+.csee1
 .spac3
      3204   1E 10 0C   ASL &0C10,X
      3207   AD 49 0C   LDA &0C49

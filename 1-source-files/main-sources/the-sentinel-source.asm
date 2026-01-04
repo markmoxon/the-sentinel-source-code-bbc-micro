@@ -5625,6 +5625,7 @@
 \
 \       Name: lowestPitchAngle
 \       Type: Variable
+\   Category: Sights
 \    Summary: The pitch angle of the lowest point that the player can look at
 \             with the sights
 \
@@ -8986,15 +8987,6 @@
 \
 \   enemyObject         Contains the same as X
 \
-\ ------------------------------------------------------------------------------
-\
-\ Other entry points:
-\
-\   tact25              Dither the updated object #X onto the screen, with bit 7
-\                       of drawLandscape determining whether the object is drawn
-\                       on its own (bit 7 set) or with the surrounding landscape
-\                       (bit 7 clear)
-\
 \ ******************************************************************************
 
 .ApplyTactics
@@ -9707,6 +9699,15 @@
 \   Category: Gameplay
 \    Summary: Redraw the object on the screen, optionally with a dithered
 \             effect
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   tact25              Dither the updated object #X onto the screen, with bit 7
+\                       of drawLandscape determining whether the object is drawn
+\                       on its own (bit 7 set) or with the surrounding landscape
+\                       (bit 7 clear)
 \
 \ ******************************************************************************
 
@@ -17642,7 +17643,7 @@
 .CheckSecretStash
 
  LDA doNotCheckSecret   \ If bit 7 of doNotCheckSecret is set then jump down to
- BMI rvis6              \ part 2 of GetRowVisibility to skip checking the secret
+ BMI stas2              \ part 2 of GetRowVisibility to skip checking the secret
                         \ code stash
 
                         \ The following code does a check on the secret entry
@@ -17779,6 +17780,8 @@
  SEC                    \ Set bit 7 of doNotCheckSecret so we do not repeat the
  ROR doNotCheckSecret   \ secret code check again (at least, until we reach the
                         \ next landscape)
+
+.stas2
 
                         \ Fall through into part 2 of GetRowVisibility to
                         \ continue with the visibility calculations
@@ -26024,9 +26027,9 @@
                         \ the AlterCrackerSeed routine
 
  CMP CrackerSeed+1-7,X  \ If A >= the contents of CrackerSeed+1 then the code
- BCS spac3              \ in AlterCrackerSeed was correctly run (which only
+ BCS csee1              \ in AlterCrackerSeed was correctly run (which only
                         \ happens if the gameplay routines are run, i.e. when
-                        \ the landscape has been played), so jump to spac3 to
+                        \ the landscape has been played), so jump to csee1 to
                         \ skip the following
 
                         \ If we get here then the AlterCrackerSeed routine has
@@ -26042,6 +26045,7 @@
                         \ by moving one step too far in the landscape's sequence
                         \ of seed numbers
 
+.csee1
                         \ Fall through into part 2 of SpawnCharacter3D to
                         \ continue with the character-spawning process
 
@@ -33254,7 +33258,7 @@
 \
 \       Name: objPolygonData
 \       Type: Variable
-\   Category: Drawing object
+\   Category: Drawing objects
 \    Summary: Various data for object polygons (colour, drawing phase)
 \
 \ ------------------------------------------------------------------------------
@@ -36843,7 +36847,7 @@
 \
 \       Name: SetScannerAndPause
 \       Type: Subroutine
-\   Category: Main loop
+\   Category: Main game loop
 \    Summary: Set the scanner update status and delay for 40 empty loops of 256
 \             iterations each (i.e. 10,240 loops)
 \
