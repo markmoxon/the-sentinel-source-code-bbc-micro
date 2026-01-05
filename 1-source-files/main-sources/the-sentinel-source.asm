@@ -8552,7 +8552,7 @@
 \
 \       Name: UpdateScanner
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Update the scanner, if required
 \
 \ ******************************************************************************
@@ -8575,7 +8575,7 @@
 \
 \       Name: UpdateScannerNow
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Update the scanner to a new state
 \
 \ ------------------------------------------------------------------------------
@@ -8774,7 +8774,7 @@
 \
 \       Name: scannerStatic
 \       Type: Variable
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Storage for a random number that's used to generate static in the
 \             scanner
 \
@@ -8788,7 +8788,7 @@
 \
 \       Name: scannerBlock
 \       Type: Variable
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: A counter for the eight character blocks that make up the scanner
 \
 \ ******************************************************************************
@@ -8801,7 +8801,7 @@
 \
 \       Name: scannerState
 \       Type: Variable
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: The current state of the scanner (black, static or green)
 \
 \ ******************************************************************************
@@ -8820,7 +8820,7 @@
 \
 \       Name: scannerPixelByte
 \       Type: Variable
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Pixel bytes for the three states of the scanner (black, static and
 \             green)
 \
@@ -28437,7 +28437,7 @@
 \
 \       Name: ClearIconsScanner
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Clear the energy icon and scanner row at the top of the screen
 \
 \ ******************************************************************************
@@ -28532,7 +28532,7 @@
 \
 \       Name: UpdateIconsScanner
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Update the icons in the top-left corner of the screen to show the
 \             player's current energy level and redraw the scanner box
 \
@@ -28682,7 +28682,7 @@
 \
 \       Name: DrawIcon
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Draw a single icon in the top-left corner of the screen (via the
 \             icon screen buffer at iconBuffer) and move along to the right
 \
@@ -31009,7 +31009,7 @@
 \
 \       Name: GetIconRowAddress
 \       Type: Subroutine
-\   Category: Scanner and energy icons
+\   Category: Scanner/energy row
 \    Summary: Calculate the address in screen memory of the icon and scanner row
 \             at the top of the screen
 \
