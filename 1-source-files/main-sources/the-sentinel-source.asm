@@ -31601,7 +31601,7 @@
 \
 \       Name: screenBufferRow0
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 0
 \
 \ ------------------------------------------------------------------------------
@@ -31748,7 +31748,7 @@
 \
 \       Name: screenBufferRow16
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 16 (as part of a column
 \             buffer)
 \
@@ -31781,7 +31781,7 @@
 \
 \       Name: screenBufferRow1
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 1
 \
 \ ******************************************************************************
@@ -31813,7 +31813,7 @@
 \
 \       Name: screenBufferRow17
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 17 (as part of a column
 \             buffer)
 \
@@ -31846,7 +31846,7 @@
 \
 \       Name: screenBufferRow2
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 2
 \
 \ ******************************************************************************
@@ -31878,7 +31878,7 @@
 \
 \       Name: screenBufferRow18
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 18 (as part of a column
 \             buffer)
 \
@@ -31911,7 +31911,7 @@
 \
 \       Name: screenBufferRow3
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 3
 \
 \ ******************************************************************************
@@ -31943,7 +31943,7 @@
 \
 \       Name: screenBufferRow19
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 19 (as part of a column
 \             buffer)
 \
@@ -31976,7 +31976,7 @@
 \
 \       Name: screenBufferRow4
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 4
 \
 \ ******************************************************************************
@@ -32008,7 +32008,7 @@
 \
 \       Name: screenBufferRow20
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 20 (as part of a column
 \             buffer)
 \
@@ -32041,7 +32041,7 @@
 \
 \       Name: screenBufferRow5
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 5
 \
 \ ******************************************************************************
@@ -32073,7 +32073,7 @@
 \
 \       Name: screenBufferRow21
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 21 (as part of a column
 \             buffer)
 \
@@ -32106,7 +32106,7 @@
 \
 \       Name: screenBufferRow6
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 6
 \
 \ ******************************************************************************
@@ -32138,7 +32138,7 @@
 \
 \       Name: screenBufferRow22
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 22 (as part of a column
 \             buffer)
 \
@@ -32171,7 +32171,7 @@
 \
 \       Name: screenBufferRow7
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 7
 \
 \ ******************************************************************************
@@ -32203,7 +32203,7 @@
 \
 \       Name: screenBufferRow23
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 23 (as part of a column
 \             buffer)
 \
@@ -32236,7 +32236,7 @@
 \
 \       Name: screenBufferRow8
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 8
 \
 \ ******************************************************************************
@@ -32605,7 +32605,7 @@
 \
 \       Name: screenBufferRow9
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 9
 \
 \ ******************************************************************************
@@ -32809,7 +32809,7 @@
 \
 \       Name: screenBufferRow10
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 10
 \
 \ ******************************************************************************
@@ -33022,7 +33022,7 @@
 \
 \       Name: screenBufferRow11
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 11
 \
 \ ******************************************************************************
@@ -33226,7 +33226,7 @@
 \
 \       Name: screenBufferRow12
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 12
 \
 \ ******************************************************************************
@@ -34407,7 +34407,7 @@
 \
 \       Name: screenBufferRow13
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 13
 \
 \ ******************************************************************************
@@ -34621,7 +34621,7 @@
 \
 \       Name: screenBufferRow14
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 14
 \
 \ ******************************************************************************
@@ -34835,7 +34835,7 @@
 \
 \       Name: screenBufferRow15
 \       Type: Subroutine
-\   Category: Landscape
+\   Category: Screen buffer
 \    Summary: The screen buffer for character row 15
 \
 \ ******************************************************************************
