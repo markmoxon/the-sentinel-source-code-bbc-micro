@@ -16149,9 +16149,11 @@
 
 .buffersOffsetLo
 
- EQUB LO(0)
- EQUB LO(96)
- EQUB LO(0)
+ EQUB LO(0)             \ Left row buffer
+
+ EQUB LO(96)            \ Right row buffer
+
+ EQUB LO(0)             \ Column buffer
 
 \ ******************************************************************************
 \
@@ -16165,9 +16167,11 @@
 
 .buffersOffsetHi
 
- EQUB HI(0)
- EQUB HI(96)
- EQUB HI(0)
+ EQUB HI(0)             \ Left row buffer
+
+ EQUB HI(96)            \ Right row buffer
+
+ EQUB HI(0)             \ Column buffer
 
 \ ******************************************************************************
 \
