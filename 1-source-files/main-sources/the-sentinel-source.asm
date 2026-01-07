@@ -414,7 +414,7 @@
 .quadrantOffset
 
  SKIP 1                 \ The offset into the drawing tables for the quadrant
-                        \ containing the right edge of the viewing arc ???
+                        \ containing the right edge of the viewing arc
 
 .viewingArcRightYaw
 
@@ -1031,7 +1031,7 @@
 .viewingQuadrantOpp
 
  SKIP 1                 \ The opposite quadrant number to that containing the
-                        \ right edge of the viewing arc ???
+                        \ right edge of the viewing arc
 
 .objTypeToAnalyse
 
@@ -3332,7 +3332,7 @@
 
  CMP V                  \ If A = V then jump to gang10 with the C flag set, as
  BEQ gang10             \ we can skip the rest of the shifts and still get a
-                        \ good result ???
+                        \ good result
 
  ASL T                  \ Shift a zero for the third shift into T, so bit 5 of
                         \ the result is always clear
@@ -3483,7 +3483,7 @@
                         \ then we have already set bit 5 of the result with an
                         \ ORA instruction in gang10 before jumping back to
                         \ gang8, so there is a possibility for this addition to
-                        \ overflow ???
+                        \ overflow
 
 .gang9
 
@@ -3526,7 +3526,7 @@
  ROR T                  \ the shift-and-subtract process that we've skipped
  ROR A
 
- ORA #%00100000         \ Set bit 5 of the result in A ???
+ ORA #%00100000         \ Set bit 5 of the result in A
                         \
                         \ So we now have the result of the division in A
 
@@ -10493,7 +10493,7 @@
 
  LDA #104               \ Set minObjWidth = 104 so we use the width of the wider
  STA minObjWidth        \ object, the tree, when we calculate the object's
-                        \ visibility when updating the object on-screen ???
+                        \ visibility when updating the object on-screen
 
  CLC                    \ Clear the C flag to indicate that we have successfully
                         \ turned a tree into a meanie
@@ -10650,7 +10650,7 @@
 
  LDA #116               \ Set minObjWidth = 116 so we use the width of the wider
  STA minObjWidth        \ object, the boulder, when we calculate the object's
-                        \ visibility when updating the object on-screen ???
+                        \ visibility when updating the object on-screen
 
  LDA #2                 \ Set A = 2 so the boulder loses one energy unit and
                         \ changes into a tree (i.e. an object of type 2)
@@ -11734,7 +11734,7 @@
 \
 \ The -5 in the pitch angle calculation caters for the distance between the top
 \ of the sights and the centre of the sights, and the (3 32) element represents
-\ ???.
+\ something I have yet to work out.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16279,7 +16279,7 @@
  LDY screenBufferType   \ If this is the right row screen buffer then Y = 1, so
  LDA R                  \ add the following to (S R):
  CLC                    \
- ADC buffersOffsetLo,Y  \   (S R) = (S R) + 96 ???
+ ADC buffersOffsetLo,Y  \   (S R) = (S R) + 96
  STA R                  \
  LDA S                  \ This addition is performed for all buffer types, but
  ADC buffersOffsetHi,Y  \ the addition is only non-zero for the right row buffer
@@ -16475,7 +16475,7 @@
  STA xPolygonRightEdge  \ This sets the screen x-coordinate of the right end of
                         \ the polygon line we are drawing to the right edge of
                         \ the screen buffer (we double the value in xBufferWidth
-                        \ to get the x-coordinate because ???)
+                        \ to get the x-coordinate)
 
  STA polygonGoesRight   \ Set polygonGoesRight to the value of A, which is at
                         \ least 2 because xBufferWidth is non-zero and we just
@@ -16672,7 +16672,7 @@
 
  ASL A                  \ Set Y to the offset within the character row of the
  AND #%11111000         \ pixel byte containing the right edge of the polygon
- TAY                    \ ???
+ TAY
 
  TXA                    \ Set X to the pixel number within the character block
  AND #%00000011         \ of the left edge of the polygon (as each character
@@ -16742,7 +16742,7 @@
                         \ jump to dpol8 in part 2 to process this
 
  ASL A                  \ Set Y to the offset within the character row of the
- AND #%11111000         \ pixel byte containing the left edge of the polygon ???
+ AND #%11111000         \ pixel byte containing the left edge of the polygon
  TAY
 
  CPY xPolygonRightEdge  \ If Y >= xPolygonRightEdge then the pixel byte offset
@@ -18344,7 +18344,7 @@
  LDA quadrantOffsets,Y  \ Set quadrantOffset to 0, 1, 33 or 32 depending on the
  STA quadrantOffset     \ quadrant containing the right edge of the viewing arc
                         \
-                        \ This is used by the DrawTileAndObjects routine ???
+                        \ This is used by the DrawTileAndObjects routine
 
  TYA                    \ Set viewingQuadrantx4 = Y * 4
  ASL A                  \
@@ -18361,7 +18361,7 @@
  STA viewingQuadrantOpp \ quadrant opposite the quadrant containing the right
                         \ edge of the viewing arc
                         \
-                        \ This is used by the DrawTileAndObjects routine ???
+                        \ This is used by the DrawTileAndObjects routine
 
  LDA T                  \ Set screenLeftYawHi = T - 10
  SEC                    \
@@ -18419,7 +18419,7 @@
                         \
                         \ Note that in the following, we subtract from 30 rather
                         \ than 31 because we are working with tiles rather than
-                        \ tile corners ???
+                        \ tile corners
 
  BIT viewingArcRightYaw \ If bit 7 of the quadrant containing the right edge of
  BMI dlan2              \ the viewing arc is set, jump to dlan2
@@ -19139,7 +19139,7 @@
  LDA drawViewPitchHi,Y  \ If the high byte of the pitch angle of the front-left
  CMP #2                 \ edge of the viewer's tile is 2 or more, then it is off
  BCS dlan22             \ the top of the screen, so jump to dlan22 to skip
-                        \ drawing it and instead return from the subroutine ???
+                        \ drawing it and instead return from the subroutine
 
  STA drawViewPitchHi+1,Y    \ Set the pitch angle for the tile corner in the
  LDA drawViewPitchLo,Y      \ front-right corner of the viewer's tile to be the
@@ -19270,7 +19270,7 @@
                         \ misinterpreted how GetTileViewAngles sets the bits in
                         \ tileIsOnScreen, as that uses bufferMinYaw(Hi Lo) for
                         \ the calculation and those values are not completely
-                        \ understood ??? 
+                        \ understood
 
  LDY xTileViewLeft      \ Set Y to the tile column so we can pass it to the
                         \ GetTileViewAngles routine
@@ -20452,7 +20452,7 @@
 
  LSR A                  \ Set bufferMaxYawHi = bufferMinYawHi / 2
  EOR #%10000000         \
- STA bufferMaxYawHi     \ and with bit 7 flipped ???
+ STA bufferMaxYawHi     \ and with bit 7 flipped
 
  LDA buffersOrigin,Y    \ Set the high byte of bufferOrigin(Hi Lo) to the value
  STA bufferOriginHi     \ from the buffersOrigin table for this screen buffer
@@ -20497,7 +20497,7 @@
 \       Name: xBuffersLeft
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: The left edge of each screen buffer in pixels ???
+\    Summary: The left edge of each screen buffer in pixels
 \
 \ ******************************************************************************
 
@@ -20514,7 +20514,7 @@
 \       Name: xBuffersWidth
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: The width of each screen buffer in pixels ???
+\    Summary: The width of each screen buffer in pixels
 \
 \ ******************************************************************************
 
@@ -20531,7 +20531,7 @@
 \       Name: buffersMinYaw
 \       Type: Variable
 \   Category: Screen buffer
-\    Summary: Minimum allowed yaw angles for points in the screen buffer ???
+\    Summary: Minimum allowed yaw angles for points in the screen buffer
 \
 \ ******************************************************************************
 
@@ -20588,11 +20588,11 @@
                         \ effectively a fractional part
                         \
                         \ This gives us the yaw angle of the left edge of the
-                        \ screen buffer ???
+                        \ screen buffer
 
  LDA bufferMinYawHi     \ Set bufferMaxYawHi = bufferMinYawHi / 2
  LSR A                  \
- EOR #%10000000         \ and with bit 7 flipped ???
+ EOR #%10000000         \ and with bit 7 flipped
  STA bufferMaxYawHi
 
  LDA T                  \ Set xBufferWidth = T * 4
@@ -20602,7 +20602,7 @@
 
  LSR A                  \ Set xBufferRight = 128 + T * 2
  AND #%11111100         \
- ORA #%10000000         \ rounded down to a multiple of 4 ???
+ ORA #%10000000         \ rounded down to a multiple of 4
  STA xBufferRight
 
  SEC                    \ Set xBufferLeft = xBufferRight - xBufferWidth
@@ -20691,7 +20691,7 @@
 
  LDA xTileToDraw        \ Set X to the index of the tile data that we set up for
  ORA drawingTableOffset \ this tile in part 2 of the GetTileViewAngles routine
- CLC                    \ ???
+ CLC
  ADC quadrantOffset
  AND #%00111111
  TAX
@@ -20757,7 +20757,7 @@
  PHA                    \ Store the tile shape on the stack
 
  LDA viewingQuadrantOpp \ Set triangleStartPoint to bit 0 of viewingQuadrantOpp
- AND #1                 \ to pass to the DrawTwoFaceTile routine ???
+ AND #1                 \ to pass to the DrawTwoFaceTile routine
  STA triangleStartPoint
 
  PLA                    \ Retrieve the tile shape from the stack
@@ -20954,7 +20954,7 @@
                         \ table offset for the tile colour, so we can pass them
                         \ to DrawTwoFaceTile to draw the tile
 
- LDA triangleStart,Y    \ Set triangleStartPoint = 1 for Y = 6, 7, 14, 15 ???
+ LDA triangleStart,Y    \ Set triangleStartPoint = 1 for Y = 6, 7, 14, 15
  STA triangleStartPoint \                          0 for Y = 2, 3, 10, 11
 
  TXA                    \ Set A = 1 for tile shapes 6, 7, 14, 15
@@ -20971,7 +20971,7 @@
 
  TXA                    \ Set A to the tile shape to pass to DrawTwoFaceTile
 
- BCS DrawTwoFaceTile    \ Add 16 to the tile shape if the C flag is clear ???
+ BCS DrawTwoFaceTile    \ Add 16 to the tile shape if the C flag is clear
  ORA #16
 
                         \ Fall through into DrawTwoFaceTile to draw the tile
@@ -20989,7 +20989,7 @@
 \ Arguments:
 \
 \   A                   The shape of the tile to draw, amended to use as an
-\                       offset into the tileShapeColour table ???
+\                       offset into the tileShapeColour table
 \
 \                       Add 16 if either of these is true, so we use the colours
 \                       from tileShapeColour+16:
@@ -23058,7 +23058,7 @@
                         \ a pair of triangles and A contains the offset of the
                         \ rear left tile corner in the drawing tables
 
-                        \ For a triangle, we number the points like this: ???
+                        \ For a triangle, we number the points like this:
                         \
                         \   1. Rear left
                         \                        3. Point 2 + trianglePointAdd,Y
@@ -23069,7 +23069,7 @@
                         \ from point 3 to point 1
 
  LDY triangleStartPoint \ Set Y to the number of the starting point for this
-                        \ tile shape ???
+                        \ tile shape
 
  BVC gpol2              \ If bit 6 of polygonType is clear then we are drawing
                         \ the first triangle in a two-face tile, so jump to
@@ -23087,12 +23087,10 @@
                         \   offset x          offset x + 1
                         \
                         \   offset 32 + x     offset 32 + x + 1
-                        \
-                        \ ???
 
  INY                    \ Set Y = Y + 2
  INY                    \
-                        \ to give 2 or 3 ???
+                        \ to give 2 or 3
 
 .gpol2
 
@@ -23106,7 +23104,7 @@
  STA polygonPoint+1     \ but in the other drawing table offset
 
  CLC                    \ Set the third triangle point to A + the Y-th entry
- ADC trianglePointAdd,Y \ from trianglePointAdd, mod 64 ???
+ ADC trianglePointAdd,Y \ from trianglePointAdd, mod 64
  AND #63
  STA polygonPoint+2
 
@@ -23547,7 +23545,7 @@
  INC xPolygonAddrHi     \ Increment xPolygonAddrHi to HI(xPolygonRight), so when
                         \ we modify the instructions for storing the polygon
                         \ line x-coordinates, they are stored in the table for
-                        \ the right end of the polygon line at xPolygonRight ???
+                        \ the right end of the polygon line at xPolygonRight
 
  STX T                  \ Swap X and Y around, so point #Y is now higher than
  STY U                  \ point #X
@@ -23569,8 +23567,8 @@
                         \ positive value in yEdgeDelta(Hi Lo) that contains the
                         \ y-axis delta between the two points
                         \
-                        \ xPolygonAddrHi will also point to the correct table
-                        \ for storing the polygon line (left or right) ???
+                        \ Also, xPolygonAddrHi points to the correct table for
+                        \ storing the polygon line (left or right)
 
  BIT xPolygonPointScale \ If bit 6 of xPolygonPointScale is clear then the pixel
  BVC gpol13             \ x-coordinates of all the polygon points fit into
@@ -23589,7 +23587,7 @@
  LDA yEdgeDeltaLo       \ If yEdgeDeltaLo = 0 then we know yEdgeDelta(Hi Lo)
  BEQ gpol15             \ must be zero as we passed through the BNE above, so
                         \ the polygon edge is horizontal and we jump to gpol15
-                        \ to move on to the next polygon edge ???
+                        \ to move on to the next polygon edge
 
 .gpol12
 
@@ -24098,7 +24096,8 @@
 
  LDA yEdgeDeltaLo       \ Set A = ~(yEdgeDeltaLo / 2)
  LSR A                  \
- EOR #&FF               \ We use A to keep track of the slope error ???
+ EOR #&FF               \ We use A to keep track of the slope error, though I am
+                        \ unsure of why we start with this value
 
  CLC                    \ Clear the C flag so the first addition we do in the
                         \ following loop will work correctly
@@ -24137,7 +24136,9 @@
                         \ to a whole pixel, so we now need to step along the
                         \ x-axis by a pixel
 
- SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
+ SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo
+                        \
+                        \ This updates the slope error in A
                         \
                         \ This subtraction works as we just passed through a
                         \ BCC, so we know the C flag is set
@@ -24325,7 +24326,8 @@
 
  LDA xEdgeDelta         \ Set A = ~(xEdgeDelta / 2)
  LSR A                  \
- EOR #&FF               \ We use A to keep track of the slope error ???
+ EOR #&FF               \ We use A to keep track of the slope error, though I am
+                        \ unsure of why we start with this value
 
  CLC                    \ Clear the C flag so the first addition we do in the
                         \ following loop will work correctly
@@ -24398,7 +24400,9 @@
                         \ pixel for each step (so we store the leftmost pixels
                         \ from this edge, which is what we want)
 
- SBC xEdgeDelta         \ Set A = A - xEdgeDelta ???
+ SBC xEdgeDelta         \ Set A = A - xEdgeDelta
+                        \
+                        \ This updates the slope error in A
                         \
                         \ This subtraction works as we just passed through a
                         \ BCC, so we know the C flag is set
@@ -24498,7 +24502,9 @@
                         \ to a whole pixel, so we now need to step along the
                         \ x-axis by a pixel
 
- SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
+ SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo
+                        \
+                        \ This updates the slope error in A
                         \
                         \ This subtraction works as we just passed through a
                         \ BCC, so we know the C flag is set
@@ -24611,7 +24617,9 @@
                         \ x-axis, so jump to tred33 so we do not move along the
                         \ y-axis
 
- SBC xEdgeDelta         \ Set A = A - xEdgeDelta ???
+ SBC xEdgeDelta         \ Set A = A - xEdgeDelta
+                        \
+                        \ This updates the slope error in A
                         \
                         \ This subtraction works as we just passed through a
                         \ BCC, so we know the C flag is set
@@ -25090,7 +25098,7 @@
                         \ instruction
 
  INY                    \ The start point is above the top edge of the screen,
-                        \ so increment the low byte of (A Y) ???
+                        \ so increment the low byte of (A Y)
 
 .tred38
 
@@ -25129,8 +25137,8 @@
 
  LDY yEdgeDeltaLo       \ Set A = ~(yEdgeDeltaLo / 2)
  TYA                    \
- LSR A                  \ We use A to keep track of the slope error ???
- EOR #&FF
+ LSR A                  \ We use A to keep track of the slope error, though I am
+ EOR #&FF               \ unsure of why we start with this value
 
  CLC                    \ Clear the C flag so the first addition we do in the
                         \ following loop will work correctly
@@ -25180,7 +25188,9 @@
                         \ to a whole pixel, so we now need to step along the
                         \ x-axis by a pixel
 
- SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo ???
+ SBC yEdgeDeltaLo       \ Set A = A - yEdgeDeltaLo
+                        \
+                        \ This updates the slope error in A
                         \
                         \ This subtraction works as we just passed through a
                         \ BCC, so we know the C flag is set
@@ -25268,7 +25278,7 @@
 .tred44
 
  BNE tred42             \ If yEdgeStartHi is non-zero, jump to tred42 to keep
-                        \ working along the edge with the same y-coordinate ???
+                        \ working along the edge with the same y-coordinate
 
  DEC tred41+1           \ Decrement the low byte of the address in the
                         \ instruction above so that it points to the table
@@ -25377,7 +25387,7 @@
                         \ instruction
 
  INY                    \ The start point is above the top edge of the screen,
-                        \ so increment the low byte of (A Y) ???
+                        \ so increment the low byte of (A Y)
 
 .tred47
 
@@ -25417,8 +25427,8 @@
 
  LDY xEdgeDelta         \ Set A = ~(xEdgeDelta / 2)
  TYA                    \
- LSR A                  \ We use A to keep track of the slope error ???
- EOR #&FF
+ LSR A                  \ We use A to keep track of the slope error, though I am
+ EOR #&FF               \ unsure of why we start with this value
 
  CLC                    \ Clear the C flag so the first addition we do in the
                         \ following loop will work correctly
@@ -25488,7 +25498,9 @@
                         \ to a whole pixel, so we now need to step along the
                         \ y-axis by a pixel
 
- SBC xEdgeDelta         \ Set A = A - xEdgeDelta ???
+ SBC xEdgeDelta         \ Set A = A - xEdgeDelta
+                        \
+                        \ This updates the slope error in A
                         \
                         \ This subtraction works as we just passed through a
                         \ BCC, so we know the C flag is set
@@ -25554,7 +25566,7 @@
 .tred52
 
  BNE tred50             \ If yEdgeStartHi is non-zero, jump to tred50 to keep
-                        \ working along the edge with the same y-coordinate ???
+                        \ working along the edge with the same y-coordinate
 
  DEC tred50+1           \ Decrement the low byte of the address in the
                         \ instruction above so that it points to the table
@@ -36175,7 +36187,7 @@
                         \ will clear these bits anyway
                         \
                         \ Is this a requirement for W so it can be passed to
-                        \ GetAngleFromCoords ???
+                        \ GetAngleFromCoords?
 
  LDA zDeltaAbsoluteHi   \ Set A to the high byte of the scaled z-axis length
 
@@ -36197,7 +36209,7 @@
  LDA xDeltaHi           \ If xDeltaHi and zDeltaHi have different sign bits in
  EOR zDeltaHi           \ bit 7, then EOR'ing them will produce a 1, so jump to
  BMI ghyp6              \ ghyp6 to skip the following, as the sign of the angle
-                        \ is already correct ???
+                        \ is already correct
 
  LDA #0                 \ Negate angle(Hi Lo) to give it the correct sign
  SEC
@@ -36219,7 +36231,7 @@
  CLC                    \ Set angleHi = angleHi + A
  ADC angleHi            \
  STA angleHi            \ So this sets bits 6 and 7 of the angle correctly so it
-                        \ is in the correct quadrant ???
+                        \ is in the correct quadrant
 
  RTS                    \ Return from the subroutine
 
@@ -36331,7 +36343,7 @@
  CLC                    \ Set angleHi = angleHi + A
  ADC angleHi
  STA angleHi            \ So this sets bits 6 and 7 of the angle correctly so it
-                        \ is in the correct quadrant ???
+                        \ is in the correct quadrant
 
  RTS                    \ Return from the subroutine
 
@@ -39836,7 +39848,7 @@
  LSR ditherStore        \
  ROR A                  \ This gives us the address of a randomly picked screen
  LSR ditherStore        \ row in (ditherStore A), as an offset from within
- ROR A                  \ screen memory ???
+ ROR A                  \ screen memory
  LSR ditherStore
  ROR A
 
