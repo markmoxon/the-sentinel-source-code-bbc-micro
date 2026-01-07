@@ -18,7 +18,7 @@ See [my profile](https://github.com/markmoxon) for more repositories to explore.
 
 This repository contains source code for The Sentinel on the BBC Micro, with every single line documented and (for the most part) explained. It has been reconstructed by hand from a disassembly of the original game binaries.
 
-<!--It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com).-->
+It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com).
 
 See the [introduction](#introduction) for more information.
 
@@ -49,11 +49,11 @@ This repository contains source code for The Sentinel on the BBC Micro, with eve
 
 You can build the fully functioning game from this source. One variant is currently supported: the version from the Play it Again Sam 6 compilation.
 
-<!--It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com), which contains all the code from this repository, but laid out in a much more human-friendly fashion.
+It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com), which contains all the code from this repository, but laid out in a much more human-friendly fashion.
 
-* If you want to browse the source and read about how The Sentinel works under the hood, you will probably find [the website](https://thesentinel.bbcelite.com) is a better place to start than this repository.-->
+* If you want to browse the source and read about how The Sentinel works under the hood, you will probably find [the website](https://thesentinel.bbcelite.com) is a better place to start than this repository.
 
-* If you would <!--rather--> like to explore the source code in your favourite IDE, then the [annotated source](1-source-files/main-sources/the-sentinel-source.asm) is what you're looking for. <!--It contains the exact same content as the website, so you won't be missing out (the website is generated from the source files, so they are guaranteed to be identical).--> You might also like to read the section on [browsing the source in an IDE](#browsing-the-source-in-an-ide) for some tips.
+* If you would rather explore the source code in your favourite IDE, then the [annotated source](1-source-files/main-sources/the-sentinel-source.asm) is what you're looking for. It contains the exact same content as the website, so you won't be missing out (the website is generated from the source files, so they are guaranteed to be identical). You might also like to read the section on [browsing the source in an IDE](#browsing-the-source-in-an-ide) for some tips.
 
 * If you want to build The Sentinel from the source on a modern computer, to produce a working game disc that can be loaded into a BBC Micro or an emulator, then you want the section on [building The Sentinel from the source](#building-the-sentinel-from-the-source).
 
