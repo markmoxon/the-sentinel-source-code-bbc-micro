@@ -16,7 +16,7 @@ See [my profile](https://github.com/markmoxon) for more repositories to explore.
 
 ![Screenshot of The Sentinel on the BBC Micro](https://thesentinel.bbcelite.com/images/github/TheSentinel.png)
 
-This repository contains source code for The Sentinel on the BBC Micro, with every single line documented and (for the most part) explained. It has been reconstructed by hand from a disassembly of the original game binaries.
+This repository contains source code for Geoff Crammond's classic game The Sentinel on the BBC Micro, with every single line documented and (for the most part) explained. It has been reconstructed by hand from a disassembly of the original game binaries.
 
 It is a companion to the [thesentinel.bbcelite.com website](https://thesentinel.bbcelite.com).
 
