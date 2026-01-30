@@ -13,6 +13,9 @@
 \ The terminology and notations used in this commentary are explained at
 \ https://thesentinel.bbcelite.com/terminology
 \
+\ The deep dive articles referred to in this commentary can be found at
+\ https://thesentinel.bbcelite.com/deep_dives
+\
 \ ------------------------------------------------------------------------------
 \
 \ This source file contains the main game code for The Sentinel on the BBC
