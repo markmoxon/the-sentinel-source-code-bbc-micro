@@ -31244,7 +31244,7 @@
 \
 \       Name: screenRowAddrHi
 \       Type: Variable
-\   Category: Graphics
+\   Category: Screen buffer
 \    Summary: Address lookup table for character rows in screen memory (high
 \             byte)
 \
@@ -32605,7 +32605,7 @@
 \
 \       Name: enemyYawStep
 \       Type: Variable
-\   Category: 3D objects
+\   Category: Gameplay
 \    Summary: The yaw angle through which each enemy rotates on each scheduled
 \             rotation
 \
@@ -36846,7 +36846,7 @@
 \
 \       Name: pixelByteColour1
 \       Type: Variable
-\   Category: Sights
+\   Category: Graphics
 \    Summary: A table for converting a pixel number in the range 0 to 3 into a
 \             screen mode 5 pixel byte with that pixel set to colour 1 (%01)
 \
