@@ -1734,8 +1734,27 @@
  EQUB &20, &20, &20, &20, &20, &20, &20, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
- EQUB &FF, &00, &00, &00, &00, &00, &00, &00
- EQUB &C0, &C0, &C0, &C0, &04, &04, &04, &04
+
+\ ******************************************************************************
+\
+\       Name: MOS sound and printer buffers
+\       Type: Workspace
+\    Address: &0800 to &08FF
+\   Category: Workspaces
+\    Summary: The operating system's sound and printer buffers
+\
+\ ------------------------------------------------------------------------------
+\
+\ The operating system uses page 8 for the sound, printer and envelope buffers.
+\
+\ The Sentinel does not use this memory directly, but the game binary contains
+\ workspace noise content that is loaded into this memory location, but which
+\ has no effect.
+\
+\ ******************************************************************************
+
+ EQUB &FF, &00, &00, &00, &00, &00, &00, &00    \ These values are workspace
+ EQUB &C0, &C0, &C0, &C0, &04, &04, &04, &04    \ noise and have no meaning
  EQUB &00, &00, &00, &64, &00, &00, &00, &FF
  EQUB &00, &00, &00, &00, &00, &00, &00, &00
  EQUB &00, &00, &00, &05, &00, &00, &00, &FF
