@@ -40595,7 +40595,9 @@
 \ 160 pixels.
 \
 \ Screen memory for the custom mode runs from &6000 to &7F3F, with four pixels
-\ per byte and four colours per pixel.
+\ per byte and four colours per pixel. Howeve, because the landscape view is
+\ panned using a hardware scroll, the entire section from &6000 to &7FFF is used
+\ for screen memory as the landscape is panned.
 \
 \ ******************************************************************************
 
