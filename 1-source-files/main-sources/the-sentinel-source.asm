@@ -40800,9 +40800,19 @@
                         \
                         \   * &4100-&49FF is copied to &5800-&60FF
                         \
-                        \ The game binary could easily have been structured to
-                        \ avoid this copy, so presumably it's just done to make
-                        \ the game code harder to crack
+                        \ This copying process moves part of the game binary
+                        \ into memory just before the custom screen mode, from
+                        \ &5800 to &5FFF
+                        \
+                        \ For the standard mode 5, this is part of screen memory
+                        \ (as mode 5's screen memory starts at &5800), but now
+                        \ that we have switched to the custom mode 5, which
+                        \ starts at &6000, this part of memory is available to
+                        \ the game for code
+                        \
+                        \ The loop copies one more page of memory than required,
+                        \ but this has no effect as the screen is cleared when
+                        \ we get to MainTitleLoop
 
  LDA #&00               \ Set (Q P) = &4100
  STA P                  \
