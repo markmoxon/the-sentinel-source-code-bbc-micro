@@ -22552,6 +22552,8 @@
 \
 \   * a, b represent arbitrary altitudes where a <> b <> 1
 \
+\   * c represents an arbitrary altitude where a <> b <> c (and c can be 1)
+\
 \ These are all the different types of shape (note there is no shape 8, and
 \ shapes 4 and 12 can have multiple layouts):
 \
@@ -22594,7 +22596,7 @@
 \   11      S <> V      S <> T      S >  U      U == V      U == T      0 0
 \                                                                       1 0
 \
-\   12a     S <> V      S <> T                  U <> V                  1 1
+\   12a     S <> V      S <> T                  U <> V                  1 c
 \                                                                       a b
 \
 \   12b     S == V      S <> T                  U <> V      U <> T      a b
@@ -22609,16 +22611,17 @@
 \   15      S == V      S <> T                  U == V      U >= T      0 1
 \                                                                       1 1
 \
-\ Note that for shape 12a, the top-right corner could in theory be a different
-\ altitude to a, b and 1, and the comparisons would still fit. However, the way
-\ the landscape gets smoothed ensures that every tile has at least one
-\ horizontal edge, so this means the top-right corner must be at altitude 1.
+\ Note that shape 12a is catch-all, as it is allocated to any shapes that don't
+\ fit into the other numbers.
 \
 \ It is worth noting that:
 \
 \   * Shape 0 has four horizontal edges
 \
-\   * Shapes 4 and 12 have one horizontal edge and three sloping edges
+\   * Shapes 4 and 12b have one horizontal edge and three sloping edges
+\
+\   * Shape 12a has either one or zero horizontal edges and either three or four
+\     sloping edges
 \
 \   * Shape 8 is unused
 \
