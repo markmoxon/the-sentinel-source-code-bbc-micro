@@ -22560,8 +22560,8 @@
 \   Shape   S vs V      S vs T      S vs U      U vs V      U vs T      Layout
 \   -----   ------      ------      ------      ------      ------      ------
 \
-\   0       S == V      S == T      S == U                              1 1
-\                                                                       1 1
+\   0       S == V      S == T      S == U                              0 0
+\                                                                       0 0
 \
 \   1       S == V      S <> T                  U <  V      U == T      0 0
 \                                                                       1 1
