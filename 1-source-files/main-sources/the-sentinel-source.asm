@@ -5105,6 +5105,7 @@
 \   Category: Main title loop
 \    Summary: The main title loop: display the title screen, fetch the landscape
 \             number/code, preview the landscape and jump to the main game loop
+\  Deep dive: Program flow of the main title loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5263,6 +5264,7 @@
 \   Category: Main title loop
 \    Summary: Display the "WRONG SECRET CODE" error, wait for a key press and
 \             rejoin the main title loop
+\  Deep dive: Program flow of the main title loop
 \
 \ ******************************************************************************
 
@@ -7775,7 +7777,7 @@
                         \
                         \   * PreviewLandscape
                         \
-                        \   * FinishLandscape
+                        \   * GetNextLandscape
                         \
                         \ and then either failing the secret code checks or
                         \ finishing the current landscape
@@ -7785,7 +7787,7 @@
                         \ "WRONG SECRET CODE" error, wait for a key press and
                         \ rejoin the main title loop
                         \
-                        \ If we got here from FinishLandscape, then the next
+                        \ If we got here from GetNextLandscape, then the next
                         \ instructions display the landscape's secret code on
                         \ completion of the level
 
@@ -10820,15 +10822,16 @@
 
 \ ******************************************************************************
 \
-\       Name: FinishLandscape
+\       Name: GetNextLandscape
 \       Type: Subroutine
-\   Category: Main game loop
+\   Category: Main title loop
 \    Summary: Add the player's energy to the landscape number to get the number
 \             of the next landscape and display that landscape's secret code
+\  Deep dive: Program flow of the main title loop
 \
 \ ******************************************************************************
 
-.FinishLandscape
+.GetNextLandscape
 
  SED                    \ Set the D flag to switch arithmetic to binary coded
                         \ decimal (BCD), so the call to GetPlayerEnergyBCD and
@@ -18047,7 +18050,7 @@
 \
 \ Other entry points:
 \
-\   talt2               Jump to MainTitleLoop via game10
+\   talt2               Jump to MainTitleLoop via flan3
 \
 \ ******************************************************************************
 
@@ -18092,7 +18095,7 @@
 
 .talt2
 
- JMP game10             \ Jump to MainTitleLoop to restart the game (this has
+ JMP flan3              \ Jump to MainTitleLoop to restart the game (this has
                         \ nothing to do with the GetTileAltitudes routine, but
                         \ is all part of the anti-cracker code)
 
@@ -21203,6 +21206,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Generate tile data for the landscape
+\  Deep dive: Program flow of the main title loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22300,7 +22304,7 @@
                         \     player enters an incorrect secret code
                         \
                         \   * If we called GenerateLandscape from the
-                        \     FinishLandscape routine, then we return there to
+                        \     GetNextLandscape routine, then we return there to
                         \     display the landscape's secret entry code
                         \     on-screen, for when the player completes a level
                         \
@@ -28098,6 +28102,7 @@
 \       Type: Subroutine
 \   Category: Main game loop
 \    Summary: Start playing the generated landscape
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
@@ -28125,24 +28130,19 @@
 
 \ ******************************************************************************
 \
-\       Name: MainGameLoop
+\       Name: MainGameLoop (Part 1 of 2)
 \       Type: Subroutine
 \   Category: Main game loop
 \    Summary: The main game loop for playing a landscape
-\
-\ ------------------------------------------------------------------------------
-\
-\ Other entry points:
-\
-\   game10              Jump to MainTitleLoop to restart the game
+\  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
 
 .MainGameLoop
 
                         \ If we get here then we have either started a brand new
-                        \ game or we jumped here from game11 below when one of
-                        \ the following occurred:
+                        \ game or we jumped here from part 2 when one of the
+                        \ following occurred:
                         \
                         \   * The Sentinel has won
                         \
@@ -28162,8 +28162,8 @@
 .game1
 
                         \ If we get here then we have either started a brand new
-                        \ landscape or we jumped to MainGameLoop from game11
-                        \ below when one of the following occurred:
+                        \ landscape or we jumped to MainGameLoop from part 2
+                        \ when one of the following occurred:
                         \
                         \   * The Sentinel has won
                         \
@@ -28175,8 +28175,8 @@
                         \ landscape
 
                         \ If we get here then we have either started a brand new
-                        \ landscape or we jumped to MainGameLoop from game11
-                        \ below when the player moved to a new tile
+                        \ landscape or we jumped to MainGameLoop from part 2
+                        \ when the player moved to a new tile
                         \
                         \ In both cases we need to generate a brand new
                         \ landscape view
@@ -28217,10 +28217,10 @@
                         \ If we get here then the game has ended because the
                         \ player performed a hyperspace
 
- BVS game7              \ If bit 6 of hyperspaceEndsGame is set then the game
+ BVS FinishLandscape    \ If bit 6 of hyperspaceEndsGame is set then the game
                         \ has ended because the player has hyperspaced from the
                         \ Sentinel's tower, thus winning the game, so jump to
-                        \ game7 to process winning the landscape
+                        \ FinishLandscape to process winning the landscape
 
                         \ If we get here then bit 6 of hyperspaceEndsGame is
                         \ clear and the player has run out of energy by trying
@@ -28280,14 +28280,14 @@
 
  LDA hyperspaceEndsGame \ Set A to the hyperspace status flag
 
- BPL game11             \ If bit 7 of hyperspaceEndsGame is clear then the game
+ BPL game7              \ If bit 7 of hyperspaceEndsGame is clear then the game
                         \ has not ended because of a hyperspace, so jump to
-                        \ game11 to keep going
+                        \ part 2 to move on to the main game loop itself
 
                         \ If we get here then the game has ended because of a
                         \ hyperspace, and it must be because the player ran out
                         \ of energy, as otherwise we would have taken the branch
-                        \ to game7 above
+                        \ to part 2 above
 
  STA sentinelHasWon     \ Set bit 7 of sentinelHasWon to indicate that the
                         \ player has run out of energy and the Sentinel has won
@@ -28320,7 +28320,24 @@
                         \ landscape without having to enter the landscape's
                         \ secret code again
 
-.game7
+\ ******************************************************************************
+\
+\       Name: FinishLandscape
+\       Type: Subroutine
+\   Category: Main title loop
+\    Summary: Process the successful completion of a landscape by displaying the
+\             secret code for the next landscape and jumping to the title screen
+\  Deep dive: Program flow of the main title loop
+\
+\ ------------------------------------------------------------------------------
+\
+\ Other entry points:
+\
+\   flan3               Jump to MainTitleLoop to restart the game
+\
+\ ******************************************************************************
+
+.FinishLandscape
 
                         \ If we get here then we have successfully completed
                         \ the landscape, so we display the secret code for the
@@ -28333,7 +28350,7 @@
                         \ landscape we need to generate it, so we now reset the
                         \ landscape seed generator, the tile visibility table
                         \ and the object flags, to get ready for the generation
-                        \ process in the FinishLandscape routine
+                        \ process in the GetNextLandscape routine
 
  LDX #3                 \ We now zero bits 8 to 40 of the five-byte linear
                         \ feedback shift landscape register, so set a byte
@@ -28344,18 +28361,18 @@
  STA soundEffect        \ Set soundEffect = 0 to disable sound effect processing
                         \ in the ProcessSound routine
 
-.game8
+.flan1
 
  STA seedNumberLFSR+1,X \ Zero byte X+1 of seedNumberLFSR(4 3 2 1 0)
 
  DEX                    \ Decrement the byte counter
 
- BPL game8              \ Loop back until we have reset all four bytes
+ BPL flan1              \ Loop back until we have reset all four bytes
 
  JSR ResetTilesObjects  \ Reset the tile visibility table and deallocate all
                         \ object numbers
 
- JSR FinishLandscape    \ Add the player's energy to the landscape number to get
+ JSR GetNextLandscape   \ Add the player's energy to the landscape number to get
                         \ the number of the next landscape and display that
                         \ landscape's secret code as a title screen
 
@@ -28369,13 +28386,13 @@
  LDA #66                \ Call the PlayMusic routine with A = 66 to play the
  JSR PlayMusic          \ music for when the player finishes a landscape
 
-.game9
+.flan2
 
  JSR ProcessSound       \ Process any sounds or music that are being made in the
                         \ background
 
  LDA musicCounter       \ Loop back to keep calling ProcessSound until bit 7 of
- BPL game9              \ musicCounter is clear, so if any music is being
+ BPL flan2              \ musicCounter is clear, so if any music is being
                         \ played, we wait until it has finished
 
  LDX #6                 \ Print text token 6: Print "PRESS ANY KEY" at (64, 100)
@@ -28385,12 +28402,22 @@
                         \ read a character from it (so this waits for a key
                         \ press)
 
-.game10
+.flan3
 
  JMP MainTitleLoop      \ Jump to MainTitleLoop to restart the game from the
                         \ title screen
 
-.game11
+\ ******************************************************************************
+\
+\       Name: MainGameLoop (Part 2 of 2)
+\       Type: Subroutine
+\   Category: Main game loop
+\    Summary: Progress gameplay as part of the main game loop
+\  Deep dive: Program flow of the main game loop
+\
+\ ******************************************************************************
+
+.game7
 
                         \ If we get here then the game is still in progress, so
                         \ we progress the gameplay
@@ -28399,10 +28426,10 @@
                         \ presses, returning here when the player moves, quits,
                         \ loses or pans
 
- BCC game12             \ The ProcessGameplay routine will return with the C
+ BCC game8              \ The ProcessGameplay routine will return with the C
                         \ flag clear if we just finished a landscape pan and the
                         \ player is still holding down a pan key, in which case
-                        \ jump to game12 to process the pan
+                        \ jump to game8 to process the pan
 
  JMP MainGameLoop       \ Otherwise the ProcessGameplay routine returned because
                         \ one of the following is true:
@@ -28415,7 +28442,7 @@
                         \
                         \ so jump to MainGameLoop to process these actions
 
-.game12
+.game8
 
                         \ If we get here then the player is holding down a pan
                         \ key and wants to pan the screen, so we need to process
@@ -28433,7 +28460,7 @@
                         \ be updated on the screen with a dithered effect
 
  BIT sightsAreVisible   \ If bit 7 of sightsAreVisible is set then the sights
- BMI game13             \ are being shown, so jump to game13 to skip the
+ BMI game9              \ are being shown, so jump to game9 to skip the
                         \ following two instructions
                         \
                         \ This ensures that when we pan the screen as a result
@@ -28447,7 +28474,7 @@
                         \ will abort the drawing process if the player releases
                         \ the pan key before the drawing process has finished
 
-.game13
+.game9
 
  JSR PanLandscapeView   \ Pan the landscape and update the landscape view
 
@@ -28464,15 +28491,15 @@
  STA scrollCounter      \ so the interrupt handler will scroll the screen by
                         \ this many steps in the background
 
-.game14
+.game10
 
  LDA scrollCounter      \ Loop around until scrollCounter is zero, so this waits
- BNE game14             \ until the interrupt handler has finished scrolling the
+ BNE game10             \ until the interrupt handler has finished scrolling the
                         \ landscape view, thus implementing the pan on-screen
 
- BEQ game11             \ Jump to game11 to continue progressing the gameplay
-                        \ (this BEQ is effectively a JMP as we just passed
-                        \ through a BNE)
+ BEQ game7              \ Jump back to the start of part 2 to continue with
+                        \ progressing the gameplay (this BEQ is effectively a
+                        \ JMP as we just passed through a BNE)
 
 \ ******************************************************************************
 \
@@ -40038,6 +40065,7 @@
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: Display the game over screen
+\  Deep dive: Program flow of the main title loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40353,6 +40381,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Draw an aerial preview of the landscape
+\  Deep dive: Program flow of the main title loop
 \
 \ ******************************************************************************
 
@@ -40587,6 +40616,7 @@
 \   Category: Setup
 \    Summary: Configure the custom screen mode, set the break handler to clear
 \             memory, move code, reset timers and set the interrupt handler
+\  Deep dive: Entry and setup code
 \
 \ ------------------------------------------------------------------------------
 \
@@ -41012,6 +41042,7 @@
 \       Type: Subroutine
 \   Category: Setup
 \    Summary: The main entry point for the game
+\  Deep dive: Entry and setup code
 \
 \ ******************************************************************************
 

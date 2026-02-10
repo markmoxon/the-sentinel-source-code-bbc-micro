@@ -4685,7 +4685,7 @@
 .dren2
      1A78   20 D8 1E   JSR &1ED8
      1A7B   4C EC 1A   JMP &1AEC
-.FinishLandscape
+.GetNextLandscape
      1A7E   F8         SED
      1A7F   20 2C 34   JSR &342C
      1A82   18         CLC
@@ -8758,13 +8758,13 @@
      3623   AE FD 0C   LDX &0CFD
      3626   20 B7 33   JSR &33B7
      3629   4C 6C 10   JMP &106C
-.game7
+.FinishLandscape
      362C   A9 04      LDA #&04
      362E   20 2C 5E   JSR &5E2C
      3631   A2 03      LDX #&03
      3633   A9 00      LDA #&00
      3635   8D 73 0C   STA &0C73
-.game8
+.flan1
      3638   9D 7C 0C   STA &0C7C,X
      363B   CA         DEX
      363C   10 FA      BPL &3638
@@ -8776,20 +8776,20 @@
      364B   8D DF 0C   STA &0CDF
      364E   A9 42      LDA #&42
      3650   20 F6 5F   JSR &5FF6
-.game9
+.flan2
      3653   20 5A 35   JSR &355A
      3656   AD E7 0C   LDA &0CE7
      3659   10 F8      BPL &3653
      365B   A2 06      LDX #&06
      365D   20 AD 36   JSR &36AD
      3660   20 07 5E   JSR &5E07
-.game10
+.flan3
      3663   4C 17 10   JMP &1017
-.game11
+.game7
      3666   20 64 12   JSR &1264
      3669   90 03      BCC &366E
      366B   4C AF 35   JMP &35AF
-.game12
+.game8
      366E   A5 09      LDA &09
      3670   85 08      STA &08
      3672   A9 00      LDA #&00
@@ -8799,13 +8799,13 @@
      367D   30 04      BMI &3683
      367F   38         SEC
      3680   6E 1B 0C   ROR &0C1B
-.game13
+.game9
      3683   20 B7 10   JSR &10B7
      3686   4E 1B 0C   LSR &0C1B
      3689   20 C7 36   JSR &36C7
      368C   AD D1 0C   LDA &0CD1
      368F   8D C1 0C   STA &0CC1
-.game14
+.game10
      3692   AD C1 0C   LDA &0CC1
      3695   D0 FB      BNE &3692
      3697   F0 CD      BEQ &3666
