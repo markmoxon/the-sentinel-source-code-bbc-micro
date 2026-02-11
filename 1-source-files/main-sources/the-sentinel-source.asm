@@ -5790,6 +5790,7 @@
 \   Category: Keyboard
 \    Summary: Check for various game key presses and update the key logger and
 \             relevant variables (during the interrupt handler)
+\  Deep dive: The interrupt handler
 \
 \ ******************************************************************************
 
@@ -6293,6 +6294,7 @@
 \   Category: Gameplay
 \    Summary: A gameplay loop that processes all game key presses, returning to
 \             the main game loop when the player moves, quits, loses or pans
+\  Deep dive: Program flow of the gameplay loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6449,7 +6451,7 @@
  JSR ProcessVolumeKeys  \ Adjust the volume of the sound envelopes when the
                         \ volume keys are pressed
 
- JMP play1              \ Jump back to play1 to repeat the main game loop
+ JMP play1              \ Jump back to play1 to repeat the gameplay loop
 
 .play5
 
@@ -6579,6 +6581,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Update the timers that control the enemy tactics
+\  Deep dive: The interrupt handler
 \
 \ ******************************************************************************
 
@@ -11182,6 +11185,7 @@
 \   Category: Keyboard
 \    Summary: Process an action key press from key logger entry 1 (absorb,
 \             transfer, create, hyperspace, U-turn)
+\  Deep dive: Program flow of the gameplay loop
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11471,6 +11475,7 @@
 \   Category: Keyboard
 \    Summary: Process an action key press from key logger entry 1 (absorb,
 \             transfer, create, hyperspace, U-turn)
+\  Deep dive: Program flow of the gameplay loop
 \
 \ ******************************************************************************
 
@@ -28866,6 +28871,7 @@
 \   Category: Main game loop
 \    Summary: The main interrupt handler, which gets run 50 times a second to
 \             update the game state and check for game key presses
+\  Deep dive: The interrupt handler
 \
 \ ------------------------------------------------------------------------------
 \
@@ -28967,9 +28973,9 @@
                         \ now do one scrolling step (ScrollPlayerView decrements
                         \ the counter in scrollCounter)
 
- JSR ScrollPlayerView   \ Scroll the screen and copy data from the view screen
-                        \ buffer into screen memory to implement the player's
-                        \ scrolling landscape view
+ JSR ScrollPlayerView   \ Scroll the screen and copy data from the screen buffer
+                        \ into screen memory to implement the player's scrolling
+                        \ landscape view
 
  JSR ShowIconBuffer     \ Display the contents of the icon screen buffer by
                         \ copying it into screen memory, as the scrolling
@@ -29065,6 +29071,7 @@
 \   Category: Graphics
 \    Summary: Scroll the screen and copy data from the screen buffer into screen
 \             memory to implement the player's scrolling landscape view
+\  Deep dive: The interrupt handler
 \
 \ ******************************************************************************
 
@@ -40617,6 +40624,7 @@
 \    Summary: Configure the custom screen mode, set the break handler to clear
 \             memory, move code, reset timers and set the interrupt handler
 \  Deep dive: Entry and setup code
+\             The interrupt handler
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40912,7 +40920,7 @@
                         \ process takes two ticks, which gives us a total count
                         \ of 20,000)
                         \
-                        \ The timer counts down at 1 MHz. or one million times a
+                        \ The timer counts down at 1 MHz, or one million times a
                         \ second, so this means the interrupt is triggered every
                         \ 0.02 seconds, or exactly 50 times a second
                         \
