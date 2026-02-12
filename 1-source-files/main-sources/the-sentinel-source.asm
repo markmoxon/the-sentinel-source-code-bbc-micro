@@ -2519,8 +2519,10 @@
                         \ whether to regenerate the player's landscape view
                         \
                         \   * Bit 7 clear = player has not moved to a new tile
+                        \                   or performed a U-turn
                         \
-                        \   * Bit 7 set = player has moved to a new tile
+                        \   * Bit 7 set = player has moved to a new tile or
+                        \                 performed a U-turn
 
 .quitGame
 
@@ -6312,6 +6314,8 @@
 \
 \                           * The player has moved to a new tile
 \
+\                           * The player has performed a U-turn
+\
 \                           * The player has pressed the quit game key
 \
 \ ******************************************************************************
@@ -6416,6 +6420,8 @@
                         \
                         \   * The player has moved to a new tile
                         \
+                        \   * The player has performed a U-turn
+                        \
                         \   * The player has pressed the quit game key
                         \
                         \ so the main game loop can process this action
@@ -6431,8 +6437,9 @@
 
  BCS play3              \ If the C flag is set then bit 7 of playerHasMovedTile
                         \ was set before we cleared it, which indicates that the
-                        \ player has moved to a new tile, so jump to play3 to
-                        \ return from the subroutine with the C flag set
+                        \ player has moved to a new tile or performed a U-turn,
+                        \ so jump to play3 to return from the subroutine with
+                        \ the C flag set
 
  BIT quitGame           \ If bit 7 of quitGame is set then the player has
  BMI play3              \ pressed function key f1 to quit the game, so jump to
@@ -6565,8 +6572,9 @@
 
                         \ If we get here then bit 7 of playerHasMovedTile was
                         \ set before we cleared it, which indicates that the
-                        \ player has moved to a new tile, so return from the
-                        \ subroutine with the C flag set
+                        \ player has moved to a new tile or has performed a
+                        \ U-turn, so return from the subroutine with the C
+                        \ flag set
 
  RTS                    \ Return from the subroutine
 
@@ -9233,7 +9241,7 @@
 .tact6
 
  STX viewingObject      \ Set the viewing object to the enemy we are processing,
-                        \ so everything is done from their viewpoint from now on
+                        \ so everything is done from its viewpoint from now on
 
  JSR ExpendEnemyEnergy  \ Drain one unit of energy from the enemy and expend it
                         \ onto the landscape by spawning a tree, if possible
@@ -11204,7 +11212,7 @@
 \
 \                           * Player has hyperspaced
 \
-\                           * Player has done a U-turn
+\                           * Player has performed a U-turn
 \
 \                           * Player has transferred to a new tile
 \
@@ -11298,9 +11306,10 @@
  LDA #40                \ Set A = 40 to pass to the PlayMusic routine after we
                         \ jump to pkey4, so it plays the music for a U-turn
 
- BNE pkey4              \ Jump to pkey4 to play the U-turn music and return from
-                        \ the subroutine with the C flag set (this BNE is
-                        \ effectively a JMP as A is never zero)
+ BNE pkey4              \ Jump to pkey4 to play the U-turn music, set bit 7 of
+                        \ playerHasMovedTile so the landscape view gets redrawn,
+                        \ and return from the subroutine with the C flag set
+                        \ (this BNE is effectively a JMP as A is never zero)
 
 .pkey3
 
@@ -11493,7 +11502,7 @@
                         \ robot or the music for a U-turn)
 
  LDA #%10000000         \ Set bit 7 of playerHasMovedTile to indicate that the
- STA playerHasMovedTile \ player has moved to a new tile
+ STA playerHasMovedTile \ player has moved to a new tile or performed a U-turn
 
  SEC                    \ Set the C flag to denote that no object has been added
                         \ or removed by the routine
@@ -28153,6 +28162,8 @@
                         \
                         \   * The player has moved to a new tile
                         \
+                        \   * The player has performed a U-turn
+                        \
                         \   * The player has pressed the quit game key
 
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
@@ -28173,6 +28184,8 @@
                         \   * The Sentinel has won
                         \
                         \   * The player has moved to a new tile
+                        \
+                        \   * The player has performed a U-turn
 
  LDA sentinelHasWon     \ If bit 7 of sentinelHasWon is set then the player has
  BMI game6              \ run out of energy either by trying to hyperspace or by
@@ -28181,7 +28194,8 @@
 
                         \ If we get here then we have either started a brand new
                         \ landscape or we jumped to MainGameLoop from part 2
-                        \ when the player moved to a new tile
+                        \ when the player moved to a new tile or performed a
+                        \ U-turn
                         \
                         \ In both cases we need to generate a brand new
                         \ landscape view
@@ -28442,6 +28456,8 @@
                         \   * The Sentinel has won
                         \
                         \   * The player has moved to a new tile
+                        \
+                        \   * The player has performed a U-turn
                         \
                         \   * The player has pressed the quit game key
                         \
