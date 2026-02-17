@@ -751,7 +751,7 @@
 .cosVectorPitchLo
 
  SKIP 1                 \ The low byte of cos(vectorPitchAngle) when converting
-                        \ pitch and yaw angles to cartesian vectors
+                        \ pitch and yaw angles to Cartesian vectors
                         \
                         \ This variable shares the same memory location as
                         \ xTileViewLeft
@@ -767,7 +767,7 @@
 .cosVectorPitchHi
 
  SKIP 1                 \ The high byte of cos(vectorPitchAngle) when converting
-                        \ pitch and yaw angles to cartesian vectors
+                        \ pitch and yaw angles to Cartesian vectors
                         \
                         \ This variable shares the same memory location as
                         \ xTileViewRight
@@ -1555,6 +1555,8 @@
 \       Type: Variable
 \   Category: Landscape
 \    Summary: Altitude and shape data for landscape tiles
+\  Deep dive: Tile data
+\             Tile shapes
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1864,6 +1866,7 @@
 \   Category: 3D objects
 \    Summary: The yaw angle for each object (i.e. the horizontal direction in
 \             which they are facing)
+\  Deep dive: Pitch and yaw angles
 \
 \ ******************************************************************************
 
@@ -1954,6 +1957,7 @@
 \   Category: Drawing the landscape
 \    Summary: Storage for the pitch angles of tiles and object points for
 \             drawing the current landscape view (low bytes)
+\  Deep dive: Pitch and yaw angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1984,6 +1988,7 @@
 \   Category: Drawing the landscape
 \    Summary: Storage for the pitch angles of tiles and object points for
 \             drawing the current landscape view (high bytes)
+\  Deep dive: Pitch and yaw angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2039,6 +2044,7 @@
 \   Category: Drawing the landscape
 \    Summary: Storage for the yaw angles of tiles and object points for drawing
 \             the current landscape view (low bytes)
+\  Deep dive: Pitch and yaw angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3103,6 +3109,7 @@
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
 \    Summary: Calculate (A T) = T * U
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3207,6 +3214,9 @@
 \   Category: Maths (Geometry)
 \    Summary: Given the coordinates along two axes, calculate the pitch or yaw
 \             angle to those coordinates
+\  Deep dive: Trigonometry
+\             Coordinate conversion
+\             Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3420,6 +3430,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Overflow and accuracy calculations
+\  Deep dive: Trigonometry
 \
 \ ******************************************************************************
 
@@ -3563,6 +3574,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate the arctangent to get the angle
+\  Deep dive: Trigonometry
 \
 \ ******************************************************************************
 
@@ -3688,6 +3700,8 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the rotation matrix for rotating the pitch or yaw angle
 \             for the sights into the global 3D coordinate system
+\  Deep dive: Trigonometry
+\             Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -3702,7 +3716,7 @@
 \   cosAngle = cos(vectorYawAngle)
 \
 \ We can use these to convert the pitch and yaw angles of the vector from the
-\ player's eyes to the sights into a cartesian vector within the 3D world.
+\ player's eyes to the sights into a Cartesian vector within the 3D world.
 \
 \ This routine is from Revs, Geoff Crammond's previous game. There are only
 \ minor differences: the argument is (A T) instead of (A X), and the value of X
@@ -3865,6 +3879,8 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate sin(H G) for smaller angles
+\  Deep dive: Trigonometry
+\             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
 
@@ -3941,6 +3957,8 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate sin(H G) for bigger angles
+\  Deep dive: Trigonometry
+\             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
 
@@ -4080,6 +4098,8 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Loop back to calculate cos instead of sin
+\  Deep dive: Trigonometry
+\             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
 
@@ -4137,6 +4157,8 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Apply the correct signs to the result
+\  Deep dive: Trigonometry
+\             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
 
@@ -4258,6 +4280,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Convert a 16-bit angle into radians, restricted to a quarter
 \             circle
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4344,6 +4367,7 @@
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
 \    Summary: Multiply an 8-bit and a 16-bit number
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4399,6 +4423,7 @@
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Scan the keyboard for a specific key press
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4453,6 +4478,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate the sine and the cosine of an angle
+\  Deep dive: Trigonometry
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4848,6 +4874,7 @@
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
 \    Summary: Multiply a sign-magnitude 16-bit number and a signed 16-bit number
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5025,6 +5052,7 @@
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
 \    Summary: Calculate the absolute value (modulus) of a 16-bit number
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5071,6 +5099,7 @@
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
 \    Summary: Negate a 16-bit number
+\  Deep dive: Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5640,6 +5669,7 @@
 \   Category: Sights
 \    Summary: The pitch angle of the highest point that the player can look at
 \             with the sights
+\  Deep dive: Pitch and yaw angles
 \
 \ ******************************************************************************
 
@@ -5654,6 +5684,7 @@
 \   Category: Sights
 \    Summary: The pitch angle of the lowest point that the player can look at
 \             with the sights
+\  Deep dive: Pitch and yaw angles
 \
 \ ******************************************************************************
 
@@ -10067,7 +10098,7 @@
                         \
                         \   vectorYawAngle(Hi Lo)
                         \
-                        \ into a cartesian vector:
+                        \ into a Cartesian vector:
                         \
                         \   [ xVector(Lo Bot) ]
                         \   [ yVector(Lo Bot) ]
@@ -11327,7 +11358,7 @@
                         \
                         \   vectorPitchAngle(Hi Lo)
                         \
-                        \ and as a cartesian vector:
+                        \ and as a Cartesian vector:
                         \
                         \   [ xVector(Lo Bot) ]
                         \   [ yVector(Lo Bot) ]
@@ -11862,7 +11893,7 @@
                         \   = (ySights-5) / 16 + (objectPitchAngle,X 0) + (3 32)
                         \
                         \ We now fall through into GetVectorForAngles to convert
-                        \ these two angles into a cartesian vector:
+                        \ these two angles into a Cartesian vector:
                         \
                         \   [ xVector(Lo Bot) ]
                         \   [ yVector(Lo Bot) ]
@@ -11873,13 +11904,14 @@
 \       Name: GetVectorForAngles
 \       Type: Subroutine
 \   Category: Maths (Geometry)
-\    Summary: Convert a vector from pitch and yaw angles into a 3D cartesian
+\    Summary: Convert a vector from pitch and yaw angles into a 3D Cartesian
 \             vector
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
 \ This routine uses the rotation matrix routine from Revs to convert a vector
-\ from a pair of pitch and yaw angles into a cartesian [x y z] vector.
+\ from a pair of pitch and yaw angles into a Cartesian [x y z] vector.
 \
 \ The pitch and yaw angles are 16-bit numbers as follows:
 \
@@ -11887,7 +11919,7 @@
 \
 \   vectorYawAngle(Hi Lo)
 \
-\ The same vector, but expressed as a cartesian vector, is calculated as
+\ The same vector, but expressed as a Cartesian vector, is calculated as
 \ follows:
 \
 \   [ xVector(Lo Bot) ]
@@ -11913,7 +11945,7 @@
                         \ the same process
 
                         \ We start by converting the pitch angle of the vector
-                        \ from the player's eyes to the sights into a cartesian
+                        \ from the player's eyes to the sights into a Cartesian
                         \ y-coordinate in the global 3D coordinate system, where
                         \ the y-axis is the up-down axis
                         \
@@ -12003,7 +12035,7 @@
                         \   y = sin(vectorPitchAngle)
 
                         \ Now we convert the yaw angle of the sights vector
-                        \ into cartesian x- and z-coordinates, where the x-axis
+                        \ into Cartesian x- and z-coordinates, where the x-axis
                         \ is the left-right axis and the z-axis goes into the
                         \ screen
                         \
@@ -12436,7 +12468,7 @@
                         \ there is tree on the tile that can be seen by the
                         \ gaze vector
 
- JSR GetObjectCoords    \ Fetch the cartesian coordinates of the viewing object
+ JSR GetObjectCoords    \ Fetch the Cartesian coordinates of the viewing object
                         \ as three 24-bit numbers, as follows:
                         \
                         \   xCoord(Hi Lo Bot)
@@ -12597,7 +12629,7 @@
                         \ more than 0.5 of a tile's height above the tile) apart
                         \ from the tile containing the Sentinel's tower, when it
                         \ is reduced to 16 if the gaze vector is pointing at the
-                        \ sides of the tower (i.e. no more than 0.025 of a
+                        \ sides of the tower (i.e. no more than 0.0625 of a
                         \ tile's height above the tile)
                         \
                         \ This makes the player have to be much more accurate
@@ -13605,7 +13637,7 @@
                         \ platform on top of the tower
 
  LDA #16                \ Set yAccuracyLo = 16, so the gaze vector has to be
- STA yAccuracyLo        \ no more than 0.025 of a tile's height above the tile
+ STA yAccuracyLo        \ no more than 0.0625 of a tile's height above the tile
                         \ for us to consider it as potentially hitting the tile
                         \ when we return to the FollowGazeVector routine (this
                         \ makes the player have to be much more accurate when
@@ -13885,7 +13917,7 @@
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine fetches the cartesian coordinates of object #X as three 24-bit
+\ This routine fetches the Cartesian coordinates of object #X as three 24-bit
 \ numbers, as follows:
 \
 \   xCoord(Hi Lo Bot)
@@ -14930,6 +14962,7 @@
 \   Category: Gameplay
 \    Summary: Calculate whether any part of an object is visible on-screen, and
 \             if so, which character columns it spans on the screen
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17456,7 +17489,7 @@
                         \ corner in bits 1-4, so we shift this value right by
                         \ one place to extract the altitude
 
- LDX playerObject       \ Fetch the cartesian coordinates of the player object
+ LDX playerObject       \ Fetch the Cartesian coordinates of the player object
  JSR GetObjectCoords    \ as three 24-bit numbers, as follows:
                         \
                         \   xCoord(Hi Lo Bot)
@@ -19660,6 +19693,7 @@
 \   Category: Drawing the landscape
 \    Summary: Calculate the pitch and yaw angles for a tile corner, relative to
 \             a viewer object (e.g. the player), and whether it is on-screen
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21891,6 +21925,8 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Get the tile data and tile data address for a specific tile
+\  Deep dive: Tile data
+\             Cartesian coordinates
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22551,6 +22587,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Calculate the shape of the tile anchored at (xTile, zTile)
+\  Deep dive: Tile shapes
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31174,6 +31211,8 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for arctan values when calculating yaw angles (low byte)
+\  Deep dive: Trigonometry
+\             Coordinate conversion
 \
 \ ******************************************************************************
 
@@ -31191,6 +31230,8 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for arctan values when calculating yaw angles (high byte)
+\  Deep dive: Trigonometry
+\             Coordinate conversion
 \
 \ ******************************************************************************
 
@@ -31208,6 +31249,7 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for hypotenuse lengths given the tangent of an angle
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -32680,6 +32722,7 @@
 \   Category: Gameplay
 \    Summary: The yaw angle through which each enemy rotates on each scheduled
 \             rotation
+\  Deep dive: Pitch and yaw angles
 \
 \ ******************************************************************************
 
@@ -32730,6 +32773,7 @@
 \       Type: Variable
 \   Category: Drawing objects
 \    Summary: Polar yaw angles for each of the points in each of the objects
+\  Deep dive: Pitch and yaw angles
 \
 \ ******************************************************************************
 
@@ -36047,6 +36091,7 @@
 \   Category: Drawing the landscape
 \    Summary: Storage for the yaw angles of tiles and object points for drawing
 \             the current landscape view (high bytes)
+\  Deep dive: Pitch and yaw angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36077,6 +36122,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the angle of the hypotenuse in a right-angle triangle
 \             given the two non-hypotenuse sides (i.e. two orthogonal axes)
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36429,6 +36475,8 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the pitch angle of a vector relative to an object's
 \             pitch angle
+\  Deep dive: Pitch and yaw angles
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36576,6 +36624,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the hypotenuse from an angle and two triangle sides with
 \             one lookup and one multiplication (so without a square root)
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37955,6 +38004,7 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for sine values
+\  Deep dive: Trigonometry
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38323,6 +38373,7 @@
 \   Category: 3D objects
 \    Summary: Calculate the angles and distances of the vector from the viewer
 \             to a specific object
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38604,6 +38655,7 @@
 \   Category: Drawing objects
 \    Summary: Calculate the view-relative pitch and yaw angles of all the points
 \             in an object
+\  Deep dive: Coordinate conversion
 \
 \ ------------------------------------------------------------------------------
 \
