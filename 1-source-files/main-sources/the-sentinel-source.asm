@@ -3214,8 +3214,8 @@
 \   Category: Maths (Geometry)
 \    Summary: Given the coordinates along two axes, calculate the pitch or yaw
 \             angle to those coordinates
-\  Deep dive: Trigonometry
-\             Coordinate conversion
+\  Deep dive: Trigonometry in 8-bit assembly
+\             Converting coordinates to angles
 \             Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
@@ -3430,7 +3430,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Overflow and accuracy calculations
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \
 \ ******************************************************************************
 
@@ -3574,7 +3574,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate the arctangent to get the angle
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \
 \ ******************************************************************************
 
@@ -3700,7 +3700,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the rotation matrix for rotating the pitch or yaw angle
 \             for the sights into the global 3D coordinate system
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \             Reusing the geometry routines from Revs
 \
 \ ------------------------------------------------------------------------------
@@ -3879,7 +3879,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate sin(H G) for smaller angles
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
@@ -3957,7 +3957,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate sin(H G) for bigger angles
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
@@ -4098,7 +4098,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Loop back to calculate cos instead of sin
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
@@ -4157,7 +4157,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Apply the correct signs to the result
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \             Reusing the geometry routines from Revs
 \
 \ ******************************************************************************
@@ -4478,7 +4478,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate the sine and the cosine of an angle
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5772,6 +5772,7 @@
 \       Type: Subroutine
 \   Category: Main title Loop
 \    Summary: Reset the tile visibility table and deallocate all object numbers
+\  Deep dive: Seed number generation
 \
 \ ******************************************************************************
 
@@ -6305,6 +6306,7 @@
 \   Category: Maths (Arithmetic)
 \    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to the range 0 to 30
+\  Deep dive: Seed number generation
 \
 \ ******************************************************************************
 
@@ -11788,6 +11790,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the angles of the vector from the player's eyes to the
 \             sights
+\  Deep dive: Converting angles to coordinates
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11906,7 +11909,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Convert a vector from pitch and yaw angles into a 3D Cartesian
 \             vector
-\  Deep dive: Coordinate conversion
+\  Deep dive: Converting angles to coordinates
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14962,7 +14965,7 @@
 \   Category: Gameplay
 \    Summary: Calculate whether any part of an object is visible on-screen, and
 \             if so, which character columns it spans on the screen
-\  Deep dive: Coordinate conversion
+\  Deep dive: Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19693,7 +19696,7 @@
 \   Category: Drawing the landscape
 \    Summary: Calculate the pitch and yaw angles for a tile corner, relative to
 \             a viewer object (e.g. the player), and whether it is on-screen
-\  Deep dive: Coordinate conversion
+\  Deep dive: Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25858,11 +25861,12 @@
 \       Name: GetNextSeedNumber
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
-\    Summary: Set A to a seed number
+\    Summary: Fetch the next seed number for the current landscape
+\  Deep dive: Seed number generation
 \
 \ ------------------------------------------------------------------------------
 \
-\ Seed numbers in The Sentinel are produced using a five-byte (40-bit) linear
+\ Seed numbers in The Sentinel are produced using a five-byte (33-bit) linear
 \ feedback shift register (LFSR) with EOR feedback.
 \
 \ Specifically, to generate a new seed number, we shift the LFSR left by eight
@@ -26900,6 +26904,7 @@
 \   Category: Maths (Arithmetic)
 \    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to a binary coded decimal (BCD) number
+\  Deep dive: Seed number generation
 \
 \ ******************************************************************************
 
@@ -27084,6 +27089,7 @@
 \   Category: Landscape
 \    Summary: Initialise the seed number generator so it generates the sequence
 \             of seed numbers for a specific landscape number
+\  Deep dive: Seed number generation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27329,6 +27335,7 @@
 \   Category: Maths (Arithmetic)
 \    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to the range 0 to 22
+\  Deep dive: Seed number generation
 \
 \ ******************************************************************************
 
@@ -31211,8 +31218,8 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for arctan values when calculating yaw angles (low byte)
-\  Deep dive: Trigonometry
-\             Coordinate conversion
+\  Deep dive: Trigonometry in 8-bit assembly
+\             Converting coordinates to angles
 \
 \ ******************************************************************************
 
@@ -31230,8 +31237,8 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for arctan values when calculating yaw angles (high byte)
-\  Deep dive: Trigonometry
-\             Coordinate conversion
+\  Deep dive: Trigonometry in 8-bit assembly
+\             Converting coordinates to angles
 \
 \ ******************************************************************************
 
@@ -31249,7 +31256,7 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for hypotenuse lengths given the tangent of an angle
-\  Deep dive: Coordinate conversion
+\  Deep dive: Calculating the hypotenuse
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36122,7 +36129,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the angle of the hypotenuse in a right-angle triangle
 \             given the two non-hypotenuse sides (i.e. two orthogonal axes)
-\  Deep dive: Coordinate conversion
+\  Deep dive: Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36476,7 +36483,7 @@
 \    Summary: Calculate the pitch angle of a vector relative to an object's
 \             pitch angle
 \  Deep dive: Pitch and yaw angles
-\  Deep dive: Coordinate conversion
+\             Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36624,7 +36631,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the hypotenuse from an angle and two triangle sides with
 \             one lookup and one multiplication (so without a square root)
-\  Deep dive: Coordinate conversion
+\  Deep dive: Calculating the hypotenuse
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38004,7 +38011,7 @@
 \       Type: Variable
 \   Category: Maths (Geometry)
 \    Summary: Table for sine values
-\  Deep dive: Trigonometry
+\  Deep dive: Trigonometry in 8-bit assembly
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38373,7 +38380,7 @@
 \   Category: 3D objects
 \    Summary: Calculate the angles and distances of the vector from the viewer
 \             to a specific object
-\  Deep dive: Coordinate conversion
+\  Deep dive: Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38655,7 +38662,7 @@
 \   Category: Drawing objects
 \    Summary: Calculate the view-relative pitch and yaw angles of all the points
 \             in an object
-\  Deep dive: Coordinate conversion
+\  Deep dive: Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
 \
