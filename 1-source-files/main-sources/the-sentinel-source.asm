@@ -21307,11 +21307,12 @@
                         \ be discarded
                         \
                         \ The purpose of this step is to get the seed number
-                        \ generator to a point where the output is predictable
-                        \ and stable, so that every time we generate a sequence
-                        \ of seed numbers for a landscape, they are exactly the
-                        \ same each time while being unique to that landscape
-                        \ number
+                        \ generator to a point where the output is usable and
+                        \ random enough to use - for example, the first 32
+                        \ shifts will simply output the initial state of the
+                        \ register, so those aren't remotely random, but by the
+                        \ time we have shifted 81 bytes through the register
+                        \ we will truly be into pseudo-random territory
                         \
                         \ That said, the third seed number that's generated and
                         \ stored at stripData+78 is used by the anti-cracker
