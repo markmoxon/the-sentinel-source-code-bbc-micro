@@ -1581,7 +1581,7 @@
 \   * The high nibble of each byte contains the altitude of the tile corner in
 \     the front-left corner of the tile (i.e. the corner closest to the origin
 \     of the landscape). We call this tile corner the "anchor". The altitude is
-\     in the range 1 to 11, so the top nibble never has both bit 6 and 7 set.
+\     in the range 1 to 11, so the high nibble never has both bit 6 and 7 set.
 \
 \ If there is an object placed on the tile, then the data contained in each byte
 \ is as follows:
@@ -1594,7 +1594,7 @@
 \
 \ We can therefore test for the presence of an object on a tile by checking
 \ whether both bit 6 and 7 are set (as empty tiles have the tile altitude in the
-\ top nibble, and this is in the range 1 to 11).
+\ high nibble, and this is in the range 1 to 11).
 \
 \ As each tile is defined by a tile corner and a shape, we tend to use the terms
 \ "tile" and "tile corner" interchangeably, depending on the context. That said,
@@ -6270,8 +6270,8 @@
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- LSR A                  \ Set A to the tile altitude, which is in the top nibble
- LSR A                  \ of the tile data
+ LSR A                  \ Set A to the tile altitude, which is in the high
+ LSR A                  \ nibble of the tile data
  LSR A
  LSR A
 
@@ -8550,7 +8550,7 @@
                         \ tile data entry in the tileData table
 
  AND #%00001111         \ Set A to the tile shape for the tile, which is in the
-                        \ bottom nibble of the tile data
+                        \ low nibble of the tile data
 
  BNE high5              \ If the shape is non-zero then the tile is not flat, so
                         \ jump to high5 to move on to the next tile in the
@@ -8558,8 +8558,8 @@
  LDA (tileDataPage),Y   \ Set A to the tile data for the tile anchored at
                         \ (xTile, zTile)
 
- AND #%11110000         \ Set A to the tile altitude, which is in the top nibble
-                        \ of the tile data
+ AND #%11110000         \ Set A to the tile altitude, which is in the high
+                        \ nibble of the tile data
 
  CMP maxAltitude,X      \ If the altitude of the tile we are analysing is lower
  BCC high5              \ than the altitude we have currently stored in the
@@ -13580,8 +13580,8 @@
 
  PLA                    \ Retrieve the tile data from the stack
 
- LSR A                  \ Set A to the tile altitude, which is in the top nibble
- LSR A                  \ of the tile data
+ LSR A                  \ Set A to the tile altitude, which is in the high
+ LSR A                  \ nibble of the tile data
  LSR A
  LSR A
 
@@ -14329,7 +14329,7 @@
  PLA                    \ Set A to the tile data for the tile, which we stored
                         \ on the stack above
 
- LSR A                  \ The top nibble of the tile data contains the tile
+ LSR A                  \ The high nibble of the tile data contains the tile
  LSR A                  \ altitude, so this sets A to the tile altitude
  LSR A
  LSR A
@@ -20811,7 +20811,7 @@
                         \ contain an object
 
  AND #%00001111         \ Set A to the tile shape for the tile, which is in the
-                        \ bottom nibble of the tile data
+                        \ low nibble of the tile data
 
  BEQ DrawFlatTile       \ If the tile shape is zero then the tile is flat, so
                         \ jump to DrawFlatTile to draw the flat tile, returning
@@ -21258,6 +21258,7 @@
 \   Category: Landscape
 \    Summary: Generate tile data for the landscape
 \  Deep dive: Program flow of the main title loop
+\             Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21391,7 +21392,7 @@
                         \ before capping each byte of data to between 1 and 11
                         \
                         \ This capping process ensures that when we place the
-                        \ tile altitude in the top nibble of the tile data, we
+                        \ tile altitude in the high nibble of the tile data, we
                         \ never have both bits 6 and 7 set (these bits can
                         \ therefore be used to identify whether or not a tile
                         \ contains an object)
@@ -21530,6 +21531,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Process the tile data for all tiles in the landscape
+\  Deep dive: Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21750,7 +21752,7 @@
  ADC #6                 \
                         \ So the ranges for A are now:
                         \
-                        \   * Minimum multiplier range is -1 to +13
+                        \   * Minimum multiplier range is 0 to +12
                         \
                         \   * Maximum multiplier range is -11 to +23
 
@@ -21764,7 +21766,7 @@
                         \ By this point A is a positive number and the ranges
                         \ for A are now:
                         \
-                        \   * Minimum multiplier range is 0 to 13
+                        \   * Minimum multiplier range is 0 to 12
                         \
                         \   * Maximum multiplier range is 0 to 23
 
@@ -21774,7 +21776,7 @@
                         \ By this point A is a positive number and the ranges
                         \ for A are now:
                         \
-                        \   * Minimum multiplier range is 1 to 14
+                        \   * Minimum multiplier range is 1 to 13
                         \
                         \   * Maximum multiplier range is 1 to 24
 
@@ -21788,7 +21790,7 @@
                         \ By this point, A is a positive number between 1 and 11
                         \
                         \ For minimum values of the multiplier we have only lost
-                        \ the very low and very high values in the range
+                        \ the very high values in the range
                         \
                         \ For maximum values of the multiplier we have lost
                         \ around one-third at the top end and one-third at the
@@ -21842,6 +21844,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Smooth the entire landscape
+\  Deep dive: Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22071,6 +22074,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Smooth a row or column of tile corners (a "strip of tiles")
+\  Deep dive: Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22169,6 +22173,7 @@
 \   Category: Landscape
 \    Summary: Smooth a strip by moving each outlier tile corner to the altitude
 \             of its closest immediate neighbour (in terms of altitude)
+\  Deep dive: Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22401,6 +22406,7 @@
 \   Category: Landscape
 \    Summary: Smooth a strip by setting the tile corner altitudes to the average
 \             of the current tile corner altitude and three following corners
+\  Deep dive: Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22529,6 +22535,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Copy the smoothed strip data back into the tileData table
+\  Deep dive: Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22592,6 +22599,7 @@
 \   Category: Landscape
 \    Summary: Calculate the shape of the tile anchored at (xTile, zTile)
 \  Deep dive: Tile shapes
+\             Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -25864,6 +25872,7 @@
 \   Category: Maths (Arithmetic)
 \    Summary: Fetch the next seed number for the current landscape
 \  Deep dive: Seed number generation
+\             Generating the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27337,6 +27346,7 @@
 \    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to the range 0 to 22
 \  Deep dive: Seed number generation
+\             Generating the landscape
 \
 \ ******************************************************************************
 
@@ -37928,9 +37938,9 @@
 \ where each value consists of two bytes, with the low byte first and the high
 \ byte second.
 \
-\ For the channel/flush parameter, the top nibble of the low byte is the flush
+\ For the channel/flush parameter, the high nibble of the low byte is the flush
 \ control (where a flush control of 0 queues the sound, and a flush control of
-\ 1 makes the sound instantly), while the bottom nibble of the low byte is the
+\ 1 makes the sound instantly), while the low nibble of the low byte is the
 \ channel number. When written in hexadecimal, the first figure gives the flush
 \ control, while the second is the channel (so &13 indicates flush control = 1
 \ and channel = 3).
