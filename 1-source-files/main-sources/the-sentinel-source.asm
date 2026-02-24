@@ -6276,7 +6276,7 @@
  LSR A
 
  CMP tileAltitude       \ If the altitude of the chosen tile is equal to or
- BCS objb1              \ higher than the minimum altitude in tileAltitude, then
+ BCS objb1              \ higher than the maximum altitude in tileAltitude, then
                         \ this tile is too high, so jump to objb1 to try another
                         \ tile from the landscape's sequence of seed numbers
 
@@ -7476,9 +7476,12 @@
                         \   * When numberOfEnemies = 7, range is 10 to 27
                         \   * When numberOfEnemies = 8, range is 10 to 24
                         \
-                        \ As the number of trees determines the total amount of
-                        \ energy in the landscape, this makes the levels get
-                        \ even more difficult when there are higher enemy counts
+                        \ As the total number of enemies and trees determines
+                        \ the total amount of energy in the landscape, and each
+                        \ sentry is worth 3 energy points, this calculation
+                        \ ensures that the total amount of energy in the
+                        \ landscape is never greater than 49 (as the Sentinel is
+                        \ worth 4 energy points, while each sentry is worth 3)
                         \
                         \ We now try to add this number of trees to the
                         \ landscape, so store the result in treeCounter to use
@@ -7493,7 +7496,7 @@
                         \ landscape, so we try to spawn all the trees at a lower
                         \ altitude to the enemies
 
- JSR PlaceObjectBelow   \ Attempt to place the player object on a tile that is
+ JSR PlaceObjectBelow   \ Attempt to place the tree object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
@@ -8204,7 +8207,7 @@
                         \ somewhere between 5 * 0.06 = 0.3 seconds and
                         \ 63 * 0.06 = 3.8 seconds)
 
- LDA #20                \ Set A to either 20 or 236, depending on the value that
+ LDA #20                \ Set A to either 20 or -20, depending on the value that
  BCC aden5              \ we gave to the C flag above
  LDA #236
 
@@ -8212,7 +8215,7 @@
 
  STA enemyYawStep,X     \ Set enemyYawStep for the enemy to the value of A,
                         \ so this sets the yaw step (i.e. the rate of rotation)
-                        \ to either 20 or 236
+                        \ to either 20 or -20
                         \
                         \ The degree system in the Sentinel looks like this:
                         \
