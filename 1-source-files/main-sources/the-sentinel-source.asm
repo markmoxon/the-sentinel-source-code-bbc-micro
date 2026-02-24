@@ -10925,7 +10925,11 @@
                         \ add them to the landscape and set the palette
                         \ accordingly
 
- JSR SpawnPlayer        \ Add the player and trees to the landscape
+ JSR SpawnPlayer        \ Add the player and trees to the landscape, and then
+                        \ generate the secret code for the new landscape (the
+                        \ SpawnPlayer routine falls through into SpawnTrees,
+                        \ which falls through into CheckSecretCode to generate
+                        \ the secret code and return back here)
 
  LDA #&80               \ Call DrawTitleScreen with A = &80 to draw the screen
  JSR DrawTitleScreen    \ showing the landscape's secret code
@@ -40528,15 +40532,20 @@
 
  JSR PrintLandscapeNum  \ Print the four-digit landscape number (0000 to 9999)
 
- JSR SpawnPlayer        \ Add the player and trees to the landscape
+ JSR SpawnPlayer        \ Add the player and trees to the landscape, and then
+                        \ generate and check the landscape secret code (the
+                        \ SpawnPlayer routine falls through into SpawnTrees,
+                        \ which falls through into CheckSecretCode)
                         \
                         \ If the entered secret entry code in the keyboard input
                         \ buffer does not match the generated secret code for
-                        \ this landscape then the call will return here so we
-                        \ can display an error
+                        \ this landscape, then the call to CheckSecretCode will
+                        \ return here so we can display an error with the jump
+                        \ to SecretCodeError below
                         \
-                        \ If the codes match then the CheckSecretCode will jump
-                        \ to the PlayGame routine instead to play the game
+                        \ If the codes match then the CheckSecretCode routine
+                        \ will jump to the PlayGame routine to play the game, so
+                        \ we will not return here
 
  JMP SecretCodeError    \ The entered secret entry in the keyboard input buffer
                         \ does not match the generated secret code for this
