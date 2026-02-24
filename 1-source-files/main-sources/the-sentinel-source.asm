@@ -6181,6 +6181,7 @@
 \   Category: 3D objects
 \    Summary: Attempt to place an object on a tile that is below the maximum
 \             altitude specified in A
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6307,6 +6308,7 @@
 \    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to the range 0 to 30
 \  Deep dive: Seed number generation
+\             Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -7302,6 +7304,7 @@
 \   Category: Landscape
 \    Summary: Calculate the number of enemies for this landscape, add them to
 \             the landscape and set the palette accordingly
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -7372,6 +7375,7 @@
 \   Category: Landscape
 \    Summary: Add the player object to the landscape, ideally placing it below
 \             all the enemies and in the bottom half of the landscape
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -7442,6 +7446,7 @@
 \   Category: Landscape
 \    Summary: Add trees to the landscape, ideally placing them below all the
 \             enemies in the landscape
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -7845,6 +7850,7 @@
 \   Category: Landscape
 \    Summary: Physical colours for colour 3 in the game palette for the
 \             different numbers of enemies
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -7971,6 +7977,7 @@
 \   Category: Landscape
 \    Summary: Physical colours for colour 2 in the game palette for the
 \             different numbers of enemies
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -7999,6 +8006,7 @@
 \   Category: Landscape
 \    Summary: Add the required number of enemies to the landscape, starting from
 \             the highest altitude and working down, with one enemy per contour
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -8267,6 +8275,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Return a list of tile blocks at a specified altitude
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8414,6 +8423,7 @@
 \   Category: Landscape
 \    Summary: Calculate both the highest tiles in each 4x4 block of tiles in the
 \             landscape and the altitude of the highest tile in the landscape
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10875,6 +10885,7 @@
 \    Summary: Add the player's energy to the landscape number to get the number
 \             of the next landscape and display that landscape's secret code
 \  Deep dive: Program flow of the main title loop
+\             Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -14090,6 +14101,7 @@
 \   Category: 3D objects
 \    Summary: Place an object on a tile, putting it on top of any existing
 \             boulders or towers
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27243,6 +27255,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Calculate the number of enemies for the current landscape
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27350,6 +27363,7 @@
 \             numbers, converted to the range 0 to 22
 \  Deep dive: Seed number generation
 \             Generating the landscape
+\             Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
@@ -38257,6 +38271,7 @@
 \       Type: Variable
 \   Category: Landscape
 \    Summary: The maximum tile altitude for each 4x4 block of tiles
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38307,6 +38322,7 @@
 \   Category: Landscape
 \    Summary: The tile x-coordinate of the highest tile within each 4x4 block of
 \             tiles
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38346,6 +38362,7 @@
 \   Category: Landscape
 \    Summary: The tile z-coordinate of the highest tile within each 4x4 block of
 \             tiles
+\  Deep dive: Adding enemies and trees to the landscape
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40478,6 +40495,7 @@
 \   Category: Landscape
 \    Summary: Draw an aerial preview of the landscape
 \  Deep dive: Program flow of the main title loop
+\             Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
 
