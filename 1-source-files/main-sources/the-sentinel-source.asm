@@ -7528,6 +7528,7 @@
 \   Category: Landscape
 \    Summary: Generate the secret code for this landscape and optionally check
 \             it against the entered code in the keyboard input buffer
+\  Deep dive: The landscape secret code
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7879,6 +7880,7 @@
 \   Category: Landscape
 \    Summary: Check the results of the secret code matching process, and if the
 \             secret codes match, jump to PlayGame to play the game
+\  Deep dive: The landscape secret code
 \
 \ ******************************************************************************
 
@@ -25735,6 +25737,7 @@
 \   Category: Cracker protection
 \    Summary: Corrupt the generation process for the landscape's secret code by
 \             fetching one more seed number than necessary
+\  Deep dive: The landscape secret code
 \
 \ ******************************************************************************
 
@@ -26930,6 +26933,7 @@
 \    Summary: Set A to the next number from the landscape's sequence of seed
 \             numbers, converted to a binary coded decimal (BCD) number
 \  Deep dive: Seed number generation
+\             The landscape secret code
 \
 \ ******************************************************************************
 
@@ -27005,6 +27009,7 @@
 \   Category: Title screen
 \    Summary: Draw the landscape's secret code by spawning a set of large 3D
 \             text block objects
+\  Deep dive: The landscape secret code
 \
 \ ******************************************************************************
 
