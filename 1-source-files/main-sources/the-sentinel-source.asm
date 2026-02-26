@@ -15487,7 +15487,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The amount of energy required to create each object or the amount
-\             energy acquired when absorbing each object
+\             of energy acquired when absorbing each object
 \
 \ ******************************************************************************
 
