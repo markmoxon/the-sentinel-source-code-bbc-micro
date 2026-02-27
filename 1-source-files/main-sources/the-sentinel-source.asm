@@ -6176,10 +6176,10 @@
 
 \ ******************************************************************************
 \
-\       Name: PlaceObjectBelow
+\       Name: SpawnObjectBelow
 \       Type: Subroutine
 \   Category: 3D objects
-\    Summary: Attempt to place an object on a tile that is below the maximum
+\    Summary: Attempt to spawn an object on a tile that is below the maximum
 \             altitude specified in A
 \  Deep dive: Adding enemies and trees to the landscape
 \
@@ -6190,7 +6190,7 @@
 \   A                   The maximum desired altitude of the object (though we
 \                       may end up placing the object higher than this)
 \
-\   X                   The number of the object to add to the tile
+\   X                   The number of the object to spawn
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6198,14 +6198,14 @@
 \
 \   C flag              Status flag:
 \
-\                         * Clear if the object was successfully placed on a
+\                         * Clear if the object was successfully spawned on a
 \                           tile
 \
-\                         * Set if the object was not placed on a suitable tile
+\                         * Set if the object was not spawned on a suitable tile
 \
 \ ******************************************************************************
 
-.PlaceObjectBelow
+.SpawnObjectBelow
 
  STA tileAltitude       \ Store the maximum altitude in tileAltitude
 
@@ -6286,17 +6286,17 @@
                         \ contain an object, so we can use this for placing our
                         \ object
 
- JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+ JSR SpawnObjectOnTile  \ Spawn object #X on the tile anchored at (xTile, zTile)
 
  CLC                    \ Clear the C flag to indicate that we have successfully
-                        \ placed the object on a tile
+                        \ spawned the object on a tile
 
  RTS                    \ Return from the subroutine
 
 .objb3
 
  SEC                    \ Set the C flag to indicate that we have failed to
-                        \ place the object on a suitable tile
+                        \ spawn the object on a suitable tile
 
  RTS                    \ Return from the subroutine
 
@@ -7381,12 +7381,12 @@
 
 .SpawnPlayer
 
- LDA #0                 \ Spawn the player's robot (an object of type 0),
- JSR SpawnObject        \ returning the object number of the new object in X
-                        \ and currentObject
+ LDA #0                 \ Fetch a new object number that we can use for the
+ JSR GetObjectNumber    \ player's robot (an object of type 0), returning the
+                        \ number of the new object in X and currentObject
 
- STX playerObject       \ Set playerObject to the object number of the newly
-                        \ spawned object
+ STX playerObject       \ Set playerObject to the object number that we just
+                        \ fetched
 
  LDA #10                \ Set the player's energy level to 10
  STA playerEnergy
@@ -7399,7 +7399,8 @@
  LDA #17                \ So the player always starts on this tile in the first
  STA zTile              \ landscape
 
- JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+ JSR SpawnObjectOnTile  \ Spawn object #X on the tile anchored at (xTile, zTile)
+                        \ to add the player to the landscape
 
  JMP SpawnTrees         \ Jump to SpawnTrees to add trees to the landscape and
                         \ move towards playing the game
@@ -7425,19 +7426,19 @@
                         \ the enemies, and in the bottom half of the landscape
                         \ (which ranges from altitude 1 to 11)
 
- JSR PlaceObjectBelow   \ Attempt to place the player object on a tile that is
+ JSR SpawnObjectBelow   \ Attempt to spawn the player object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
- BCS sply1              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been successfully placed, so loop
+ BCS sply1              \ If the call to SpawnObjectBelow sets the C flag then
+                        \ the object has not been successfully spawned, so loop
                         \ back to sply1 to keep trying, working through the
                         \ landscape's sequence of seed numbers until we do
                         \ manage to place the player on a tile
 
-                        \ Otherwise we have placed the player object on a tile,
-                        \ so now we fall through into SpawnTrees to add trees to
-                        \ the landscape
+                        \ Otherwise we have successfully spawned the player
+                        \ object on a tile, so now we fall through into
+                        \ SpawnTrees to add trees to the landscape
 
 \ ******************************************************************************
 \
@@ -7494,19 +7495,20 @@
 
 .tree2
 
- LDA #2                 \ Spawn a tree (an object of type 2), returning the
- JSR SpawnObject        \ object number of the new object in X and currentObject
+ LDA #2                 \ Fetch a new object number that we can use for the tree
+ JSR GetObjectNumber    \ (an object of type 2), returning the number of the new
+                        \ object in X and currentObject
 
  LDA minEnemyAltitude   \ Set A to the altitude of the lowest enemy on the
                         \ landscape, so we try to spawn all the trees at a lower
                         \ altitude to the enemies
 
- JSR PlaceObjectBelow   \ Attempt to place the tree object on a tile that is
+ JSR SpawnObjectBelow   \ Attempt to spawn the tree object on a tile that is
                         \ below the maximum altitude specified in A (though we
                         \ may end up placing the object higher than this)
 
- BCS tree3              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been successfully placed, so jump
+ BCS tree3              \ If the call to SpawnObjectBelow sets the C flag then
+                        \ the object has not been successfully spawned, so jump
                         \ to tree3 to stop adding trees to the landscape
 
  DEC treeCounter        \ Decrement the tree counter
@@ -7780,7 +7782,7 @@
                         \
                         \ The Sentinel's object flags are therefore %01111111
                         \
-                        \ See the PlaceObjectOnTile routine for details of how
+                        \ See the SpawnObjectOnTile routine for details of how
                         \ the Sentinel's object flags are constructed
 
  CLC                    \ Set A = A + %01111111
@@ -8173,11 +8175,11 @@
                         \ object #0, while other objects that are spawned are
                         \ allocated to object #63 and work down the numbers)
 
- LDA #6                 \ Spawn the Sentinel's tower (an object of type 6),
- JSR SpawnObject        \ returning the object number of the new object in X
-                        \ and currentObject
+ LDA #6                 \ Fetch a new object number that we can use for the
+ JSR GetObjectNumber    \ Sentinel's tower (an object of type 6), returning the
+                        \ number of the new object in X and currentObject
 
- JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+ JSR SpawnObjectOnTile  \ Spawn object #X on the tile anchored at (xTile, zTile)
                         \ to place the tower on the landscape
 
  LDA #0                 \ Set the tower object's objectYawAngle to 0, so it's
@@ -8193,7 +8195,7 @@
 
 .aden4
 
- JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+ JSR SpawnObjectOnTile  \ Spawn object #X on the tile anchored at (xTile, zTile)
                         \ to place the Sentinel or sentry in the correct place
                         \ on the landscape
 
@@ -10818,17 +10820,18 @@
                         \ energy level by one (as a tree is worth one energy
                         \ unit)
 
- LDA #2                 \ Spawn a tree (an object of type 2), returning the
- JSR SpawnObject        \ object number of the new object in X and currentObject
+ LDA #2                 \ Fetch a new object number that we can use for the tree
+ JSR GetObjectNumber    \ (an object of type 2), returning the number of the new
+                        \ object in X and currentObject
 
  LDA minEnemyAltitude   \ Set A to altitude of the lowest enemy on the landscape
 
- JSR PlaceObjectBelow   \ Attempt to place the tree on a tile that is below the
+ JSR SpawnObjectBelow   \ Attempt to spawn the tree on a tile that is below the
                         \ maximum altitude specified in A (though we may end up
                         \ placing the tree higher than this)
 
- BCS dren1              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the tree has not been successfully placed, so jump to
+ BCS dren1              \ If the call to SpawnObjectBelow sets the C flag then
+                        \ the tree has not been successfully spawned, so jump to
                         \ dren1 to return from the subroutine with the C flag
                         \ set
 
@@ -11649,13 +11652,14 @@
                         \ If we get here then the player is trying to create an
                         \ object of the type given in keyPress
 
- JSR SpawnObject+3      \ Spawn an object of type keyPress, returning the object
-                        \ number of the new object in X and currentObject
+ JSR GetObjectNumber+3  \ Fetch a new object number that we can use for an
+                        \ object of type keyPress, returning the number of the
+                        \ new object in X and currentObject
 
- BCS pkey7              \ If there are no free object numbers then the call to
-                        \ SpawnObject will return with the C flag set and the
-                        \ object will not have been created, so jump to pkey7 to
-                        \ make an error sound and return from the subroutine
+ BCS pkey7              \ If there are no available object numbers then the call
+                        \ to GetObjectNumber will return with the C flag set, so
+                        \ jump to pkey7 to make an error sound and return from
+                        \ the subroutine
 
  SEC                    \ Call UpdatePlayerEnergy with the C flag set to
  JSR UpdatePlayerEnergy \ subtract the amount of energy in object #X from the
@@ -11668,25 +11672,25 @@
                         \ make an error sound and return from the subroutine
 
  LDX currentObject      \ Set X to the object number of the object we just
-                        \ created
+                        \ fetched
 
  LDA xCoordHi           \ Set (xTile, zTile) to the tile coordinates of the tile
  STA xTile              \ in the sights, which we set in part 1 with the call to
  LDA zCoordHi           \ FollowGazeVector
  STA zTile
 
- JSR PlaceObjectOnTile  \ Place object #X on the tile anchored at (xTile, zTile)
+ JSR SpawnObjectOnTile  \ Spawn object #X on the tile anchored at (xTile, zTile)
 
- BCC pkey9              \ If the object was successfully placed on the tile then
-                        \ the call to PlaceObjectOnTile will return with the C
-                        \ flag clear, so jump to pkey9 to keep going
+ BCC pkey9              \ If the object was successfully spawned on the tile
+                        \ then the call to SpawnObjectOnTile will return with
+                        \ the C flag clear, so jump to pkey9 to keep going
 
- CLC                    \ Otherwise we failed to add the object to the tile, so
- JSR UpdatePlayerEnergy \ call UpdatePlayerEnergy with the C flag clear to
+ CLC                    \ Otherwise we failed to spawn the object on the tile,
+ JSR UpdatePlayerEnergy \ so call UpdatePlayerEnergy with the C flag clear to
                         \ refund the energy that we used to create the object
                         \ back to the player
 
- JMP pkey7              \ We failed to place the object on the tile, so jump to
+ JMP pkey7              \ We failed to spawn the object on the tile, so jump to
                         \ pkey7 to make an error sound and return from the
                         \ subroutine
 
@@ -14102,10 +14106,10 @@
 
 \ ******************************************************************************
 \
-\       Name: PlaceObjectOnTile
+\       Name: SpawnObjectOnTile
 \       Type: Subroutine
 \   Category: 3D objects
-\    Summary: Place an object on a tile, putting it on top of any existing
+\    Summary: Spawn an object on a tile, putting it on top of any existing
 \             boulders or towers
 \  Deep dive: Adding enemies and trees to the landscape
 \
@@ -14113,29 +14117,30 @@
 \
 \ This routine sets the following (if successful):
 \
-\   * X-th entry in (xObject, yObject, zObject) is set to the 3D coordinate of
-\     the newly added object, where the y-coordinate is yObject(Hi Lo)
+\   * The X-th entry in (xObject, yObject, zObject) is set to the 3D coordinate
+\     of the newly added object, where the y-coordinate is a 16-bit value in
+\     yObject(Hi Lo) that contains an integer and fractional part
 \
-\   * X-th entry in objectFlags, bit 7 is clear to indicate that object #X has
-\     been allocated to an object
+\   * The X-th entry in objectFlags, bit 7 is clear to indicate that object #X
+\     has been allocated to an object
 \
-\   * X-th entry in objectFlags, bit 6 is set if we add the object on top of a
-\     boulder or tower (and the object number of the boulder/tower is in bits
+\   * The X-th entry in objectFlags has bit 6 set if we add the object on top of
+\     a boulder or tower (and the object number of the boulder/tower is in bits
 \     0-5)
 \
-\   * X-th entry in yObjectLo = 224, so objects are spawned at a height of 224
-\     above the tile itself, or 0.875 tile widths (this is used for the gaze
-\     vector calculations, so this is effectively the height of the object's
-\     eyes above the tile)
+\   * The X-th entry in yObjectLo is set to 224, so objects are spawned at a
+\     height of 224 above the tile itself, or 0.875 tile widths (this is used
+\     for the gaze vector calculations, so this is effectively the height of the
+\     object's eyes above the tile)
 \
-\   * X-th entry in objectPitchAngle = -11, so objects look slightly downwards
-\     at a pitch angle of 15.5 degrees
+\   * The X-th entry in objectPitchAngle is set to -11, so objects look slightly
+\     downwards at a pitch angle of 15.5 degrees
 \
-\   * X-th entry in objectYawAngle is set to a multiple of 11.25 degrees, as
-\     determined by the next seed
+\   * The X-th entry in objectYawAngle is set to a multiple of 11.25 degrees, as
+\     determined by the next seed, with 96 added to it (135 degrees)
 \
-\   * tileData for the tile is set to the object number in X in bits 0 to 5, and
-\     bits 6 and 7 are set to indicate that the tile contains an object
+\   * The tileData for the tile is set to the object number in X in bits 0 to 5,
+\     and bits 6 and 7 are set to indicate that the tile contains an object
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14160,7 +14165,7 @@
 \
 \ ******************************************************************************
 
-.PlaceObjectOnTile
+.SpawnObjectOnTile
 
  LDA xTile              \ Set the 3D coordinate for object #X to (xTile, zTile)
  STA xObject,X          \ by updating the X-th entries in the xObject and
@@ -14439,7 +14444,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The tile number to which we are adding an object in the
-\             PlaceObjectOnTile routine
+\             SpawnObjectOnTile routine
 \
 \ ******************************************************************************
 
@@ -15256,7 +15261,8 @@
 \       Name: objectHalfWidth
 \       Type: Variable
 \   Category: Gameplay
-\    Summary: Each object's width in terms of tile widths, for half the object
+\    Summary: Each object's width in terms of tile widths, for half of the
+\             object only
 \
 \ ******************************************************************************
 
@@ -15278,27 +15284,31 @@
 
 \ ******************************************************************************
 \
-\       Name: SpawnObject
+\       Name: GetObjectNumber
 \       Type: Subroutine
 \   Category: 3D objects
-\    Summary: Add a new object of the specified type to the objectTypes table
+\    Summary: Fetch an object number that we can use for a new object of the
+\             specified type, and add the type to the objectTypes table
 \
 \ ------------------------------------------------------------------------------
 \
-\ This routine spawns a new object by searching the objectFlags table for a free
-\ number to allocate. If there is no free number then the routine returns with
-\ the C flag set, otherwise the C flag is clear, X and currentObject are set to
-\ the number of the new object, and the object type is added to the objectTypes
-\ table.
+\ This routine looks for an object number that isn't currently allocated to an
+\ object so we can use it to spawn a new object via one of the spawning
+\ routines. It does this by searching the objectFlags table for a free number
+\ to allocate. If there is no free number then the routine returns with the
+\ C flag set, otherwise the C flag is clear, the object type is added to the
+\ objectTypes table, and X and currentObject are set to the number that we can
+\ use to spawn the new object.
 \
-\ Note that this routine only adds the object to the objectTypes table; it
-\ doesn't update the flags or add any other information about the object.
+\ Note that this routine only finds a free number and adds the object type to
+\ the objectTypes table. It doesn't spawn the object - that needs to be done by
+\ calling SpawnObjectOnTile or SpawnObjectBelow, for example.
 \
 \ ------------------------------------------------------------------------------
 \
 \ Arguments:
 \
-\   A                   The type of object to spawn:
+\   A                   The type of object that we want to create:
 \
 \                         * 0 = Robot (one of which is the player)
 \
@@ -15318,13 +15328,13 @@
 \
 \ Returns:
 \
-\   X                   The number of the new object (if successful)
+\   X                   The number to use for the new object (if successful)
 \
-\   currentObject       The number of the new object (if successful)
+\   currentObject       The number to use for the new object (if successful)
 \
 \   C flag              Status flag:
 \
-\                         * Clear if the object was successfully spawned
+\                         * Clear if an object number was successfully found
 \
 \                         * Set if there is no free number for the new object
 \
@@ -15332,17 +15342,18 @@
 \
 \ Other entry points:
 \
-\   SpawnObject+3       Spawn an object of the type specified in keyPress
+\   GetObjectNumber+3   Find an available object number to use for a new object
+\                       of the type specified in keyPress
 \
 \                       The keyPress and objectType variables share the same
 \                       memory location, so this lets us store object types in
 \                       the key press codes in keyLoggerConfig, so that pressing
-\                       one of the "create" keys will automatically spawn that
-\                       type of object
+\                       one of the "create" keys will automatically look for an
+\                       object number for that type of object
 \
 \ ******************************************************************************
 
-.SpawnObject
+.GetObjectNumber
 
  STA objectType         \ Store the object type in objectType for future
                         \ reference
@@ -15372,7 +15383,8 @@
 
  SEC                    \ If we get here then we have checked all 64 object
                         \ numbers and none of them are free, so set the C flag
-                        \ to indicate that we have failed to spawn the object
+                        \ to indicate that we have failed to find an object
+                        \ number for the new object
 
  RTS                    \ Return from the subroutine
 
@@ -15531,27 +15543,28 @@
 
 .PerformHyperspace
 
- LDA #0                 \ Spawn a robot (an object of type 0), returning the
- JSR SpawnObject        \ object number of the new object in X and currentObject
+ LDA #0                 \ Fetch a new object number that we can use for a robot
+ JSR GetObjectNumber    \ (an object of type 0), returning the number of the new
+                        \ object in X and currentObject
 
  LDX playerObject       \ Set A to the high byte of the altitude of the player
  LDA yObjectHi,X        \ object (i.e. the high byte of the player object's
                         \ y-coordinate in yObjectHi)
 
  CLC                    \ Increment A so it's one coordinate higher than the
- ADC #1                 \ player object, so the call to PlaceObjectBelow will
+ ADC #1                 \ player object, so the call to SpawnObjectBelow will
                         \ try to hyperspace the player to the same height as
                         \ before
 
  LDX currentObject      \ Set X to the object number of the new robot that we
-                        \ spawned above
+                        \ fetched above
 
- JSR PlaceObjectBelow   \ Attempt to place the new robot on a tile that is below
+ JSR SpawnObjectBelow   \ Attempt to spawn the new robot on a tile that is below
                         \ the maximum altitude specified in A (though we may end
                         \ up placing the object higher than this)
 
- BCS hypr4              \ If the call to PlaceObjectBelow sets the C flag then
-                        \ the object has not been successfully placed, so jump
+ BCS hypr4              \ If the call to SpawnObjectBelow sets the C flag then
+                        \ the object has not been successfully spawned, so jump
                         \ to hypr4 to return from the subroutine with the C flag
                         \ set to indicate that we haven't managed to hyperspace
                         \ the player
@@ -34619,7 +34632,7 @@
 \       Name: objPolygonAddrLo
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: Addresses for the list of polygons and points for each object
+\    Summary: Addresses for the lists of polygons and points for each object
 \             (low byte)
 \
 \ ******************************************************************************
@@ -34833,7 +34846,7 @@
 \       Name: objPolygonAddrHi
 \       Type: Variable
 \   Category: Drawing objects
-\    Summary: Addresses for the list of polygons and points for each object
+\    Summary: Addresses for the lists of polygons and points for each object
 \             (high byte)
 \
 \ ******************************************************************************

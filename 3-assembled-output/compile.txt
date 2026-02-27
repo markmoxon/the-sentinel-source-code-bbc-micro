@@ -3525,7 +3525,7 @@
 .spaceKeyDebounce
      1222   00
      1223   00
-.PlaceObjectBelow
+.SpawnObjectBelow
      1224   85 06      STA &06
      1226   A9 00      LDA #&00
      1228   85 15      STA &15
@@ -5333,7 +5333,7 @@
      1EF9   A9 80      LDA #&80
      1EFB   9D 00 01   STA &0100,X
      1EFE   60         RTS
-.PlaceObjectOnTile
+.SpawnObjectOnTile
      1EFF   A5 24      LDA &24
      1F01   9D 00 09   STA &0900,X
      1F04   A5 26      LDA &26
@@ -5610,7 +5610,7 @@
      210B   4A
      210C   4E
      210D   C1
-.SpawnObject
+.GetObjectNumber
      210E   8D 61 0C   STA &0C61
      2111   A2 3F      LDX #&3F
 .sobj1
