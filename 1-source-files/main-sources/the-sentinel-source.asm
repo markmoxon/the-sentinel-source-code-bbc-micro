@@ -7347,8 +7347,8 @@
                         \ numberOfEnemies
 
  JSR AddEnemiesToTiles  \ Add the required number of enemies to the landscape,
-                        \ starting from the highest altitude and working down,
-                        \ with no more than one enemy on each contour
+                        \ starting from the highest altitude and working down
+                        \ once each contour is full
 
                         \ We now update colours 2 and 3 in the first palette in
                         \ colourPalettes according to the number of enemies
@@ -8009,7 +8009,7 @@
 \       Type: Subroutine
 \   Category: Landscape
 \    Summary: Add the required number of enemies to the landscape, starting from
-\             the highest altitude and working down, with one enemy per contour
+\             the highest altitude and working down once each contour is full
 \  Deep dive: Adding enemies and trees to the landscape
 \
 \ ******************************************************************************
