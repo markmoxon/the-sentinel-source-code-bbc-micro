@@ -1557,6 +1557,7 @@
 \    Summary: Altitude and shape data for landscape tiles
 \  Deep dive: Tile data
 \             Tile shapes
+\             Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1794,6 +1795,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The x-coordinates in 3D space for the 3D objects
+\  Deep dive: Object management
 \
 \ ******************************************************************************
 
@@ -1814,6 +1816,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The y-coordinates in 3D space for the 3D objects (high byte)
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1845,6 +1848,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The z-coordinates in 3D space for the 3D objects
+\  Deep dive: Object management
 \
 \ ******************************************************************************
 
@@ -1867,6 +1871,7 @@
 \    Summary: The yaw angle for each object (i.e. the horizontal direction in
 \             which they are facing)
 \  Deep dive: Pitch and yaw angles
+\             Object management
 \
 \ ******************************************************************************
 
@@ -1887,6 +1892,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The y-coordinates in 3D space for the 3D objects (low byte)
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -1918,6 +1924,7 @@
 \       Type: Variable
 \   Category: 3D objects
 \    Summary: The object types table for up to 64 objects
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6182,6 +6189,7 @@
 \    Summary: Attempt to spawn an object on a tile that is below the maximum
 \             altitude specified in A
 \  Deep dive: Adding enemies and trees to the landscape
+\             Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7305,6 +7313,7 @@
 \    Summary: Calculate the number of enemies for this landscape, add them to
 \             the landscape and set the palette accordingly
 \  Deep dive: Adding enemies and trees to the landscape
+\             Object management
 \
 \ ******************************************************************************
 
@@ -7376,6 +7385,7 @@
 \    Summary: Add the player object to the landscape, ideally placing it below
 \             all the enemies and in the bottom half of the landscape
 \  Deep dive: Adding enemies and trees to the landscape
+\             Object management
 \
 \ ******************************************************************************
 
@@ -7448,6 +7458,7 @@
 \    Summary: Add trees to the landscape, ideally placing them below all the
 \             enemies in the landscape
 \  Deep dive: Adding enemies and trees to the landscape
+\             Object management
 \
 \ ******************************************************************************
 
@@ -13941,6 +13952,7 @@
 \       Type: Subroutine
 \   Category: 3D objects
 \    Summary: Get an object's coordinates
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14004,6 +14016,7 @@
 \   Category: 3D objects
 \    Summary: Delete an object, removing it from the landscape and vacating its
 \             object number
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14112,6 +14125,7 @@
 \    Summary: Spawn an object on a tile, putting it on top of any existing
 \             boulders or towers
 \  Deep dive: Adding enemies and trees to the landscape
+\             Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15289,6 +15303,7 @@
 \   Category: 3D objects
 \    Summary: Fetch an object number that we can use for a new object of the
 \             specified type, and add the type to the objectTypes table
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26047,6 +26062,7 @@
 \   Category: Title screen
 \    Summary: Spawn a character on the landscape in large 3D blocks for drawing
 \             on the main title screen or secret code screen
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26200,6 +26216,7 @@
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: Spawn large 3D blocks for the extracted character definition
+\  Deep dive: Object management
 \
 \ ******************************************************************************
 
@@ -27027,6 +27044,7 @@
 \    Summary: Draw the landscape's secret code by spawning a set of large 3D
 \             text block objects
 \  Deep dive: The landscape secret code
+\             Object management
 \
 \ ******************************************************************************
 
@@ -40384,7 +40402,9 @@
 \       Name: SpawnTitleObject
 \       Type: Subroutine
 \   Category: Title screen
-\    Summary: Spawn the title object (robot or the Sentinel) as object #1
+\    Summary: Spawn object #1 for the title screen (a robot or the Sentinel) or
+\             the game over screen (the object responsible for ending the game)
+\  Deep dive: Object management
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40395,7 +40415,7 @@
 \   Y                   The configuration to use when spawning the object:
 \
 \                         * 0 = the object on the game over screen (i.e. the
-\                               enemy that ended the game)
+\                               object responsible for ending the game)
 \
 \                         * 1 = the Sentinel on the main title screen or the
 \                               robot on the secret code screen
