@@ -38490,6 +38490,7 @@
 \    Summary: Calculate the angles and distances of the vector from the viewer
 \             to a specific object
 \  Deep dive: Converting coordinates to angles
+\             Calculating angles for drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38515,7 +38516,7 @@
 \ 3D vector from the viewer to the object we are analysing. We subtract the
 \ viewer's yaw angle and the yaw adjustment, and add half a screen width to get
 \ the yaw angle delta from the viewer's gaze to the object, relative to the
-\ viewer's gaze, i.e. the screen). This gives us the yaw angle relative to the
+\ viewer's gaze, i.e. the screen. This gives us the yaw angle relative to the
 \ view. You can think of this as the screen x-coordinate of the object, or how
 \ far the object appears from the left edge of the screen.
 \
@@ -38772,6 +38773,7 @@
 \    Summary: Calculate the view-relative pitch and yaw angles of all the points
 \             in an object
 \  Deep dive: Converting coordinates to angles
+\             Calculating angles for drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
