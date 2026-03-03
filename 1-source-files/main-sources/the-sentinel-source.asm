@@ -15746,6 +15746,13 @@
                         \
                         \ At this point, object #Y is the bottom object in the
                         \ stack and object #topObjectOnStack is the top object
+                        \
+                        \ However, if we end up drawing the stack upwards from
+                        \ the bottom, we jump back here after drawing each
+                        \ object and repeat the altitude test, so we can know
+                        \ whether to keep drawing from the bottom up (in stak3),
+                        \ or draw the rest of the object stack from the top down
+                        \ (in stak6)
 
 .stak2
 
@@ -15885,9 +15892,15 @@
 
 .stak7
 
-                        \ This loop draws all the objects in the stack in turn,
-                        \ from object #Y at the top, all the way down to the
-                        \ object at the bottom of the stack
+                        \ This loop draws the objects in the stack in turn, from
+                        \ object #Y, all the way down to the object at the
+                        \ bottom of the stack
+                        \
+                        \ The number of objects drawn is in objectStackCounter,
+                        \ so if we have already drawn any objects in the stack
+                        \ in the other direction (i.e.working upwards from the
+                        \ bottom of the stack) then these objects will not be
+                        \ redrawn
 
  JSR DrawObject         \ Draw object #Y onto the screen or into the screen
                         \ buffer
