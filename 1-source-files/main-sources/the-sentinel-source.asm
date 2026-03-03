@@ -1925,6 +1925,7 @@
 \   Category: 3D objects
 \    Summary: The object types table for up to 64 objects
 \  Deep dive: Object management
+\             3D object definitions
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26063,6 +26064,7 @@
 \    Summary: Spawn a character on the landscape in large 3D blocks for drawing
 \             on the main title screen or secret code screen
 \  Deep dive: Object management
+\             3D object definitions
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26217,6 +26219,7 @@
 \   Category: Title screen
 \    Summary: Spawn large 3D blocks for the extracted character definition
 \  Deep dive: Object management
+\             3D object definitions
 \
 \ ******************************************************************************
 
@@ -32478,6 +32481,7 @@
 \       Type: Variable
 \   Category: Drawing objects
 \    Summary: The first and last point numbers for each object
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -32510,6 +32514,7 @@
 \       Type: Variable
 \   Category: Drawing objects
 \    Summary: The first and last polygon numbers for each object
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -32542,6 +32547,7 @@
 \       Type: Variable
 \   Category: Drawing objects
 \    Summary: The phase configuration for each object
+\  Deep dive: 3D object definitions
 \
 \ ------------------------------------------------------------------------------
 \
@@ -32604,6 +32610,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the meanie object (polygons
 \             77 to 101, using points 76 to 93)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -32849,6 +32856,7 @@
 \   Category: Drawing objects
 \    Summary: Polar yaw angles for each of the points in each of the objects
 \  Deep dive: Pitch and yaw angles
+\             3D object definitions
 \
 \ ******************************************************************************
 
@@ -33054,6 +33062,7 @@
 \   Category: Drawing objects
 \    Summary: The height of each of the points in each of the objects, relative
 \             to the object's origin
+\  Deep dive: 3D object definitions
 \
 \ ------------------------------------------------------------------------------
 \
@@ -33266,6 +33275,7 @@
 \       Type: Variable
 \   Category: Drawing objects
 \    Summary: Polar distances for each of the points in each of the objects
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -33470,6 +33480,7 @@
 \       Type: Variable
 \   Category: Drawing objects
 \    Summary: Various data for object polygons (colour, drawing phase)
+\  Deep dive: 3D object definitions
 \
 \ ------------------------------------------------------------------------------
 \
@@ -34652,6 +34663,7 @@
 \   Category: Drawing objects
 \    Summary: Addresses for the lists of polygons and points for each object
 \             (low byte)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -34866,6 +34878,7 @@
 \   Category: Drawing objects
 \    Summary: Addresses for the lists of polygons and points for each object
 \             (high byte)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -35080,6 +35093,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the Sentinel object (polygons
 \             102 to 136, using points 94 to 123)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -35358,6 +35372,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the tree object (polygons 52
 \             to 66, using points 51 to 67)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -35482,6 +35497,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the boulder object (polygons
 \             67 to 76, using points 68 to 75)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -35566,6 +35582,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the Sentinel's tower object
 \             (polygons 137 to 147, using points 124 to 135)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -35662,6 +35679,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the 3D text block object
 \             (polygons 148 to 151, using points 136 to 143)
+\  Deep dive: 3D object definitions
 \
 \ ------------------------------------------------------------------------------
 \
@@ -35725,6 +35743,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the robot object (polygons 0
 \             to 26, using points 0 to 28)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
@@ -35941,6 +35960,7 @@
 \   Category: Drawing objects
 \    Summary: The list of polygons and points for the sentry object (polygons
 \             27 to 51, using points 29 to 50)
+\  Deep dive: 3D object definitions
 \
 \ ******************************************************************************
 
