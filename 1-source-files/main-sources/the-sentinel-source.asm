@@ -1558,6 +1558,7 @@
 \  Deep dive: Tile data
 \             Tile shapes
 \             Object management
+\             Stacking objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13517,6 +13518,7 @@
 \   Category: Landscape
 \    Summary: Calculate the altitude of a tile, optionally including platform
 \             objects and trees in the calculation
+\  Deep dive: Stacking objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14127,6 +14129,7 @@
 \             boulders or towers
 \  Deep dive: Adding enemies and trees to the landscape
 \             Object management
+\             Stacking objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15674,6 +15677,7 @@
 \       Type: Subroutine
 \   Category: Drawing objects
 \    Summary: Draw an entire stack of objects
+\  Deep dive: Stacking objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20232,6 +20236,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Calculate the pitch angle for the tile corner
+\  Deep dive: Stacking objects
 \
 \ ******************************************************************************
 
