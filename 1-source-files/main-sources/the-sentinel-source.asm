@@ -23292,7 +23292,7 @@
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: The main entry point for the routine to calculate the horizontal
-\             lines in filled polygon and prepare them for drawing on-screen
+\             lines in a filled polygon and prepare them for drawing on-screen
 \
 \ ------------------------------------------------------------------------------
 \
