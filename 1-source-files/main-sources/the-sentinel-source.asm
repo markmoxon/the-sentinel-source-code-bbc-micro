@@ -194,15 +194,15 @@
                         \ seen by the viewer, as a fractional part
                         \
                         \ The default for tiles is 128, so the gaze vector has
-                        \ to be no more than 0.5 of a tile's height above the
-                        \ tile for us to consider it as potentially hitting the
-                        \ tile
+                        \ to be no more than 0.5 of a tile's height below the
+                        \ tile or boulder surface for us to consider it as
+                        \ potentially hitting the tile
                         \
                         \ For the Sentinel's tile the accuracy is only 16, so
                         \ the gaze vector has to be more than 0.0625 of a tile's
-                        \ height above the top of the Sentinel's tower (this
-                        \ makes the player have to be much more accurate when
-                        \ trying to view the Sentinel's tile)
+                        \ height below the top of the Sentinel's tower (this
+                        \ means we can't just look at the side of the tower and
+                        \ perform an action on the Sentinel, unlike the boulder)
                         \
                         \ This variable shares the same memory location as
                         \ yEdgeDeltaLo, zCounter and stashAddr
@@ -12644,19 +12644,28 @@
                         \ checks
 
  BNE gaze4              \ If the high byte of the result is non-zero and
-                        \ positive, then the gaze is passing through the
-                        \ y-coordinate below the tile or platform, in terms of
-                        \ whole numbers (so it is essentially in the "tile cube"
-                        \ beneath the tile)
+                        \ positive, then the gaze is passing through the integer
+                        \ y-coordinate below the coordinate that contains the
+                        \ tile or platform (so it is essentially in the "tile
+                        \ cube" beneath the one that has the tile on top or that
+                        \ contains the platform)
                         \
                         \ This means the gaze must have passed through a slope
-                        \ and "into" the ground beneath the tile, so jump to
-                        \ gaze4 to return from the subroutine with the C flag
+                        \ and deep "into" the ground beneath the tile, so jump
+                        \ to gaze4 to return from the subroutine with the C flag
                         \ set to indicate that the viewer is not looking at a
                         \ tile
 
                         \ If we get here then the gaze is currently sitting
-                        \ within the "tile cube" above the tile
+                        \ within the "tile cube" below the tile surface or the
+                        \ platform's surface, and the distance between the
+                        \ surface and the gaze vector is given in the positive
+                        \ value of yPlatformLo, because A is zero and we know
+                        \ the distance in (A yPlatformLo) is positive
+                        \
+                        \ Because yPlatformLo is positive, this means the gaze
+                        \ is below the surface by a fractional distance of
+                        \ yPlatformLo, where 256 represents one tile height
 
  LDA yPlatformLo        \ If yPlatformLo >= yAccuracyLo, then the vertical
  CMP yAccuracyLo        \ distance between the gaze and the platform is greater
@@ -12666,14 +12675,16 @@
                         \ tile or object
                         \
                         \ Note that yAccuracyLo = 128 for all tiles (i.e. no
-                        \ more than 0.5 of a tile's height above the tile) apart
-                        \ from the tile containing the Sentinel's tower, when it
-                        \ is reduced to 16 if the gaze vector is pointing at the
-                        \ sides of the tower (i.e. no more than 0.0625 of a
-                        \ tile's height above the tile)
+                        \ more than 0.5 of a tile's height above the tile), so
+                        \ this ensures we can see the side of a boulder (which
+                        \ has a height of 0.5 tiles) and it will be classed as
+                        \ a hit
                         \
-                        \ This makes the player have to be much more accurate
-                        \ when trying to view the Sentinel's tile
+                        \ For the Sentinel's tile only, yAccuracyLo is set to
+                        \ 16, so this means we can't gaze at the sides of the
+                        \ tower to initiate an action (though we can look at a
+                        \ very small strip of 0.0625 tile heights at the top of
+                        \ the tower)
 
  BIT considerObjects    \ If bit 6 of considerObjects is set then the tile
  BVS gaze4              \ contains a boulder or the Sentinel's tower and the
@@ -13678,11 +13689,12 @@
                         \ platform on top of the tower
 
  LDA #16                \ Set yAccuracyLo = 16, so the gaze vector has to be
- STA yAccuracyLo        \ no more than 0.0625 of a tile's height above the tile
-                        \ for us to consider it as potentially hitting the tile
-                        \ when we return to the FollowGazeVector routine (this
-                        \ makes the player have to be much more accurate when
-                        \ trying to view the Sentinel's tile)
+ STA yAccuracyLo        \ no more than 0.0625 of a tile's height below the
+                        \ surface of the tower for us to consider it as
+                        \ potentially hitting the tower when we return to the
+                        \ FollowGazeVector routine (this means we can't just
+                        \ look at the side of the tower and perform an action,
+                        \ unlike the boulder)
 
  LDA yObjectLo,Y        \ Set the following:
  CLC                    \
