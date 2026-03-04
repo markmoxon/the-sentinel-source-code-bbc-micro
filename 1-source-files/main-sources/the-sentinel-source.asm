@@ -9210,7 +9210,7 @@
  BIT objectViewYawHi    \ If objectViewYawHi is positive then the player is to
  BPL tact3              \ the right of the meanie's viewing arc, so jump to
                         \ tact3 to set the yaw step to +8 so the meanie rotates
-                        \ right (clockwise( towards the player to the right
+                        \ right (clockwise) towards the player to the right
 
  LDA #&F8               \ Otherwise objectViewYawHi is negative and the player
                         \ is to the left of the meanie's viewing arc, so set A
@@ -23902,7 +23902,7 @@
                         \ value in the buffer, so jump to gpol17 to skip the
                         \ following
 
- CPY maxPitchAngle      \ If Y >= maxPitchAngle hen the line is not within the
+ CPY maxPitchAngle      \ If Y >= maxPitchAngle then the line is not within the
  BCS gpol17             \ screen buffer as the pitch angle is above the maximum
                         \ value in the buffer, so jump to gpol17 to skip the
                         \ following
