@@ -16333,6 +16333,7 @@
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw an analysed polygon into the screen buffer
+\  Deep dive: Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16522,6 +16523,7 @@
 \   Category: Drawing polygons
 \    Summary: Process the line overflowing the sides of the buffer, or fitting
 \             into one pixel byte, and loop on to the next polygon pixel line
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -16776,6 +16778,7 @@
 \   Category: Drawing polygons
 \    Summary: Draw the left and right edges of the polygon line and fall into
 \             part 4 to draw the line in between
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -16954,6 +16957,7 @@
 \   Category: Drawing polygons
 \    Summary: Draw a horizontal pixel line of a specific length in character
 \             columns
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -21205,6 +21209,7 @@
 \       Type: Subroutine
 \   Category: Drawing polygons
 \    Summary: Draw a polygon
+\  Deep dive: Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23221,6 +23226,7 @@
 \   Category: Drawing polygons
 \    Summary: Calculate the points in a two-face tile polygon when it consists
 \             of a pair of triangles
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -23293,6 +23299,7 @@
 \   Category: Drawing polygons
 \    Summary: The main entry point for the routine to calculate the horizontal
 \             lines in a filled polygon and prepare them for drawing on-screen
+\  Deep dive: Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23438,6 +23445,7 @@
 \   Category: Drawing polygons
 \    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
 \             (for larger yaw angles that convert into a 16-bit x-coordinate)
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -23533,6 +23541,7 @@
 \   Category: Drawing polygons
 \    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
 \             (for smaller yaw angles that convert into an 8-bit x-coordinate)
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -23633,6 +23642,7 @@
 \   Category: Drawing polygons
 \    Summary: Loop through all the edges in the polygon and call the correct
 \             routines to process one-byte, two-byte or horizontal edges
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -24841,6 +24851,7 @@
 \   Category: Drawing polygons
 \    Summary: Split polygon edges whose coordinates are stored in two-byte
 \             numbers into smaller sections for processing
+\  Deep dive: Drawing objects
 \
 \ ******************************************************************************
 
@@ -32578,6 +32589,7 @@
 \   Category: Drawing objects
 \    Summary: The phase configuration for each object
 \  Deep dive: 3D object definitions
+\             Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -33511,6 +33523,7 @@
 \   Category: Drawing objects
 \    Summary: Various data for object polygons (colour, drawing phase)
 \  Deep dive: 3D object definitions
+\             Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38503,6 +38516,7 @@
 \             to a specific object
 \  Deep dive: Converting coordinates to angles
 \             Calculating angles for drawing objects
+\             Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38786,6 +38800,7 @@
 \             in an object
 \  Deep dive: Converting coordinates to angles
 \             Calculating angles for drawing objects
+\             Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -39216,6 +39231,7 @@
 \       Type: Subroutine
 \   Category: Drawing objects
 \    Summary: Draw a 3D object
+\  Deep dive: Drawing objects
 \
 \ ------------------------------------------------------------------------------
 \
