@@ -6713,6 +6713,7 @@
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Reset the address of the start of screen memory
+\  Deep dive: The custom screen mode
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29252,6 +29253,7 @@
 \    Summary: Scroll the screen and copy data from the screen buffer into screen
 \             memory to implement the player's scrolling landscape view
 \  Deep dive: The interrupt handler
+\             The custom screen mode
 \
 \ ******************************************************************************
 
@@ -31412,6 +31414,7 @@
 \   Category: Screen buffer
 \    Summary: Address lookup table for character rows in screen memory (low
 \             byte)
+\  Deep dive: The custom screen mode
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31488,6 +31491,7 @@
 \   Category: Screen buffer
 \    Summary: Address lookup table for character rows in screen memory (high
 \             byte)
+\  Deep dive: The custom screen mode
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40864,6 +40868,7 @@
 \             memory, move code, reset timers and set the interrupt handler
 \  Deep dive: Entry and setup code
 \             The interrupt handler
+\             The custom screen mode
 \
 \ ------------------------------------------------------------------------------
 \
