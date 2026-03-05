@@ -38828,16 +38828,24 @@
 \ of the object point within the object itself (i.e. relative to the object's
 \ origin and rotated to the correct gaze).
 \
-\ 3. angle(Hi Lo): Calculate the angle of the right-angled triangle made up of
-\ the object point's object-relative x- and z-coordinates, to give us the angle
-\ of the vector from the object's origin to the point within the object.
+\ 3. zDelta(Hi Lo): Add the z-coordinate to objectAdjacent(Hi Lo) to move the
+\ object point away from us to the correct distance, so we end up with the
+\ z-coordinate of the point relative to the viewer rather than the object's
+\ origin. We don't change the x-coordinate, so the next calculation is as if
+\ the object was directly in front of the viewer.
 \
-\ 4. drawViewYaw(Hi Lo): Rotate the yaw angle of the point within the object
-\ definition by the object's view-relative yaw angle to get the view-relative
-\ yaw angle of the point. This is the yaw angle of the vector from the viewer to
-\ the object point.
+\ 4. angle(Hi Lo): Calculate the angle of the right-angled triangle made up of
+\ the object point's x- and z-coordinates, to give us the yaw angle of the
+\ vector from the viewer to the point within the object, as if the object was
+\ directly in front of the viewer.
 \
-\ 5. drawViewPitch(Hi Lo): Construct the vertical triangle that has the vector
+\ 5. drawViewYaw(Hi Lo): Take this calculated yaw angle from the viewer to the
+\ object, and add it to the object's view-relative yaw angle to get the
+\ view-relative yaw angle of the point. This is the yaw angle of the vector
+\ from the viewer to the object point, with the object moved sideways into its
+\ correct x-axis position.
+\
+\ 6. drawViewPitch(Hi Lo): Construct the vertical triangle that has the vector
 \ from the viewer to the point as the hypotenuse, the point altitude as the
 \ opposite side and the projection onto the ground of the vector as the adjacent
 \ side, and use this to calculate the pitch angle of the vector from the viewer
@@ -38999,21 +39007,20 @@
                         \ is still in zDeltaHi
 
                         \ We now do a similar calculation for the x-axis, but
-                        \ using sin(A) instead of cos(A) to get the length of
-                        \ the opposite side of the triangle instead of the
+                        \ using sin(A T) instead of cos(A T) to get the length
+                        \ of the opposite side of the triangle instead of the
                         \ adjacent
 
  LDA objPointDistance,Y \ Set U to the polar distance of the object point
  STA U
 
  LDA sinA               \ Set (A T) = A * U
- JSR Multiply8x8        \           = distance * sin(A)
+ JSR Multiply8x8        \           = distance * sin(A T)
 
- STA xDeltaLo           \ Set (A xDeltaLo) = distance * sin(A) / 256
- LDA #0
+ STA xDeltaLo           \ Set (A xDeltaLo) = distance * sin(A T) / 256
 
- STA xDeltaAbsoluteHi   \ Set xDeltaAbsoluteHi = 0 so it is correctly set to the
-                        \ high byte of (A xDeltaLo), as A is 0
+ LDA #0                 \ Set xDeltaAbsoluteHi = 0 so it is correctly set to the
+ STA xDeltaAbsoluteHi   \ high byte of (A xDeltaLo), as A is 0
 
  LDA H                  \ Set xDeltaHi to the sign of sin(A T) from above, so
  STA xDeltaHi           \ the calculation in GetHypotenuseAngle uses the correct
@@ -39071,8 +39078,9 @@
                         \ This contains the yaw angle of the object relative to
                         \ the view
                         \
-                        \ We just calculated the object-relative yaw angle of
-                        \ the object point in:
+                        \ We just calculated the yaw angle of the object point
+                        \ relative to the viewer, for when the object is
+                        \ directly in front of the viewer, and put it in:
                         \
                         \   angle(Hi Lo)
                         \
