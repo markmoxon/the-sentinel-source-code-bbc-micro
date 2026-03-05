@@ -40879,10 +40879,15 @@
 \ the 256 pixels of standard mode 5. The horizontal resolution is the same at
 \ 160 pixels.
 \
-\ Screen memory for the custom mode runs from &6000 to &7F3F, with four pixels
-\ per byte and four colours per pixel. Howeve, because the landscape view is
-\ panned using a hardware scroll, the entire section from &6000 to &7FFF is used
-\ for screen memory as the landscape is panned.
+\ Screen memory for the custom mode runs from &6000 to &7FFF, with four pixels
+\ per byte and four colours per pixel. However, not all of this memory is used
+\ at any one time, as the total screen memory required is &1F40 bytes rather
+\ than &2000.
+\
+\ In its default, unscrolled state, screen memory actually starts at &7F80
+\ rather than &6000, and because the landscape view is panned using a hardware
+\ scroll, the entire section from &6000 to &7FFF ends up being used for screen
+\ memory as the landscape is panned.
 \
 \ ******************************************************************************
 
@@ -41007,7 +41012,7 @@
                         \ B4 and B5 in the System VIA control the address of the
                         \ start of screen memory and the screen size, so this
                         \ sets screen memory to &6000 and screen size to 8K (see
-                        \ page 429 of the "Advanced User Guide for the BBC
+                        \ page 419 of the "Advanced User Guide for the BBC
                         \ Micro" by Bray, Dickens and Holmes for details)
 
  LDA #0                 \ Call OSBYTE with A = 0 and X = 255 to fetch the
