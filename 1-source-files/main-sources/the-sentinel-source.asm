@@ -38799,6 +38799,7 @@
 \    Summary: Calculate the view-relative pitch and yaw angles of all the points
 \             in an object
 \  Deep dive: Converting coordinates to angles
+\             Converting angles to coordinates
 \             Calculating angles for drawing objects
 \             Drawing objects
 \
@@ -38821,7 +38822,7 @@
 \
 \ 3. angle(Hi Lo): Calculate the angle of the right-angled triangle made up of
 \ the object point's object-relative x- and z-coordinates, to give us the angle
-\ of the vector from the object's origin to the to the point within the object.
+\ of the vector from the object's origin to the point within the object.
 \
 \ 4. drawViewYaw(Hi Lo): Rotate the yaw angle of the point within the object
 \ definition by the object's view-relative yaw angle to get the view-relative
@@ -39035,7 +39036,7 @@
                         \ triangle made up of the object point's object-relative
                         \ x- and z-coordinates, i.e. the yaw angle of the point
                         \ within the object, or the angle of the vector from the
-                        \ object's origin to the to the point within the object
+                        \ object's origin to the point within the object
 
                         \ We now calculate the yaw and pitch angles of the point
                         \ in terms of the 3D world, storing the results in the
@@ -39123,8 +39124,8 @@
                         \ with side lengths of a(Hi Lo) and b(Hi Lo) and angle
                         \ angleTangent, which are still set from the call to
                         \ GetHypotenuseAngle above to the values for the vector
-                        \ from the object's origin to the to the point within
-                        \ the object
+                        \ from the object's origin to the point within the
+                        \ object
                         \
                         \ So this is the adjacent side of our new triangle,
                         \ along the ground
