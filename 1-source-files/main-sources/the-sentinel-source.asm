@@ -196,7 +196,10 @@
                         \ The default for tiles is 128, so the gaze vector has
                         \ to be no more than 0.5 of a tile's height below the
                         \ tile or boulder surface for us to consider it as
-                        \ potentially hitting the tile
+                        \ potentially hitting the tile (though this test only
+                        \ gets applied to boulders, as tiles have neighbouring
+                        \ tiles whose surfaces will obscure the gaze vector
+                        \ before it can reach the sides of the tile cube)
                         \
                         \ For the Sentinel's tile the accuracy is only 16, so
                         \ the gaze vector has to be more than 0.0625 of a tile's
@@ -12679,6 +12682,11 @@
                         \ this ensures we can see the side of a boulder (which
                         \ has a height of 0.5 tiles) and it will be classed as
                         \ a hit
+                        \
+                        \ In practice, this test will only affect boulders, as
+                        \ tiles have neighbouring tiles whose surfaces will have
+                        \ obscured the gaze vector before it can reach the sides
+                        \ of the tile cube below the tile surface
                         \
                         \ For the Sentinel's tile only, yAccuracyLo is set to
                         \ 16, so this means we can't gaze at the sides of the
