@@ -5682,6 +5682,7 @@
 \    Summary: The pitch angle of the highest point that the player can look at
 \             with the sights
 \  Deep dive: Pitch and yaw angles
+\             The projection system
 \
 \ ******************************************************************************
 
@@ -5697,6 +5698,7 @@
 \    Summary: The pitch angle of the lowest point that the player can look at
 \             with the sights
 \  Deep dive: Pitch and yaw angles
+\             The projection system
 \
 \ ******************************************************************************
 
@@ -23455,6 +23457,7 @@
 \    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
 \             (for larger yaw angles that convert into a 16-bit x-coordinate)
 \  Deep dive: Drawing objects
+\             The projection system
 \
 \ ******************************************************************************
 
@@ -23551,6 +23554,7 @@
 \    Summary: Convert all the polygon point yaw angles into pixel x-coordinates
 \             (for smaller yaw angles that convert into an 8-bit x-coordinate)
 \  Deep dive: Drawing objects
+\             The projection system
 \
 \ ******************************************************************************
 
@@ -39057,7 +39061,7 @@
                         \ within the object, or the angle of the vector from the
                         \ object's origin to the point within the object
 
-                        \ We now calculate the yaw and pitch angles of the point
+                        \ We now calculate the pitch and yaw angles of the point
                         \ in terms of the 3D world, storing the results in the
                         \ following tables:
                         \
