@@ -1520,7 +1520,7 @@
 
 .oddVisibility
 
- SKIP 32                \ The visibility of tiles corners in odd rows as they
+ SKIP 32                \ The visibility of tile corners in odd rows as they
                         \ are processed by the GetRowVisibility routine
                         \
                         \   * 0 = tile corner is not visible
@@ -1532,7 +1532,7 @@
 
 .evenVisibility
 
- SKIP 32                \ The visibility of tiles corners in even rows as they
+ SKIP 32                \ The visibility of tile corners in even rows as they
                         \ are processed by the GetRowVisibility routine
                         \
                         \   * 0 = tile corner is not visible
@@ -1970,6 +1970,7 @@
 \    Summary: Storage for the pitch angles of tiles and object points for
 \             drawing the current landscape view (low bytes)
 \  Deep dive: Pitch and yaw angles
+\             The drawing tables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2001,6 +2002,7 @@
 \    Summary: Storage for the pitch angles of tiles and object points for
 \             drawing the current landscape view (high bytes)
 \  Deep dive: Pitch and yaw angles
+\             The drawing tables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -2057,6 +2059,7 @@
 \    Summary: Storage for the yaw angles of tiles and object points for drawing
 \             the current landscape view (low bytes)
 \  Deep dive: Pitch and yaw angles
+\             The drawing tables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18781,8 +18784,8 @@
 
  LDA #0                 \ Set drawingTableOffset = 0 so the call to first call
  STA drawingTableOffset \ GetTileViewEdges (for tile row 31) will populate the
-                        \ tables at tileViewData+0, tileViewYaw+0 and
-                        \ tileViewPitch+0 with the angles of the tile being
+                        \ tables at tileViewData+0, drawViewYaw+0 and
+                        \ drawViewPitch+0 with the angles of the tile being
                         \ analysed
 
  JSR GetTileViewEdges   \ For the row of tile corners at the very back of the
@@ -19253,7 +19256,7 @@
  LDA #0                 \ Set drawingTableOffset = 0 so the following call to
  STA drawingTableOffset \ GetTileViewAngles (which we call to fetch the data for
                         \ the tile corner row in front of viewer) will populate
-                        \ the tables at tileViewYaw+0 and tileViewPitch+0
+                        \ the tables at drawViewYaw+0 and drawViewPitch+0
 
  INC zTile              \ Increment the row number so it's the row in front of
                         \ the viewer
@@ -19277,12 +19280,12 @@
 
                         \ By this point we have the following:
                         \
-                        \   * The tables at tileViewYaw+0 and tileViewPitch+0
+                        \   * The tables at drawViewYaw+0 and drawViewPitch+0
                         \     contain data for the tile corner row in front of
                         \     the viewer, i.e. for the front edge of the tile on
                         \     which the viewer sits
                         \
-                        \   * The tables at tileViewYaw+32 and tileViewPitch+32
+                        \   * The tables at drawViewYaw+32 and drawViewPitch+32
                         \     contain data for the tile corner row containing
                         \     the viewer, i.e. for the rear edge of the tile on
                         \     which the viewer sits
@@ -19319,7 +19322,7 @@
  LDA #32                \ Set drawingTableOffset = 0 so the following call to
  STA drawingTableOffset \ DrawFlatTile (for the tile row beneath the viewer)
                         \ will fetch data from the tables at tileViewData+32,
-                        \ tileViewYaw+32 and tileViewPitch+32
+                        \ drawViewYaw+32 and drawViewPitch+32
 
  DEC zTile              \ Decrement the row number so it goes back to the row
                         \ containing the viewer
@@ -19392,7 +19395,7 @@
 \                       perspective of the viewer
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
-\                       the tileViewData, tileViewYaw and tileViewPitch drawing
+\                       the tileViewData, drawViewYaw and drawViewPitch drawing
 \                       data tables; each table contains two complete sets of
 \                       tile data, with the first table at offset 0 and the
 \                       second table at offset 32, so we store the results
@@ -19803,7 +19806,7 @@
 \                       perspective of the viewer
 \
 \   drawingTableOffset  Defines where we store the results of the analysis in
-\                       the tileViewData, tileViewYaw and tileViewPitch drawing
+\                       the tileViewData, drawViewYaw and drawViewPitch drawing
 \                       data tables; each table contains two complete sets of
 \                       tile data, with the first table at offset 0 and the
 \                       second table at offset 32, so we store the results
@@ -31828,6 +31831,7 @@
 \   Category: Drawing the landscape
 \    Summary: A table for storing the visibility of each tile from the player's
 \             point of view, with one bit per tile (1 = visible, 0 = hidden)
+\  Deep dive: The drawing tables
 \
 \ ******************************************************************************
 
@@ -36246,6 +36250,7 @@
 \    Summary: Storage for the yaw angles of tiles and object points for drawing
 \             the current landscape view (high bytes)
 \  Deep dive: Pitch and yaw angles
+\             The drawing tables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38877,7 +38882,7 @@
                         \ tile drawing tables in memory, and the index is set
                         \ accordingly
                         \
-                        \ Specifically, the tile view angles is stored with a
+                        \ Specifically, the tile view angles are stored with a
                         \ drawing index of 0 or 32, thus taking up the first 64
                         \ bytes of each table, while the object point angles
                         \ are stored from drawing index 64
