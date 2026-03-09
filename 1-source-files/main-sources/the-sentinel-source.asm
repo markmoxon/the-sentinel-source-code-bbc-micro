@@ -21257,7 +21257,6 @@
 \                         * When drawing object polygons, this points to a list
 \                           of object-relative numbers of polygon points
 \
-\
 \   triangleStartPoint  When drawing a two-face tile as a pair of triangles,
 \                       this is the number of the starting point to use (0 or 1)
 \
@@ -23319,7 +23318,15 @@
 \
 \ Arguments:
 \
-\   polygonType         The polygon type
+\   polygonType         Bits 6 and 7 determine the type of polygon to calculate:
+\
+\                         * %00xxxxxx = quadrilateral
+\
+\                         * %01xxxxxx = object polygon
+\
+\                         * %10xxxxxx = first triangle in a two-face tile
+\
+\                         * %11xxxxxx = second triangle in a two-face tile
 \
 \   triangleStartPoint  When drawing a two-face tile as a pair of triangles,
 \                       this is the number of the starting point to use (0 or 1)
