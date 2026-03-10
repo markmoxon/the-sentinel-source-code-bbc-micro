@@ -2033,6 +2033,7 @@
 \   Category: Drawing polygons
 \    Summary: Pixel x-coordinates for all the points in the polygon that we are
 \             currently drawing (high bytes)
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -16348,6 +16349,7 @@
 \   Category: Drawing polygons
 \    Summary: Draw an analysed polygon into the screen buffer
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -16523,7 +16525,7 @@
 
  CPY yPolygonBottom     \ If yPolygonTop >= yPolygonBottom then there is at
  BCS dpol13             \ least one visible line to draw in this polygon, so
-                        \ jump to dpol13 to draw the polygon, starting from
+                        \ jump to part 3 to draw the polygon, starting from
                         \ row Y
 
 .dpol2
@@ -16538,6 +16540,7 @@
 \    Summary: Process the line overflowing the sides of the buffer, or fitting
 \             into one pixel byte, and loop on to the next polygon pixel line
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -16793,6 +16796,7 @@
 \    Summary: Draw the left and right edges of the polygon line and fall into
 \             part 4 to draw the line in between
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -16972,6 +16976,7 @@
 \    Summary: Draw a horizontal pixel line of a specific length in character
 \             columns
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -21018,6 +21023,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a tile with one quadrilateral (four-sided) face
+\  Deep dive: Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21046,6 +21052,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a sloping tile that is not shape 4 or 12
+\  Deep dive: Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21157,6 +21164,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a tile with two triangular (three-sided) faces
+\  Deep dive: Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21224,6 +21232,7 @@
 \   Category: Drawing polygons
 \    Summary: Draw a polygon
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23240,6 +23249,7 @@
 \    Summary: Calculate the points in a two-face tile polygon when it consists
 \             of a pair of triangles
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -23313,6 +23323,7 @@
 \    Summary: The main entry point for the routine to calculate the horizontal
 \             lines in a filled polygon and prepare them for drawing on-screen
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23468,6 +23479,7 @@
 \             (for larger yaw angles that convert into a 16-bit x-coordinate)
 \  Deep dive: Drawing objects
 \             The projection system
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -23565,6 +23577,7 @@
 \             (for smaller yaw angles that convert into an 8-bit x-coordinate)
 \  Deep dive: Drawing objects
 \             The projection system
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -23666,6 +23679,7 @@
 \    Summary: Loop through all the edges in the polygon and call the correct
 \             routines to process one-byte, two-byte or horizontal edges
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -24019,6 +24033,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge, populating xPolygonRight or xPolygonLeft
 \             with the x-coordinate of the edge for each y-coordinate
+\  Deep dive: Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -24247,6 +24262,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge with a steep gradient by stepping along the
 \             y-axis
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -24422,6 +24438,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge with a shallow gradient by stepping along the
 \             x-axis
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -24659,6 +24676,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a steep edge that starts off-screen, without storing the
 \             coordinates, until we reach the screen and return to part 2
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -24770,6 +24788,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a shallow edge that starts off-screen, without storing the
 \             coordinates, until we reach the screen and return to part 3
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -24875,6 +24894,7 @@
 \    Summary: Split polygon edges whose coordinates are stored in two-byte
 \             numbers into smaller sections for processing
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -25170,6 +25190,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge where the start or end point x-coordinates
 \             are two-byte numbers
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -25258,6 +25279,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge with a steep gradient by stepping along the
 \             y-axis (for two-byte x-coordinates)
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -25546,6 +25568,7 @@
 \   Category: Drawing polygons
 \    Summary: Trace a polygon edge with a shallow gradient by stepping along the
 \             x-axis (for two-byte x-coordinates)
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -32680,6 +32703,7 @@
 \    Summary: The list of polygons and points for the meanie object (polygons
 \             77 to 101, using points 76 to 93)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -35164,6 +35188,7 @@
 \    Summary: The list of polygons and points for the Sentinel object (polygons
 \             102 to 136, using points 94 to 123)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -35443,6 +35468,7 @@
 \    Summary: The list of polygons and points for the tree object (polygons 52
 \             to 66, using points 51 to 67)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -35568,6 +35594,7 @@
 \    Summary: The list of polygons and points for the boulder object (polygons
 \             67 to 76, using points 68 to 75)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -35653,6 +35680,7 @@
 \    Summary: The list of polygons and points for the Sentinel's tower object
 \             (polygons 137 to 147, using points 124 to 135)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -35750,6 +35778,7 @@
 \    Summary: The list of polygons and points for the 3D text block object
 \             (polygons 148 to 151, using points 136 to 143)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -35814,6 +35843,7 @@
 \    Summary: The list of polygons and points for the robot object (polygons 0
 \             to 26, using points 0 to 28)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -36031,6 +36061,7 @@
 \    Summary: The list of polygons and points for the sentry object (polygons
 \             27 to 51, using points 29 to 50)
 \  Deep dive: 3D object definitions
+\             Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -36231,6 +36262,7 @@
 \   Category: Drawing polygons
 \    Summary: Pixel x-coordinates for all the points in the polygon that we are
 \             currently drawing (low bytes)
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -38228,6 +38260,7 @@
 \   Category: Drawing polygons
 \    Summary: The pixel x-coordinate of the left edge of each pixel line in the
 \             polygon being drawn
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -38273,6 +38306,7 @@
 \   Category: Drawing polygons
 \    Summary: The pixel x-coordinate of the right edge of each pixel line in the
 \             polygon being drawn
+\  Deep dive: Drawing filled polygons
 \
 \ ******************************************************************************
 
@@ -39269,6 +39303,7 @@
 \   Category: Drawing objects
 \    Summary: Draw a 3D object
 \  Deep dive: Drawing objects
+\             Drawing filled polygons
 \
 \ ------------------------------------------------------------------------------
 \
