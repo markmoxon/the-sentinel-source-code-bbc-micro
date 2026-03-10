@@ -7326,6 +7326,7 @@
 \             the landscape and set the palette accordingly
 \  Deep dive: Adding enemies and trees to the landscape
 \             Object management
+\             Colours and palettes
 \
 \ ******************************************************************************
 
@@ -23143,6 +23144,7 @@
 \       Type: Variable
 \   Category: Drawing the landscape
 \    Summary: Tile colours by shape and the orientation of the viewer
+\  Deep dive: Colours and palettes
 \
 \ ------------------------------------------------------------------------------
 \
@@ -39891,6 +39893,7 @@
 \   Category: Graphics
 \    Summary: Set the logical colours for each of the four physical colours in
 \             screen mode 5
+\  Deep dive: Colours and palettes
 \
 \ ------------------------------------------------------------------------------
 \
@@ -39993,6 +39996,7 @@
 \       Type: Variable
 \   Category: Graphics
 \    Summary: The logical colours for two mode 5 palettes
+\  Deep dive: Colours and palettes
 \
 \ ------------------------------------------------------------------------------
 \
