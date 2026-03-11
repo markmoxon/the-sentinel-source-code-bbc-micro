@@ -31947,21 +31947,21 @@
 \   &4720 (screenBufferRow22)
 \   &4860 (screenBufferRow23)
 \
-\ The first batch of locations need to be able to store an entire screen row of
+\ The first eight locations need to be able to store an entire screen row of
 \ 320 bytes, so they can be used to store the screen buffer when scrolling in
-\ any direction (and specifically for the up and down scrolling, when we need to
-\ be able to store eight full character rows in the buffer).
+\ the up and down direction, as then we need to be able to store eight full
+\ character rows in the buffer.
 \
-\ We only need to use the second batch of locations when we are drawing the left
-\ or right buffers when scrolling sideways, or when updating an object on-screen
+\ We only need to use the other locations when we are drawing into the left or
+\ right buffers when scrolling sideways, or when updating an object on-screen
 \ via the screen buffer, as we then need to fit all 24 character rows into the
 \ buffer. We can fit the first 16 rows into the first batch of buffer rows, but
 \ we need more.
 \
-\ Luckily, when scrolling sideways, each row is only eight character blocks
-\ wide, so each buffer row only needs to be 64 bytes long rather than the 320
+\ Luckily, when scrolling sideways, each row is only 16 character blocks
+\ wide, so each buffer row only needs to be 128 bytes long rather than the 320
 \ bytes needed when scrolling up or down. This means that we are only using the
-\ first 64 bytes of each buffer, so we can stick a second batch of buffers in
+\ first 128 bytes of each buffer, so we can stick a second batch of buffers in
 \ the latter part of each of the first batch.
 \
 \ However, when using the screen buffer to update an on-screen object, we can't
