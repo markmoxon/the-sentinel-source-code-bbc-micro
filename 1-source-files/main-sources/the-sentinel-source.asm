@@ -32006,33 +32006,33 @@
 \
 \ And when the player pans left or right, the new screen content that we need to
 \ draw into the screen buffers is a strip down the side of the screen that's 24
-\ character rows tall and eight character columns wide, so each row is 64 bytes
+\ character rows tall and 16 character columns wide, so each row is 128 bytes
 \ long. So we use the screen buffer space as follows:
 \
-\   &3F00 to &3F3F for character row 0  (first 64 bytes of screenBufferRow0)
-\   &4040 to &407F for character row 1  (first 64 bytes of screenBufferRow1)
-\   &4180 to &41BF for character row 2  (first 64 bytes of screenBufferRow2)
-\   &42C0 to &42FF for character row 3  (first 64 bytes of screenBufferRow3)
-\   &4400 to &443F for character row 4  (first 64 bytes of screenBufferRow4)
-\   &4540 to &457F for character row 5  (first 64 bytes of screenBufferRow5)
-\   &4680 to &46BF for character row 6  (first 64 bytes of screenBufferRow6)
-\   &47C0 to &47FF for character row 7  (first 64 bytes of screenBufferRow7)
-\   &4900 to &493F for character row 8  (first 64 bytes of screenBufferRow8)
-\   &4A40 to &4A7F for character row 9  (first 64 bytes of screenBufferRow9)
-\   &4B80 to &4BBF for character row 10 (first 64 bytes of screenBufferRow10)
-\   &4CC0 to &4CFF for character row 11 (first 64 bytes of screenBufferRow11)
-\   &4E00 to &4E3F for character row 12 (first 64 bytes of screenBufferRow12)
-\   &4F40 to &4F7F for character row 13 (first 64 bytes of screenBufferRow13)
-\   &5080 to &50BF for character row 14 (first 64 bytes of screenBufferRow14)
-\   &51C0 to &51FF for character row 15 (first 64 bytes of screenBufferRow15)
-\   &3FA0 to &3FDF for character row 16 (first 64 bytes of screenBufferRow16)
-\   &40E0 to &411F for character row 17 (first 64 bytes of screenBufferRow17)
-\   &4220 to &425F for character row 18 (first 64 bytes of screenBufferRow18)
-\   &4360 to &439F for character row 19 (first 64 bytes of screenBufferRow19)
-\   &44A0 to &43DF for character row 20 (first 64 bytes of screenBufferRow20)
-\   &45E0 to &461F for character row 21 (first 64 bytes of screenBufferRow21)
-\   &4720 to &475F for character row 22 (first 64 bytes of screenBufferRow22)
-\   &4860 to &489F for character row 23 (first 64 bytes of screenBufferRow23)
+\   &3F00 to &3F7F for character row 0  (first 128 bytes of screenBufferRow0)
+\   &4040 to &40BF for character row 1  (first 128 bytes of screenBufferRow1)
+\   &4180 to &42FF for character row 2  (first 128 bytes of screenBufferRow2)
+\   &42C0 to &433F for character row 3  (first 128 bytes of screenBufferRow3)
+\   &4400 to &447F for character row 4  (first 128 bytes of screenBufferRow4)
+\   &4540 to &45BF for character row 5  (first 128 bytes of screenBufferRow5)
+\   &4680 to &46FF for character row 6  (first 128 bytes of screenBufferRow6)
+\   &47C0 to &483F for character row 7  (first 128 bytes of screenBufferRow7)
+\   &4900 to &497F for character row 8  (first 128 bytes of screenBufferRow8)
+\   &4A40 to &4ABF for character row 9  (first 128 bytes of screenBufferRow9)
+\   &4B80 to &4BFF for character row 10 (first 128 bytes of screenBufferRow10)
+\   &4CC0 to &4D3F for character row 11 (first 128 bytes of screenBufferRow11)
+\   &4E00 to &4E7F for character row 12 (first 128 bytes of screenBufferRow12)
+\   &4F40 to &4FBF for character row 13 (first 128 bytes of screenBufferRow13)
+\   &5080 to &50FF for character row 14 (first 128 bytes of screenBufferRow14)
+\   &51C0 to &523F for character row 15 (first 128 bytes of screenBufferRow15)
+\   &3FA0 to &401F for character row 16 (first 128 bytes of screenBufferRow16)
+\   &40E0 to &415F for character row 17 (first 128 bytes of screenBufferRow17)
+\   &4220 to &429F for character row 18 (first 128 bytes of screenBufferRow18)
+\   &4360 to &43DF for character row 19 (first 128 bytes of screenBufferRow19)
+\   &44A0 to &451F for character row 20 (first 128 bytes of screenBufferRow20)
+\   &45E0 to &465F for character row 21 (first 128 bytes of screenBufferRow21)
+\   &4720 to &479F for character row 22 (first 128 bytes of screenBufferRow22)
+\   &4860 to &48DF for character row 23 (first 128 bytes of screenBufferRow23)
 \
 \ And when we update an object on-screen that is wider than half a screen, we
 \ use 160 bytes in all 24 row buffers to draw the first 20 character columns of
