@@ -16351,6 +16351,7 @@
 \    Summary: Draw an analysed polygon into the screen buffer
 \  Deep dive: Drawing 3D objects
 \             Drawing filled polygons
+\             Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20584,6 +20585,7 @@
 \   Category: Screen buffer
 \    Summary: Flip the buffer type between buffer type 0 (left row buffer) and
 \             buffer type 1 (right row buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -20661,6 +20663,7 @@
 \   Category: Screen buffer
 \    Summary: The offset to add to yaw angles for each screen buffer to convert
 \             from the origin in the buffer centre to the origin on the left
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -20678,6 +20681,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The left edge of each screen buffer in pixels
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -20695,6 +20699,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The width of each screen buffer in pixels
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -20712,6 +20717,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Minimum allowed yaw angles for points in the screen buffer
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -20730,6 +20736,7 @@
 \   Category: Screen buffer
 \    Summary: Set up the variables required to configure the screen buffer for
 \             updating an object
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -28978,6 +28985,7 @@
 \   Category: Scanner/energy row
 \    Summary: Draw a single icon in the top-left corner of the screen (via the
 \             icon screen buffer at iconBuffer) and move along to the right
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -30241,6 +30249,7 @@
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Configure the row buffer for use
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -30275,6 +30284,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Maximum allowed pitch angles for points in the screen buffer
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -30290,6 +30300,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: Minimum allowed pitch angles for points in the screen buffer
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -30305,6 +30316,7 @@
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Configure the column buffer for use
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -30322,6 +30334,7 @@
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Set the maximum and minimum pitch angles for the column buffer
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -31308,6 +31321,7 @@
 \   Category: Scanner/energy row
 \    Summary: Calculate the address in screen memory of the icon and scanner row
 \             at the top of the screen
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31353,6 +31367,7 @@
 \   Category: Screen buffer
 \    Summary: Display the redrawn icon and scanner row by copying the contents
 \             of the icon screen buffer into screen memory
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -31454,6 +31469,7 @@
 \    Summary: Address lookup table for character rows in screen memory (low
 \             byte)
 \  Deep dive: The custom screen mode
+\             Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31484,6 +31500,7 @@
 \   Category: Screen buffer
 \    Summary: Address lookup table for character rows in the screen buffer (low
 \             byte)
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31531,6 +31548,7 @@
 \    Summary: Address lookup table for character rows in screen memory (high
 \             byte)
 \  Deep dive: The custom screen mode
+\             Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31561,6 +31579,7 @@
 \   Category: Screen buffer
 \    Summary: Address lookup table for character rows in the screen buffer (high
 \             byte)
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31907,6 +31926,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 0
+\  Deep dive: Screen buffers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -32055,6 +32075,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 16 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32087,6 +32108,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 1
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32120,6 +32142,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 17 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32152,6 +32175,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 2
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32185,6 +32209,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 18 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32217,6 +32242,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 3
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32250,6 +32276,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 19 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32282,6 +32309,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 4
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32315,6 +32343,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 20 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32347,6 +32376,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 5
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32380,6 +32410,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 21 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32412,6 +32443,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 6
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32445,6 +32477,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 22 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32477,6 +32510,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 7
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32510,6 +32544,7 @@
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 23 (as part of a column
 \             buffer)
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32542,6 +32577,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 8
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -32918,6 +32954,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 9
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -33124,6 +33161,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 10
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -33338,6 +33376,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 11
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -33543,6 +33582,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 12
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -34727,6 +34767,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 13
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -34942,6 +34983,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 14
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -35157,6 +35199,7 @@
 \       Type: Variable
 \   Category: Screen buffer
 \    Summary: The screen buffer for character row 15
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
@@ -38248,6 +38291,7 @@
 \   Category: Graphics
 \    Summary: The icon screen buffer, which is used to buffer the energy icon
 \             and scanner row before writing to screen memory
+\  Deep dive: Screen buffers
 \
 \ ******************************************************************************
 
