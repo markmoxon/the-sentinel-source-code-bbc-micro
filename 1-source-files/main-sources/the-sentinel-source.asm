@@ -5428,7 +5428,8 @@
 \       Name: PanLandscapeView
 \       Type: Subroutine
 \   Category: Drawing the landscape
-\    Summary: Pan the landscape and update the landscape view
+\    Summary: Draw the new part of the landscape view required for a screen pan
+\             and if it completes, initialise the interrupt-based scroll process
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6358,9 +6359,7 @@
 \
 \   C flag              Status flag on exit:
 \
-\                         * Clear if we have just finished processing a pan of
-\                           the landscape view, and the player is still holding
-\                           down a pan key
+\                         * Clear if the player is holding down a pan key
 \
 \                         * Set if any of the following are true:
 \
@@ -6519,9 +6518,9 @@
  LDA panKeyBeingPressed \ If no pan key is currently being pressed, jump to
  BMI play6              \ play6 to process any action key presses
 
- CLC                    \ Clear the C flag to indicate that we just finished a
-                        \ landscape pan and the player is still holding down a
-                        \ pan key, so the main game loop can process a new pan
+ CLC                    \ Clear the C flag to indicate that the player is
+                        \ holding down a pan key, so the main game loop can
+                        \ process the pan
 
  RTS                    \ Return from the subroutine
 
@@ -15035,8 +15034,8 @@
 \       Name: GetObjVisibility
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Calculate whether any part of a 3D object is visible on-screen, and
-\             if so, which character columns it spans on the screen
+\    Summary: Calculate whether any part of a 3D object is visible on-screen,
+\             and if so, which character columns it spans on the screen
 \  Deep dive: Converting coordinates to angles
 \
 \ ------------------------------------------------------------------------------
@@ -28656,10 +28655,9 @@
                         \ presses, returning here when the player moves, quits,
                         \ loses or pans
 
- BCC game8              \ The ProcessGameplay routine will return with the C
-                        \ flag clear if we just finished a landscape pan and the
-                        \ player is still holding down a pan key, in which case
-                        \ jump to game8 to process the pan
+ BCC game8              \ The ProcessGameplay routine will return with the
+                        \ C flag clear if the player is holding down a pan key,
+                        \ in which case jump to game8 to process the pan
 
  JMP MainGameLoop       \ Otherwise the ProcessGameplay routine returned because
                         \ one of the following is true:
@@ -28708,7 +28706,27 @@
 
 .game9
 
- JSR PanLandscapeView   \ Pan the landscape and update the landscape view
+ JSR PanLandscapeView   \ Draw the new part of the landscape view required for
+                        \ the screen pan, and if it completes (i.e. if the
+                        \ player keeps holding the pan key throughout the whole
+                        \ drawing process), then set up the following:
+                        \
+                        \   * Set numberOfScrolls to the correct number of
+                        \     scrolls required for the pan (8 or 16)
+                        \
+                        \   * Set screenBufferAddr(1 0) to the address where the
+                        \     interrupt handler should start fetching new
+                        \     content to scroll onto the screen
+                        \
+                        \ The scrolling won't start yet, but it will be done in
+                        \ the background during the loop at game10 below, after
+                        \ being triggered by setting scrollCounter to the
+                        \ non-zero value in numberOfScrolls
+                        \
+                        \ If the player releases the pan key before the drawing
+                        \ process has been finished, numberOfScrolls will be
+                        \ left at zero and the scrolling process will never be
+                        \ triggered
 
  LSR keepCheckingPanKey \ Clear bit 7 of keepCheckingPanKey so DrawLandscapeView
                         \ will keep drawing the landscape irrespective of the
@@ -28718,6 +28736,11 @@
  JSR UpdateIconsScanner \ Update the icons in the top-left corner of the screen
                         \ to show the player's current energy level and redraw
                         \ the scanner box
+                        \
+                        \ We call this to ensure that the icon screen buffer is
+                        \ updated with the correct content for the top row, so
+                        \ it can be refreshed after every scrolling step in the
+                        \ interrupt routine
 
  LDA numberOfScrolls    \ Set scrollCounter to the number of scrolls required,
  STA scrollCounter      \ so the interrupt handler will scroll the screen by
