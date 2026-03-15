@@ -38083,11 +38083,11 @@
 
  EQUB 68                \ Note 4 = 68 with sound counter 4 * 4 = 16
 
- EQUB 200 + 15          \ Note 5 = 8 with sound counter 15 * 4 = 60
+ EQUB 200 + 15          \ Note 5 = 84 with sound counter 15 * 4 = 60
  EQUB 84
 
  EQUB 200 + 1           \ Arpeggiated chord of five short notes, each with
- EQUB 104               \ sound counter 1 * 4 = 4:g
+ EQUB 104               \ sound counter 1 * 4 = 4:
  EQUB 84                \
  EQUB 68                \ 104, 84, 68, 64, 36
  EQUB 64
