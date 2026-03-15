@@ -5430,6 +5430,7 @@
 \   Category: Drawing the landscape
 \    Summary: Draw the new part of the landscape view required for a screen pan
 \             and if it completes, initialise the interrupt-based scroll process
+\  Deep dive: Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6086,6 +6087,7 @@
 \   Category: Keyboard
 \    Summary: Tell the game to start focusing effort on the action that has been
 \             initiated, such as a pan of the landscape, absorb, transfer etc.
+\  Deep dive: Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -14976,6 +14978,7 @@
 \   Category: Screen buffer
 \    Summary: Storage for the address for the current drawing operation in the
 \             screen buffer
+\  Deep dive: Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -18467,6 +18470,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Set up a number of variables for drawing the landscape view
+\  Deep dive: Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -28643,6 +28647,7 @@
 \   Category: Main game loop
 \    Summary: Progress gameplay as part of the main game loop
 \  Deep dive: Program flow of the main game loop
+\             Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -28858,6 +28863,7 @@
 \   Category: Scanner/energy row
 \    Summary: Update the icons in the top-left corner of the screen to show the
 \             player's current energy level and redraw the scanner box
+\  Deep dive: Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -29123,6 +29129,7 @@
 \    Summary: The main interrupt handler, which gets run 50 times a second to
 \             update the game state and check for game key presses
 \  Deep dive: The interrupt handler
+\             Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29324,6 +29331,7 @@
 \             memory to implement the player's scrolling landscape view
 \  Deep dive: The interrupt handler
 \             The custom screen mode
+\             Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -29367,7 +29375,7 @@
                         \
                         \   * When scrolling horizontally, we scroll by one
                         \     column that's one character block wide (i.e. one
-                        \     byte, two pixels wide)
+                        \     byte, four pixels wide)
                         \
                         \   * When scrolling vertically, we scroll by one row
                         \     that's one character block tall (i.e. eight bytes,
@@ -29384,8 +29392,8 @@
                         \ screen to the left, so the start of the screen in
                         \ memory moves on by eight bytes (one character block)
                         \
-                        \ This would scroll the screen to the left by two pixels
-                        \ as each character block is two pixels wide
+                        \ This would scroll the screen to the left by four
+                        \ pixels as each character block is four pixels wide
                         \
                         \ Similarly, we reduce viewScreenAddr(1 0) by 320 bytes
                         \ when panning up, as we need to scroll the screen down,
@@ -29572,6 +29580,7 @@
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying the
 \             relevant parts of the screen buffer into screen memory
+\  Deep dive: Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29640,6 +29649,7 @@
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying a 2-pixel
 \             wide column from the screen buffer into screen memory
+\  Deep dive: Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29758,6 +29768,7 @@
 \   Category: Screen buffer
 \    Summary: Update the player's scrolling landscape view by copying an 8-pixel
 \             high character row from the screen buffer into screen memory
+\  Deep dive: Panning and hardware scrolling
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29923,6 +29934,7 @@
 \   Category: Screen buffer
 \    Summary: The amount to change the start of screen memory in order to scroll
 \             the player's landscape view through each direction (low byte)
+\  Deep dive: Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -29940,6 +29952,7 @@
 \   Category: Screen buffer
 \    Summary: The amount to change the start of screen memory in order to scroll
 \             the player's landscape view through each direction (high byte)
+\  Deep dive: Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -30192,6 +30205,7 @@
 \   Category: Screen buffer
 \    Summary: Start a scroll process in the background by setting the number of
 \             scroll steps and the address to start copying new content from
+\  Deep dive: Panning and hardware scrolling
 \
 \ ******************************************************************************
 
@@ -31391,6 +31405,7 @@
 \    Summary: Display the redrawn icon and scanner row by copying the contents
 \             of the icon screen buffer into screen memory
 \  Deep dive: Screen buffers
+\             Panning and hardware scrolling
 \
 \ ******************************************************************************
 
