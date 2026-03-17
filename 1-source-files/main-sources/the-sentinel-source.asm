@@ -14506,6 +14506,7 @@
 \   Category: Drawing 3D objects
 \    Summary: Draw an updated 3D object on-screen, optionally with a dithered
 \             effect, and with or without the surrounding landscape
+\  Deep dive: Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15040,6 +15041,7 @@
 \    Summary: Calculate whether any part of a 3D object is visible on-screen,
 \             and if so, which character columns it spans on the screen
 \  Deep dive: Converting coordinates to angles
+\             Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20740,6 +20742,7 @@
 \    Summary: Set up the variables required to configure the screen buffer for
 \             updating an object
 \  Deep dive: Screen buffers
+\             Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29130,6 +29133,7 @@
 \             update the game state and check for game key presses
 \  Deep dive: The interrupt handler
 \             Panning and hardware scrolling
+\             Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37002,6 +37006,7 @@
 \       Type: Subroutine
 \   Category: Maths (Arithmetic)
 \    Summary: Set A to a random number
+\  Deep dive: Dithering to the screen
 \
 \ ******************************************************************************
 
@@ -37098,6 +37103,7 @@
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Draw 80 randomly positioned dots on the screen in colour 1 (black)
+\  Deep dive: Dithering to the screen
 \
 \ ******************************************************************************
 
@@ -37116,6 +37122,7 @@
 \       Type: Subroutine
 \   Category: Graphics
 \    Summary: Draw 80 randomly positioned dots on the screen
+\  Deep dive: Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37148,7 +37155,9 @@
  LDA randomGenerator+1  \ Set randomPixel to the second byte of the random
  STA randomPixel        \ number generator, so this is also a random number
 
- AND #&1F               \ Reduce the random number to the range 0 to &1F
+ AND #&1F               \ Reduce the random number to the range 0 to &1F (which
+                        \ we do by clearing bits 5 to 7 - we will end up using
+                        \ the original values of bits 6 and 7 below)
 
  CMP #&1E               \ If A >= &1E then loop back to dots1 to choose another
  BCS dots1              \ random number
@@ -40138,6 +40147,7 @@
 \       Type: Subroutine
 \   Category: Screen buffer
 \    Summary: Dither the contents of the screen buffer onto the screen
+\  Deep dive: Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40209,8 +40219,9 @@
 
  SEI                    \ Disable interrupts so we can fetch a random number
                         \ without clashing with the dithering process in the
-                        \ handler (which is activated on the game over screen,
-                        \ which also uses this routine)
+                        \ interrupt handler (the interrupt-driven dithering
+                        \ process is used on the game over screen, which also
+                        \ uses this routine)
 
  JSR GetRandomNumber    \ Set A to a random number
 
@@ -40446,6 +40457,7 @@
 \   Category: Title screen
 \    Summary: Display the game over screen
 \  Deep dive: Program flow of the main title loop
+\             Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40544,6 +40556,7 @@
 \   Category: Graphics
 \    Summary: Smother the screen with randomly placed black dots to decay the
 \             screen to black
+\  Deep dive: Dithering to the screen
 \
 \ ------------------------------------------------------------------------------
 \
