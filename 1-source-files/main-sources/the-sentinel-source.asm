@@ -13547,6 +13547,7 @@
 \    Summary: Calculate the altitude of a tile, optionally including platform
 \             objects and trees in the calculation
 \  Deep dive: Stacking objects
+\             The tile visibility table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17200,6 +17201,7 @@
 \   Category: Drawing the landscape
 \    Summary: For each tile in the landscape, calculate whether the player can
 \             see that tile, to speed up the process of drawing the landscape
+\  Deep dive: The tile visibility table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17519,6 +17521,7 @@
 \   Category: Drawing the landscape
 \    Summary: Set up the calculations to determine whether each tile corner in a
 \             tile row is obscured from the player by any intervening landscape
+\  Deep dive: The tile visibility table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -17980,6 +17983,7 @@
 \   Category: Drawing the landscape
 \    Summary: Calculate whether each tile corner in a tile row is obscured from
 \             the player by any intervening landscape
+\  Deep dive: The tile visibility table
 \
 \ ******************************************************************************
 
@@ -18174,6 +18178,7 @@
 \   Category: Drawing the landscape
 \    Summary: Calculate tile corner altitudes and maximum tile corner altitudes
 \             for each tile in the landscape
+\  Deep dive: The tile visibility table
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18200,9 +18205,13 @@
 \
 \ Returns:
 \
-\   (Q P)               (Q P) is set to &6000
+\   Q                   Set to &60 so (Q P) = &6000
 \
-\   (S R)               (Q P) is set to &6020
+\   P                   Set to &00 so (Q P) = &6000
+\
+\   S                   Set to &60 so (S R) = &6020
+\
+\   R                   Set to &20 so (S R) = &6020
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18442,7 +18451,7 @@
 
  LSR A                  \ Shift the highest altitude in A to remove the tile
                         \ shape from bit 0 and set A to the actual altitude from
-                        \ bits 2 to 4
+                        \ bits 1 to 4
 
 .talt9
 
@@ -20279,6 +20288,7 @@
 \   Category: Drawing the landscape
 \    Summary: Calculate the pitch angle for the tile corner
 \  Deep dive: Stacking objects
+\             The tile visibility table
 \
 \ ******************************************************************************
 
