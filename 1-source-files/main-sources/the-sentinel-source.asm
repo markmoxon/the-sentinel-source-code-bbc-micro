@@ -38087,13 +38087,13 @@
  EQUB 200 + 6
  EQUB 48
 
- EQUB 200 + 0           \ Chord 2 = 16, 44, 44 with sound counter 6 * 4 = 24
+ EQUB 200 + 0           \ Chord 3 = 16, 44, 44 with sound counter 6 * 4 = 24
  EQUB 16
  EQUB 44
  EQUB 200 + 6
  EQUB 44
 
-                        \ Music data offset 25: U-turn
+                        \ Music data offset 40: U-turn
 
  EQUB 200 + 0           \ Chord 1 = 0, 28, 28 with sound counter 6 * 4 = 24
  EQUB 0
