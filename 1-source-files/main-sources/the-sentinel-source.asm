@@ -19816,6 +19816,7 @@
 \    Summary: Calculate the pitch and yaw angles for a tile corner, relative to
 \             a viewer object (e.g. the player), and whether it is on-screen
 \  Deep dive: Converting coordinates to angles
+\             Calculating quadrants for the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20836,6 +20837,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a tile and any objects stacked on it
+\  Deep dive: Calculating quadrants for the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21079,6 +21081,7 @@
 \   Category: Drawing the landscape
 \    Summary: Draw a sloping tile that is not shape 4 or 12
 \  Deep dive: Drawing filled polygons
+\             Calculating quadrants for the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
