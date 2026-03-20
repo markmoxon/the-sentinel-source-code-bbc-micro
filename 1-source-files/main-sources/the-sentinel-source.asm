@@ -18482,6 +18482,7 @@
 \   Category: Drawing the landscape
 \    Summary: Set up a number of variables for drawing the landscape view
 \  Deep dive: Panning and hardware scrolling
+\             Calculating quadrants for the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20059,6 +20060,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Fetch the tile data for the tile corner we are analysing
+\  Deep dive: Calculating quadrants for the landscape view
 \
 \ ******************************************************************************
 
