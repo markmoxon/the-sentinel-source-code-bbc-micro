@@ -15711,6 +15711,7 @@
 \   Category: Drawing 3D objects
 \    Summary: Draw an entire stack of 3D objects
 \  Deep dive: Stacking objects
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18483,6 +18484,7 @@
 \    Summary: Set up a number of variables for drawing the landscape view
 \  Deep dive: Panning and hardware scrolling
 \             Calculating quadrants for the landscape view
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -18787,6 +18789,7 @@
 \   Category: Drawing the landscape
 \    Summary: Work through the landscape, drawing one row of tiles/objects at a
 \             time, from the back row to the front row
+\  Deep dive: Drawing the landscape view
 \
 \ ******************************************************************************
 
@@ -19172,6 +19175,7 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a tile row in two parts, one on either side of the viewer
+\  Deep dive: Drawing the landscape view
 \
 \ ******************************************************************************
 
@@ -19315,17 +19319,17 @@
                         \ Y is the offset of the viewer's tile within these
                         \ tables, so, for example:
                         \
-                        \    * drawViewPitchHi,Y is the corner at the front
-                        \      left of the viewer's tile
+                        \   * drawViewPitchHi,Y is the corner at the front
+                        \     left of the viewer's tile
                         \
-                        \    * drawViewPitchHi+1,Y is the corner at the front
-                        \      right of the viewer's tile
+                        \   * drawViewPitchHi+1,Y is the corner at the front
+                        \     right of the viewer's tile
                         \
-                        \    * drawViewPitchHi+32,Y is the corner at the rear
-                        \      left of the viewer's tile
+                        \   * drawViewPitchHi+32,Y is the corner at the rear
+                        \     left of the viewer's tile
                         \
-                        \    * drawViewPitchHi+32+1,Y is the corner at the rear
-                        \      right of the viewer's tile
+                        \   * drawViewPitchHi+32+1,Y is the corner at the rear
+                        \     right of the viewer's tile
                         \
                         \ We now set up the angles for the tile to ensure that
                         \ it looks correct
@@ -19404,6 +19408,7 @@
 \   Category: Drawing the landscape
 \    Summary: For a given tile row, work out the edges of the visible portion of
 \             the row in the current player view, as left to right tile numbers
+\  Deep dive: Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19450,10 +19455,6 @@
 \
 \   drawViewPitchLo     Low byte of the pitch angles for all the tile corners
 \                       analysed while looking for the edges
-\
-\   tileIsOnScreen      Information on whether a tile corner is on-screen for
-\                       all the tile corners analysed while looking for the
-\                       edges
 \
 \ ******************************************************************************
 
@@ -19817,6 +19818,7 @@
 \             a viewer object (e.g. the player), and whether it is on-screen
 \  Deep dive: Converting coordinates to angles
 \             Calculating quadrants for the landscape view
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20533,7 +20535,8 @@
 \       Type: Subroutine
 \   Category: Drawing the landscape
 \    Summary: Draw a row of tiles between the left visible edge and the right
-\             visible, in two parts towards each side of the viewer
+\             visible edge, in two parts towards each side of the viewer
+\  Deep dive: Drawing the landscape view
 \
 \ ******************************************************************************
 
@@ -20838,6 +20841,7 @@
 \   Category: Drawing the landscape
 \    Summary: Draw a tile and any objects stacked on it
 \  Deep dive: Calculating quadrants for the landscape view
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20981,6 +20985,7 @@
 \   Category: Drawing the landscape
 \    Summary: Draw a flat tile in the correct colour for the chess board effect
 \             that we use to draw the landscape
+\  Deep dive: Drawing the landscape view
 \
 \ ******************************************************************************
 
@@ -21052,6 +21057,7 @@
 \   Category: Drawing the landscape
 \    Summary: Draw a tile with one quadrilateral (four-sided) face
 \  Deep dive: Drawing filled polygons
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21082,6 +21088,7 @@
 \    Summary: Draw a sloping tile that is not shape 4 or 12
 \  Deep dive: Drawing filled polygons
 \             Calculating quadrants for the landscape view
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21194,6 +21201,7 @@
 \   Category: Drawing the landscape
 \    Summary: Draw a tile with two triangular (three-sided) faces
 \  Deep dive: Drawing filled polygons
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -21262,6 +21270,7 @@
 \    Summary: Draw a polygon
 \  Deep dive: Drawing 3D objects
 \             Drawing filled polygons
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
@@ -23173,6 +23182,7 @@
 \   Category: Drawing the landscape
 \    Summary: Tile colours by shape and the orientation of the viewer
 \  Deep dive: Colours and palettes
+\             Drawing the landscape view
 \
 \ ------------------------------------------------------------------------------
 \
