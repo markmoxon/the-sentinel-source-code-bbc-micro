@@ -7038,6 +7038,7 @@
 \   Category: Title screen
 \    Summary: Draw the main title screen, the secret code screen or the
 \             landscape preview
+\  Deep dive: Drawing the landscape preview
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7051,7 +7052,7 @@
 \                         * 5 = draw the Sentinel on the right of the screen for
 \                               the main title screen
 \
-\                         * &80 = draw the landscape preview
+\                         * &80 = do not draw an object
 \
 \   X                   The screen background:
 \
@@ -7214,8 +7215,8 @@
 \       Name: yTextViewer
 \       Type: Variable
 \   Category: Title screen
-\    Summary: The y-coordinate of the viewer for the large 3D text on the title
-\             screen
+\    Summary: The y-coordinate of the viewer for the title screen
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -7230,8 +7231,8 @@
 \       Name: textViewerPitch
 \       Type: Variable
 \   Category: Title screen
-\    Summary: The pitch angle of the viewer for the large 3D text on the title
-\             screen
+\    Summary: The pitch angle of the viewer for the title screen
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -7246,8 +7247,8 @@
 \       Name: xTextViewer
 \       Type: Variable
 \   Category: Title screen
-\    Summary: The x-coordinate of the viewer for the large 3D text on the title
-\             screen
+\    Summary: The x-coordinate of the viewer for the title screen
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -7263,6 +7264,7 @@
 \       Type: Variable
 \   Category: Title screen
 \    Summary: An offset to apply to the large 3D text for the title screen
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -7277,8 +7279,8 @@
 \       Name: zTextViewer
 \       Type: Variable
 \   Category: Title screen
-\    Summary: The z-coordinate of the viewer for the large 3D text on the title
-\             screen
+\    Summary: The z-coordinate of the viewer for the title screen
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -7293,8 +7295,8 @@
 \       Name: textViewerYaw
 \       Type: Variable
 \   Category: Title screen
-\    Summary: The yaw angle of the viewer for the large 3D text on the title
-\             screen
+\    Summary: The yaw angle of the viewer for the title screen
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -7311,6 +7313,7 @@
 \   Category: Title screen
 \    Summary: Storage for the type of title view we are drawing in DrawTitleView
 \             (title screen or landscape preview)
+\  Deep dive: Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -38698,6 +38701,7 @@
 \  Deep dive: Converting coordinates to angles
 \             Calculating angles for drawing 3D objects
 \             Drawing 3D objects
+\             Drawing the landscape preview
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38892,9 +38896,9 @@
  BNE oang1              \ preview, so jump to oang1 to skip the following
 
                         \ This is the landscape preview, so we rotate the object
-                        \ to face towards the back of the landscape, so the
-                        \ Sentinel and sentries all neatly look out of the
-                        \ screen in the preview
+                        \ to face towards the camera that's positioned in front
+                        \ of the landscape, so the Sentinel and sentries all
+                        \ neatly look out of the screen in the preview
 
  LDA #128               \ Set objectGazeYaw(Hi Lo) = (128 0)
  STA objectGazeYawHi    \
@@ -40803,6 +40807,7 @@
 \    Summary: Draw an aerial preview of the landscape
 \  Deep dive: Program flow of the main title loop
 \             Adding enemies and trees to the landscape
+\             Drawing the landscape preview
 \
 \ ******************************************************************************
 
@@ -40819,8 +40824,8 @@
                         \ screen with the correct perspective for the landscape
                         \ preview
 
- LDA #&80               \ Set A = &80 so the call to DrawTitleView draws the
-                        \ landscape preview
+ LDA #&80               \ Set A = &80 so the call to DrawTitleView does not draw
+                        \ a 3D object as part of the landscape preview
 
  JSR DrawTitleView      \ Draw the landscape preview
 
