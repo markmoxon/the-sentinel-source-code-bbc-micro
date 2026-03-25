@@ -15555,6 +15555,7 @@
 \   Category: 3D objects
 \    Summary: The amount of energy required to create each object or the amount
 \             of energy acquired when absorbing each object
+\  Deep dive: The energy icons
 \
 \ ******************************************************************************
 
@@ -28798,6 +28799,7 @@
 \       Type: Subroutine
 \   Category: Scanner/energy row
 \    Summary: Clear the energy icon and scanner row at the top of the screen
+\  Deep dive: The energy icons
 \
 \ ******************************************************************************
 
@@ -28895,6 +28897,7 @@
 \    Summary: Update the icons in the top-left corner of the screen to show the
 \             player's current energy level and redraw the scanner box
 \  Deep dive: Panning and hardware scrolling
+\             The energy icons
 \
 \ ******************************************************************************
 
@@ -29046,6 +29049,7 @@
 \    Summary: Draw a single icon in the top-left corner of the screen (via the
 \             icon screen buffer at iconBuffer) and move along to the right
 \  Deep dive: Screen buffers
+\             The energy icons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31391,6 +31395,7 @@
 \    Summary: Calculate the address in screen memory of the icon and scanner row
 \             at the top of the screen
 \  Deep dive: Screen buffers
+\             The energy icons
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31438,6 +31443,7 @@
 \             of the icon screen buffer into screen memory
 \  Deep dive: Screen buffers
 \             Panning and hardware scrolling
+\             The energy icons
 \
 \ ******************************************************************************
 
@@ -38196,6 +38202,7 @@
 \   Category: Graphics
 \    Summary: Screen mode 5 bitmap data for the ten icons that make up the
 \             energy icon and scanner row at the top of the screen
+\  Deep dive: The energy icons
 \
 \ ******************************************************************************
 
