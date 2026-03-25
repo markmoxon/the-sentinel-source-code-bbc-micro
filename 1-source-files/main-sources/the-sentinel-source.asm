@@ -2155,11 +2155,12 @@
  EQUB 0                 \ The state of the scanner the last time that it was
                         \ updated:
                         \
-                        \   * 0 = fill scanner with black
+                        \   * 0 = fill the scanner with black (scanner is off)
                         \
-                        \   * 4 = fill the scanner with static in colour 3
+                        \   * 4 = fill the scanner with static in colour 3 (for
+                        \         when the player is being scanned)
                         \
-                        \   * 8 = fill scanner with green
+                        \   * 8 = fill the scanner with colour 3 (pause)
 
 .playerEnergy
 
@@ -7106,7 +7107,7 @@
 
  INX                    \ Set X = 3 to use as the colour for the rear character
                         \ of a drop shadow (this is yellow on the title screens
-                        \ green/red/yellow/cyan in the landscape preview)
+                        \ and green/red/yellow/cyan in the landscape preview)
 
 .tvew1
 
@@ -7114,7 +7115,8 @@
                         \ character of the dropdown text is printed in colour X,
                         \ so that's:
                         \
-                        \   * Colour 3 (yellow) for the solid blue background
+                        \   * Colour 3 (yellow) for text on top of the solid
+                        \     blue background
                         \
                         \   * Colour 2 for the star background, which is red for
                         \     the secret code screen, or white/yellow/cyan/red
@@ -8667,6 +8669,7 @@
 \       Type: Subroutine
 \   Category: Scanner/energy row
 \    Summary: Update the scanner, if required
+\  Deep dive: The scanner
 \
 \ ******************************************************************************
 
@@ -8690,6 +8693,7 @@
 \       Type: Subroutine
 \   Category: Scanner/energy row
 \    Summary: Update the scanner to a new state
+\  Deep dive: The scanner
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8697,11 +8701,12 @@
 \
 \   A                   The new state of the scanner:
 \
-\                         * 0 = fill scanner with black
+\                         * 0 = fill scanner with black (scanner is off)
 \
-\                         * 4 = fill the scanner with static in colour 3
+\                         * 4 = fill the scanner with static in colour 3 (for
+\                               when the player is being scanned)
 \
-\                         * 8 = fill scanner with green
+\                         * 8 = fill scanner with colour 3 (pause)
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8812,8 +8817,8 @@
 
  LDA scannerPixelByte,X \ Set A to the X-th pixel byte from the relevant part of
                         \ the scannerPixelByte lookup table, which will return a
-                        \ pixel byte containing black, random static or green,
-                        \ according to the value of scannerState
+                        \ pixel byte containing black, random static or colour
+                        \ 3, according to the value of scannerState
 
  STA (screenAddr),Y     \ Draw the Y-th pixel row for this character block in
                         \ the scanner
@@ -8915,7 +8920,7 @@
 \       Name: scannerState
 \       Type: Variable
 \   Category: Scanner/energy row
-\    Summary: The current state of the scanner (black, static or green)
+\    Summary: The current state of the scanner (black, static or pause)
 \
 \ ******************************************************************************
 
@@ -8923,11 +8928,12 @@
 
  EQUB 0                 \ The current state of the scanner:
                         \
-                        \   * 0 = fill the scanner with black
+                        \   * 0 = fill the scanner with black (scanner is off)
                         \
-                        \   * 4 = fill the scanner with static in colour 3
+                        \   * 4 = fill the scanner with static in colour 3 (for
+                        \         when the player is being scanned)
                         \
-                        \   * 8 = fill the scanner with green
+                        \   * 8 = fill the scanner with colour 3 (pause)
 
 \ ******************************************************************************
 \
@@ -8935,23 +8941,24 @@
 \       Type: Variable
 \   Category: Scanner/energy row
 \    Summary: Pixel bytes for the three states of the scanner (black, static and
-\             green)
+\             pause)
+\  Deep dive: The scanner
 \
 \ ******************************************************************************
 
 .scannerPixelByte
 
  EQUB %00001111         \ Four bytes of colour 1 (black) for scanner state 0
- EQUB %00001111
+ EQUB %00001111         \ (scanner is off)
  EQUB %00001111
  EQUB %00001111
 
  EQUB %10001111         \ Four bytes of static in colour 3 on a background of
- EQUB %01001111         \ colour 1 (black)
- EQUB %00101111
+ EQUB %01001111         \ colour 1 (black) for scanner state 4 (player is being
+ EQUB %00101111         \ scanned)
  EQUB %00011111
 
- EQUB %11111111         \ Four bytes of colour 3 (green) for scanner state 8
+ EQUB %11111111         \ Four bytes of colour 3 for scanner state 8 (pause)
  EQUB %11111111
  EQUB %11111111
  EQUB %11111111
@@ -10267,6 +10274,7 @@
 \   Category: Gameplay
 \    Summary: Calculate whether the player is being scanned by an enemy and
 \             whether the enemy can see the player's tile
+\  Deep dive: The scanner
 \
 \ ******************************************************************************
 
@@ -20998,8 +21006,8 @@
  LDX #0                 \ If bit 0 of xTileToDraw and zTile are the same, then
  LDA xTileToDraw        \ the tile's x-coordinate and z-coordinate are either
  EOR zTile              \ both odd or both even, so jump to DrawOneFaceTile
- AND #1                 \ with X set to 0 to draw this tile in colour 3 (white,
- BEQ DrawOneFaceTile    \ yellow, cyan or red)
+ AND #1                 \ with X set to 0 to draw this tile in colour 3 (green,
+ BEQ DrawOneFaceTile    \ red, yellow or cyan)
 
  LDX #8                 \ Otherwise the tile's x-coordinate and z-coordinate are
                         \ different (i.e. one is odd and one is even), so set
@@ -28033,6 +28041,7 @@
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Pause or unpause the game when COPY or DELETE are pressed
+\  Deep dive: The scanner
 \
 \ ******************************************************************************
 
@@ -28055,10 +28064,11 @@
                         \ equality, so the C flag is set and ready to be rotated
                         \ into bit 7 of gamePaused)
 
- LDA #8                 \ Update the scanner so it's filled with green, to show
- JSR UpdateScannerNow   \ that the game is paused (calling UpdateScannerNow
-                        \ ensures the scanner is updated irrespective of whether
-                        \ the scanner is currently enabled in-game)
+ LDA #8                 \ Update the scanner so it's filled with colour 3 (e.g.
+ JSR UpdateScannerNow   \ green in landscape 0000), to show that the game is
+                        \ paused (calling UpdateScannerNow ensures the scanner
+                        \ is updated irrespective of whether the scanner is
+                        \ currently enabled in-game)
 
  JSR FlushSoundBuffers  \ Flush all four sound channel buffers
 
@@ -28800,6 +28810,7 @@
 \   Category: Scanner/energy row
 \    Summary: Clear the energy icon and scanner row at the top of the screen
 \  Deep dive: The energy icons
+\             The scanner
 \
 \ ******************************************************************************
 
@@ -28898,6 +28909,7 @@
 \             player's current energy level and redraw the scanner box
 \  Deep dive: Panning and hardware scrolling
 \             The energy icons
+\             The scanner
 \
 \ ******************************************************************************
 
@@ -29050,6 +29062,7 @@
 \             icon screen buffer at iconBuffer) and move along to the right
 \  Deep dive: Screen buffers
 \             The energy icons
+\             The scanner
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29166,6 +29179,7 @@
 \  Deep dive: The interrupt handler
 \             Panning and hardware scrolling
 \             Dithering to the screen
+\             The scanner
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31396,6 +31410,7 @@
 \             at the top of the screen
 \  Deep dive: Screen buffers
 \             The energy icons
+\             The scanner
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31444,6 +31459,7 @@
 \  Deep dive: Screen buffers
 \             Panning and hardware scrolling
 \             The energy icons
+\             The scanner
 \
 \ ******************************************************************************
 
@@ -37041,6 +37057,7 @@
 \   Category: Maths (Arithmetic)
 \    Summary: Set A to a random number
 \  Deep dive: Dithering to the screen
+\             The scanner
 \
 \ ******************************************************************************
 
@@ -38203,6 +38220,7 @@
 \    Summary: Screen mode 5 bitmap data for the ten icons that make up the
 \             energy icon and scanner row at the top of the screen
 \  Deep dive: The energy icons
+\             The scanner
 \
 \ ******************************************************************************
 
