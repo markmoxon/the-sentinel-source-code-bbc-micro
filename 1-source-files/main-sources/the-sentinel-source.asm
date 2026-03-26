@@ -13782,7 +13782,7 @@
                         \ the gaze vector is to the centre of the tile, in terms
                         \ of the x-coordinate and z-coordinate
 
- CMP #64                \ If A >= 64 then the gaze vector is more than half way
+ CMP #64                \ If A >= 64 then the gaze vector is more than halfway
  BCS tile6              \ from the centre of the tile (i.e. more than 64/128 =
                         \ 50% of the distance from the centre to the tile edge,
                         \ which is outside the body of the tree or boulder), so
