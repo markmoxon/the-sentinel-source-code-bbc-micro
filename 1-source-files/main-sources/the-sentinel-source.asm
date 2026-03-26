@@ -26573,8 +26573,9 @@
                         \      -96   |   +96
                         \           128
                         \
-                        \ So this makes object #63 face directly out of the
-                        \ screen
+                        \ So this makes object #63 face towards the front of the
+                        \ landscape (i.e. towards the tile row with a
+                        \ z-coordinate of 0)
 
  LDA #&E0               \ For object #63, set the following:
  STA yObjectLo+63       \
@@ -40730,13 +40731,6 @@
                         \ spawning:
                         \
                         \   * Object #1 (the object to draw) is set to a yaw
-                        \     of 128 for the game over screen (so the enemy
-                        \     stares directly out of the screen), or -114 for
-                        \     the object on the tower (so it looks towards the
-                        \     left of the viewer) or -50 for the tower (so it is
-                        \     rotated slightly to the left)
-                        \
-                        \   * Object #1 (the object to draw) is set to a yaw
                         \     of 128 for the game over screen, so the enemy
                         \     stares directly out of the screen
                         \
@@ -40751,8 +40745,7 @@
                         \
                         \   * Object #2 (the viewing object) is set to a pitch
                         \     of -12 for the game over screen, so the camera
-                        \     points down, thus moving the object down the
-                        \     screen
+                        \     points down, thus moving the object up the screen
                         \
                         \   * Object #2 (the viewing object) is set to a pitch
                         \     of -5 and a yaw of -8 for the title screen, so the
@@ -40763,8 +40756,8 @@
                         \     the viewing object
                         \
                         \   * The tower and game over objects are at the same
-                        \     y-coordinate as the viewer (so they at the same
-                        \     altitude)
+                        \     y-coordinate as the viewer (so they are at the
+                        \     same altitude)
                         \
                         \   * The object on the tower is higher than the viewer
                         \     by one y-coordinate
