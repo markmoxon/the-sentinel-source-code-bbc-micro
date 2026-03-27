@@ -7041,6 +7041,7 @@
 \             landscape preview
 \  Deep dive: Drawing the landscape preview
 \             Drawing the title screens
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7220,6 +7221,7 @@
 \   Category: Title screen
 \    Summary: The y-coordinate of the viewer for the title screen
 \  Deep dive: Drawing the landscape preview
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -7236,6 +7238,7 @@
 \   Category: Title screen
 \    Summary: The pitch angle of the viewer for the title screen
 \  Deep dive: Drawing the landscape preview
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -7252,6 +7255,7 @@
 \   Category: Title screen
 \    Summary: The x-coordinate of the viewer for the title screen
 \  Deep dive: Drawing the landscape preview
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -7268,6 +7272,7 @@
 \   Category: Title screen
 \    Summary: An offset to apply to the large 3D text for the title screen
 \  Deep dive: Drawing the landscape preview
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -7284,6 +7289,7 @@
 \   Category: Title screen
 \    Summary: The z-coordinate of the viewer for the title screen
 \  Deep dive: Drawing the landscape preview
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -7300,6 +7306,7 @@
 \   Category: Title screen
 \    Summary: The yaw angle of the viewer for the title screen
 \  Deep dive: Drawing the landscape preview
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -18501,6 +18508,7 @@
 \             Calculating quadrants for the landscape view
 \             Drawing the landscape view
 \             Drawing the title screens
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -19835,6 +19843,7 @@
 \  Deep dive: Converting coordinates to angles
 \             Calculating quadrants for the landscape view
 \             Drawing the landscape view
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20859,6 +20868,7 @@
 \  Deep dive: Calculating quadrants for the landscape view
 \             Drawing the landscape view
 \             Drawing the title screens
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26209,6 +26219,7 @@
 \             on the main title screen or secret code screen
 \  Deep dive: Object management
 \             3D object definitions
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26513,6 +26524,7 @@
 \   Category: Title screen
 \    Summary: A lookup table to convert bit pairs into object numbers for
 \             spawning 3D text blocks on the landscape
+\  Deep dive: Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -26545,6 +26557,7 @@
 \   Category: Title screen
 \    Summary: Draw the title screen or the screen showing the secret code
 \  Deep dive: Drawing the title screens
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26679,6 +26692,7 @@
 \   Category: Title screen
 \    Summary: The text to draw on the title screen
 \  Deep dive: Drawing the title screens
+\             Drawing 3D text using blocks
 \
 \ ******************************************************************************
 
@@ -35925,6 +35939,7 @@
 \             (polygons 148 to 151, using points 136 to 143)
 \  Deep dive: 3D object definitions
 \             Drawing filled polygons
+\             Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -39784,6 +39799,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate the difference in the x-axis and z-axis between two
 \             objects, as both signed and absolute deltas
+\  Deep dive: Drawing 3D text using blocks
 \
 \ ------------------------------------------------------------------------------
 \
