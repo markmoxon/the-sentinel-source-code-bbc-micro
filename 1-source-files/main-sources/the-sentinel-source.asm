@@ -7040,6 +7040,7 @@
 \    Summary: Draw the main title screen, the secret code screen or the
 \             landscape preview
 \  Deep dive: Drawing the landscape preview
+\             Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10927,6 +10928,7 @@
 \             of the next landscape and display that landscape's secret code
 \  Deep dive: Program flow of the main title loop
 \             Adding enemies and trees to the landscape
+\             Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -11162,6 +11164,7 @@
 \   Category: Gameplay
 \    Summary: Stop applying tactics to the current enemy and return to the
 \             ProcessGameplay routine to continue with the gameplay loop
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -18497,6 +18500,7 @@
 \  Deep dive: Panning and hardware scrolling
 \             Calculating quadrants for the landscape view
 \             Drawing the landscape view
+\             Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -20854,6 +20858,7 @@
 \    Summary: Draw a tile and any objects stacked on it
 \  Deep dive: Calculating quadrants for the landscape view
 \             Drawing the landscape view
+\             Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26539,6 +26544,7 @@
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: Draw the title screen or the screen showing the secret code
+\  Deep dive: Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26672,6 +26678,7 @@
 \       Type: Variable
 \   Category: Title screen
 \    Summary: The text to draw on the title screen
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40513,6 +40520,7 @@
 \    Summary: Display the game over screen
 \  Deep dive: Program flow of the main title loop
 \             Dithering to the screen
+\             Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40700,6 +40708,7 @@
 \    Summary: Spawn object #1 for the title screen (a robot or the Sentinel) or
 \             the game over screen (the object responsible for ending the game)
 \  Deep dive: Object management
+\             Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40806,6 +40815,7 @@
 \   Category: Title screen
 \    Summary: The z-coordinate of an object on the title screen, as a delta from
 \             the z-coordinate of the viewing object
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40826,6 +40836,7 @@
 \  Deep dive: Program flow of the main title loop
 \             Adding enemies and trees to the landscape
 \             Drawing the landscape preview
+\             Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40880,6 +40891,7 @@
 \       Type: Variable
 \   Category: Title screen
 \    Summary: The pitch angle of the viewer for objects on the title screen
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40898,6 +40910,7 @@
 \   Category: Title screen
 \    Summary: The y-coordinate of an object on the title screen, as a delta from
 \             the y-coordinate of the viewing object
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40915,6 +40928,7 @@
 \       Type: Variable
 \   Category: Title screen
 \    Summary: The yaw angle of an object on the title screen
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40932,6 +40946,7 @@
 \       Type: Variable
 \   Category: Title screen
 \    Summary: The yaw angle of the viewer for objects on the title screen
+\  Deep dive: Drawing the title screens
 \
 \ ******************************************************************************
 
@@ -40949,6 +40964,7 @@
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: Draw an object on top of a tower on the title screen
+\  Deep dive: Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40994,6 +41010,7 @@
 \       Type: Subroutine
 \   Category: Title screen
 \    Summary: Draw an object on the title screen
+\  Deep dive: Drawing the title screens
 \
 \ ------------------------------------------------------------------------------
 \
