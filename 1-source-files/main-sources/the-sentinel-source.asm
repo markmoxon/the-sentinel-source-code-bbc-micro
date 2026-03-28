@@ -11866,18 +11866,24 @@
 \
 \ The vector from the player's eyes to the sights is calculated as follows:
 \
-\   vectorYawAngle = (xSights * 32) + (objectYawAngle,X 0) - (10 0)
+\   vectorYawAngle = (xSights / 8) + (objectYawAngle,X 0) - (10 0)
 \
-\   vectorPitchAngle = (ySights - 5) * 16 + (objectPitchAngle,X 0) + (3 32)
+\   vectorPitchAngle = (ySights - 5) / 16 + (objectPitchAngle,X 0) + (3 32)
 \
+\ The division by 8 converts pixel x-coordinates into yaw angles, and the
+\ division by 16 converts pixel y-coordinates into pitch angles.
+
 \ The (10 0) element in the yaw angle calculation represents half a screen
 \ width, as the screen is 20 yaw angles wide, so subtracting (10 0) from the
 \ object's yaw angle makes it to the left edge of the screen, and then we add
 \ the x-coordinate of the sights on-screen to get the vector's yaw angle.
 \
 \ The -5 in the pitch angle calculation caters for the distance between the top
-\ of the sights and the centre of the sights, and the (3 32) element represents
-\ something I have yet to work out.
+\ of the sights and the centre of the sights, and the (3 32) element is the
+\ right amount to make the point that's 36 pixels above the starting position of
+\ the crosshairs have a pitch angle of zero (as the starting position is when
+\ the player is looking down at their pitch angle of -15.5 degrees, rather than
+\ horizontally ahead).
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11941,10 +11947,12 @@
 
                         \ We now calculate the following:
                         \
-                        \   (U A) + (objectPitchAngle,X 0) + (3 32)
+                        \   (A T) = (U A) + (objectPitchAngle,X 0) + (3 32)
                         \
-                        \ and store it in both (A T) and in
-                        \ vectorPitchAngle(Hi Lo)
+                        \ and store it in both vectorPitchAngle(Hi Lo) and (A T)
+                        \
+                        \ In this context, (3 32) is a pitch angle of 3.125
+                        \ expressed with the low byte as a fraction
 
  CLC                    \ Calculate the low byte and store it in both T and
  ADC #32                \ vectorPitchAngleLo
