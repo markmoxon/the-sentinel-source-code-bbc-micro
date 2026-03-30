@@ -10159,7 +10159,10 @@
  LDA angleHi            \ enemy towards the object, as taken from the vertical
  STA vectorPitchAngleHi \ triangle with the gaze vector as the hypotenuse
                         \
-                        \ This also sets T to the low byte in vectorPitchAngleLo
+                        \ This also sets (A T) to the pitch angle, so it can be
+                        \ passed to the vectorPitchAngle(Hi Lo) routine at the
+                        \ start of the GetVectorForAngles routine we are about
+                        \ to call
 
  JSR GetVectorForAngles \ Convert the pitch and yaw angles of the enemy's gaze
                         \ vector towards the object:
@@ -11981,6 +11984,9 @@
                         \   vectorPitchAngle(Hi Lo)
                         \   = (ySights-5) / 16 + (objectPitchAngle,X 0) + (3 32)
                         \
+                        \ And (A T) contains the same as vectorPitchAngle(Hi Lo)
+                        \ so we can pass it to GetVectorForAngles
+                        \
                         \ We now fall through into GetVectorForAngles to convert
                         \ these two angles into a Cartesian vector:
                         \
@@ -12022,6 +12028,12 @@
 \   zVector = cosVectorPitchAngle * cosVectorYawAngle / 16
 \
 \   xVector = cosVectorPitchAngle * sinVectorYawAngle / 16
+\
+\ ------------------------------------------------------------------------------
+\
+\ Arguments:
+\
+\   (A T)               The same pitch angle as in vectorPitchAngle(Hi Lo)
 \
 \ ******************************************************************************
 
@@ -12087,7 +12099,8 @@
                         \ calculate the x- and z-coordinates of the vector later
 
  JSR GetRotationMatrix  \ This routine is taken from Revs, where it calculates a
-                        \ rotation matrix from an angle
+                        \ rotation matrix from the angle in (A T), which is set
+                        \ to the pitch angle in vectorPitchAngle(Hi Lo)
                         \
                         \ We don't need a full rotation matrix here, but the
                         \ Revs routine calculates the values that we do need
@@ -12483,9 +12496,9 @@
 \
 \ The gaze is defined by the following vector:
 \
-\   [ xVector ]   [ xVector(Lo Bot) ]
-\   [ yVector ] = [ yVector(Lo Bot) ]
-\   [ zVector ]   [ zVector(Lo Bot) ]
+\   [ xVector(Lo Bot) ]
+\   [ yVector(Lo Bot) ]
+\   [ zVector(Lo Bot) ]
 \
 \ This contains the gaze vector, scaled down to be very small, so we can trace
 \ the line of the gaze by repeatedly adding this vector to the coordinates of
@@ -12664,7 +12677,7 @@
                         \     contains the Sentinel's tower and the gaze vector
                         \     is pointing at the sides of the tower
 
- BCS gaze5              \ If the tile is not flat, jump to gaze5 to calculate
+ BCS gaze5              \ If the tile is not flat, jump to part 2 to calculate
                         \ the gaze vector's interaction with the tile slopes
 
                         \ If we get here then the tile is flat and may contain
