@@ -11891,10 +11891,12 @@
 \ vector's yaw angle.
 \
 \ The -5 in the pitch angle calculation caters for the distance between the top
-\ of the sights and the centre of the sights, and the (3 32) element is the
-\ pitch angle that represents the distance between the bottom of the screen and
-\ the player's gaze when looking down at a pitch angle of -11 (which is the
-\ pitch angle for all objects when they are spawned).
+\ of the sights and the centre of the sights.
+\
+\ The (3 32) element is not fully understood, but it might be composed of -(6 0)
+\ to subtract half a screen height to make the pitch angle relative to the
+\ centre of the screen, and then adding (9 32) to capture the fact that the
+\ player's eyes are 0.875 tiles above the tile surface.
 \
 \ ------------------------------------------------------------------------------
 \
@@ -36917,7 +36919,8 @@
 \
 \ Returns:
 \
-\   pitchDelta(Hi Lo)   The pitch angle delta (divided by 16)
+\   pitchDelta(Hi Lo)   The pitch angle delta (as a pitch angle rather than
+\                       screen coordinates)
 \
 \   angle(Hi Lo)        The angle of the right-angled triangle with adjacent
 \                       side hypotenuse(Hi Lo) and opposite side (A xDeltaLo)
@@ -36987,9 +36990,9 @@
  PHP                    \ Store the status flags from the calculation
 
  LSR A                  \ Set (A pitchDeltaLo) = (A pitchDeltaLo) / 16
- ROR pitchDeltaLo
- LSR A
- ROR pitchDeltaLo
+ ROR pitchDeltaLo       \
+ LSR A                  \ THe division by 16 converts the value from screen
+ ROR pitchDeltaLo       \ pixels into a pitch angle
  LSR A
  ROR pitchDeltaLo
  LSR A
