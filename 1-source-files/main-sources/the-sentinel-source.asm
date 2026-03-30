@@ -6797,6 +6797,7 @@
 \   Category: Sights
 \    Summary: Initialise the variables used to manage the sights, so the sights
 \             appear in the middle of the screen
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -11872,6 +11873,7 @@
 \    Summary: Calculate the angles of the vector from the player's eyes to the
 \             sights
 \  Deep dive: Converting angles to coordinates
+\             The crosshair sights
 \
 \ ------------------------------------------------------------------------------
 \
@@ -28743,6 +28745,7 @@
 \    Summary: Progress gameplay as part of the main game loop
 \  Deep dive: Program flow of the main game loop
 \             Panning and hardware scrolling
+\             The crosshair sights
 \
 \ ******************************************************************************
 
@@ -30495,6 +30498,7 @@
 \   Category: Sights
 \    Summary: Check for up/down/left/right key presses and move the sights
 \             accordingly, panning the screen if they go past the screen edges
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -30526,6 +30530,7 @@
 \   Category: Sights
 \    Summary: Check for the left/right keys and move the sights accordingly,
 \             panning to the left or right if they go past the screen edges
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -30636,6 +30641,7 @@
 \   Category: Sights
 \    Summary: Check for the up/down keys and move the sights accordingly,
 \             panning up or down if they go past the screen edges
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -30756,6 +30762,7 @@
 \   Category: Sights
 \    Summary: Update the address variables for the sights when they move into a
 \             new character block or row
+\  Deep dive: The crosshair sights
 \
 \ ------------------------------------------------------------------------------
 \
@@ -30839,6 +30846,7 @@
 \   Category: Sights
 \    Summary: Draw the sights on the screen, saving the existing screen contents
 \             in the sights pixel byte stash
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -31266,6 +31274,7 @@
 \       Type: Variable
 \   Category: Sights
 \    Summary: Steps to take along the x-axis when drawing the sights
+\  Deep dive: The crosshair sights
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31320,6 +31329,7 @@
 \       Type: Variable
 \   Category: Sights
 \    Summary: Steps to take along the y-axis when drawing the sights
+\  Deep dive: The crosshair sights
 \
 \ ------------------------------------------------------------------------------
 \
@@ -31362,6 +31372,7 @@
 \       Type: Subroutine
 \   Category: Sights
 \    Summary: Remove the sights from the screen
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -31771,6 +31782,7 @@
 \   Category: Sights
 \    Summary: The sights pixel byte stash, which contains the screen pixel bytes
 \             behind the sights, so they can be restored to remove the sights
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -31790,6 +31802,7 @@
 \   Category: Sights
 \    Summary: The screen addresses of the bytes in the sights pixel byte stash,
 \             to which they can be restored to remove the sights (high byte)
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
@@ -32866,6 +32879,7 @@
 \   Category: Sights
 \    Summary: The screen addresses of the bytes in the sights pixel byte stash,
 \             to which they can be restored to remove the sights (low byte)
+\  Deep dive: The crosshair sights
 \
 \ ******************************************************************************
 
