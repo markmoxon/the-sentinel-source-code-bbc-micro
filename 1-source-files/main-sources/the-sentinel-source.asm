@@ -9891,6 +9891,7 @@
 \   Category: Gameplay
 \    Summary: Check to see whether the current enemy can see a specific target
 \             object of a specific type
+\  Deep dive: Following the gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10064,6 +10065,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Calculate whether the current enemy can see the specified object
+\  Deep dive: Following the gaze vector
 \
 \ ******************************************************************************
 
@@ -11308,6 +11310,7 @@
 \    Summary: Process an action key press from key logger entry 1 (absorb,
 \             transfer, create, hyperspace, U-turn)
 \  Deep dive: Program flow of the gameplay loop
+\             Following the gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12504,6 +12507,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Follow a gaze vector from a viewing object to determine whether
 \             the viewer can see a flat tile or platform (i.e. boulder or tower)
+\  Deep dive: Following the gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
@@ -12665,8 +12669,10 @@
                         \
                         \   * (A yPlatformLo) = if the tile contains a boulder
                         \     or the Sentinel's tower, then this is set to the
-                        \     altitude of the platform object, plus 32 for the
-                        \     tower or plus 96 for the boulder
+                        \     altitude of the top of the platform object; if
+                        \     there is an object stack, then this will be the
+                        \     altitude of the top of the top boulder on the
+                        \     stack
                         \
                         \   * A = if the tile contains a non-platform object
                         \         then this is set to the high byte of the
@@ -12858,6 +12864,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate the altitudes of the four corners in a non-flat tile
+\  Deep dive: Following the gaze vector
 \
 \ ******************************************************************************
 
@@ -12966,6 +12973,7 @@
 \   Category: Maths (Geometry)
 \    Summary: Calculate whether the viewing object's gaze is obstructed by a
 \             tile of shape 4 or 12 (i.e. a tile with one horizontal edge)
+\  Deep dive: Following the gaze vector
 \
 \ ******************************************************************************
 
@@ -13008,6 +13016,7 @@
 \   Category: Maths (Geometry)
 \    Summary: For non-flat tiles with two horizontal edges, work out which tile
 \             edge to use when checking for obstruction of the gaze vector
+\  Deep dive: Following the gaze vector
 \
 \ ******************************************************************************
 
@@ -13315,6 +13324,7 @@
 \   Category: Maths (Geometry)
 \    Summary: For non-flat tiles with two horizontal edges, work out whether the
 \             tile edge obstructs the gaze vector
+\  Deep dive: Following the gaze vector
 \
 \ ******************************************************************************
 
@@ -13555,6 +13565,7 @@
 \       Type: Variable
 \   Category: Landscape
 \    Summary: A table to map tile shapes and gaze vector direction to tile edges
+\  Deep dive: Following the gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13614,6 +13625,7 @@
 \             objects and trees in the calculation
 \  Deep dive: Stacking objects
 \             Ray-casting for the tile visibility table
+\             Following the gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
@@ -13658,7 +13670,9 @@
 \   yPlatformLo         If bit 7 of considerObjects is set and the tile contains
 \                       the Sentinel's tower or a boulder, the altitude of the
 \                       platform on the top of the tower or boulder is returned
-\                       in (A yPlatformLo)
+\                       in (A yPlatformLo); if there is an object stack, then
+\                       this will be the altitude of the top of the top boulder
+\                       on the stack
 \
 \   boulderOnTile       If bit 7 of considerObjects is set, this records whether
 \                       the tile contains a boulder:
@@ -13747,8 +13761,11 @@
 
  CMP #6                 \ If the tile doesn't contain the Sentinel's tower (type
  BNE tile7              \ 6) then it must contain a robot, sentry, meanie or the
-                        \ Sentinel, so jump to tile7 to return the altitude of
-                        \ the tile rather than the object
+                        \ Sentinel, so jump to tile7 to work down the stack so
+                        \ we either return the altitude of the tile (if there is
+                        \ only the object on the tile), or we reach the boulder
+                        \ beneath the object and return the details for that
+                        \ instead
 
                         \ If we get here then the tile contains the Sentinel's
                         \ tower in object #Y
@@ -13849,7 +13866,8 @@
  BEQ tile5
 
                         \ If we get here then the tile contains a boulder in
-                        \ object #Y
+                        \ object #Y, and because of the way object stacks are
+                        \ stored, this will be the top boulder on the stack
 
  SEC                    \ Set bit 7 of boulderOnTile to indicate that the tile
  ROR boulderOnTile      \ contains a boulder
@@ -13976,11 +13994,12 @@
                         \ 5 of the object flags in A, so we can process that
                         \ object instead
 
- LDA yObjectHi,Y        \ At this point we have reached the object on the tile
-                        \ itself, so set A to the y-coordinate of that object,
-                        \ which will be the tile altitude, and return from the
-                        \ subroutine with the C flag clear to denote a flat
-                        \ tile, as objects are only ever placed on flat tiles
+ LDA yObjectHi,Y        \ At this point we have reached the tile itself, so set
+                        \ A to the y-coordinate of the tile, i.e. the tile
+                        \ altitude, which is stored in the bottom object in the
+                        \ stack, and return from the subroutine with the C flag
+                        \ clear to denote a flat tile, as objects are only ever
+                        \ placed on flat tiles
 
  RTS                    \ Return from the subroutine
 
