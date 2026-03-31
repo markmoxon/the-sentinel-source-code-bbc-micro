@@ -12799,8 +12799,8 @@
                         \   * We are looking at a boulder, in which case it can
                         \     still be above us and a suitable target for an
                         \     action (as we can create or absorb from a boulder
-                        \     stack by looking at any of the boulders on the
-                        \     stack, even if they are above us)
+                        \     stack by looking at the top boulder in the stack,
+                        \     even if it is above us)
 
                         \ If we get here then neither of the above special cases
                         \ are true, so we now check whether the viewer is
