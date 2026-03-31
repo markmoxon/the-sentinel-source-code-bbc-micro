@@ -14009,6 +14009,7 @@
 \       Type: Subroutine
 \   Category: Maths (Geometry)
 \    Summary: Calculate max(|xCoordLo - 128|, |zCoordLo - 128|)
+\  Deep dive: Following the gaze vector
 \
 \ ------------------------------------------------------------------------------
 \
