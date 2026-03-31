@@ -11447,15 +11447,27 @@
                         \   [ yVector(Lo Bot) ]
                         \   [ zVector(Lo Bot) ]
                         \
-                        \ This vector is the vector from the player's eyes to
-                        \ the sights, divided by 16 by the GetVectorForAngles
-                        \ routine that GetSightsVector uses
+                        \ So xVector(Lo Bot) contains the distance in the x-axis
+                        \ from the player's eyes to the sights, divided by 256
                         \
-                        \ The "divided by 16" part is important, as we want to
-                        \ divide the vector from the player to the sights into
-                        \ small steps, so we can move along the vector
-                        \ sequentially, checking on each step whether the
-                        \ vector is passing through a flat tile or platform
+                        \ The "divided by 256" part is subtle and important
+                        \
+                        \ We want to divide the vector from the player to the
+                        \ sights into small steps, so we can move along the
+                        \ vector sequentially, checking on each step whether the
+                        \ vector is hitting something (i.e. a tile, platform or
+                        \ object)
+                        \
+                        \ The above calculation puts the result into a low
+                        \ byte/bottom byte 16-bit number in xVector(Lo Bot)
+                        \ rather than a normal high/low byte in xVector(Hi Lo)
+                        \
+                        \ This is the same as dividing the result by 256, as:
+                        \
+                        \   xVector(Lo Bot) = xVector(Hi Lo) / 256
+                        \
+                        \ So we pass the scaled-down sights vector to the
+                        \ FollowGazeVector, as required
 
  JSR FollowGazeVector   \ Follow the gaze vector from the player's eyes to the
                         \ sights to determine whether the player can see a flat
