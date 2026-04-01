@@ -5752,6 +5752,25 @@
                         \ and set the following variable block to %10000000:
                         \
                         \   * &0CE4 to &0CEF (Main variable workspace)
+                        \
+                        \ This zeroes the bulk of the main variable workspace,
+                        \ and sets bit 7 in the following variables:
+                        \
+                        \   * focusOnKeyAction
+                        \
+                        \   * activateSentinel
+                        \
+                        \   * playerIsOnTower
+                        \
+                        \   * musicCounter
+                        \
+                        \   * keyLogger
+                        \
+                        \   * inputBuffer
+                        \
+                        \   * gameInProgress
+                        \
+                        \   * landscapeNumber(Hi Lo)
 
  LDX #0                 \ Set X to use as a byte counter to run from 0 to &EF
 
@@ -6654,6 +6673,7 @@
 \   Category: Gameplay
 \    Summary: Update the timers that control the enemy tactics
 \  Deep dive: The interrupt handler
+\             Gameplay timers
 \
 \ ******************************************************************************
 
@@ -8987,6 +9007,7 @@
 \   Category: Gameplay
 \    Summary: Apply tactics to an enemy object, setting things up so the next
 \             call applies tactics to the next enemy object
+\  Deep dive: Gameplay timers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9042,8 +9063,10 @@
                         \ from the subroutine using a tail call
 
                         \ If we get here then bit 7 of the enemy object's flags
-                        \ is clear, so the enemy has been removed from the
-                        \ landscape at some point
+                        \ is clear, so either this enemy was never spawned
+                        \ because there aren't this many enemies on this
+                        \ landscape, or the enemy has been removed from the
+                        \ landscape because the player has absorbed it
 
  JSR ExpendEnemyEnergy  \ Drain one unit of energy from the enemy and expend it
                         \ onto the landscape by spawning a tree, if possible
@@ -9114,6 +9137,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
+\  Deep dive: Gameplay timers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9164,6 +9188,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
+\  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
 
@@ -9337,6 +9362,7 @@
 \   Category: Gameplay
 \    Summary: If the enemy has any residual energy, try expending it onto the
 \             landscape in the form of a tree (and end tactics if successful)
+\  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
 
@@ -9378,6 +9404,7 @@
 \   Category: Gameplay
 \    Summary: If configured, search the landscape for a suitable target for the
 \             enemy to drain of energy
+\  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
 
@@ -9427,6 +9454,7 @@
 \   Category: Gameplay
 \    Summary: Look for a suitable robot to drain of energy, or look for a
 \             drainable tree or boulder if there are no suitable robots
+\  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
 
@@ -9641,6 +9669,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Rotate the enemy and make a rotation sound
+\  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
 
@@ -9690,6 +9719,7 @@
 \   Category: Gameplay
 \    Summary: Drain energy from the enemy's target object, or try scanning for
 \             a tree to turn into a meanie if the target's tile is obscured
+\  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
 
@@ -9836,6 +9866,7 @@
 \   Category: Gameplay
 \    Summary: Redraw the object on the screen, optionally with a dithered
 \             effect
+\  Deep dive: Gameplay timers
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29268,6 +29299,7 @@
 \             Panning and hardware scrolling
 \             Dithering to the screen
 \             The scanner
+\             Gameplay timers
 \
 \ ------------------------------------------------------------------------------
 \
