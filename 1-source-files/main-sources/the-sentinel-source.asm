@@ -9606,7 +9606,7 @@
 
  BCS tact16             \ If FindObjectToDrain set the C flag, then no suitable
                         \ object was found for the enemy to drain, so jump to
-                        \ tact16 to keep applying tactics
+                        \ part 7 to keep applying tactics
 
 \ ******************************************************************************
 \
@@ -9645,11 +9645,11 @@
  LDA #30                \ for 30 * 0.06 = 1.8 seconds before applying tactics
  STA enemyTacticTimer,Y \ to the enemy again
 
- JMP tact25             \ Jump to tact25 in part 10 with X set to the object
-                        \ number of the enemy to update it on-screen with a
-                        \ dithered effect (as it has now been transformed into
-                        \ a different type of object) and return from the
-                        \ subroutine
+ JMP tact25             \ Jump to tact25 in part 10 with X set to the number
+                        \ of the object that was drained so we update it
+                        \ on-screen with a dithered effect (as it has now been
+                        \ transformed into a different type of object) and
+                        \ return from the subroutine
 
 \ ******************************************************************************
 \
@@ -9667,7 +9667,7 @@
                         \ are applying tactics (so this is now object #X)
 
  LDA enemyRotateTimer,X \ If the rotation timer for the enemy is less than 2
- CMP #2                 \ then it has run all the way down, so jump to part 7
+ CMP #2                 \ then it has run all the way down, so jump to tact18
  BCC tact18             \ to rotate the enemy
 
 .tact17
