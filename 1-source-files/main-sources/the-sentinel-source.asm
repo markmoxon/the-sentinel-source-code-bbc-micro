@@ -9326,10 +9326,8 @@
 
 .tact4
 
- LDA #0                 \ Set enemyDrainTimer = 0 to restart the drain counter
- STA enemyDrainTimer,X  \ for the enemy in part 5 of ApplyTactics, so it doesn't
-                        \ drain energy for another 120 timer ticks (120 * 0.06 =
-                        \ 7.2 seconds)
+ LDA #0                 \ Set enemyDrainTimer = 0 to disable the drain timer for
+ STA enemyDrainTimer,X  \ the meanie
 
 .tact5
 
@@ -9460,9 +9458,9 @@
 
 .tact9
 
- LDA enemyDrainTimer,X  \ If enemyDrainTimer for the enemy is zero then jump to
- BEQ tact11             \ tact11 to skip the following, as this timer is not in
-                        \ use
+ LDA enemyDrainTimer,X  \ If enemyDrainTimer for the enemy is zero then the
+ BEQ tact11             \ timer is disabled, so jump to tact11 to skip the
+                        \ following
 
  LDY enemyTarget,X      \ Set Y to the object number in enemyTarget, so when we
                         \ refer to object #Y, it's the enemy's target object
@@ -9489,10 +9487,8 @@
 
 .tact10
 
- STA enemyDrainTimer,X  \ Set enemyDrainTimer = 0 to restart the drain counter
-                        \ for the enemy in part 5 of ApplyTactics, so it doesn't
-                        \ drain energy for another 120 timer ticks (120 * 0.06 =
-                        \ 7.2 seconds)
+ STA enemyDrainTimer,X  \ Set enemyDrainTimer = 0 to disable the drain timer for
+                        \ the enemy
 
 .tact11
 
@@ -9501,7 +9497,7 @@
                         \ (in other words, a robot whose tile the enemy can see)
                         \
                         \ If the robot turns out to be the player object, then
-                        \ we also check whether the object
+                        \ we also check whether the object is partially obscured
 
  LDA #%10000000         \ Set bit 7 of playerTileObscured, so by default the
  STA playerTileObscured \ the player object can't be seen at all (though we will
@@ -9597,10 +9593,8 @@
 
 .tact14
 
- LDA #0                 \ Set enemyDrainTimer = 0 to restart the drain counter
- STA enemyDrainTimer,X  \ for the enemy in part 5 of ApplyTactics, so it doesn't
-                        \ drain energy for another 120 timer ticks (120 * 0.06 =
-                        \ 7.2 seconds)
+ LDA #0                 \ Set enemyDrainTimer = 0 to disable the drain timer for
+ STA enemyDrainTimer,X  \ the enemy
 
  JSR FindObjectToDrain  \ Find a suitable target object for the enemy to drain
                         \ (i.e. a tree that is stacked on top of another object,
@@ -9835,10 +9829,8 @@
 
 .tact23
 
- LDA #0                 \ Set enemyDrainTimer = 0 to restart the drain counter
- STA enemyDrainTimer,Y  \ for the enemy in part 5 of ApplyTactics, so it doesn't
-                        \ drain energy for another 120 timer ticks (120 * 0.06 =
-                        \ 7.2 seconds)
+ LDA #0                 \ Set enemyDrainTimer = 0 to disable the drain timer for
+ STA enemyDrainTimer,Y  \ the enemy
 
  BEQ tact27             \ Jump to tact27 to stop applying tactics to this enemy
                         \ and set things up so we move on to the next enemy in
@@ -10791,10 +10783,9 @@
                         \ If we get here then we are draining energy from a
                         \ robot in object #X
 
- LDY enemyObject        \ Set enemyDrainTimer = 0 to restart the drain counter
- LDA #0                 \ for the enemy in part 5 of ApplyTactics, so it doesn't
- STA enemyDrainTimer,Y  \ drain energy for another 120 timer ticks (120 * 0.06 =
-                        \ 7.2 seconds)
+ LDY enemyObject        \ Set enemyDrainTimer = 0 to disable the drain timer for
+ LDA #0                 \ the enemy
+ STA enemyDrainTimer,Y
 
  LDA #3                 \ Set A = 3 so the robot loses one energy unit and
                         \ changes into a boulder (i.e. an object of type 3)
