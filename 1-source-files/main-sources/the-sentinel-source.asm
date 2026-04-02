@@ -9091,10 +9091,10 @@
                         \ enemy and set things up so we move on to the next
                         \ enemy in the next iteration of the gameplay loop
 
- JMP tact25             \ Otherwise jump to tact25 with X set to the object
-                        \ number of the tree to update it on-screen with a
-                        \ dithered effect and return from the subroutine using
-                        \ a tail call
+ JMP tact25             \ Otherwise jump to part 10 of ApplyTactics with X set
+                        \ to the object number of the tree to update it
+                        \ on-screen with a dithered effect and return from the
+                        \ subroutine using a tail call
 
 \ ******************************************************************************
 \
@@ -9133,7 +9133,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 1 of 8)
+\       Name: ApplyTactics (Part 1 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
@@ -9184,7 +9184,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 2 of 8)
+\       Name: ApplyTactics (Part 2 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
@@ -9320,9 +9320,9 @@
  PLA                    \ Retrieve the enemy object number from the stack into X
  TAX
 
- JMP tact26             \ Jump to tact26 to draw the updated object #X without a
-                        \ dithered effect, so the meanie rotates instantly if it
-                        \ is on the screen
+ JMP tact26             \ Jump to tact26 in part 10 to update object #X on the
+                        \ screen without a dithered effect, so the enemy rotates
+                        \ instantly if it is on-screen
 
 .tact4
 
@@ -9349,13 +9349,13 @@
  LDA #2                 \ Turn the meanie object back into a tree (an object of
  STA objectTypes,X      \ type 2)
 
- JMP tact25             \ Jump to tact25 with X set to the object number of
-                        \ the tree to update it on-screen with a dithered effect
-                        \ and return from the subroutine using a tail call
+ JMP tact25             \ Jump to tact25 in part 10 with X set to the object
+                        \ number of the tree to update it on-screen with a
+                        \ dithered effect and return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 3 of 8)
+\       Name: ApplyTactics (Part 3 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: If the enemy has any residual energy, try expending it onto the
@@ -9391,13 +9391,13 @@
                         \ 4 to keep applying tactics
 
  JMP tact25             \ Otherwise that's enough tactics for this iteration, so
-                        \ jump to tact25 with X set to the object number of
-                        \ the tree to update it on-screen with a dithered effect
-                        \ and return from the subroutine using a tail call
+                        \ jump to tact25 in part 10 with X set to the object
+                        \ number of the tree to update it on-screen with a
+                        \ dithered effect and return from the subroutine
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 4 of 8)
+\       Name: ApplyTactics (Part 4 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: If configured, search the landscape for a suitable target for the
@@ -9434,7 +9434,7 @@
  STA enemyMeanieScan,X  \ scanning objects for trees to potentially turn into a
                         \ meanie, we start from the last object and work down
 
- BNE tact15             \ Jump to tact15 to drain energy from the target object
+ BNE tact15             \ Jump to part 6 to drain energy from the target object
                         \ (this BNE is effectively a JMP as A is never zero)
 
 .tact8
@@ -9447,7 +9447,7 @@
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 5 of 8)
+\       Name: ApplyTactics (Part 5 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Look for a suitable robot to drain of energy, or look for a
@@ -9481,7 +9481,7 @@
                         \ keep applying tactics
 
  JMP tact19             \ Otherwise the target is a robot and the enemy can see
-                        \ at least some of it, so jump to part 7 with the target
+                        \ at least some of it, so jump to part 8 with the target
                         \ object number in Y to try draining energy from the
                         \ robot
 
@@ -9529,7 +9529,7 @@
                         \ object
 
  BMI tact19             \ If bit 7 of targetVisibility is set then the enemy can
-                        \ see the robot's tile, so jump to part 7 with the
+                        \ see the robot's tile, so jump to part 8 with the
                         \ robot's object number in Y to try draining energy from
                         \ the robot
 
@@ -9585,9 +9585,9 @@
  LDA #%01000000         \ Set targetVisibility to record that the enemy can see
  STA targetVisibility   \ the player object (bit 6 set) but it can't see the
                         \ tile the player is on (bit 7 clear), so we store this
-                        \ in the enemy's data when we jump to part 7
+                        \ in the enemy's data when we jump to part 8
 
- BNE tact19             \ Jump to part 7 with the target object number in Y to
+ BNE tact19             \ Jump to part 8 with the target object number in Y to
                         \ try draining energy from the target object (this BNE
                         \ is effectively a JMP as A is never zero)
 
@@ -9608,6 +9608,16 @@
                         \ object was found for the enemy to drain, so jump to
                         \ tact16 to keep applying tactics
 
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 6 of 10)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Drain energy from a target object
+\  Deep dive: Gameplay timers
+\
+\ ******************************************************************************
+
 .tact15
 
                         \ If we get here then we drain energy from the target
@@ -9625,21 +9635,31 @@
                         \ been transformed into a different object type)
 
  BCS tact17             \ If DrainObjectEnergy set the C flag then the enemy
-                        \ just drained the player object, so jump to tact17 to
-                        \ move on to the next enemy in the next iteration of
-                        \ the gameplay loop, as we don't need to update the
-                        \ player object on-screen (as we never see the player
-                        \ object)
+                        \ just drained the player object, so jump to
+                        \ MoveOnToNextEnemy via tact17 to move on to the next
+                        \ enemy in the next iteration of the gameplay loop, as
+                        \ we don't need to update the player object on-screen
+                        \ (as we never see the player object)
 
  LDY enemyObject        \ Set enemyTacticTimer for the enemy to 30 so we wait
  LDA #30                \ for 30 * 0.06 = 1.8 seconds before applying tactics
  STA enemyTacticTimer,Y \ to the enemy again
 
- JMP tact25             \ Jump to tact25 with X set to the object number of
-                        \ the enemy to update it on-screen with a dithered
-                        \ effect (as it has now been transformed into a
-                        \ different type of object) and return from the
-                        \ subroutine using a tail call
+ JMP tact25             \ Jump to tact25 in part 10 with X set to the object
+                        \ number of the enemy to update it on-screen with a
+                        \ dithered effect (as it has now been transformed into
+                        \ a different type of object) and return from the
+                        \ subroutine
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 7 of 10)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Rotate the enemy and make a rotation sound
+\  Deep dive: Gameplay timers
+\
+\ ******************************************************************************
 
 .tact16
 
@@ -9647,7 +9667,7 @@
                         \ are applying tactics (so this is now object #X)
 
  LDA enemyRotateTimer,X \ If the rotation timer for the enemy is less than 2
- CMP #2                 \ then it has run all the way down, so jump to part 6
+ CMP #2                 \ then it has run all the way down, so jump to part 7
  BCC tact18             \ to rotate the enemy
 
 .tact17
@@ -9656,16 +9676,6 @@
                         \ tactics to this enemy and set things up so we move on
                         \ to the next enemy in the next iteration of the
                         \ gameplay loop
-
-\ ******************************************************************************
-\
-\       Name: ApplyTactics (Part 6 of 8)
-\       Type: Subroutine
-\   Category: Gameplay
-\    Summary: Rotate the enemy and make a rotation sound
-\  Deep dive: Gameplay timers
-\
-\ ******************************************************************************
 
 .tact18
 
@@ -9702,17 +9712,17 @@
  LDX enemyObject        \ Set X to the object number of the enemy to which we
                         \ are applying tactics
 
- JMP tact26             \ Jump to tact26 to draw the updated object #X without a
-                        \ dithered effect, so the enemy rotates instantly if it
-                        \ is on the screen
+ JMP tact26             \ Jump to tact26 in part 10 to update object #X on the
+                        \ screen without a dithered effect, so the enemy rotates
+                        \ instantly if it is on-screen
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 7 of 8)
+\       Name: ApplyTactics (Part 8 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Drain energy from the enemy's target object, or try scanning for
-\             a tree to turn into a meanie if the target's tile is obscured
+\    Summary: If the drain timer has run down, either drain the target's energy
+\             or jump to part 9 to create a meanie; or start the drain timer
 \  Deep dive: Gameplay timers
 \
 \ ******************************************************************************
@@ -9758,7 +9768,7 @@
  LDA targetVisibility   \ If bit 7 of targetVisibility is clear then the enemy
  BPL tact22             \ can't see the tile containing the enemy's target (but
                         \ we know it can see the enemy object as otherwise we
-                        \ wouldn't have reached this point), so jump to tact22
+                        \ wouldn't have reached this point), so jump to part 9
                         \ to consider turning a tree into a meanie
 
                         \ If we get here then the enemy can see the tile
@@ -9781,17 +9791,28 @@
  STA enemyTacticTimer,Y \ to the enemy again
 
  BCS tact27             \ If DrainObjectEnergy set the C flag then the enemy
-                        \ just drained the player object, so jump to tact27 to
-                        \ stop applying tactics to this enemy and set things up
-                        \ so we move on to the next enemy in the next iteration
-                        \ of the gameplay loop
+                        \ just drained the player object, so jump to
+                        \ MoveOnToNextEnemy via tact27 to stop applying tactics
+                        \ to this enemy and set things up so we move on to the
+                        \ next enemy in the next iteration of the gameplay loop
 
  JMP tact25             \ Otherwise it wasn't the player object being drained,
-                        \ so jump to tact25 with X set to the number of the
-                        \ object that was drained so we update it on-screen with
-                        \ a dithered effect (as it has now been transformed into
-                        \ a different type of object) and return from the
-                        \ subroutine using a tail call
+                        \ so jump to tact25 in part 10 with X set to the number
+                        \ of the object that was drained so we update it
+                        \ on-screen with a dithered effect (as it has now been
+                        \ transformed into a different type of object) and
+                        \ return from the subroutine
+
+\ ******************************************************************************
+\
+\       Name: ApplyTactics (Part 9 of 10)
+\       Type: Subroutine
+\   Category: Gameplay
+\    Summary: Try scanning for a tree to turn into a meanie when the target's
+\             tile is obscured
+\  Deep dive: Gameplay timers
+\
+\ ******************************************************************************
 
 .tact22
 
@@ -9822,20 +9843,22 @@
  STA enemyDrainScan,Y   \ we apply tactics to the enemy it will immediately scan
                         \ for an object to drain
 
- BNE tact27             \ Jump to tact27 to stop applying tactics to this enemy
-                        \ and set things up so we move on to the next enemy in
-                        \ the next iteration of the gameplay loop (this BNE is
-                        \ effectively a JMP as A is always non-zero)
+ BNE tact27             \ Jump to MoveOnToNextEnemy via tact27 to stop applying
+                        \ tactics to this enemy and set things up so we move on
+                        \ to the next enemy in the next iteration of the
+                        \ gameplay loop (this BNE is effectively a JMP as A is
+                        \ always non-zero)
 
 .tact23
 
  LDA #0                 \ Set enemyDrainTimer = 0 to disable the drain timer for
  STA enemyDrainTimer,Y  \ the enemy
 
- BEQ tact27             \ Jump to tact27 to stop applying tactics to this enemy
-                        \ and set things up so we move on to the next enemy in
-                        \ the next iteration of the gameplay loop (this BEQ is
-                        \ effectively a JMP as A is always zero)
+ BEQ tact27             \ Jump to MoveOnToNextEnemy via tact27 to stop applying
+                        \ tactics to this enemy and set things up so we move on
+                        \ to the next enemy in the next iteration of the
+                        \ gameplay loop (this BNE is effectively a JMP as A is
+                        \ always zero)
 
 .tact24
 
@@ -9847,13 +9870,13 @@
                         \ the enemy again
 
  LDX enemyMeanieTree,Y  \ Set X to the object number of the tree that we just
-                        \ turned into a meanie, and fall through into part 8 to
+                        \ turned into a meanie, and fall through into part 10 to
                         \ redraw the transformed object on the screen with a
                         \ dithered effect
 
 \ ******************************************************************************
 \
-\       Name: ApplyTactics (Part 8 of 8)
+\       Name: ApplyTactics (Part 10 of 10)
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Redraw the object on the screen, optionally with a dithered
