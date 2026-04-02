@@ -6673,7 +6673,7 @@
 \   Category: Gameplay
 \    Summary: Update the timers that control the enemy tactics
 \  Deep dive: The interrupt handler
-\             Gameplay timers
+\             Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9007,7 +9007,7 @@
 \   Category: Gameplay
 \    Summary: Apply tactics to an enemy object, setting things up so the next
 \             call applies tactics to the next enemy object
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9137,7 +9137,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9188,7 +9188,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9360,7 +9360,7 @@
 \   Category: Gameplay
 \    Summary: If the enemy has any residual energy, try expending it onto the
 \             landscape in the form of a tree (and end tactics if successful)
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9402,7 +9402,7 @@
 \   Category: Gameplay
 \    Summary: If configured, search the landscape for a suitable target for the
 \             enemy to drain of energy
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9452,7 +9452,7 @@
 \   Category: Gameplay
 \    Summary: Look for a suitable robot to drain of energy, or look for a
 \             drainable tree or boulder if there are no suitable robots
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9614,7 +9614,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Drain energy from a target object
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9657,7 +9657,7 @@
 \       Type: Subroutine
 \   Category: Gameplay
 \    Summary: Rotate the enemy and make a rotation sound
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9723,7 +9723,7 @@
 \   Category: Gameplay
 \    Summary: If the drain timer has run down, either drain the target's energy
 \             or jump to part 9 to create a meanie; or start the drain timer
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9810,7 +9810,7 @@
 \   Category: Gameplay
 \    Summary: Try scanning for a tree to turn into a meanie when the target's
 \             tile is obscured
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ******************************************************************************
 
@@ -9881,7 +9881,7 @@
 \   Category: Gameplay
 \    Summary: Redraw the object on the screen, optionally with a dithered
 \             effect
-\  Deep dive: Gameplay timers
+\  Deep dive: Enemy timers and state variables
 \
 \ ------------------------------------------------------------------------------
 \
@@ -29313,7 +29313,7 @@
 \             Panning and hardware scrolling
 \             Dithering to the screen
 \             The scanner
-\             Gameplay timers
+\             Enemy timers and state variables
 \
 \ ------------------------------------------------------------------------------
 \
