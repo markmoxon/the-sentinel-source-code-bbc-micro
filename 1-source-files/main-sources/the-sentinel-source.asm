@@ -6674,6 +6674,7 @@
 \    Summary: Update the timers that control the enemy tactics
 \  Deep dive: The interrupt handler
 \             Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9008,6 +9009,7 @@
 \    Summary: Apply tactics to an enemy object, setting things up so the next
 \             call applies tactics to the next enemy object
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9103,6 +9105,7 @@
 \   Category: Gameplay
 \    Summary: Update enemyObject so the next time we consider applying enemy
 \             tactics, we apply them to the next enemy, looping from 7 to 0
+\  Deep dive: Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9138,6 +9141,7 @@
 \   Category: Gameplay
 \    Summary: Apply tactics to the Sentinel or a sentry
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9163,7 +9167,7 @@
                         \ apply tactics to the enemy
 
  LDA #4                 \ Set enemyTacticTimer for the enemy to 4 so by default
- STA enemyTacticTimer,X \ we wait for 4 * 0.06 = 0.6 seconds before applying
+ STA enemyTacticTimer,X \ we wait for 4 * 0.06 = 0.24 seconds before applying
                         \ tactics to the enemy again (though we may change this)
 
  LDA #20                \ Set enemyViewingArc = 20, so the enemy's gaze has a
@@ -9189,6 +9193,7 @@
 \   Category: Gameplay
 \    Summary: Process the tactics for a meanie
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9361,6 +9366,7 @@
 \    Summary: If the enemy has any residual energy, try expending it onto the
 \             landscape in the form of a tree (and end tactics if successful)
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9403,6 +9409,7 @@
 \    Summary: If configured, search the landscape for a suitable target for the
 \             enemy to drain of energy
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9453,6 +9460,7 @@
 \    Summary: Look for a suitable robot to drain of energy, or look for a
 \             drainable tree or boulder if there are no suitable robots
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9615,6 +9623,7 @@
 \   Category: Gameplay
 \    Summary: Drain energy from a target object
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9658,6 +9667,7 @@
 \   Category: Gameplay
 \    Summary: Rotate the enemy and make a rotation sound
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9724,6 +9734,7 @@
 \    Summary: If the drain timer has run down, either drain the target's energy
 \             or jump to part 9 to create a meanie; or start the drain timer
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9811,6 +9822,7 @@
 \    Summary: Try scanning for a tree to turn into a meanie when the target's
 \             tile is obscured
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -9882,6 +9894,7 @@
 \    Summary: Redraw the object on the screen, optionally with a dithered
 \             effect
 \  Deep dive: Enemy timers and state variables
+\             Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9938,6 +9951,7 @@
 \    Summary: Check to see whether the current enemy can see a specific target
 \             object of a specific type
 \  Deep dive: Following the gaze vector
+\             Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10112,14 +10126,16 @@
 \   Category: Gameplay
 \    Summary: Calculate whether the current enemy can see the specified object
 \  Deep dive: Following the gaze vector
+\             Enemy tactics
 \
 \ ******************************************************************************
 
  LDA enemyViewingArc    \ Set T = enemyViewingArc / 2
  LSR A                  \
  STA T                  \ So T is the yaw width of half the enemy's viewing arc,
-                        \ which is always 10 as enemyViewingArc is only ever set
-                        \ to 20
+                        \ which is either 10 for a sentry or the Sentinel, or
+                        \ 20 for a meanie (as enemyViewingArc is 40 for meanies
+                        \ and 20 for other enemy types)
 
  LDA objectViewYawHi    \ Set A = objectViewYawHi - 10 + T
  SEC                    \
@@ -10484,6 +10500,7 @@
 \   Category: Gameplay
 \    Summary: Reset the data stored for any meanie scans that the enemy has
 \             tried in the past, so we can start looking with a clean slate
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10517,6 +10534,7 @@
 \   Category: Gameplay
 \    Summary: Scan through the objects in the landscape to see if any of them
 \             are trees that are suitable for turning into a meanie
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10711,6 +10729,7 @@
 \   Category: Gameplay
 \    Summary: Drain energy from an object into an enemy, transforming it into an
 \             object with an energy level of one unit less (if applicable)
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -10874,6 +10893,7 @@
 \   Category: Gameplay
 \    Summary: Drain one unit of energy from an enemy and expend it onto the
 \             landscape by spawning a tree, if possible
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11053,7 +11073,8 @@
 \       Name: FindObjectToDrain
 \       Type: Subroutine
 \   Category: Gameplay
-\    Summary: Find a suitable target object for an enemy to drain
+\    Summary: Find a suitable non-robot target object for an enemy to drain
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11197,6 +11218,7 @@
 \   Category: Gameplay
 \    Summary: Abort applying the tactics for this gameplay loop if updating the
 \             object on-screen will corrupt a screen pan
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -11253,6 +11275,7 @@
 \   Category: Drawing 3D objects
 \    Summary: Check whether a 3D object is visible on-screen and should
 \             therefore not be changed if a pan operation is about to happen
+\  Deep dive: Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15174,6 +15197,7 @@
 \             and if so, which character columns it spans on the screen
 \  Deep dive: Converting coordinates to angles
 \             Dithering to the screen
+\             Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
@@ -15684,6 +15708,7 @@
 \    Summary: The amount of energy required to create each object or the amount
 \             of energy acquired when absorbing each object
 \  Deep dive: The energy icons
+\             Enemy tactics
 \
 \ ******************************************************************************
 
@@ -29314,6 +29339,7 @@
 \             Dithering to the screen
 \             The scanner
 \             Enemy timers and state variables
+\             Enemy tactics
 \
 \ ------------------------------------------------------------------------------
 \
