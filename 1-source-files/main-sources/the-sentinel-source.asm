@@ -6700,7 +6700,8 @@
                         \ times a second, or once every 0.06 seconds
                         \
                         \ So setting a timer to n means it will count down in
-                        \ 3 * n / 50 = 3 * 0.06 seconds
+                        \ 3 * (n - 1) / 50 = (n - 1) * 0.06 seconds (it's n - 1
+                        \ because the timer counts down to one rather than zero)
 
  LDX #23                \ There are 24 bytes of enemy timers, split into three
                         \ timers keeping track of up to eight enemies each:
@@ -8284,8 +8285,8 @@
  STA enemyTacticTimer,X \ Set the enemy's tactics timer to the number in A, so
                         \ we wait for A * 0.06 seconds before applying tactics
                         \ to this enemy in the ApplyTactics routine (so that's
-                        \ somewhere between 5 * 0.06 = 0.3 seconds and
-                        \ 63 * 0.06 = 3.8 seconds)
+                        \ somewhere between 4 * 0.06 = 0.24 seconds and
+                        \ 62 * 0.06 = 3.72 seconds)
 
  LDA #20                \ Set A to either 20 or -20, depending on the value that
  BCC aden5              \ we gave to the C flag above
@@ -9703,8 +9704,8 @@
  STA objectYawAngle,X   \ enemy's enemyYawStep variable
 
  LDA #200               \ Set enemyRotateTimer for the enemy to 200 so we wait
- STA enemyRotateTimer,X \ for 200 * 0.06 = 12 seconds before rotating the enemy
-                        \ again
+ STA enemyRotateTimer,X \ for 199 * 0.06 = 11.94 seconds before rotating the
+                        \ enemy again
 
  JSR ResetMeanieScan    \ Reset the data stored for any meanie scans that the
                         \ enemy has tried in the past, so the enemy can start
@@ -9757,8 +9758,8 @@
                         \ restart the timer from 120
 
  LDA #120               \ Set enemyDrainTimer for this enemy to 120 so the enemy
- STA enemyDrainTimer,X  \ doesn't drain energy for another 120 timer ticks
-                        \ (120 * 0.06 = 7.2 seconds)
+ STA enemyDrainTimer,X  \ doesn't drain energy for another 119 timer ticks
+                        \ (119 * 0.06 = 7.14 seconds)
 
 .tact20
 
@@ -9798,7 +9799,7 @@
                         \ been transformed into a different object type)
 
  LDY enemyObject        \ Set enemyTacticTimer for the enemy to 30 so we wait
- LDA #30                \ for 30 * 0.06 = 1.8 seconds before applying tactics
+ LDA #30                \ for 19 * 0.06 = 1.74 seconds before applying tactics
  STA enemyTacticTimer,Y \ to the enemy again
 
  BCS tact27             \ If DrainObjectEnergy set the C flag then the enemy
@@ -9878,8 +9879,8 @@
                         \ meanie and the enemy number is in Y
 
  LDA #50                \ Set enemyTacticTimer for the enemy to 50 so we wait
- STA enemyTacticTimer,Y \ for 50 * 0.06 = 3.0 seconds before applying tactics to
-                        \ the enemy again
+ STA enemyTacticTimer,Y \ for 49 * 0.06 = 2.94 seconds before applying tactics
+                        \ to the enemy again
 
  LDX enemyMeanieTree,Y  \ Set X to the object number of the tree that we just
                         \ turned into a meanie, and fall through into part 10 to
@@ -12802,11 +12803,10 @@
                         \ cube" beneath the one that has the tile on top or that
                         \ contains the platform)
                         \
-                        \ This means the gaze must have passed through a slope
-                        \ and deep "into" the ground beneath the tile, so jump
-                        \ to gaze4 to return from the subroutine with the C flag
-                        \ set to indicate that the viewer is not looking at a
-                        \ tile
+                        \ This means the gaze must have passed deep "into" the
+                        \ ground beneath the tile, so jump to gaze4 to return
+                        \ from the subroutine with the C flag set to indicate
+                        \ that the viewer is not looking at a tile
 
                         \ If we get here then the gaze is currently sitting
                         \ within the "tile cube" below the tile surface or the
