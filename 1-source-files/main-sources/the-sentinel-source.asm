@@ -9275,7 +9275,7 @@
 
  LDA #8                 \ Set A = 8 to use as the value of meanieYawStep when
                         \ the meanie needs to rotate clockwise towards the
-                        \ player
+                        \ player (so that's 360 * 8 / 256 = 8.25 degrees)
 
  BIT objectViewYawHi    \ If objectViewYawHi is positive then the player is to
  BPL tact3              \ the right of the meanie's viewing arc, so jump to
