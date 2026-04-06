@@ -9438,7 +9438,7 @@
                         \ tact8 to stop the enemy from searching again and keep
                         \ applying tactics
 
- LDA #64                \ Set enemyMeanieCheck = 64 for the enemy so if we start
+ LDA #64                \ Set enemyMeanieScan = 64 for the enemy so if we start
  STA enemyMeanieScan,X  \ scanning objects for trees to potentially turn into a
                         \ meanie, we start from the last object and work down
 
@@ -9749,6 +9749,14 @@
 
  LDA targetVisibility   \ Store the target's visibility in enemyVisibility for
  STA enemyVisibility,X  \ this enemy
+
+                        \ We now wait for enemyDrainTimer to count down, as this
+                        \ makes the enemy wait for 7.14 seconds before starting
+                        \ the draining process
+                        \
+                        \ Once the enemyDrainTimer counter has counted down, we
+                        \ leave it set to 1 so we jump straight to tact21 to
+                        \ keep draining one point every 1.74 seconds
 
  LDA enemyDrainTimer,X  \ If enemyDrainTimer for this enemy is non-zero then it
  CMP #1                 \ is either counting down or has counted down, so jump
@@ -10522,7 +10530,7 @@
  LDA #0                 \ Zero enemyFailCounter for object #X to reset the
  STA enemyFailCounter,X \ recorded number of failed meanie scans for this enemy
 
- LDA #64                \ Set enemyMeanieCheck = 64 for the enemy so if we start
+ LDA #64                \ Set enemyMeanieScan = 64 for the enemy so if we start
  STA enemyMeanieScan,X  \ scanning objects for trees to potentially turn into a
                         \ meanie, we start from the last object and work down
 
