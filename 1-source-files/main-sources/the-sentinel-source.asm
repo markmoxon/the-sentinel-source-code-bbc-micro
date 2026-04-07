@@ -2683,12 +2683,12 @@
 
 .gameOverSoundPitch
 
- EQUB 0                 \ A timer for the game over sound
+ EQUB 0                 \ A pitch counter for the game over sound
                         \
-                        \ Sound is made in ProcessSound when the timer is 80 or
-                        \ higher, and it starts at 250 in ShowGameOverScreen and
-                        \ decrements in ProcessSound until it dips below 80, at
-                        \ which point the sound stops
+                        \ Sound at this pitch is made in ProcessSound when the
+                        \ counter is 80 or higher; it decrements on each call
+                        \ to ProcessSound until it dips below 80, at which point
+                        \ the sound stops
 
 .alteredSeed
 
@@ -28344,7 +28344,7 @@
  CMP #&14               \ If A < &14 then we are still in the range &11 to &13,
  BCC musi2              \ so jump to musi2 to use this channel
 
- LDA #&11               \ Otherwise warp around to channel &11
+ LDA #&11               \ Otherwise wrap around to channel &11
 
 .musi2
 
@@ -38249,7 +38249,7 @@
 \ followed by a third note with the counter set to the duration of the chord.
 \
 \ Setting the counter to zero for the last chord in a piece of music ensures
-\ that the last chords plays until it naturally decays according to the sound
+\ that the last chord plays until it naturally decays according to the sound
 \ envelope for sound #3.
 \
 \ ******************************************************************************
@@ -38349,7 +38349,7 @@
  EQUB 64
  EQUB 36
 
- EQUB 200 + 12          \ Final note = 8 with counter 15 * 4 = 48
+ EQUB 200 + 12          \ Final note = 8 with counter 12 * 4 = 48
  EQUB 8
 
  EQUB &FF               \ End of music data
