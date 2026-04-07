@@ -27785,6 +27785,7 @@
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Make a sound
+\  Deep dive: Sound effects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27888,6 +27889,7 @@
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Define a sound envelope
+\  Deep dive: Sound effects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27924,6 +27926,7 @@
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Either make a sound or set up an envelope
+\  Deep dive: Sound effects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -27974,6 +27977,7 @@
 \   Category: Sound
 \    Summary: A table to map a sound number (0 to 6) to the sound data block(s)
 \             that are used to make the sound
+\  Deep dive: Sound effects
 \
 \ ******************************************************************************
 
@@ -28265,6 +28269,7 @@
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Play the configured music in the background
+\  Deep dive: Sound effects
 \
 \ ******************************************************************************
 
@@ -28446,6 +28451,8 @@
 \   Category: Sound
 \    Summary: Process any sound effects that have been configured so they play
 \             in the background (this is called regularly throughout gameplay)
+\  Deep dive: Sound effects
+\             Music
 \
 \ ******************************************************************************
 
@@ -38229,6 +38236,7 @@
 \       Type: Variable
 \   Category: Sound
 \    Summary: Data for the game's music
+\  Deep dive: Music
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38433,6 +38441,7 @@
 \       Type: Variable
 \   Category: Sound
 \    Summary: OSWORD blocks for making the various game sounds
+\  Deep dive: Sound effects
 \
 \ ------------------------------------------------------------------------------
 \
@@ -41215,6 +41224,7 @@
 \       Type: Subroutine
 \   Category: Sound
 \    Summary: Play a piece of music
+\  Deep dive: Music
 \
 \ ------------------------------------------------------------------------------
 \
