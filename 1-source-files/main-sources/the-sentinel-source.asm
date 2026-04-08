@@ -21185,7 +21185,7 @@
 \       Name: SetSecretStash
 \       Type: Subroutine
 \   Category: Cracker protection
-\    Summary: Alter the secret code stash, as part of the anti-cracker code
+\    Summary: Set the secret code stash offset, as part of the anti-cracker code
 \
 \ ******************************************************************************
 
