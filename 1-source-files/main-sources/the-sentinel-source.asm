@@ -6232,6 +6232,7 @@
 \             altitude specified in A
 \  Deep dive: Adding enemies and trees to the landscape
 \             Object management
+\             Random number generation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -8733,6 +8734,7 @@
 \   Category: Scanner/energy row
 \    Summary: Update the scanner to a new state
 \  Deep dive: The scanner
+\             Random number generation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -9107,6 +9109,7 @@
 \    Summary: Update enemyObject so the next time we consider applying enemy
 \             tactics, we apply them to the next enemy, looping from 7 to 0
 \  Deep dive: Enemy tactics
+\             Random number generation
 \
 \ ******************************************************************************
 
@@ -14322,6 +14325,7 @@
 \  Deep dive: Adding enemies and trees to the landscape
 \             Object management
 \             Stacking objects
+\             Random number generation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -28453,6 +28457,7 @@
 \             in the background (this is called regularly throughout gameplay)
 \  Deep dive: Sound effects
 \             Music
+\             Random number generation
 \
 \ ******************************************************************************
 
@@ -37246,6 +37251,7 @@
 \    Summary: Set A to a random number
 \  Deep dive: Dithering to the screen
 \             The scanner
+\             Random number generation
 \
 \ ******************************************************************************
 
@@ -37295,6 +37301,7 @@
 \   Category: Maths (Arithmetic)
 \    Summary: A 24-bit random number generator that works independently from the
 \             landscape seeds and with a much simpler generation algorithm
+\  Deep dive: Random number generation
 \
 \ ******************************************************************************
 
@@ -37323,6 +37330,7 @@
 \   Category: Graphics
 \    Summary: Draw 80 randomly positioned stars on the screen in colour 2
 \             (white, yellow, cyan or red)
+\  Deep dive: Random number generation
 \
 \ ******************************************************************************
 
@@ -37343,6 +37351,7 @@
 \   Category: Graphics
 \    Summary: Draw 80 randomly positioned dots on the screen in colour 1 (black)
 \  Deep dive: Dithering to the screen
+\             Random number generation
 \
 \ ******************************************************************************
 
@@ -37362,6 +37371,7 @@
 \   Category: Graphics
 \    Summary: Draw 80 randomly positioned dots on the screen
 \  Deep dive: Dithering to the screen
+\             Random number generation
 \
 \ ------------------------------------------------------------------------------
 \
@@ -40393,6 +40403,7 @@
 \   Category: Screen buffer
 \    Summary: Dither the contents of the screen buffer onto the screen
 \  Deep dive: Dithering to the screen
+\             Random number generation
 \
 \ ------------------------------------------------------------------------------
 \
