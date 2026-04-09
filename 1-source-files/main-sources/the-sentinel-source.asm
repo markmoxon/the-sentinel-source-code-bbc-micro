@@ -3066,8 +3066,9 @@
 
  EQUB 0, 0, 0, 0        \ The eight-byte keyboard input buffer
  EQUB 0, 0, 0, 0        \
-                        \ Key presses are stored in the input buffer using an
-                        \ ascending stack, with new input being pushed into
+                        \ Key presses are stored in the input buffer using a
+                        \ descending stack that is shuffled up in memory as it
+                        \ grows, with new input being pushed into the low end of
                         \ inputBuffer, and any existing content in the buffer
                         \ moving up in memory
 
@@ -26940,12 +26941,12 @@
                         \ If we get here then DELETE has been pressed, so we
                         \ need to delete the most recently entered character
                         \
-                        \ Because the input buffer is stored as an ascending
-                        \ stack, this means we need to delete the character at
-                        \ inputBuffer, which is the top of the buffer stack,
-                        \ and shuffle the rest of the stack to the left to
-                        \ close up the gap (so that's shuffling then down in
-                        \ memory)
+                        \ Because the input buffer is stored as a descending
+                        \ stack that is shuffled up in memory as it grows, with
+                        \ new input being pushed into the low end of the buffer,
+                        \ this means we need to delete the most recently entered
+                        \ character at inputBuffer and shuffle the rest of the
+                        \ stack down in memory to close up the gap
 
  DEY                    \ Decrement Y to reduce the character count by one, as
                         \ we are about to delete a character from the buffer
@@ -27138,11 +27139,12 @@
 
                         \ We now fetch two digits from the input buffer and
                         \ convert them into a single BCD number, remembering
-                        \ that the input buffer is stored as an ascending stack,
-                        \ so the digits on the left of the stack (i.e. those
-                        \ that were typed first) are lower significance than
-                        \ those on the right of the stack (i.e. those that were
-                        \ typed last)
+                        \ that the input buffer is stored as a descending stack
+                        \ that is shuffled up in memory as it grows, so the
+                        \ digits at the low end of the stack (i.e. those that
+                        \ were typed most recently) are of lower significance
+                        \ than those that are higher in memory (i.e. those that
+                        \ were typed first)
                         \
                         \ Effectively the stack is little-endian, just like the
                         \ 6502 processor
@@ -28436,7 +28438,7 @@
 \
 \       Name: FlushBuffer
 \       Type: Subroutine
-\   Category: Keyboard
+\   Category: Sound
 \    Summary: Flush the specified buffer
 \
 \ ------------------------------------------------------------------------------
@@ -28444,6 +28446,8 @@
 \ Arguments:
 \
 \   X                   The number of the buffer to flush:
+\
+\                         * 0 = keyboard buffer
 \
 \                         * 4 = sound channel 0 buffer
 \
