@@ -1562,6 +1562,7 @@
 \             Tile shapes
 \             Object management
 \             Stacking objects
+\             Anti-cracker checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -4290,6 +4291,7 @@
 \   Category: Cracker protection
 \    Summary: Obfuscated storage for the high byte of the landscape number as
 \             part of the anti-cracker code
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -7953,6 +7955,7 @@
 \    Summary: Check the results of the secret code matching process, and if the
 \             secret codes match, jump to PlayGame to play the game
 \  Deep dive: The landscape secret code
+\             Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -10077,6 +10080,7 @@
 \   Category: Cracker protection
 \    Summary: Create an altered version of the anti-cracker seed-related data,
 \             as part of the anti-cracker code
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -11622,6 +11626,7 @@
 \   Category: Cracker protection
 \    Summary: Set up the playerIsOnTower value for checking the game is won, as
 \             part of the anti-cracker code
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -17997,6 +18002,7 @@
 \   Category: Cracker protection
 \    Summary: Check whether the secret code stash is correctly set up, as part
 \             of the anti-cracker code
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -21186,6 +21192,7 @@
 \       Type: Subroutine
 \   Category: Cracker protection
 \    Summary: Set the secret code stash offset, as part of the anti-cracker code
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -22493,6 +22500,7 @@
 \    Summary: Smooth a strip by moving each outlier tile corner to the altitude
 \             of its closest immediate neighbour (in terms of altitude)
 \  Deep dive: Generating the landscape
+\             Anti-cracker checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -22815,6 +22823,7 @@
 \   Category: Cracker protection
 \    Summary: Set up anti-cracker tile-related data that can be checked in the
 \             CheckCrackerSeed routine
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -26072,6 +26081,7 @@
 \    Summary: Corrupt the generation process for the landscape's secret code by
 \             fetching one more seed number than necessary
 \  Deep dive: The landscape secret code
+\             Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -26483,6 +26493,7 @@
 \   Category: Cracker protection
 \    Summary: Check whether the anti-cracker seed-related data is correctly set
 \             up, as part of the anti-cracker code
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -27356,6 +27367,7 @@
 \             text block objects
 \  Deep dive: The landscape secret code
 \             Object management
+\             Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -28541,8 +28553,6 @@
 
  RTS                    \ Return from the subroutine
 
- EQUB &B9               \ This byte appears to be unused
-
 \ ******************************************************************************
 \
 \       Name: PlayGame
@@ -28552,6 +28562,24 @@
 \  Deep dive: Program flow of the main game loop
 \
 \ ******************************************************************************
+
+ EQUB &B9               \ This byte is never executed, as the stack modification
+                        \ in part 2 of the CheckSecretCode routine sets the
+                        \ return address on the stack to PlayGame-1, so the RTS
+                        \ instruction at the end of CheckSecretCode will
+                        \ therefore jump to PlayGame (as that's how the RTS
+                        \ instruction works)
+                        \
+                        \ This byte is the opcode for a Y-indexed absolute LDA
+                        \ instruction, so this makes it look like there is a
+                        \ PlayGame routine that starts with the following:
+                        \
+                        \   &B9 &A9 &83     LDA &83A9,Y
+                        \
+                        \ as the LDA instruction below assembles into &A9 &83
+                        \
+                        \ This is intended to confuse any crackers who have
+                        \ reached this point in their analysis
 
 .PlayGame
 
@@ -32194,6 +32222,7 @@
 \   Category: Landscape
 \    Summary: A stash for calculated values for each iteration in the
 \             CheckSecretCode routine
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -40859,6 +40888,7 @@
 \   Category: Cracker protection
 \    Summary: An intentionally confusing jump point for controlling the main
 \             title loop flow when returning from the GenerateLandscape routine
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
@@ -40878,10 +40908,17 @@
                         \
                         \ as the BMI instruction below assembles into &30 &3F
                         \
-                        \ This would jump to a valid instruction halfway through
-                        \ the ConfigureMachine routine, so this byte, although
-                        \ unused, is presumably a JMP opcode to confuse any
-                        \ crackers who have reached this point in their analysis
+                        \ This would either jump to a valid instruction halfway
+                        \ through the ConfigureMachine routine, or into the
+                        \ contents of the secret code stash, or into the screen
+                        \ buffer, depending on the location of the stash and
+                        \ whether we've already played a landscape by this point
+                        \
+                        \ What is clear is that this would jump into code that
+                        \ would probably crash the machine, so the &4C byte,
+                        \ although unused, is presumably a JMP opcode to confuse
+                        \ any crackers who have reached this point in their
+                        \ analysis
 
  BMI PreviewLandscape   \ We only get here if the stack has been modified by the
                         \ SmoothTileData routine, which makes the RTS at the end
@@ -41280,6 +41317,7 @@
 \  Deep dive: Entry and setup code
 \             The interrupt handler
 \             The custom screen mode
+\             Anti-cracker checks
 \
 \ ------------------------------------------------------------------------------
 \
@@ -41635,6 +41673,7 @@
 \   Category: Setup
 \    Summary: Clear game memory, so that the BREAK key can remove all trace of
 \             the game code in early versions of the operating system
+\  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
 
