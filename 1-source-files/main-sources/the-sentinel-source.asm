@@ -38740,6 +38740,8 @@
 \   Category: Landscape
 \    Summary: Storage for tile data when smoothing strips of tiles during the
 \             landscape generation process
+\  Deep dive: Generating the landscape
+\             Source code clues hidden in the game binary
 \
 \ ******************************************************************************
 
@@ -38781,6 +38783,7 @@
 \   Category: Landscape
 \    Summary: Storage for tile blocks at specific altitudes for placing enemies
 \             on the landscape
+\  Deep dive: Source code clues hidden in the game binary
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38825,6 +38828,7 @@
 \   Category: Landscape
 \    Summary: The maximum tile altitude for each 4x4 block of tiles
 \  Deep dive: Adding enemies and trees to the landscape
+\             Source code clues hidden in the game binary
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38876,6 +38880,7 @@
 \    Summary: The tile x-coordinate of the highest tile within each 4x4 block of
 \             tiles
 \  Deep dive: Adding enemies and trees to the landscape
+\             Source code clues hidden in the game binary
 \
 \ ------------------------------------------------------------------------------
 \
@@ -38916,6 +38921,7 @@
 \    Summary: The tile z-coordinate of the highest tile within each 4x4 block of
 \             tiles
 \  Deep dive: Adding enemies and trees to the landscape
+\             Source code clues hidden in the game binary
 \
 \ ------------------------------------------------------------------------------
 \
@@ -41686,6 +41692,7 @@
 \    Summary: Clear game memory, so that the BREAK key can remove all trace of
 \             the game code in early versions of the operating system
 \  Deep dive: Anti-cracker checks
+\             Source code clues hidden in the game binary
 \
 \ ******************************************************************************
 
