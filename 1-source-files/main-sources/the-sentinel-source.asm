@@ -4452,6 +4452,7 @@
 \   Category: Keyboard
 \    Summary: Scan the keyboard for a specific key press
 \  Deep dive: Reusing the geometry routines from Revs
+\             The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -5876,6 +5877,7 @@
 \    Summary: Check for various game key presses and update the key logger and
 \             relevant variables (during the interrupt handler)
 \  Deep dive: The interrupt handler
+\             The key logger
 \
 \ ******************************************************************************
 
@@ -6164,6 +6166,7 @@
 \   Category: Keyboard
 \    Summary: Check to see whether the same pan key is being held down compared
 \             to the last time we checked
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6217,6 +6220,7 @@
 \   Category: Keyboard
 \    Summary: A variable to flag whether the SPACE key has been pressed, so we
 \             can implement debounce
+\  Deep dive: The key logger
 \
 \ ******************************************************************************
 
@@ -6897,6 +6901,7 @@
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Scan for game key presses and update the key logger
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -6990,6 +6995,7 @@
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: Negative inkey values for the game keys
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -7022,6 +7028,7 @@
 \       Type: Variable
 \   Category: Keyboard
 \    Summary: The configuration table for storing keys the key logger
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
@@ -26873,6 +26880,7 @@
 \       Type: Subroutine
 \   Category: Keyboard
 \    Summary: Read a number from the keyboard into the input buffer
+\  Deep dive: The key logger
 \
 \ ------------------------------------------------------------------------------
 \
