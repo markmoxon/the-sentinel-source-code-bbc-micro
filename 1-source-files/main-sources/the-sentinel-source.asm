@@ -29058,6 +29058,7 @@
 \       Type: Subroutine
 \   Category: Text
 \    Summary: Print a recursive text token
+\  Deep dive: Text tokens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37616,6 +37617,7 @@
 \   Category: Text
 \    Summary: Print a single-byte VDU command or character from a text token,
 \             optionally printing a drop shadow if the character is alphanumeric
+\  Deep dive: Text tokens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37808,6 +37810,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: VDU commands for printing the front character of a drop shadow
+\  Deep dive: Text tokens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37854,6 +37857,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: VDU commands for printing the rear character of a drop shadow
+\  Deep dive: Text tokens
 \
 \ ------------------------------------------------------------------------------
 \
@@ -37898,8 +37902,9 @@
 \       Name: token0
 \       Type: Variable
 \   Category: Text
-\    Summary: Background colour blue, print "PRESS ANY KEY" at (64, 100), set
-\             text background to black
+\    Summary: Text token 0: Background colour blue, print "PRESS ANY KEY" at
+\             (64, 100), set text background to black
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -37924,8 +37929,9 @@
 \       Name: token1
 \       Type: Variable
 \   Category: Text
-\    Summary: Print 13 spaces at (64, 100), print "LANDSCAPE NUMBER?" at
+\    Summary: Text token 1: Print 13 spaces at (64, 100), "LANDSCAPE NUMBER?" at
 \             (64, 768), switch to text cursor, move text cursor to (5, 27)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -37960,8 +37966,9 @@
 \       Name: token2
 \       Type: Variable
 \   Category: Text
-\    Summary: Background colour blue, print "SECRET ENTRY CODE?" at (64, 768),
-\             switch to text cursor, move text cursor to (2, 27)
+\    Summary: Text token 2: Background colour blue, print "SECRET ENTRY CODE?"
+\             at (64, 768), switch to text cursor, move text cursor to (2, 27)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -37992,8 +37999,9 @@
 \       Name: token3
 \       Type: Variable
 \   Category: Text
-\    Summary: Background colour blue, print "WRONG SECRET CODE" at (64, 768),
-\             print "PRESS ANY KEY" at (64, 100), set text background to black
+\    Summary: Text token 3: Background colour blue, print "WRONG SECRET CODE" at
+\             (64, 768), "PRESS ANY KEY" at (64, 100), set black text background
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38018,8 +38026,9 @@
 \       Name: token4
 \       Type: Variable
 \   Category: Text
-\    Summary: Background colour black, print "PRESS ANY KEY" at (192, 64), print
-\             "LANDSCAPE" two chars right of (64, 768), move cursor right
+\    Summary: Text token 4: Black background, print "PRESS ANY KEY" at (192, 64)
+\             and "LANDSCAPE" two chars right of (64, 768), move cursor right
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38055,6 +38064,7 @@
 \   Category: Text
 \    Summary: Text token 5: Print "SECRET ENTRY CODE" at (64, 768), "LANDSCAPE"
 \             at (192, 704), move cursor right
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38081,6 +38091,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 6: Print "PRESS ANY KEY" at (64, 100)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38098,6 +38109,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 7: Move the graphics cursor to (64, 768)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38115,6 +38127,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 8: Move the graphics cursor to (192, 704)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38132,6 +38145,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 9: Move the graphics cursor to (192, 64)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38150,6 +38164,7 @@
 \   Category: Text
 \    Summary: Text token 10: Configure text to be printed at the graphics cursor
 \             and set the background colour to colour 0 (blue)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38173,6 +38188,7 @@
 \   Category: Text
 \    Summary: Text token 11: Configure text to be printed at the graphics cursor
 \             and set the background colour to colour 1 (black)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38195,6 +38211,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 12: Move graphics cursor to (64, 100)
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38212,6 +38229,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 13: Print "LANDSCAPE"
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38227,6 +38245,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 14: Print "SECRET ENTRY CODE"
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38242,6 +38261,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 15: Print five spaces
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38257,6 +38277,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 16: Print three spaces
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
@@ -38272,6 +38293,7 @@
 \       Type: Variable
 \   Category: Text
 \    Summary: Text token 17: Print "PRESS ANY KEY"
+\  Deep dive: Text tokens
 \
 \ ******************************************************************************
 
