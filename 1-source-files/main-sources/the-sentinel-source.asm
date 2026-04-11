@@ -22829,8 +22829,8 @@
 \       Name: SetCrackerSeed
 \       Type: Subroutine
 \   Category: Cracker protection
-\    Summary: Set up anti-cracker tile-related data that can be checked in the
-\             CheckCrackerSeed routine
+\    Summary: Set up anti-cracker landscape-related data that can be checked in
+\             the CheckCrackerSeed routine
 \  Deep dive: Anti-cracker checks
 \
 \ ******************************************************************************
