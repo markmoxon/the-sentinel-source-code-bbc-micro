@@ -1546,7 +1546,7 @@
 \
 \ THE SENTINEL MAIN GAME CODE
 \
-\ Produces the binary file Sentinel.bin that contains the main game code.
+\ Produces the binary file TheSentinel.bin that contains the main game code.
 \
 \ ******************************************************************************
 
@@ -2842,16 +2842,16 @@
 
 .xSights
 
- EQUB 0                 \ The pixel x-coordinate of the sights on-screen (i.e of
-                        \ the top pixel in the sights)
+ EQUB 0                 \ The pixel x-coordinate of the sights on-screen (i.e.
+                        \ of the top pixel in the sights)
                         \
                         \ The centre of the crosshair sights is at coordinates
                         \ (xSights, ySights - 5)
 
 .ySights
 
- EQUB 0                 \ The pixel y-coordinate of the sights on-screen (i.e of
-                        \ the top pixel in the sights)
+ EQUB 0                 \ The pixel y-coordinate of the sights on-screen (i.e.
+                        \ of the top pixel in the sights)
                         \
                         \ The centre of the crosshair sights is at coordinates
                         \ (xSights, ySights - 5)
@@ -6940,7 +6940,7 @@
 
  BPL gkey1              \ Loop back until we have reset all four entries
 
-                        \ We now work our way backwards through the gameKey
+                        \ We now work our way backwards through the gameKeys
                         \ table, starting at offset Y, and checking to see if
                         \ each key is being pressed and logging the results in
                         \ the key logger
@@ -6948,7 +6948,7 @@
 .gkey2
 
  LDX gameKeys,Y         \ Set X to the internal key number for the Y-th key in
-                        \ the gameKey table
+                        \ the gameKeys table
 
  JSR ScanKeyboard       \ Scan the keyboard to see if this key is being pressed
 
@@ -6969,10 +6969,10 @@
 .gkey3
 
  DEY                    \ Decrement the index in Y to move on to the next key
-                        \ in the gameKey table
+                        \ in the gameKeys table
 
  BPL gkey2              \ Loop back until we have checked all the keys up to the
-                        \ start of the gameKey table
+                        \ start of the gameKeys table
 
  LDA keyLogger          \ Combine the key logger entry for "S" and "D" (pan left
  AND keyLogger+2        \ and right) with the key logger entry for "L" and ","
@@ -16118,7 +16118,7 @@
                         \
                         \ The number of objects drawn is in objectStackCounter,
                         \ so if we have already drawn any objects in the stack
-                        \ in the other direction (i.e.working upwards from the
+                        \ in the other direction (i.e. working upwards from the
                         \ bottom of the stack) then these objects will not be
                         \ redrawn
 
@@ -37171,7 +37171,7 @@
 
  LSR A                  \ Set (A pitchDeltaLo) = (A pitchDeltaLo) / 16
  ROR pitchDeltaLo       \
- LSR A                  \ THe division by 16 converts the value from screen
+ LSR A                  \ The division by 16 converts the value from screen
  ROR pitchDeltaLo       \ pixels into a pitch angle
  LSR A
  ROR pitchDeltaLo
@@ -41845,7 +41845,7 @@
 
 \ ******************************************************************************
 \
-\ Save Sentinel.bin
+\ Save TheSentinel.bin
 \
 \ ******************************************************************************
 
