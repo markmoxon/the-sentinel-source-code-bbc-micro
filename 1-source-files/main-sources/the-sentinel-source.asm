@@ -2731,11 +2731,9 @@
 
 .seedNumberLFSR
 
- EQUB 0                 \ A five-byte linear feedback shift register for
- EQUB 0                 \ generating a sequence of seed numbers for each
- EQUB 1                 \ landscape
- EQUB 0
- EQUB 0
+ EQUB 0, 0, 1, 0, 0     \ A five-byte linear feedback shift register for
+                        \ generating a sequence of seed numbers for each
+                        \ landscape
 
 .enemyMeanieScan
 
@@ -3056,8 +3054,7 @@
 
 .keyLogger
 
- EQUB &80, &80          \ The four-byte key logger for logging game key presses
- EQUB &80, &80
+ EQUD &80808080         \ The four-byte key logger for logging game key presses
 
  EQUB &80, &80          \ These bytes appear to be unused
  EQUB &80, &80
