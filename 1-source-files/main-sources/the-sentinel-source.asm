@@ -3054,7 +3054,19 @@
 
 .keyLogger
 
- EQUD &80808080         \ The four-byte key logger for logging game key presses
+ EQUB %10000000         \ The four-entry key logger for logging game key presses
+ EQUB %10000000         \
+ EQUB %10000000         \   * Entry 0 is for sideways movement keys (pan left,
+ EQUB %10000000         \     pan right)
+                        \
+                        \   * Entry 1 is for action keys (absorb, transfer,
+                        \     create, hyperspace, U-turn)
+                        \
+                        \   * Entry 2 is for vertical movement keys (pan up, pan
+                        \     down)
+                        \
+                        \   * Entry 3 is for utility keys (volume control,
+                        \     pause)
 
  EQUB &80, &80          \ These bytes appear to be unused
  EQUB &80, &80
