@@ -5738,7 +5738,7 @@
 \
 \       Name: ResetVariables
 \       Type: Subroutine
-\   Category: Main title Loop
+\   Category: Main title loop
 \    Summary: Reset all the game's main variables
 \
 \ ******************************************************************************
@@ -5831,7 +5831,7 @@
 \
 \       Name: ResetTilesObjects
 \       Type: Subroutine
-\   Category: Main title Loop
+\   Category: Main title loop
 \    Summary: Reset the tile visibility table and deallocate all object numbers
 \  Deep dive: Seed number generation
 \
