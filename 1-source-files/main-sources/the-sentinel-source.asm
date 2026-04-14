@@ -432,7 +432,11 @@
 
 .processAction
 
- SKIP 1                 \ Defines the following:
+ SKIP 1                 \ Defines the action to be applied to tile data by the
+                        \ smoothing or processing routine
+                        \
+                        \ The value of this variable defines the action as
+                        \ follows:
                         \
                         \   * The action that's applied to tile data by the
                         \     ProcessTileData routine
@@ -2117,7 +2121,7 @@
 
 .scannerUpdate
 
- EQUB 0                 \ A flag to control whether the scanner gets updated:
+ EQUB 0                 \ A flag to control whether the scanner gets updated
                         \
                         \   * Non-zero = update scanner
                         \
@@ -2154,7 +2158,7 @@
 .lastScannerState
 
  EQUB 0                 \ The state of the scanner the last time that it was
-                        \ updated:
+                        \ updated
                         \
                         \   * 0 = fill the scanner with black (scanner is off)
                         \
@@ -2290,7 +2294,7 @@
 .drawingPhase
 
  EQUB 0                 \ The number of the current drawing phase when drawing
-                        \ two-phase objects:
+                        \ two-phase objects
                         \
                         \   * Bit 7 = 0: first phase
                         \
@@ -2956,7 +2960,7 @@
 .gazeCanSeeTree
 
  EQUB 0                 \ A flag to record whether the gaze vector can see a
-                        \ tree:
+                        \ tree
                         \
                         \   * Bit 7 clear = gaze vector cannot see a tree
                         \
