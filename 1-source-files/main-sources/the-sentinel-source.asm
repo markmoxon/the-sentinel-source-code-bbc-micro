@@ -17014,7 +17014,7 @@
                         \ We also get here on later iterations with Y set to the
                         \ polygon pixel to draw next
                         \
-                        \ In either case we draw polygon pixel line Y and steps
+                        \ In either case we draw polygon pixel line Y and step
                         \ down the polygon one pixel line at a time until we
                         \ reach the bottom
 
